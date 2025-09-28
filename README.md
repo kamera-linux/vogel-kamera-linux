@@ -125,11 +125,6 @@ vogel-kamera-linux/
 ├── wiki-sync/                                                   # 📚 Wiki-Synchronisation
 │   ├── wiki_sync.py                                            # Automatische Wiki-GitHub-Sync
 │   └── README.md                                                # Wiki-Sync Dokumentation
-├── wiki-content/                                                # 📖 Wiki-Inhalte (Symlink)
-│   ├── Home.md                                                  # Wiki-Startseite
-│   ├── Changelog.md                                             # Wiki-Changelog
-│   ├── Event-Management.md                                      # Event-Dokumentation
-│   └── weitere-wiki-seiten.md                                  # Weitere Wiki-Inhalte
 ├── veranstaltungen/                                             # 🎤 Event-Management
 │   ├── README.md                                                # Event-Übersicht
 │   └── YYYY-MM-DD-eventname/                                   # Event-spezifische Ordner
