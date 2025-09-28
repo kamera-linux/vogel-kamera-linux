@@ -4,16 +4,17 @@ Dieser Ordner enthält Dokumentation und Materialien zu Vorträgen und Präsenta
 
 ## 🗓 Aktuelle Veranstaltungen
 
-### [27. September 2025 - LinuxDay.at](./2025-09-27-linuxday-at/)
-**Automatisierte Vogelbeobachtung mit Raspberry Pi, Python und KI**
-
-- 📍 **Veranstaltung**: [LinuxDay.at](https://www.linuxday.at/)
-- 🎤 **Vortrag**: [Automatisierte Vogelbeobachtung mit Raspberry Pi, Python und KI](https://www.linuxday.at/automatisierte-vogelbeobachtung-mit-raspberry-pi-python-und-ki)
-- 📂 **Materialien**: [Ordner anzeigen](./2025-09-27-linuxday-at/)
+*Aktuell keine geplanten Veranstaltungen.*
 
 ## 📋 Vergangene Veranstaltungen
 
-*Noch keine vergangenen Veranstaltungen dokumentiert.*
+### [27. September 2025 - LinuxDay.at Dornbirn](./2025-09-27-linuxday-at/) ✅
+**Automatisierte Vogelbeobachtung mit Raspberry Pi, Python und KI**
+
+- 📍 **Veranstaltung**: [LinuxDay.at](https://www.linuxday.at/) - Dornbirn, Österreich
+- 🎤 **Vortrag**: [Automatisierte Vogelbeobachtung mit Raspberry Pi, Python und KI](https://www.linuxday.at/automatisierte-vogelbeobachtung-mit-raspberry-pi-python-und-ki)
+- 📂 **Materialien**: [Ordner anzeigen](./2025-09-27-linuxday-at/)
+- 🎯 **Status**: Erfolgreich durchgeführt
 
 ## 📝 Neue Veranstaltung hinzufügen
 
@@ -41,4 +42,4 @@ Interessiert an einem Vortrag über das Projekt?
 
 ---
 
-*Letztes Update: 25. September 2025*
+*Letztes Update: 28. September 2025*

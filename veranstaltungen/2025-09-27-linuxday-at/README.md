@@ -2,10 +2,11 @@
 
 ## 📅 Veranstaltungsdetails
 
-- **Datum**: 27. September 2025
+- **Datum**: 27. September 2025 ✅
+- **Ort**: Dornbirn, Österreich
 - **Veranstaltung**: LinuxDay.at
 - **Vortrag**: Automatisierte Vogelbeobachtung mit Raspberry Pi, Python und KI
-- **Referent**: [Ihr Name]
+- **Status**: **Erfolgreich durchgeführt** 🎉
 
 ## 🔗 Links
 
