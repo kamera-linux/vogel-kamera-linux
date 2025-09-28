@@ -1,6 +1,12 @@
 # 🐦 Vogel-Kamera-Linux
 
-[![Version](https://img.shields.io/badge/Version-v1.1.7-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.1.7)
+[![Version](https://img.shields.- ✅ **Automatische Konfig> 💡 **3D-Konstruktions-Dateien verfügbar!** Alle CAD-Dateien für den Nachbau finden Sie im [`3d-konstruktion/`](3d-konstruktion/) Verzeichnis
+
+## 🛠️ Voraussetzungentionsvalidierung**
+
+## 📸 Hardware-Galerie
+
+<div align="center">dge/Version-v1.1.7-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.1.7)
 [![GitHub Issues](https://img.shields.io/github/issues/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/pulls)
 [![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)
@@ -414,7 +420,7 @@ Siehe [LICENSE](LICENSE) Datei für Details.
 3. Änderungen commiten
 4. Pull Request erstellen
 
-## � Community & Diskussionen
+## 👥 Community & Diskussionen
 
 [![GitHub Discussions](https://img.shields.io/github/discussions/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/discussions)
 
@@ -424,7 +430,7 @@ Tauschen Sie sich mit anderen Nutzern aus:
 - 📸 **Aufnahmen zeigen** aus Ihrem Vogelhaus
 - 🔧 **Hardware-Tipps** diskutieren
 
-## �📞 Support
+## 📞 Support
 
 Bei Fragen oder Problemen:
 - 💬 **Diskussionen starten** in [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
@@ -436,11 +442,11 @@ Alle Änderungen werden in [CHANGELOG.md](CHANGELOG.md) dokumentiert.
 
 ### 🆕 Neu in v1.1.2 (23. September 2025)
 - 🔧 **GitHub Issue Templates:** Deutsche Bug Report und Feature Request Templates
-- � **Repository-Verbesserungen:** Hardware-spezifische Support-Abschnitte
+- 🏗️ **Repository-Verbesserungen:** Hardware-spezifische Support-Abschnitte
 - 🤝 **Community-Engagement:** Strukturierte Nutzen-Bewertung und Akzeptanzkriterien
-- � **Security Policy:** Comprehensive SECURITY.md mit Vulnerability-Reporting
+- 🛡️ **Security Policy:** Comprehensive SECURITY.md mit Vulnerability-Reporting
 - 📊 **Version-Tracking:** Programmatische Versionsinformationen (version.py)
-- � **Release-Dokumentation:** Vollständige Release Notes und CHANGELOG-Updates
+- 📋 **Release-Dokumentation:** Vollständige Release Notes und CHANGELOG-Updates
 
 ### 🎬 Neu in v1.1.0
 - YouTube-Integration mit QR-Codes
