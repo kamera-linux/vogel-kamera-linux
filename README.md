@@ -104,34 +104,51 @@ python python-skripte/config.py
 
 ```
 vogel-kamera-linux/
-├── README.md
-├── LICENSE
-├── CHANGELOG.md                                                    # Versionshistorie
-├── requirements.txt                                                # Python-Abhängigkeiten
-├── .gitignore
-├── assets/                                                         # QR-Codes & Medien
-│   ├── qr-youtube-channel.png                                    # YouTube-Kanal QR-Code
-│   ├── qr-playlists.png                                          # Playlists QR-Code  
-│   ├── qr-subscribe.png                                          # Abonnieren QR-Code
-│   ├── generate_qr_codes.py                                      # QR-Code Generator
-│   └── QR-CODE-ANLEITUNG.md                                      # QR-Code Dokumentation
-├── git-automation/                                               # 🔐 Git-Automatisierung
-│   ├── git_automation.py                                         # Sichere Git-Operationen
-│   ├── setup_ssh_credentials.py                                  # SSH-Credentials Setup
-│   ├── test_*.py                                                 # Test-Suite
-│   ├── .git_secrets_encrypted.json                              # Verschlüsselte Secrets
-│   └── README.md                                                 # Git-Automation Dokumentation
+├── README.md                                                     # Hauptdokumentation
+├── LICENSE                                                       # MIT Lizenz
+├── CHANGELOG.md                                                  # Versionshistorie
+├── version.py                                                    # Zentrale Versionsverwaltung
+├── requirements.txt                                              # Python-Abhängigkeiten
+├── .gitignore                                                    # Git-Ignore-Regeln
+├── assets/                                                       # 📸 QR-Codes & Medien
+│   ├── qr-youtube-channel.png                                   # YouTube-Kanal QR-Code
+│   ├── qr-playlists.png                                         # Playlists QR-Code  
+│   ├── qr-subscribe.png                                         # Abonnieren QR-Code
+│   ├── generate_qr_codes.py                                     # QR-Code Generator
+│   └── QR-CODE-ANLEITUNG.md                                     # QR-Code Dokumentation
+├── git-automation/                                              # 🔐 Git-Automatisierung
+│   ├── git_automation.py                                        # Sichere Git-Operationen mit AES-256
+│   ├── setup_ssh_credentials.py                                 # SSH-Credentials Setup
+│   ├── test_*.py                                                # Umfassende Test-Suite
+│   ├── .git_secrets_encrypted.json                             # Verschlüsselte SSH-Secrets
+│   └── README.md                                                # Git-Automation Dokumentation
 ├── wiki-sync/                                                   # 📚 Wiki-Synchronisation
-│   ├── wiki_sync.py                                             # Haupt-Wiki-Sync-Skript
-│   └── README.md                                                 # Wiki-Sync Dokumentation
-└── python-skripte/
-    ├── config.py                                                      # Konfigurationssystem
-    ├── __version__.py                                                  # Versionsverwaltung
-    ├── .env.example                                                    # Konfigurationsvorlage
-    ├── .env                                                            # Ihre Konfiguration (nicht im Git)
-    ├── ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py  # Hauptskript mit KI
-    ├── ai-had-audio-remote-param-vogel-libcamera-single.py            # Audio-Aufnahme
-    └── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py         # Zeitlupe-Aufnahmen
+│   ├── wiki_sync.py                                            # Automatische Wiki-GitHub-Sync
+│   └── README.md                                                # Wiki-Sync Dokumentation
+├── wiki-content/                                                # 📖 Wiki-Inhalte (Symlink)
+│   ├── Home.md                                                  # Wiki-Startseite
+│   ├── Changelog.md                                             # Wiki-Changelog
+│   ├── Event-Management.md                                      # Event-Dokumentation
+│   └── weitere-wiki-seiten.md                                  # Weitere Wiki-Inhalte
+├── veranstaltungen/                                             # 🎤 Event-Management
+│   ├── README.md                                                # Event-Übersicht
+│   └── YYYY-MM-DD-eventname/                                   # Event-spezifische Ordner
+│       ├── README.md                                            # Event-Details
+│       ├── slides/                                              # Präsentationsmaterialien
+│       │   ├── README.md                                        # Slide-Dokumentation
+│       │   └── *.pdf/*.pptx                                    # Präsentationsdateien
+│       └── resources/                                           # Event-Ressourcen
+│           ├── README.md                                        # Resource-Dokumentation
+│           ├── generate_qr_codes.py                            # Event-QR-Codes
+│           └── *.png                                           # QR-Code Bilder
+└── python-skripte/                                             # 🐍 Haupt-Python-Module
+    ├── config.py                                                # Konfigurationssystem
+    ├── __version__.py                                           # Modul-Versionsverwaltung
+    ├── .env.example                                             # Konfigurationsvorlage
+    ├── .env                                                     # Lokale Konfiguration (nicht im Git)
+    ├── ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py  # 🤖 Hauptskript mit KI
+    ├── ai-had-audio-remote-param-vogel-libcamera-single.py            # 🎵 Audio-Aufnahme
+    └── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py         # ⚡ Zeitlupe-Aufnahmen
 ```
 
 ## 🚀 Schnellstart
