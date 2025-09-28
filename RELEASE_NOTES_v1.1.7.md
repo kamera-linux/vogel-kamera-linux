@@ -166,7 +166,8 @@
 - **Wiki:** [Projekt-Dokumentation](https://github.com/roimme65/vogel-kamera-linux/wiki)
 - **YouTube:** [Vogel-Kamera Videos](https://www.youtube.com/@vogel-kamera-linux)
 - **Community:** [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
-- **Previous Release:** [v1.1.6 Release Notes](RELEASE_NOTES_v1.1.6.md)
+- **Previous Release:** [v1.1.6 Release Notes](releases/v1.1.6/RELEASE_NOTES_v1.1.6.md)
+- **All Releases:** [Release Archive](releases/README.md)
 
 ---
 

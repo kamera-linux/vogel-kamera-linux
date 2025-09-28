@@ -135,10 +135,10 @@ This release represents significant infrastructure improvements to enhance the p
 
 ## 🔗 Links & Resources
 
-- **Repository:** [vogel-kamera-linux](https://github.com/username/vogel-kamera-linux)
-- **Wiki:** [Project Documentation](https://github.com/username/vogel-kamera-linux/wiki)
-- **Issues:** [Report Issues](https://github.com/username/vogel-kamera-linux/issues)
-- **Previous Release:** [v1.1.5 Release Notes](RELEASE_NOTES_v1.1.5.md)
+- **Repository:** [vogel-kamera-linux](https://github.com/roimme65/vogel-kamera-linux)
+- **Wiki:** [Project Documentation](https://github.com/roimme65/vogel-kamera-linux/wiki)
+- **Issues:** [Report Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
+- **Previous Release:** [v1.1.5 Release Notes](../v1.1.5/RELEASE_NOTES_v1.1.5.md)
 
 ---
 

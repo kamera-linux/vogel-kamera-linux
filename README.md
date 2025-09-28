@@ -107,9 +107,14 @@ vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
 ├── CHANGELOG.md                                                  # Versionshistorie
+├── RELEASE_NOTES_v1.1.7.md                                      # Aktuelle Release-Dokumentation
 ├── version.py                                                    # Zentrale Versionsverwaltung
 ├── requirements.txt                                              # Python-Abhängigkeiten
 ├── .gitignore                                                    # Git-Ignore-Regeln
+├── releases/                                                     # 📋 Release-Dokumentation
+│   ├── README.md                                                # Release-Übersicht
+│   └── vX.X.X/                                                  # Versionierte Release-Archive
+│       └── RELEASE_NOTES_vX.X.X.md                              # Archivierte Release-Notes
 ├── assets/                                                       # 📸 QR-Codes & Medien
 │   ├── qr-youtube-channel.png                                   # YouTube-Kanal QR-Code
 │   ├── qr-playlists.png                                         # Playlists QR-Code  
