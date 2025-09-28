@@ -5,6 +5,11 @@
 [![GitHub PRs](https://img.shields.io/github/issues-pr/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/pulls)
 [![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)
 
+<div align="center">
+  <img src="assets/vogelhaus-kamera-komplett.png" alt="Komplettes Vogel-Kamera System" width="700"/>
+  <p><em>Professionelles Vogelhaus mit integrierter Raspberry Pi Kamera - Komplettsystem bereit für den Einsatz</em></p>
+</div>
+
 Ferngesteuerte Kameraüberwachung für Vogelhäuser mit KI-gestützter Objekterkennung.
 
 ### Basis-Aufnahme
@@ -52,7 +57,28 @@ Dieses Projekt ermöglicht die Fernsteuerung von Raspberry Pi-Kameras zur Überw
 - 🔧 **Einfache Installation** mit requirements.txt
 - ✅ **Automatische Konfigurationsvalidierung**
 
-## 🛠️ Voraussetzungen
+## � Hardware-Galerie
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="assets/vogelhaus-kamera-solo.png" alt="Einzelnes Vogelhaus" width="300"/>
+        <br><strong>Modulare Kamera-Lösung</strong>
+        <br><em>Flexible Platzierung für optimale Aufnahmen</em>
+      </td>
+      <td align="center">
+        <img src="assets/Youtube-Kanal.png" alt="YouTube Kanal Impression" width="400"/>
+        <br><strong>Live-Aufnahmen & Community</strong>
+        <br><em>Echte Vogelbeobachtungen auf YouTube</em>
+      </td>
+    </tr>
+  </table>
+</div>
+
+> 💡 **3D-Konstruktions-Dateien verfügbar!** Alle CAD-Dateien für den Nachbau finden Sie im [`3d-konstruktion/`](3d-konstruktion/) Verzeichnis
+
+## �🛠️ Voraussetzungen
 
 ### Hardware
 - Raspberry Pi 5 mit Kamera-Modul
