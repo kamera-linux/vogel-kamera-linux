@@ -13,7 +13,7 @@ RELEASE_TYPE = "minor"  # major, minor, patch
 
 # Build Information
 BUILD_NUMBER = "20250927"
-GIT_TAG = "v1.1.5"
+GIT_TAG = "v1.1.6"
 
 # Feature Flags
 FEATURES = {

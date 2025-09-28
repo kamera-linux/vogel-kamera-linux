@@ -12,6 +12,20 @@ und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 - Erweiterte KI-Modelle (YOLOv9/v10)
 - Web-Dashboard für Remote-Monitoring
 
+## [1.1.6] - 2025-09-27
+### Hinzugefügt
+- **📚 Wiki-Sync-System:** Neues `wiki-sync/` Verzeichnis für Wiki-Synchronisation
+- **🔧 Reorganisiertes Skript:** Überarbeitetes `wiki_sync.py` mit verbesserter Pfad-Behandlung
+- **🐍 Virtual Environment Integration:** Standardisierte venv-Setup-Anweisungen in aller Dokumentation
+- **📖 Erweiterte Dokumentation:** Umfassende README für Wiki-Synchronisations-Workflow
+- **💻 Verbesserte CLI:** Enhanced Command-Line-Interface mit besserer Fehlerbehandlung
+
+### Verbessert
+- **Installation-Guide.md** - Umfassende venv-Setup-Anweisungen hinzugefügt
+- **AI-Configuration.md** - Virtual Environment Workflow integriert  
+- **FAQ.md** - Enhanced Troubleshooting mit venv-Überlegungen
+- **Git-Automation.md** - Aktualisiert mit modernen Python-Umgebungs-Praktiken
+
 ## [1.1.5] - 2025-09-25
 ### Hinzugefügt
 - **🎤 Veranstaltungsmanagement:** Neuer `veranstaltungen/` Ordner für Vorträge und Präsentationen
