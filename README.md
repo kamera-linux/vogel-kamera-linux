@@ -1,6 +1,6 @@
 # 🐦 Vogel-Kamera-Linux
 
-[![Version](https://img.shields.io/badge/Version-v1.1.6-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.1.6)
+[![Version](https://img.shields.io/badge/Version-v1.1.7-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.1.7)
 [![GitHub Issues](https://img.shields.io/github/issues/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/pulls)
 [![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)
@@ -125,6 +125,12 @@ vogel-kamera-linux/
 ├── wiki-sync/                                                   # 📚 Wiki-Synchronisation
 │   ├── wiki_sync.py                                            # Automatische Wiki-GitHub-Sync
 │   └── README.md                                                # Wiki-Sync Dokumentation
+├── 3d-konstruktion/                                            # 🔧 3D-Konstruktions-Dateien
+│   ├── README.md                                                # 3D-Konstruktions-Dokumentation
+│   └── YYYY-MM-DD/                                             # Versionierte Konstruktions-Ordner
+│       ├── README.md                                            # Version-spezifische Dokumentation
+│       └── stp-dateien/                                        # STEP-Konstruktionsdateien (*.stp)
+│           └── *.stp                                           # 3D-CAD Dateien für Hardware
 ├── veranstaltungen/                                             # 🎤 Event-Management
 │   ├── README.md                                                # Event-Übersicht
 │   └── YYYY-MM-DD-eventname/                                   # Event-spezifische Ordner
@@ -184,7 +190,7 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 ### 4. Version prüfen
 ```bash
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
-# Ausgabe: Vogel-Kamera-Linux v1.1.6
+# Ausgabe: Vogel-Kamera-Linux v1.1.7
 ```
 
 ### Basis-Aufnahme
@@ -412,6 +418,6 @@ Alle Änderungen werden in [CHANGELOG.md](CHANGELOG.md) dokumentiert.
 
 ## 🔖 Versionen
 
-- **Aktuelle Version:** v1.1.6
+- **Aktuelle Version:** v1.1.7
 - **Entwicklungszweig:** `devel`
 - **Stabile Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)

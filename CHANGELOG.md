@@ -12,6 +12,26 @@ und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 - Erweiterte KI-Modelle (YOLOv9/v10)
 - Web-Dashboard für Remote-Monitoring
 
+## [1.1.7] - 2025-09-28
+### Hinzugefügt
+- **🔧 3D-Konstruktion:** Neues `3d-konstruktion/` Verzeichnis mit versionierten CAD-Dateien
+  - STP-Dateien für Vogelhaus mit Kamera-Integration
+  - Komplette Konstruktionsdokumentation mit Druck-Parametern
+  - Versionierte Struktur für zukünftige Konstruktions-Updates
+- **📚 Wiki-Sidebar:** Benutzerdefinierte `_Sidebar.md` für verbesserte Navigation
+  - Strukturierte 7-Kategorien Navigation im GitHub Wiki
+  - Externe Links zu Repository, YouTube und Community
+  - Automatische Anzeige auf allen Wiki-Seiten
+- **📖 Erweiterte Dokumentation:** 
+  - 3D-Druck Anleitungen mit Material-Empfehlungen
+  - Technische Spezifikationen für PETG/ABS Outdoor-Einsatz
+  - Wiki-Navigation für 25+ Dokumentationsseiten
+
+### Verbessert
+- **📂 Projektstruktur:** README.md mit 3D-Konstruktions-Integration erweitert
+- **🔄 Versionsverwaltung:** Konsistente v1.1.7 über alle Komponenten
+- **📱 Benutzerfreundlichkeit:** Intuitive Wiki-Navigation für Desktop und Mobile
+
 ## [1.1.6] - 2025-09-27
 ### Hinzugefügt
 - **📚 Wiki-Sync-System:** Neues `wiki-sync/` Verzeichnis für Wiki-Synchronisation

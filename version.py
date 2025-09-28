@@ -3,16 +3,16 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "1.1.6"
-__version_info__ = (1, 1, 6)
+__version__ = "1.1.7"
+__version_info__ = (1, 1, 7)
 
 # Release Information
-RELEASE_NAME = "Wiki-Sync Reorganisation und venv-Standards"
-RELEASE_DATE = "2025-09-27"
+RELEASE_NAME = "3D-Konstruktion und Wiki-Sidebar"
+RELEASE_DATE = "2025-09-28"
 RELEASE_TYPE = "minor"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20250927"
+BUILD_NUMBER = "20250928"
 GIT_TAG = "v1.1.6"
 
 # Feature Flags
