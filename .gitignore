@@ -94,6 +94,7 @@ git-automation/temp_askpass.sh
 
 # Wiki-Content (Softlink zum Wiki-Repository - nicht versionieren)
 wiki-content
+wiki-repo/
 
 # Wiki-Sync-Skript ist im Repository für alle Nutzer verfügbar
 # wiki_sync.py - bewusst NICHT ignoriert
