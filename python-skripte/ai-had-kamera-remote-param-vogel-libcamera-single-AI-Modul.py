@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import paramiko
 from scp import SCPClient
 from datetime import datetime
@@ -17,9 +18,19 @@ locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 
 # Argumente parsen
 parser = argparse.ArgumentParser(
-    description='''Vogelhaus Remote Steuerung
-    Beispiel für einen Aufruf:
-    python kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 3 --width 1920 --height 1080 --codec h264 --autofocus_mode continuous --rotation 180 --ai-modul on'''
+    description='''Vogelhaus Remote Steuerung mit AI-Objekterkennung
+    
+    Beispiele für Aufrufe:
+    # Standard YOLOv8 (allgemeine Objekterkennung)
+    python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 3 --ai-modul on --ai-model yolov8
+    
+    # Vogelarten-spezifisches Modell (falls verfügbar)
+    python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 3 --ai-modul on --ai-model bird-species
+    
+    # Benutzerdefiniertes Modell
+    python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 3 --ai-modul on --ai-model custom --ai-model-path /path/to/model.json
+    
+    Für Details siehe: AI-MODELLE-VOGELARTEN.md'''
 )
 parser.add_argument('--version', action='version', version=f'Vogel-Kamera-Linux v{__version__}')
 parser.add_argument('--duration', type=int, required=True, help='Aufnahmedauer in Minuten')
@@ -34,6 +45,8 @@ parser.add_argument('--rotation', type=int, choices=[0, 90, 180, 270], default=1
 parser.add_argument('--fps', type=int, default=15, help='Framerate für Video und Audio (default: 15)')
 parser.add_argument('--cam', type=int, default=0, choices=[0, 1], help='Kamera-ID (default: 0)')
 parser.add_argument('--ai-modul', choices=['on', 'off'], default='off', help='KI-Objekterkennung aktivieren (default: off)')
+parser.add_argument('--ai-model', type=str, default='yolov8', choices=['yolov8', 'bird-species', 'custom'], help='AI-Modell für Objekterkennung (default: yolov8)')
+parser.add_argument('--ai-model-path', type=str, help='Pfad zu benutzerdefiniertem AI-Modell (für --ai-model custom)')
 args = parser.parse_args()
 
 # Erzeuge den Zeitstempel mit deutschem Wochentag
@@ -119,10 +132,29 @@ if not audio_device:
 print(f"Verwendetes Audio-Gerät auf dem Remote-Host: {audio_device}")
 
 # Befehl zum Ausführen auf dem Remote-Host (Video- und Audioaufnahme)
+def get_ai_model_path():
+    """Bestimme den Pfad zum AI-Modell basierend auf der Auswahl"""
+    if getattr(args, 'ai_modul') == 'off':
+        return ""
+    
+    model_paths = {
+        'yolov8': '/usr/share/rpi-camera-assets/hailo_yolov8_inference.json',
+        'bird-species': '/usr/share/rpi-camera-assets/hailo_bird_species_inference.json',
+        'custom': args.ai_model_path
+    }
+    
+    model_path = model_paths.get(args.ai_model)
+    
+    if args.ai_model == 'custom' and not args.ai_model_path:
+        print("⚠️ Für --ai-model custom muss --ai-model-path angegeben werden!")
+        return ""
+    
+    return f"--post-process-file {model_path}" if model_path else ""
+
 def get_remote_video_command():
     remote_path = config.get_remote_video_path(year, timestamp)
     roi_param = f"--roi {args.roi}" if args.roi else ""
-    ai_param = "--post-process-file /usr/share/rpi-camera-assets/hailo_yolov8_inference.json" if getattr(args, 'ai_modul') == 'on' else ""
+    ai_param = get_ai_model_path()
     return f"""
     mkdir -p {remote_path} && \
     cd {remote_path} && \

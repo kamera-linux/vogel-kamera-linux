@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import paramiko
 from scp import SCPClient
 from datetime import datetime

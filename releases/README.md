@@ -40,7 +40,7 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 ## 📖 Navigation
 
 - **Zurück zum Projekt:** [../README.md](../README.md)
-- **Changelog:** [../CHANGELOG.md](../CHANGELOG.md) 
+- **Changelog:** [../docs/CHANGELOG.md](../docs/CHANGELOG.md) 
 - **Aktueller Release:** [../RELEASE_NOTES_v1.1.7.md](../RELEASE_NOTES_v1.1.7.md)
 
 ---

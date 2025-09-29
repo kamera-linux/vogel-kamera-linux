@@ -47,15 +47,16 @@ Dieses Projekt ermöglicht die Fernsteuerung von Raspberry Pi-Kameras zur Überw
 
 - 🎥 **Hochauflösende Videoaufnahme** (bis zu 4K)
 - 🎵 **Synchrone Audioaufnahme** über USB-Mikrofon
-- 🤖 **KI-Objekterkennung** mit YOLOv8 für Vogelerkennung
+- 🤖 **KI-Objekterkennung** mit YOLOv8 und eigenen Vogelarten-Modellen
 - 🌐 **Remote-Steuerung** über SSH
 - 📁 **Automatische Dateiorganisation** nach Jahr/Woche
 - ⚙️ **Flexible Konfiguration** über .env-Dateien
 - 📊 **Fortschrittsanzeige** während der Aufnahme
 - 🔄 **Automatische Video-/Audio-Synchronisation**
 - 📱 **YouTube-Integration** mit QR-Codes für mobile Nutzer
-- 🔧 **Einfache Installation** mit requirements.txt
+- 🔧 **Einfache Installation** mit config/requirements.txt
 - ✅ **Automatische Konfigurationsvalidierung**
+- 🎯 **Eigene AI-Modelle** trainierbar für spezifische Vogelarten
 
 ## 📸 Hardware-Galerie
 
@@ -68,6 +69,31 @@ Dieses Projekt ermöglicht die Fernsteuerung von Raspberry Pi-Kameras zur Überw
 *Echte Vogelbeobachtungen auf YouTube*
 
 > 💡 **3D-Konstruktions-Dateien verfügbar!** Alle CAD-Dateien für den Nachbau finden Sie im [`3d-konstruktion/`](3d-konstruktion/) Verzeichnis
+
+## 🤖 KI-Objekterkennung & Vogelarten-AI
+
+### Sofort verfügbar: Standard-Objekterkennung
+```bash
+# YOLOv8 mit allgemeiner Vogelerkennung
+python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
+  --duration 5 --ai-modul on --ai-model yolov8
+```
+
+### Erweitert: Eigene Vogelarten-Modelle trainieren
+Das System unterstützt das Training eigener AI-Modelle für spezifische Vogelarten:
+
+🎯 **Häufige deutsche Gartenvögel**: Amsel, Blaumeise, Kohlmeise, Rotkehlchen, Buchfink...
+
+📋 **Vollständige Anleitung**: [`docs/ANLEITUNG-EIGENES-AI-MODELL.md`](docs/ANLEITUNG-EIGENES-AI-MODELL.md)
+
+🛠️ **Training-Tools**: [`ai-training-tools/`](ai-training-tools/) - Komplettes Toolkit für eigene Modelle
+
+```bash
+# Eigenes Modell verwenden
+python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
+  --duration 5 --ai-modul on --ai-model custom \
+  --ai-model-path /pfad/zu/eigenem/modell.json
+```
 
 ## 🛠️ Voraussetzungen
 
@@ -94,7 +120,7 @@ source venv/bin/activate  # Linux/macOS
 # oder: venv\Scripts\activate  # Windows
 
 # Abhängigkeiten installieren
-pip install -r requirements.txt
+pip install -r config/requirements.txt
 ```
 
 **Oder manuell:**
@@ -123,11 +149,22 @@ python python-skripte/config.py
 vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
-├── CHANGELOG.md                                                  # Versionshistorie
 ├── RELEASE_NOTES_v1.1.7.md                                      # Aktuelle Release-Dokumentation
-├── version.py                                                    # Zentrale Versionsverwaltung
-├── requirements.txt                                              # Python-Abhängigkeiten
 ├── .gitignore                                                    # Git-Ignore-Regeln
+├── config/                                                       # 🔧 Konfigurationsdateien
+│   └── requirements.txt                                          # Python-Abhängigkeiten
+├── scripts/                                                      # 🔧 Build/Deploy-Skripte  
+│   ├── version.py                                               # Zentrale Versionsverwaltung
+│   ├── release_workflow.py                                     # Release-Automatisierung
+│   └── update_version.py                                       # Versions-Update-Skript
+├── docs/                                                         # 📚 Dokumentation
+│   ├── CHANGELOG.md                                             # Versionshistorie
+│   ├── SECURITY.md                                              # Sicherheitsrichtlinien
+│   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
+│   └── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
+├── tools/                                                        # 🛠️ Test & Entwicklungstools
+│   ├── automation_test.txt                                      # Automatisierungs-Tests
+│   └── test_ai_features.py                                      # AI-Feature Tests
 ├── releases/                                                     # 📋 Release-Dokumentation
 │   ├── README.md                                                # Release-Übersicht
 │   └── vX.X.X/                                                  # Versionierte Release-Archive
@@ -187,7 +224,7 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Abhängigkeiten installieren
-pip install -r requirements.txt
+pip install -r config/requirements.txt
 ```
 
 ### 2. Konfiguration
@@ -393,7 +430,7 @@ cat python-skripte/.env
 ### Dependency-Probleme
 ```bash
 # Alle Abhängigkeiten neu installieren
-pip install -r requirements.txt
+pip install -r config/requirements.txt
 
 # Einzelne Pakete installieren  
 pip install paramiko scp tqdm python-dotenv qrcode[pil]
@@ -434,7 +471,7 @@ Bei Fragen oder Problemen:
 
 ## 📋 Changelog
 
-Alle Änderungen werden in [CHANGELOG.md](CHANGELOG.md) dokumentiert.
+Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
 
 ### 🆕 Neu in v1.1.2 (23. September 2025)
 - 🔧 **GitHub Issue Templates:** Deutsche Bug Report und Feature Request Templates

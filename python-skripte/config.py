@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Konfigurationssystem für Vogel-Kamera-Linux
 """
