@@ -4,7 +4,7 @@
 Versionsinformationen für Vogel-Kamera-Linux
 """
 
-__version__ = '1.1.7'
+__version__ = '1.1.8'
 __author__ = "Vogel-Kamera-Team"
 __description__ = "Ferngesteuerte Kameraüberwachung für Vogelhäuser mit KI-gestützter Objekterkennung"
 __license__ = "MIT"

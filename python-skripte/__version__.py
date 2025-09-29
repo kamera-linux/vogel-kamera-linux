@@ -17,7 +17,7 @@ try:
     from version import __version__, get_version_info
 except ImportError:
     # Fallback wenn scripts/version.py nicht gefunden wird
-    __version__ = "1.1.7"
+    __version__ = "1.1.8"
     
     def get_version_info():
         return {

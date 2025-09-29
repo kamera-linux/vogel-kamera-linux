@@ -12,6 +12,19 @@ und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 - Erweiterte KI-Modelle (YOLOv9/v10)
 - Web-Dashboard für Remote-Monitoring
 
+## [1.1.8] - 2025-09-29
+### Hinzugefügt
+- **🏗️ Vollständige Projekt-Reorganisation:** Professionelle Verzeichnisstruktur nach Open-Source-Standards
+- **🤖 Erweiterte AI-Funktionen:** Flexible AI-Modell-Auswahl (YOLOv8, eigene Modelle)
+- **📚 AI-Training-Toolkit:** Komplettes ai-training-tools/ Verzeichnis mit 4 professionellen Tools
+- **📖 Umfassende Dokumentation:** 300+ Zeilen AI-Training-Anleitung für deutsche Gartenvögel
+- **🔧 Neue Verzeichnisstruktur:** config/, docs/, scripts/, tools/ für bessere Organisation
+
+### Geändert
+- **🔄 Versionsverwaltung:** Konsistente v1.1.8 über alle Komponenten
+- **📁 Dateien-Migration:** Alle Dateien in logische Verzeichnisse verschoben
+- **🐛 UTF-8 Encoding:** Alle Python-Dateien mit korrekten Encoding-Headern
+
 ## [1.1.7] - 2025-09-28
 ### Hinzugefügt
 - **🔧 3D-Konstruktion:** Neues `3d-konstruktion/` Verzeichnis mit versionierten CAD-Dateien
@@ -29,7 +42,7 @@ und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Verbessert
 - **📂 Projektstruktur:** README.md mit 3D-Konstruktions-Integration erweitert
-- **🔄 Versionsverwaltung:** Konsistente v1.1.7 über alle Komponenten
+- **🔄 Versionsverwaltung:** Konsistente v1.1.8 über alle Komponenten
 - **📱 Benutzerfreundlichkeit:** Intuitive Wiki-Navigation für Desktop und Mobile
 
 ## [1.1.6] - 2025-09-27

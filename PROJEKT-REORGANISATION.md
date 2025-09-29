@@ -1,4 +1,4 @@
-# Projekt-Reorganisation v1.1.7 - Verbesserung der Ordnerstruktur
+# Projekt-Reorganisation v1.1.8 - Professionelle Ordnerstruktur und AI-Erweiterungen
 
 ## 📋 Durchgeführte Änderungen
 
@@ -77,7 +77,7 @@ vogel-kamera-linux/
 vogel-kamera-linux/
 ├── README.md                 # ← Sauber & übersichtlich
 ├── LICENSE
-├── RELEASE_NOTES_v1.1.7.md
+├── RELEASE_NOTES_v1.1.8.md
 ├── config/                   # 🔧 Konfiguration
 │   └── requirements.txt
 ├── docs/                     # 📚 Dokumentation
