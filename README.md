@@ -149,7 +149,7 @@ python python-skripte/config.py
 vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
-├── RELEASE_NOTES_v1.1.7.md                                      # Aktuelle Release-Dokumentation
+├── RELEASE_NOTES_v1.1.8.md                                      # Aktuelle Release-Dokumentation
 ├── .gitignore                                                    # Git-Ignore-Regeln
 ├── config/                                                       # 🔧 Konfigurationsdateien
 │   └── requirements.txt                                          # Python-Abhängigkeiten
