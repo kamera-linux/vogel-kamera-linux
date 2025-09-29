@@ -19,7 +19,7 @@ locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 parser = argparse.ArgumentParser(
     description='''Vogelhaus Remote Steuerung
     Beispiel für einen Aufruf:
-    python kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 3 --width 1920 --height 1080 --codec h264 --autofocus_mode continuous --rotation 180'''
+    python kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 3 --width 1920 --height 1080 --codec h264 --autofocus_mode continuous --rotation 180 --ai-modul on'''
 )
 parser.add_argument('--version', action='version', version=f'Vogel-Kamera-Linux v{__version__}')
 parser.add_argument('--duration', type=int, required=True, help='Aufnahmedauer in Minuten')
@@ -32,7 +32,8 @@ parser.add_argument('--hdr', type=str, choices=['auto', 'off'], default='off', h
 parser.add_argument('--roi', type=str, help='Region of Interest im Format x,y,w,h (optional)')
 parser.add_argument('--rotation', type=int, choices=[0, 90, 180, 270], default=180, help='Rotation des Videos (default: 0)')
 parser.add_argument('--fps', type=int, default=15, help='Framerate für Video und Audio (default: 15)')
-parser.add_argument('--cam', type=int, default=1, choices=[0, 1], help='Kamera-ID (default: 1)')
+parser.add_argument('--cam', type=int, default=0, choices=[0, 1], help='Kamera-ID (default: 0)')
+parser.add_argument('--ai-modul', choices=['on', 'off'], default='off', help='KI-Objekterkennung aktivieren (default: off)')
 args = parser.parse_args()
 
 # Erzeuge den Zeitstempel mit deutschem Wochentag
@@ -121,10 +122,11 @@ print(f"Verwendetes Audio-Gerät auf dem Remote-Host: {audio_device}")
 def get_remote_video_command():
     remote_path = config.get_remote_video_path(year, timestamp)
     roi_param = f"--roi {args.roi}" if args.roi else ""
+    ai_param = "--post-process-file /usr/share/rpi-camera-assets/hailo_yolov8_inference.json" if getattr(args, 'ai_modul') == 'on' else ""
     return f"""
     mkdir -p {remote_path} && \
     cd {remote_path} && \
-    rpicam-vid --camera {args.cam} --hdr {args.hdr} --post-process-file /usr/share/rpi-camera-assets/hailo_yolov8_inference.json --width {args.width} --height {args.height} --codec {args.codec} --rotation {args.rotation} --framerate {args.fps} --autofocus-mode {args.autofocus_mode} --autofocus-range {args.autofocus_range} {roi_param} -o "video.h264" -t {recording_duration_s * 1000} & \
+    rpicam-vid --camera {args.cam} --hdr {args.hdr} {ai_param} --width {args.width} --height {args.height} --codec {args.codec} --rotation {args.rotation} --framerate {args.fps} --autofocus-mode {args.autofocus_mode} --autofocus-range {args.autofocus_range} {roi_param} -o "video.h264" -t {recording_duration_s * 1000} & \
     arecord -D {audio_device} -f S16_LE -r 44100 -c 1 -t wav -d {recording_duration_s} {remote_path}/audio.wav
     """
 

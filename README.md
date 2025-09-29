@@ -16,7 +16,8 @@ Ferngesteuerte Kameraüberwachung für Vogelhäuser mit KI-gestützter Objekterk
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --duration 5 \
     --width 1920 \
-    --height 1080
+    --height 1080 \
+    --ai-modul on
 ```
 
 > 📺 **Beispielaufnahmen verfügbar:** [Vogel-Kamera Aufnahmen](https://www.youtube.com/@vogel-kamera-linux) - Echte Aufnahmen mit der Kamera
@@ -205,7 +206,7 @@ python python-skripte/config.py
 python python-skripte/ai-had-audio-remote-param-vogel-libcamera-single.py --duration 1
 
 # Video mit KI (1 Minute, HD)
-python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 1 --width 1920 --height 1080
+python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 1 --width 1920 --height 1080 --ai-modul on
 ```
 
 ### 4. Version prüfen
@@ -214,12 +215,21 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 # Ausgabe: Vogel-Kamera-Linux v1.1.7
 ```
 
-### Basis-Aufnahme
+### Basis-Aufnahme (ohne KI)
 ```bash
 python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --duration 5 \
     --width 1920 \
     --height 1080
+```
+
+### Mit KI-Objekterkennung
+```bash
+python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
+    --duration 5 \
+    --width 1920 \
+    --height 1080 \
+    --ai-modul on
 ```
 
 ### Erweiterte Konfiguration
@@ -232,7 +242,8 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --autofocus_mode continuous \
     --rotation 180 \
     --fps 30 \
-    --cam 0
+    --cam 0 \
+    --ai-modul on
 ```
 
 ### Parameter-Übersicht
@@ -248,7 +259,8 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 | `--hdr` | HDR-Modus | off | auto, off |
 | `--rotation` | Bildrotation | 180 | 0, 90, 180, 270 |
 | `--fps` | Bildrate | 15 | 1-60 |
-| `--cam` | Kamera-ID | 1 | 0, 1 |
+| `--cam` | Kamera-ID | 0 | 0, 1 |
+| `--ai-modul` | KI-Objekterkennung | off | on, off |
 | `--roi` | Region of Interest | - | x,y,w,h |
 
 ## 🔐 Git-Automatisierung

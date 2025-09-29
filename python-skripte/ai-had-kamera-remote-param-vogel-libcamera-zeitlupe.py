@@ -19,7 +19,7 @@ locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 parser = argparse.ArgumentParser(
     description='''Kamerawagen Remote Steuerung
     Beispiel für einen Aufruf:
-    python kamera-remote-param-vogel-libcamera-zeitlupe.py --duration 3 --width 1536 --height 864 --fps 120 --slowmotion --rotation 180 --autofocus_mode continuous'''
+    python kamera-remote-param-vogel-libcamera-zeitlupe.py --duration 3 --width 1536 --height 864 --fps 120 --cam 0 --slowmotion --rotation 180 --autofocus_mode continuous'''
 )
 parser.add_argument('--version', action='version', version=f'Vogel-Kamera-Linux v{__version__}')
 parser.add_argument('--duration', type=int, required=True, help='Aufnahmedauer in Minuten')
@@ -32,6 +32,7 @@ parser.add_argument('--hdr', type=str, choices=['auto', 'off'], default='off', h
 parser.add_argument('--roi', type=str, help='Region of Interest im Format x,y,w,h (optional)')
 parser.add_argument('--rotation', type=int, choices=[0, 90, 180, 270], default=180, help='Rotation des Videos (default: 0)')
 parser.add_argument('--fps', type=int, default=120, help='Framerate für Video (default: 120 für Zeitlupe)')
+parser.add_argument('--cam', type=int, default=0, choices=[0, 1], help='Kamera-ID (default: 0)')
 parser.add_argument('--slowmotion', action='store_true', help='Aktiviere Zeitlupe (default: deaktiviert)')
 args = parser.parse_args()
 
@@ -70,7 +71,7 @@ def get_remote_video_command():
     return f"""
     mkdir -p {remote_path} && \
     cd {remote_path} && \
-    rpicam-vid --camera 1 --hdr {args.hdr} --width {args.width} --height {args.height} --codec {args.codec} \
+    rpicam-vid --camera {args.cam} --hdr {args.hdr} --width {args.width} --height {args.height} --codec {args.codec} \
     --rotation {args.rotation} --framerate {args.fps} --autofocus-mode {args.autofocus_mode} \
     --autofocus-range {args.autofocus_range} {roi_param} -o video.h264 -t {recording_duration_s * 1000}
     """
