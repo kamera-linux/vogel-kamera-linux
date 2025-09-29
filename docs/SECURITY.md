@@ -21,7 +21,7 @@ Wir bieten Sicherheits-Updates für die folgenden Versionen:
 Für **kritische Sicherheitsprobleme** nutzen Sie bitte eine der folgenden vertraulichen Kanäle:
 
 - **GitHub Security Advisories:** [Private Vulnerability Report](https://github.com/roimme65/vogel-kamera-linux/security/advisories/new)
-- **E-Mail:** security@vogel-kamera-linux.de *(falls verfügbar)*
+- **E-Mail:** kamerawagen.linux@gmail.com *(falls verfügbar)*
 
 ### 📋 Informationen für Sicherheitsberichte
 
@@ -178,7 +178,7 @@ sudo fail2ban-client status
 
 **🚨 Für Sicherheitsprobleme:**
 - GitHub Security Advisories (bevorzugt)
-- E-Mail: security@vogel-kamera-linux.de
+- E-Mail: kamerawagen.linux@gmail.com
 
 **💬 Für allgemeine Fragen:**
 - [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
