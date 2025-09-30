@@ -11,6 +11,11 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 📚 Archivierte Versionen
 
+### Version 1.1.8
+- **Release Notes:** [v1.1.8/RELEASE_NOTES_v1.1.8.md](v1.1.8/RELEASE_NOTES_v1.1.8.md)
+- **Release Date:** 2025-09-29
+- **Features:** Projekt-Reorganisation und AI-Modell-Erweiterungen
+
 ### Version 1.1.6
 - **Release Notes:** [v1.1.6/RELEASE_NOTES_v1.1.6.md](v1.1.6/RELEASE_NOTES_v1.1.6.md)
 - **Features:** Erweiterte Funktionalitäten

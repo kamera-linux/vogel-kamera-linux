@@ -163,7 +163,7 @@ python python-skripte/config.py
 vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
-├── RELEASE_NOTES_v1.1.8.md                                      # Aktuelle Release-Dokumentation
+├── RELEASE_NOTES_v1.1.9.md                                      # Aktuelle Release-Dokumentation
 ├── .gitignore                                                    # Git-Ignore-Regeln
 ├── config/                                                       # 🔧 Konfigurationsdateien
 │   └── requirements.txt                                          # Python-Abhängigkeiten
@@ -527,6 +527,6 @@ Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
 
 ## 🔖 Versionen
 
-- **Aktuelle Version:** v1.1.8
+- **Aktuelle Version:** v1.1.9
 - **Entwicklungszweig:** `devel`
 - **Stabile Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)
