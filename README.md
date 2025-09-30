@@ -222,7 +222,10 @@ vogel-kamera-linux/
     ├── .env                                                     # Lokale Konfiguration (nicht im Git)
     ├── ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py  # 🤖 Hauptskript mit KI
     ├── ai-had-audio-remote-param-vogel-libcamera-single.py            # 🎵 Audio-Aufnahme
-    └── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py         # ⚡ Zeitlupe-Aufnahmen
+    ├── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py         # ⚡ Zeitlupe-Aufnahmen
+    ├── remote_system_monitor.py                                       # 📊 Umfassendes System-Monitoring *(v1.1.9)*
+    ├── quick_system_check.py                                          # ⚡ Schnelle System-Checks *(v1.1.9)*
+    └── check_ai_models.py                                             # 🔍 AI-Modell-Validierung
 ```
 
 ## 🚀 Schnellstart
@@ -282,6 +285,13 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 # 🧠 Arbeitsspeicher: 2.1G verwendet von 7.8G (5.6G verfügbar)
 # ⚡ CPU-Load (1min): 0.8 🟢 NIEDRIG
 # ==================================================
+
+# Neue System-Monitoring-Tools:
+python python-skripte/remote_system_monitor.py    # Umfassendes Monitoring
+python python-skripte/quick_system_check.py       # Schnelle Checks
+
+# Nur System-Status anzeigen (ohne Aufnahme):
+python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --system-status
 ```
 
 ### Basis-Aufnahme (ohne KI)
@@ -330,7 +340,10 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 | `--fps` | Bildrate | 15 | 1-60 |
 | `--cam` | Kamera-ID | 0 | 0, 1 |
 | `--ai-modul` | KI-Objekterkennung | off | on, off |
+| `--ai-model` | AI-Modell auswählen *(v1.1.8)* | yolov8 | yolov8, bird-species, custom |
+| `--ai-model-path` | Pfad zu eigenem AI-Modell *(v1.1.8)* | - | Dateipfad zu .json |
 | `--roi` | Region of Interest | - | x,y,w,h |
+| `--system-status` | Nur System-Status anzeigen *(v1.1.9)* | - | Flag ohne Wert |
 
 ## 🔐 Git-Automatisierung
 
