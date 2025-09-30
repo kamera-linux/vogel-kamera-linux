@@ -50,6 +50,126 @@ base_path = config.get_video_path(year, week_number, timestamp, "Audio")
 # Erstelle das Verzeichnis, falls es nicht existiert
 os.makedirs(base_path, exist_ok=True)
 
+# System-Monitoring Funktionen
+def get_remote_system_status():
+    """Zeigt den aktuellen System-Status des Remote-Hosts an"""
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+        
+        print(f"\n📊 System-Status für {remote_host['hostname']}:")
+        print("=" * 50)
+        
+        # CPU-Temperatur
+        stdin, stdout, stderr = ssh.exec_command("vcgencmd measure_temp")
+        temp_output = stdout.read().decode().strip()
+        if temp_output.startswith("temp="):
+            temp_str = temp_output.split("=")[1].replace("'C", "")
+            temp = float(temp_str)
+            if temp > 70:
+                status = "🔴 KRITISCH"
+            elif temp > 60:
+                status = "🟡 WARNUNG"
+            else:
+                status = "🟢 OK"
+            print(f"🌡️  CPU-Temperatur: {temp}°C {status}")
+        
+        # Disk-Speicherplatz
+        stdin, stdout, stderr = ssh.exec_command("df -h / | tail -1")
+        disk_output = stdout.read().decode().strip()
+        if disk_output:
+            disk_parts = disk_output.split()
+            used_percent = disk_parts[4].replace("%", "")
+            if int(used_percent) > 90:
+                status = "🔴 VOLL"
+            elif int(used_percent) > 80:
+                status = "🟡 WARNUNG"
+            else:
+                status = "🟢 OK"
+            print(f"💾 Festplatte: {disk_parts[2]} verwendet von {disk_parts[1]} ({disk_parts[4]}) {status}")
+        
+        # Arbeitsspeicher
+        stdin, stdout, stderr = ssh.exec_command("free -h | grep Mem:")
+        mem_output = stdout.read().decode().strip()
+        if mem_output:
+            mem_parts = mem_output.split()
+            print(f"🧠 Arbeitsspeicher: {mem_parts[2]} verwendet von {mem_parts[1]} ({mem_parts[6]} verfügbar)")
+        
+        # CPU Load Average
+        stdin, stdout, stderr = ssh.exec_command("uptime")
+        uptime_output = stdout.read().decode().strip()
+        if "load average:" in uptime_output:
+            load_part = uptime_output.split("load average:")[1].strip()
+            load_1min = float(load_part.split(",")[0].strip())
+            if load_1min > 2.0:
+                status = "🔴 HOCH"
+            elif load_1min > 1.0:
+                status = "🟡 MITTEL"
+            else:
+                status = "🟢 NIEDRIG"
+            print(f"⚡ CPU-Load (1min): {load_1min} {status}")
+        
+        ssh.close()
+        print("=" * 50 + "\n")
+        
+    except Exception as e:
+        print(f"❌ Fehler beim Abrufen des System-Status: {e}")
+
+def check_system_readiness():
+    """Prüft kritische System-Parameter für Audio-Aufnahme"""
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+        
+        warnings = []
+        
+        # CPU-Temperatur prüfen
+        stdin, stdout, stderr = ssh.exec_command("vcgencmd measure_temp")
+        temp_output = stdout.read().decode().strip()
+        if temp_output.startswith("temp="):
+            temp = float(temp_output.split("=")[1].replace("'C", ""))
+            if temp > 70:
+                warnings.append(f"❌ CPU-Temperatur kritisch: {temp}°C (>70°C)")
+            elif temp > 60:
+                warnings.append(f"⚠️ CPU-Temperatur hoch: {temp}°C (>60°C)")
+        
+        # Festplattenspeicher prüfen
+        stdin, stdout, stderr = ssh.exec_command("df -h / | tail -1")
+        disk_output = stdout.read().decode().strip()
+        if disk_output:
+            used_percent = int(disk_output.split()[4].replace("%", ""))
+            if used_percent > 90:
+                warnings.append(f"❌ Festplatte fast voll: {used_percent}% (>90%)")
+            elif used_percent > 80:
+                warnings.append(f"⚠️ Festplatte wird voll: {used_percent}% (>80%)")
+        
+        # CPU Load prüfen
+        stdin, stdout, stderr = ssh.exec_command("uptime")
+        uptime_output = stdout.read().decode().strip()
+        if "load average:" in uptime_output:
+            load_1min = float(uptime_output.split("load average:")[1].split(",")[0].strip())
+            if load_1min > 2.0:
+                warnings.append(f"❌ CPU-Load sehr hoch: {load_1min} (>2.0) - kann Audio-Qualität beeinträchtigen")
+            elif load_1min > 1.0:
+                warnings.append(f"⚠️ CPU-Load erhöht: {load_1min} (>1.0) - Audio-Performance beobachten")
+        
+        ssh.close()
+        
+        if warnings:
+            print("\n⚠️ System-Warnungen erkannt:")
+            for warning in warnings:
+                print(f"  {warning}")
+            return False
+        else:
+            print("\n✅ System bereit für Audio-Aufnahme")
+            return True
+            
+    except Exception as e:
+        print(f"❌ Fehler bei System-Bereitschaftscheck: {e}")
+        return False
+
 # Aufnahmezeit in Sekunden
 recording_duration_s = args.duration * 60
 
@@ -179,6 +299,16 @@ signal.signal(signal.SIGINT, signal_handler)
 if not is_reachable(remote_host):
     print(f"Der Remote-Host {remote_host['hostname']} ist nicht erreichbar.")
     exit(1)
+
+# Zeige System-Status vor der Aufnahme
+get_remote_system_status()
+
+# Prüfe System-Bereitschaft für Audio-Aufnahme
+if not check_system_readiness():
+    response = input("⚠️ System-Warnung erkannt. Trotzdem fortfahren? (j/N): ")
+    if response.lower() not in ['j', 'ja', 'y', 'yes']:
+        print("❌ Audio-Aufnahme abgebrochen.")
+        exit(1)
 
 # Threads zum gleichzeitigen Ausführen der Befehle auf dem Remote-Host
 stop_event = threading.Event()

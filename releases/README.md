@@ -4,10 +4,10 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 1.1.8** - "Projekt-Reorganisation und AI-Modell-Erweiterungen" 
-- **Release Notes:** [RELEASE_NOTES_v1.1.8.md](../RELEASE_NOTES_v1.1.8.md) *(im Root-Verzeichnis)*
-- **Release Date:** 2025-09-28
-- **Features:** 3D-Konstruktions-System, Wiki-Sidebar Navigation, Hardware-Dokumentation
+**Version 1.1.9** - "System-Monitoring und Performance-Optimierung" 
+- **Release Notes:** [RELEASE_NOTES_v1.1.9.md](../RELEASE_NOTES_v1.1.9.md) *(im Root-Verzeichnis)*
+- **Release Date:** 2025-09-30
+- **Features:** System-Monitoring, CPU-Load-Überwachung, Performance-Optimierung für alle Kamera-Modi
 
 ## 📚 Archivierte Versionen
 

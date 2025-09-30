@@ -12,6 +12,40 @@ und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 - Erweiterte KI-Modelle (YOLOv9/v10)
 - Web-Dashboard für Remote-Monitoring
 
+## [1.1.9] - 2025-09-30
+### Hinzugefügt
+- **📊 System-Monitoring:** Umfassende Überwachung für alle Kamera-Skripte
+  - `get_remote_system_status()` - Echtzeit System-Status mit farbcodierten Indikatoren
+  - `check_system_readiness()` - Kritische System-Validierung vor Aufnahmestart
+  - CPU-Temperatur-Überwachung mit Warnstufen (>60°C Warnung, >70°C Kritisch)
+  - Festplatten-Auslastung mit automatischen Warnungen (>80% Warnung, >90% Kritisch)
+  - Arbeitsspeicher-Anzeige (verwendet/gesamt/verfügbar)
+  - CPU-Load Average mit Performance-Auswirkungen
+- **⚡ Performance-Optimierung:** Load-Balancing für verschiedene Aufnahmemodi
+  - Standard AI-Modus: Load > 2.0 = Warnung, Load > 1.0 = Beobachtung
+  - Zeitlupe-Modus: Load > 1.0 = Kritisch (strengere Anforderungen für 120fps)
+  - Audio-Modus: Load-Monitoring für optimale Audioqualität
+- **🔧 Monitoring-Tools:** Neue Tools im Verzeichnis für System-Überwachung
+  - `remote_system_monitor.py` - Umfassendes System-Monitoring mit JSON-Export
+  - `quick_system_check.py` - Schnelle System-Checks mit Watch-Modus
+- **🚨 Benutzer-Interaktion:** Automatische Bestätigungsabfragen bei kritischen Systemwerten
+- **🌡️ Erweiterte Features:** Spezialisierte Schwellenwerte für verschiedene Kamera-Modi
+
+### Geändert
+- **🔄 Alle Python-Skripte:** Integration von System-Monitoring in alle drei Hauptskripte
+  - `ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py`
+  - `ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py`
+  - `ai-had-audio-remote-param-vogel-libcamera-single.py`
+- **📊 Version Updates:** Konsistente v1.1.9 über alle Komponenten
+  - `scripts/version.py` mit neuen Feature-Flags
+  - `python-skripte/__version__.py` Fallback-Version aktualisiert
+- **📚 Dokumentation:** Erweiterte README.md und AI-MODELLE-VOGELARTEN.md mit Monitoring-Features
+
+### Verbessert
+- **🎯 Aufnahmequalität:** Proaktive System-Checks verhindern Performance-Probleme
+- **📈 Systemstabilität:** Frühzeitige Warnung bei kritischen Systemzuständen
+- **🔍 Transparenz:** Vollständige Sichtbarkeit der System-Performance vor jeder Aufnahme
+
 ## [1.1.8] - 2025-09-29
 ### Hinzugefügt
 - **🏗️ Vollständige Projekt-Reorganisation:** Professionelle Verzeichnisstruktur nach Open-Source-Standards

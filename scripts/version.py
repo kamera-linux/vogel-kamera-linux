@@ -3,23 +3,26 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "1.1.8"
-__version_info__ = (1, 1, 8)
+__version__ = "1.1.9"
+__version_info__ = (1, 1, 9)
 
 # Release Information
-RELEASE_NAME = "Projekt-Reorganisation und AI-Modell-Erweiterungen"
-RELEASE_DATE = "2025-09-29"
+RELEASE_NAME = "System-Monitoring und Performance-Optimierung"
+RELEASE_DATE = "2025-09-30"
 RELEASE_TYPE = "minor"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20250929"
-GIT_TAG = "v1.1.6"
+BUILD_NUMBER = "20250930"
+GIT_TAG = "v1.1.9"
 
 # Feature Flags
 FEATURES = {
     "ai_detection": True,
     "audio_recording": True,
     "slow_motion": True,
+    "system_monitoring": True,  # New in v1.1.9
+    "performance_optimization": True,  # New in v1.1.9
+    "load_balancing": True,  # New in v1.1.9
     "github_discussions": True,  # Since v1.1.3
     "github_templates": True,  # New in v1.1.2
     "wiki_documentation": True,  # New in v1.1.1

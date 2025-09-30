@@ -17,13 +17,13 @@ try:
     from version import __version__, get_version_info
 except ImportError:
     # Fallback wenn scripts/version.py nicht gefunden wird
-    __version__ = "1.1.8"
+    __version__ = "1.1.9"
     
     def get_version_info():
         return {
             'version': __version__,
-            'release_name': '3D-Konstruktion und Wiki-Sidebar',
-            'release_date': '2025-09-29'
+            'release_name': 'System-Monitoring und Performance-Optimierung',
+            'release_date': '2025-09-30'
         }
 
 # Für Rückwärtskompatibilität

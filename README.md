@@ -1,6 +1,6 @@
 # 🐦 Vogel-Kamera-Linux
 
-[![Version](https://img.shields.io/badge/Version-v1.1.8-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.1.8)
+[![Version](https://img.shields.io/badge/Version-v1.1.9-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.1.9)
 [![GitHub Issues](https://img.shields.io/github/issues/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/pulls)
 [![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)
@@ -48,6 +48,8 @@ Dieses Projekt ermöglicht die Fernsteuerung von Raspberry Pi-Kameras zur Überw
 - 🎥 **Hochauflösende Videoaufnahme** (bis zu 4K)
 - 🎵 **Synchrone Audioaufnahme** über USB-Mikrofon
 - 🤖 **KI-Objekterkennung** mit YOLOv8 und eigenen Vogelarten-Modellen
+- 📊 **System-Monitoring** mit CPU-Load und Temperaturüberwachung *(Neu in v1.1.9)*
+- ⚡ **Performance-Optimierung** für verschiedene Aufnahmemodi *(Neu in v1.1.9)*
 - 🌐 **Remote-Steuerung** über SSH
 - 📁 **Automatische Dateiorganisation** nach Jahr/Woche
 - ⚙️ **Flexible Konfiguration** über .env-Dateien
@@ -79,7 +81,7 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
   --duration 5 --ai-modul on --ai-model yolov8
 ```
 
-### 🔄 NEU: Automatisches bird-species Modell (v1.1.8+)
+### 🔄 Automatisches bird-species Modell
 ```bash
 # Bird-species Modell - wird automatisch erstellt falls nicht vorhanden
 python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
@@ -261,7 +263,25 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 ### 4. Version prüfen
 ```bash
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
-# Ausgabe: Vogel-Kamera-Linux v1.1.8
+# Ausgabe: Vogel-Kamera-Linux v1.1.9
+```
+
+### 🆕 System-Überwachung (v1.1.9)
+```bash
+# Alle Skripte zeigen jetzt automatisch System-Status vor der Aufnahme:
+# 🌡️ CPU-Temperatur mit Warnstufen
+# 💾 Festplattenspeicher mit Auslastung
+# 🧠 Arbeitsspeicher-Anzeige
+# ⚡ CPU-Load mit Performance-Warnungen
+
+# Beispiel-Ausgabe:
+# 📊 System-Status für pi@vogelkamera:
+# ==================================================
+# 🌡️ CPU-Temperatur: 58.4°C 🟢 OK
+# 💾 Festplatte: 45G verwendet von 59G (79%) 🟢 OK
+# 🧠 Arbeitsspeicher: 2.1G verwendet von 7.8G (5.6G verfügbar)
+# ⚡ CPU-Load (1min): 0.8 🟢 NIEDRIG
+# ==================================================
 ```
 
 ### Basis-Aufnahme (ohne KI)
@@ -485,11 +505,18 @@ Bei Fragen oder Problemen:
 
 Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
 
-### 🆕 Neu in v1.1.2 (23. September 2025)
-- 🔧 **GitHub Issue Templates:** Deutsche Bug Report und Feature Request Templates
-- 🏗️ **Repository-Verbesserungen:** Hardware-spezifische Support-Abschnitte
-- 🤝 **Community-Engagement:** Strukturierte Nutzen-Bewertung und Akzeptanzkriterien
-- 🛡️ **Security Policy:** Comprehensive SECURITY.md mit Vulnerability-Reporting
+### 🆕 Neu in v1.1.9 (30. September 2025)
+- � **System-Monitoring:** Automatische CPU-Load, Temperatur und Speicher-Überwachung
+- ⚡ **Performance-Optimierung:** Load-Balancing für verschiedene Aufnahmemodi
+- 🚨 **Bereitschaftschecks:** Kritische System-Validierung vor Aufnahmestart
+- �️ **Temperatur-Überwachung:** Warnstufen für thermische Performance
+- 💾 **Speicher-Management:** Festplatten-Auslastung mit automatischen Warnungen
+- 📈 **Load-Awareness:** Spezielle Schwellenwerte für Standard-, Zeitlupe- und Audio-Modi
+
+### 🎯 Hochpräzise Modelle in v1.1.8
+- 🤖 **Automatische bird-species Modelle:** Dynamische Erstellung optimierter AI-Modelle
+- 🔧 **3D-Konstruktions-System:** Vollständige CAD-Dateien für Hardware-Nachbau  
+- 📚 **Wiki-Integration:** Umfassende Dokumentation mit Sidebar-Navigation
 - 📊 **Version-Tracking:** Programmatische Versionsinformationen (version.py)
 - 📋 **Release-Dokumentation:** Vollständige Release Notes und CHANGELOG-Updates
 

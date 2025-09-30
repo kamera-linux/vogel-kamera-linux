@@ -32,7 +32,7 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 
 ## Automatische bird-species Modellerstellung
 
-**🔄 Neue Funktion (v1.1.8+)**: Das bird-species Modell wird automatisch erstellt, falls es nicht vorhanden ist!
+**🔄 Automatische Funktion**: Das bird-species Modell wird automatisch erstellt, falls es nicht vorhanden ist!
 
 ### Funktionsweise
 Wenn Sie `--ai-model bird-species` verwenden und das Modell nicht existiert:
@@ -129,13 +129,48 @@ hailo optimize --onnx model.onnx --hw-arch hailo8 --output-dir ./optimized/
 - **Merlin Bird ID**: Cornell Lab's AI-Modell  
 - **iNaturalist Vision**: Unterstützt viele Vogelarten
 
+## 📊 System-Monitoring für AI-Aufnahmen (v1.1.9)
+
+**🆕 Automatische System-Überwachung**: Alle AI-Kamera-Skripte überwachen jetzt automatisch die System-Performance vor und während der Aufnahme.
+
+### System-Status-Anzeige
+Vor jeder AI-Aufnahme wird automatisch angezeigt:
+- 🌡️ **CPU-Temperatur** mit Warnstufen (>60°C Warnung, >70°C Kritisch)
+- 💾 **Festplattenspeicher** mit Auslastung (>80% Warnung, >90% Kritisch)
+- 🧠 **Arbeitsspeicher** mit Verfügbarkeits-Info
+- ⚡ **CPU-Load Average** mit Performance-Auswirkungen
+
+### Performance-Optimierung
+```bash
+# Beispiel System-Status vor AI-Aufnahme:
+📊 System-Status für pi@vogelkamera:
+==================================================
+🌡️ CPU-Temperatur: 58.4°C 🟢 OK
+💾 Festplatte: 45G verwendet von 59G (79%) 🟢 OK  
+🧠 Arbeitsspeicher: 2.1G verwendet von 7.8G (5.6G verfügbar)
+⚡ CPU-Load (1min): 0.8 🟢 NIEDRIG
+==================================================
+
+✅ System bereit für AI-Aufnahme
+```
+
+### Load-Balancing für AI-Modi
+- **Standard AI-Modus**: Load > 2.0 = Warnung, Load > 1.0 = Beobachtung
+- **Zeitlupe-Modus**: Load > 1.0 = Kritisch (strengere Anforderungen)
+- **Audio-Modus**: Load-Monitoring für optimale Audioqualität
+
+Bei kritischen Werten erscheint eine Benutzer-Bestätigung:
+```
+⚠️ System-Warnung erkannt. Trotzdem fortfahren? (j/N):
+```
+
 ## Beispiel-Konfigurationsdatei erstellen
 
 Erstellen Sie eine Vogelarten-spezifische Inferenz-Datei:
 
 ```json
 {
-  "model_name": "bird_species_detection",
+  "model_name": "bird_species_detection", 
   "classes": [
     "Amsel", "Blaumeise", "Rotkehlchen", "Kohlmeise", 
     "Buchfink", "Grünfink", "Star", "Haussperling",

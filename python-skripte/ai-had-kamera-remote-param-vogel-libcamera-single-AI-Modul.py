@@ -47,6 +47,7 @@ parser.add_argument('--cam', type=int, default=0, choices=[0, 1], help='Kamera-I
 parser.add_argument('--ai-modul', choices=['on', 'off'], default='off', help='KI-Objekterkennung aktivieren (default: off)')
 parser.add_argument('--ai-model', type=str, default='yolov8', choices=['yolov8', 'bird-species', 'custom'], help='AI-Modell für Objekterkennung (default: yolov8)')
 parser.add_argument('--ai-model-path', type=str, help='Pfad zu benutzerdefiniertem AI-Modell (für --ai-model custom)')
+parser.add_argument('--system-status', action='store_true', help='Zeige nur System-Status ohne Aufnahme')
 args = parser.parse_args()
 
 # Erzeuge den Zeitstempel mit deutschem Wochentag
@@ -148,6 +149,135 @@ def check_ai_model_availability():
     except Exception as e:
         print(f"⚠️ Fehler beim Prüfen der Modell-Verfügbarkeit: {e}")
         return ['yolov8']  # Fallback
+
+def get_remote_system_status():
+    """Zeige System-Status vom Remote-Host mit Load-Berücksichtigung"""
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+        
+        # CPU-Temperatur
+        stdin, stdout, stderr = ssh.exec_command("vcgencmd measure_temp")
+        temp_output = stdout.read().decode().strip()
+        
+        # Festplattenbelegung (nur Root-Partition)
+        stdin, stdout, stderr = ssh.exec_command("df -h / | tail -1")
+        disk_output = stdout.read().decode().strip()
+        
+        # Memory
+        stdin, stdout, stderr = ssh.exec_command("free -h | grep 'Speicher\\|Mem'")
+        mem_output = stdout.read().decode().strip()
+        
+        # CPU Load und Uptime
+        stdin, stdout, stderr = ssh.exec_command("uptime")
+        uptime_output = stdout.read().decode().strip()
+        
+        ssh.close()
+        
+        # Parse und formatiere Output
+        temp = temp_output.replace("temp=", "").replace("'C", "°C")
+        temp_val = float(temp.replace("°C", "")) if temp.replace("°C", "").replace(".", "").isdigit() else 0
+        temp_status = "🟢" if temp_val < 50 else "🟡" if temp_val < 60 else "🔴"
+        
+        disk_parts = disk_output.split()
+        if len(disk_parts) >= 5:
+            used_percent = int(disk_parts[4].replace('%', ''))
+            disk_status = "🟢" if used_percent < 80 else "🟡" if used_percent < 90 else "🔴"
+            disk_info = f"{disk_parts[2]} / {disk_parts[1]} ({disk_parts[4]} belegt) {disk_status}"
+        else:
+            disk_info = "Nicht verfügbar"
+        
+        mem_parts = mem_output.split()
+        mem_info = f"{mem_parts[2]} / {mem_parts[1]} verwendet" if len(mem_parts) >= 3 else "Nicht verfügbar"
+        
+        # Parse Load Average
+        load_info = "Nicht verfügbar"
+        if "load average:" in uptime_output:
+            load_part = uptime_output.split("load average:")[1].strip()
+            load_1min = float(load_part.split(',')[0].strip().replace(',', '.'))
+            load_status = "🟢" if load_1min < 1.0 else "🟡" if load_1min < 2.0 else "🔴"
+            load_info = f"{load_1min:.2f} (1min) {load_status}"
+        
+        print(f"🖥️ Remote-Host Status ({remote_host['hostname']}):")
+        print(f"   🌡️ CPU-Temperatur: {temp} {temp_status}")
+        print(f"   💾 Festplatte: {disk_info}")
+        print(f"   💭 Arbeitsspeicher: {mem_info}")
+        print(f"   ⚡ CPU-Last: {load_info}")
+        
+        # Warnung bei hoher Load während Videoaufnahme
+        if "load average:" in uptime_output:
+            load_1min = float(uptime_output.split("load average:")[1].split(',')[0].strip().replace(',', '.'))
+            if load_1min > 2.0:
+                print(f"   ⚠️  WARNUNG: Hohe CPU-Last ({load_1min:.2f}) - Videoqualität könnte beeinträchtigt werden!")
+            elif load_1min > 1.0:
+                print(f"   💡 Moderate CPU-Last ({load_1min:.2f}) - System unter Last")
+        
+    except Exception as e:
+        print(f"⚠️ Fehler beim Abrufen des System-Status: {e}")
+
+def check_system_readiness():
+    """Prüfe ob System bereit für Videoaufnahme ist"""
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+        
+        # CPU-Temperatur prüfen
+        stdin, stdout, stderr = ssh.exec_command("vcgencmd measure_temp")
+        temp_output = stdout.read().decode().strip()
+        temp_val = float(temp_output.replace("temp=", "").replace("'C", ""))
+        
+        # Load prüfen
+        stdin, stdout, stderr = ssh.exec_command("uptime")
+        uptime_output = stdout.read().decode().strip()
+        load_1min = 0.0
+        if "load average:" in uptime_output:
+            load_1min = float(uptime_output.split("load average:")[1].split(',')[0].strip().replace(',', '.'))
+        
+        # Festplatte prüfen
+        stdin, stdout, stderr = ssh.exec_command("df / | tail -1")
+        disk_output = stdout.read().decode().strip()
+        disk_parts = disk_output.split()
+        used_percent = int(disk_parts[4].replace('%', '')) if len(disk_parts) >= 5 else 0
+        
+        ssh.close()
+        
+        # Bewertung
+        issues = []
+        if temp_val > 70:
+            issues.append(f"🔴 CPU-Temperatur kritisch: {temp_val}°C")
+        elif temp_val > 60:
+            issues.append(f"🟡 CPU-Temperatur hoch: {temp_val}°C")
+        
+        if load_1min > 3.0:
+            issues.append(f"🔴 CPU-Last kritisch: {load_1min:.2f}")
+        elif load_1min > 2.0:
+            issues.append(f"🟡 CPU-Last hoch: {load_1min:.2f}")
+        
+        if used_percent > 95:
+            issues.append(f"🔴 Festplatte fast voll: {used_percent}%")
+        elif used_percent > 90:
+            issues.append(f"🟡 Festplatte wird knapp: {used_percent}%")
+        
+        if issues:
+            print("⚠️  System-Warnungen vor Aufnahme:")
+            for issue in issues:
+                print(f"   {issue}")
+            
+            if any("🔴" in issue for issue in issues):
+                print("❌ KRITISCH: Aufnahme nicht empfohlen!")
+                return False
+            else:
+                print("⚡ Aufnahme möglich, aber mit Vorsicht")
+                return True
+        else:
+            print("✅ System bereit für Videoaufnahme")
+            return True
+    
+    except Exception as e:
+        print(f"⚠️ Fehler bei System-Bereitschaftsprüfung: {e}")
+        return True  # Im Zweifel erlauben
 
 # Befehl zum Ausführen auf dem Remote-Host (Video- und Audioaufnahme)
 def get_ai_model_path():
@@ -320,6 +450,21 @@ signal.signal(signal.SIGINT, signal_handler)
 if not is_reachable(remote_host):
     print(f"Der Remote-Host {remote_host['hostname']} ist nicht erreichbar.")
     exit(1)
+
+# Zeige System-Status vor der Aufnahme
+get_remote_system_status()
+
+# Nur System-Status anzeigen, wenn --system-status Parameter gesetzt
+if args.system_status:
+    print("✅ System-Status-Abfrage abgeschlossen.")
+    exit(0)
+
+# Prüfe System-Bereitschaft für Videoaufnahme
+if not check_system_readiness():
+    response = input("⚠️ System-Warnung erkannt. Trotzdem fortfahren? (j/N): ")
+    if response.lower() not in ['j', 'ja', 'y', 'yes']:
+        print("❌ Aufnahme abgebrochen.")
+        exit(1)
 
 # Threads zum gleichzeitigen Ausführen der Befehle auf dem Remote-Host
 stop_event = threading.Event()
