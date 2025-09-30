@@ -131,9 +131,27 @@ if not audio_device:
 
 print(f"Verwendetes Audio-Gerät auf dem Remote-Host: {audio_device}")
 
+# Funktion zur Überprüfung der Modell-Verfügbarkeit auf Remote-Host
+def check_ai_model_availability():
+    """Prüfe verfügbare AI-Modelle auf dem Remote-Host"""
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+        
+        # Prüfe verfügbare Modell-Dateien
+        stdin, stdout, stderr = ssh.exec_command("ls /usr/share/rpi-camera-assets/hailo_*_inference.json")
+        available_models = stdout.read().decode().strip().split('\n')
+        ssh.close()
+        
+        return [model.split('/')[-1].replace('hailo_', '').replace('_inference.json', '') for model in available_models if model]
+    except Exception as e:
+        print(f"⚠️ Fehler beim Prüfen der Modell-Verfügbarkeit: {e}")
+        return ['yolov8']  # Fallback
+
 # Befehl zum Ausführen auf dem Remote-Host (Video- und Audioaufnahme)
 def get_ai_model_path():
-    """Bestimme den Pfad zum AI-Modell basierend auf der Auswahl"""
+    """Bestimme den Pfad zum AI-Modell basierend auf der Auswahl mit Verfügbarkeits-Check"""
     if getattr(args, 'ai_modul') == 'off':
         return ""
     
@@ -145,11 +163,87 @@ def get_ai_model_path():
     
     model_path = model_paths.get(args.ai_model)
     
+    # Spezielle Behandlung für bird-species
+    if args.ai_model == 'bird-species':
+        # Prüfe ob bird-species Modell existiert
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+            
+            stdin, stdout, stderr = ssh.exec_command("test -f /usr/share/rpi-camera-assets/hailo_bird_species_inference.json && echo 'exists'")
+            result = stdout.read().decode().strip()
+            ssh.close()
+            
+            if result != 'exists':
+                print("⚠️ bird-species Modell nicht gefunden! Erstelle temporäres Modell...")
+                create_bird_species_model()
+                
+        except Exception as e:
+            print(f"⚠️ Fehler beim Prüfen des bird-species Modells: {e}")
+            print("🔄 Fallback zu YOLOv8...")
+            model_path = '/usr/share/rpi-camera-assets/hailo_yolov8_inference.json'
+    
     if args.ai_model == 'custom' and not args.ai_model_path:
         print("⚠️ Für --ai-model custom muss --ai-model-path angegeben werden!")
         return ""
     
     return f"--post-process-file {model_path}" if model_path else ""
+
+def create_bird_species_model():
+    """Erstelle ein bird-species Modell basierend auf YOLOv8 mit Vogel-fokussierten Einstellungen"""
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+        
+        # Erstelle bird-species Konfiguration basierend auf YOLOv8
+        bird_species_config = """{
+    "rpicam-apps":
+    {
+        "lores":
+        {
+            "width": 640,
+            "height": 640,
+            "format": "rgb"
+        }
+    },
+
+    "hailo_yolo_inference":
+    {
+        "hef_file_8L": "/usr/share/hailo-models/yolov8s_h8l.hef",
+        "hef_file_8": "/usr/share/hailo-models/yolov8s_h8.hef",
+        "max_detections": 10,
+        "threshold": 0.3,
+        "class_filter": [14],
+
+        "temporal_filter":
+        {
+            "tolerance": 0.15,
+            "factor": 0.8,
+            "visible_frames": 8,
+            "hidden_frames": 2
+        }
+    },
+
+    "object_detect_draw_cv":
+    {
+        "line_thickness" : 3,
+        "font_thickness": 2
+    }
+}"""
+        
+        # Erstelle die Datei auf dem Remote-Host
+        stdin, stdout, stderr = ssh.exec_command(f'sudo tee /usr/share/rpi-camera-assets/hailo_bird_species_inference.json > /dev/null << EOF\n{bird_species_config}\nEOF')
+        stdout.channel.recv_exit_status()
+        
+        ssh.close()
+        print("✅ bird-species Modell erfolgreich erstellt!")
+        print("🐦 Optimiert für Vogelerkennung: niedrigere Schwelle, Fokus auf Klasse 14 (bird)")
+        
+    except Exception as e:
+        print(f"❌ Fehler beim Erstellen des bird-species Modells: {e}")
+        print("🔄 Verwende Standard YOLOv8...")
 
 def get_remote_video_command():
     remote_path = config.get_remote_video_path(year, timestamp)

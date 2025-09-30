@@ -79,6 +79,18 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
   --duration 5 --ai-modul on --ai-model yolov8
 ```
 
+### 🔄 NEU: Automatisches bird-species Modell (v1.1.8+)
+```bash
+# Bird-species Modell - wird automatisch erstellt falls nicht vorhanden
+python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
+  --duration 5 --ai-modul on --ai-model bird-species
+```
+**Optimierungen:**
+- ✅ Automatische Modellerstellung auf Remote-Host
+- 🎯 Fokus nur auf Vogel-Klasse (COCO 14)
+- ⚡ Niedrigere Schwelle (0.3) für bessere Sensitivität
+- 🔄 Temporaler Filter für stabile Erkennungen
+
 ### Erweitert: Eigene Vogelarten-Modelle trainieren
 Das System unterstützt das Training eigener AI-Modelle für spezifische Vogelarten:
 

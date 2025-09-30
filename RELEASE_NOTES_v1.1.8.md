@@ -75,11 +75,16 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
   --duration 5 --ai-modul on --ai-model yolov8
 ```
 
-#### **Vogelarten-spezifische Modelle** (falls verfügbar)
+#### **Bird-Species Modell** (automatisch erstellt) ⭐ **NEU**
 ```bash
 python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
   --duration 5 --ai-modul on --ai-model bird-species
 ```
+**Automatische Features:**
+- ✅ **Automatische Erstellung** wenn Modell nicht vorhanden
+- 🎯 **Optimiert für Vögel** (COCO Klasse 14, Schwelle 0.3)
+- 🔄 **Temporaler Filter** für stabile Erkennungen
+- 📁 **Remote-Host Integration** über SSH
 
 #### **Eigene Custom-Modelle**
 ```bash
@@ -131,6 +136,8 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 - ✅ **`--ai-model`** - Flexible Modell-Auswahl (yolov8, bird-species, custom)
 - ✅ **`--ai-model-path`** - Path zu benutzerdefinierten Modellen
 - ✅ **Intelligente Pfad-Auflösung** mit Fallback-Mechanismen
+- ⭐ **Automatische bird-species Erstellung** - Dynamische Modellgenerierung auf Remote-Host
+- 🔄 **SSH-basierte Modellverwaltung** - Verfügbarkeitsprüfung und Erstellung über SSH
 
 ### **Verbesserte Skript-Kompatibilität**
 - ✅ **UTF-8 Encoding** in allen Python-Dateien (behebt deutsche Umlaute)

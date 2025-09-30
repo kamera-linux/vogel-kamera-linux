@@ -10,13 +10,18 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 - **Erkennt**: Allgemeine Objekte inkl. "bird" (Vogel)
 - **Datei**: `/usr/share/rpi-camera-assets/hailo_yolov8_inference.json`
 
-### 2. Vogelarten-spezifisches Modell (experimentell)
+### 2. Vogelarten-spezifisches Modell (automatisch erstellt)
 ```bash
 python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
   --duration 5 --ai-modul on --ai-model bird-species
 ```
-- **Erkennt**: Verschiedene Vogelarten (wenn verfügbar)
+- **Erkennt**: Vögel (COCO Klasse 14) mit optimierter Sensitivität
 - **Datei**: `/usr/share/rpi-camera-assets/hailo_bird_species_inference.json`
+- **Automatische Erstellung**: Wird bei Bedarf automatisch generiert
+- **Optimierungen**: 
+  - Niedrigere Schwelle (0.3) für bessere Vogelerkennung
+  - Fokus nur auf Vogel-Klasse (class_filter: [14])
+  - Temporaler Filter für stabilere Erkennungen
 
 ### 3. Benutzerdefiniertes Modell
 ```bash
@@ -25,7 +30,54 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
   --ai-model-path /path/to/your/custom_bird_model.json
 ```
 
-## Vogelarten-Modelle einrichten
+## Automatische bird-species Modellerstellung
+
+**🔄 Neue Funktion (v1.1.8+)**: Das bird-species Modell wird automatisch erstellt, falls es nicht vorhanden ist!
+
+### Funktionsweise
+Wenn Sie `--ai-model bird-species` verwenden und das Modell nicht existiert:
+
+1. **Automatische Erkennung**: Das Skript prüft die Verfügbarkeit des Modells
+2. **Dynamische Erstellung**: Ein optimiertes bird-species Modell wird generiert
+3. **Sofortige Verwendung**: Das neue Modell wird direkt verwendet
+
+### Generierte Konfiguration
+```json
+{
+    "rpicam-apps": {
+        "lores": {
+            "width": 640,
+            "height": 640,
+            "format": "rgb"
+        }
+    },
+    "hailo_yolo_inference": {
+        "hef_file_8L": "/usr/share/hailo-models/yolov8s_h8l.hef",
+        "hef_file_8": "/usr/share/hailo-models/yolov8s_h8.hef",
+        "max_detections": 10,
+        "threshold": 0.3,
+        "class_filter": [14],
+        "temporal_filter": {
+            "tolerance": 0.15,
+            "factor": 0.8,
+            "visible_frames": 8,
+            "hidden_frames": 2
+        }
+    },
+    "object_detect_draw_cv": {
+        "line_thickness": 3,
+        "font_thickness": 2
+    }
+}
+```
+
+### Optimierungen für Vogelerkennung
+- **Niedrigere Schwelle**: `threshold: 0.3` (vs. 0.5 bei Standard YOLOv8)
+- **Klassenfilter**: Nur COCO-Klasse 14 ("bird") wird erkannt
+- **Temporaler Filter**: Stabilisiert Erkennungen über mehrere Frames
+- **Optimierte Auflösung**: 640x640 für beste Performance mit Hailo-Chip
+
+## Manuelle Vogelarten-Modelle einrichten
 
 ### Option 1: Existierende Modelle finden
 Prüfen Sie verfügbare Hailo-Modelle auf Ihrem Raspberry Pi:
