@@ -73,7 +73,7 @@ python3 tools/check_emojis.py --fix
 Das Tool erkennt:
 - **❓ Replacement Character** - Das Standard-Symbol für nicht darstellbare Unicode-Zeichen
 - **\ufffd** - Escaped Replacement Character
-- **??** - Doppelte Fragezeichen (oft bei Encoding-Problemen)
+- **❓❓** - Doppelte Fragezeichen (oft bei Encoding-Problemen)
 - **Private Use Area Characters** - Problematische Unicode-Zeichen
 - **Encoding-Fehler** - Dateien mit falscher Kodierung
 
