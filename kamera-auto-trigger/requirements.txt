@@ -1,0 +1,19 @@
+# =============================================================================
+# Kamera Auto-Trigger System - Dependencies
+# =============================================================================
+# Installation: pip install -r requirements.txt
+# =============================================================================
+
+# Core Dependencies
+paramiko>=3.0.0
+scp>=0.14.0
+tqdm>=4.66.0
+
+# Computer Vision & AI
+opencv-contrib-python>=4.8.0
+ultralytics>=8.0.0
+torch>=2.0.0
+numpy>=1.24.0
+
+# Optional: GPU Support (uncomment if available)
+# torch-cuda>=2.0.0

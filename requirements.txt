@@ -1,0 +1,20 @@
+# Vogel-Kamera-Linux Dependencies
+# ================================
+#
+# Installation:
+#   pip install -r requirements.txt
+#
+# Für Auto-Trigger mit echter AI-Erkennung zusätzlich:
+#   pip install -r requirements-autotrigger.txt
+
+# Core Dependencies (erforderlich)
+paramiko>=3.0.0
+scp>=0.14.0
+python-dotenv>=1.0.0
+tqdm>=4.65.0
+
+# Optional: Video-Verarbeitung und AI
+# (nur für Auto-Trigger-System mit Preview-Stream)
+# opencv-contrib-python>=4.8.0
+# ultralytics>=8.0.0
+# numpy>=1.24.0
