@@ -184,10 +184,32 @@ vogel-kamera-linux/
 │   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
 │   └── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
 ├── tools/                                                        # 🛠️ Test & Entwicklungstools
+│   ├── check_emojis.py                                          # Emoji-Validator für Markdown
 │   ├── automation_test.txt                                      # Automatisierungs-Tests
-│   └── test_ai_features.py                                      # AI-Feature Tests
+│   ├── test_ai_features.py                                      # AI-Feature Tests
+│   └── README.md                                                # Tools-Dokumentation
+├── network-tools/                                               # 🌐 Netzwerk-Diagnose-Tools *(v1.2.0)*
+│   ├── test-network-quality.py                                  # Netzwerk-Qualitäts-Test
+│   └── README.md                                                # Netzwerk-Tools Dokumentation
+├── kamera-auto-trigger/                                         # 🎯 Auto-Trigger System *(v1.2.0)*
+│   ├── start-vogel-beobachtung.sh                               # Interaktiver Wrapper
+│   ├── docs/                                                    # Auto-Trigger Dokumentation
+│   │   ├── QUICKSTART-AUTO-TRIGGER.md                           # Schnellstart-Anleitung
+│   │   ├── PREVIEW-STREAM-SETUP.md                              # Stream-Setup Guide
+│   │   ├── FIREWALL-SETUP-SUMMARY.md                            # Firewall-Konfiguration
+│   │   └── AUTO-TRIGGER-OVERVIEW.md                             # System-Überblick
+│   ├── tests/                                                   # Test-Skripte
+│   │   ├── guided-test.sh                                       # Interaktiver Test
+│   │   └── test-auto-trigger.sh                                 # Automatisierter Test
+│   └── README.md                                                # Auto-Trigger Dokumentation
+├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v1.2.0)*
+│   ├── start-rtsp-stream.sh                                     # RTSP-Stream Management
+│   ├── start-preview-stream.sh                                  # Preview-Stream (Legacy)
+│   ├── start-preview-stream-v2.sh                               # Preview-Stream v2
+│   └── start-preview-stream-watchdog.sh                         # Stream-Watchdog
 ├── releases/                                                     # 📋 Release-Dokumentation
 │   ├── README.md                                                # Release-Übersicht
+│   ├── RELEASE_NOTES_v1.2.0.md                                  # Aktuelle Release Notes *(v1.2.0)*
 │   └── vX.X.X/                                                  # Versionierte Release-Archive
 │       └── RELEASE_NOTES_vX.X.X.md                              # Archivierte Release-Notes
 ├── assets/                                                       # 📸 QR-Codes & Medien
