@@ -48,8 +48,11 @@ Dieses Projekt ermöglicht die Fernsteuerung von Raspberry Pi-Kameras zur Überw
 - 🎥 **Hochauflösende Videoaufnahme** (bis zu 4K)
 - 🎵 **Synchrone Audioaufnahme** über USB-Mikrofon
 - 🤖 **KI-Objekterkennung** mit YOLOv8 und eigenen Vogelarten-Modellen
-- 📊 **System-Monitoring** mit CPU-Load und Temperaturüberwachung *(Neu in v1.1.9)*
-- ⚡ **Performance-Optimierung** für verschiedene Aufnahmemodi *(Neu in v1.1.9)*
+- 🎯 **Auto-Trigger System** mit automatischer Vogelerkennung *(Neu in v1.2.0)*
+- 📺 **Preview-Stream** (RTSP) für Live-Überwachung *(Neu in v1.2.0)*
+- 🌐 **Netzwerk-Diagnostics** für Performance-Analyse *(Neu in v1.2.0)*
+- 📊 **System-Monitoring** mit CPU-Load und Temperaturüberwachung *(Seit v1.1.9)*
+- ⚡ **Performance-Optimierung** für verschiedene Aufnahmemodi *(Seit v1.1.9)*
 - 🌐 **Remote-Steuerung** über SSH
 - 📁 **Automatische Dateiorganisation** nach Jahr/Woche
 - ⚙️ **Flexible Konfiguration** über .env-Dateien
@@ -163,7 +166,6 @@ python python-skripte/config.py
 vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
-├── RELEASE_NOTES_v1.1.9.md                                      # Aktuelle Release-Dokumentation
 ├── .gitignore                                                    # Git-Ignore-Regeln
 ├── config/                                                       # 🔧 Konfigurationsdateien
 │   └── requirements.txt                                          # Python-Abhängigkeiten
@@ -223,6 +225,7 @@ vogel-kamera-linux/
     ├── ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py  # 🤖 Hauptskript mit KI
     ├── ai-had-audio-remote-param-vogel-libcamera-single.py            # 🎵 Audio-Aufnahme
     ├── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py         # ⚡ Zeitlupe-Aufnahmen
+    ├── ai-had-kamera-auto-trigger.py                                  # 🎯 Auto-Trigger System *(v1.2.0)*
     ├── remote_system_monitor.py                                       # 📊 Umfassendes System-Monitoring *(v1.1.9)*
     ├── quick_system_check.py                                          # ⚡ Schnelle System-Checks *(v1.1.9)*
     └── check_ai_models.py                                             # 🔍 AI-Modell-Validierung
@@ -266,12 +269,18 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 ### 4. Version prüfen
 ```bash
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
-# Ausgabe: Vogel-Kamera-Linux v1.1.9
+# Ausgabe: Vogel-Kamera-Linux v1.2.0
 ```
 
-### 🆕 System-Überwachung (v1.1.9)
+### 🆕 Auto-Trigger System (v1.2.0)
 ```bash
-# Alle Skripte zeigen jetzt automatisch System-Status vor der Aufnahme:
+# Automatische Vogelerkennung mit KI-basiertem Trigger
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+
+# Oder direkt mit Python:
+python python-skripte/ai-had-kamera-auto-trigger.py --trigger-duration 2
+
+# System-Status (alle Skripte zeigen automatisch vor der Aufnahme):
 # 🌡️ CPU-Temperatur mit Warnstufen
 # 💾 Festplattenspeicher mit Auslastung
 # 🧠 Arbeitsspeicher-Anzeige
@@ -344,6 +353,7 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 | `--ai-model-path` | Pfad zu eigenem AI-Modell *(v1.1.8)* | - | Dateipfad zu .json |
 | `--roi` | Region of Interest | - | x,y,w,h |
 | `--system-status` | Nur System-Status anzeigen *(v1.1.9)* | - | Flag ohne Wert |
+| `--no-stream-restart` | Preview-Stream nicht neu starten *(v1.2.0)* | - | Flag ohne Wert |
 
 ## 🔐 Git-Automatisierung
 
@@ -518,13 +528,19 @@ Bei Fragen oder Problemen:
 
 Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
 
-### 🆕 Neu in v1.1.9 (30. September 2025)
-- 📊 **System-Monitoring:** Automatische CPU-Load, Temperatur und Speicher-Überwachung
-- ⚡ **Performance-Optimierung:** Load-Balancing für verschiedene Aufnahmemodi
-- 🚨 **Bereitschaftschecks:** Kritische System-Validierung vor Aufnahmestart
-- 🌡️ **Temperatur-Überwachung:** Warnstufen für thermische Performance
-- 💾 **Speicher-Management:** Festplatten-Auslastung mit automatischen Warnungen
-- 📈 **Load-Awareness:** Spezielle Schwellenwerte für Standard-, Zeitlupe- und Audio-Modi
+### 🆕 Neu in v1.2.0 (01. Oktober 2025)
+- 🎯 **Auto-Trigger System:** Automatische Vogelerkennung mit KI-basierter Aufnahmesteuerung
+- 📺 **Preview-Stream:** RTSP-Stream für Echtzeit-Überwachung (640x480 @ 5fps)
+- ⏱️ **Trigger-Duration Logic:** 2-Sekunden-Check mit 70% Detection Rate
+- � **Stream-Management:** Automatischer Stream-Restart nach HD-Aufnahmen
+- � **Network-Diagnostics:** Umfassendes Netzwerk-Qualitäts-Test-Tool
+- 📊 **Status-Reports Optimierung:** Pausierung während Aufnahme und Cooldown
+- �️ **Wrapper-Skripte:** Interaktive Benutzerführung für Auto-Trigger
+
+### 📊 System-Monitoring in v1.1.9 (30. September 2025)
+- System-Überwachung: CPU-Load, Temperatur und Speicher-Checks
+- Performance-Optimierung für alle Aufnahmemodi
+- Bereitschaftschecks vor Aufnahmestart
 
 ### 🎯 Hochpräzise Modelle in v1.1.8
 - 🤖 **Automatische bird-species Modelle:** Dynamische Erstellung optimierter AI-Modelle
@@ -540,6 +556,7 @@ Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
 
 ## 🔖 Versionen
 
-- **Aktuelle Version:** v1.1.9
-- **Entwicklungszweig:** `devel`
-- **Stabile Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)
+- **Aktuelle Version:** v1.2.0
+- **Entwicklungszweig:** `devel-v1.2.0`
+- **Stabile Version (main):** v1.1.9
+- **Alle Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)

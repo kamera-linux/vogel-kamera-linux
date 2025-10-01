@@ -4,7 +4,8 @@
 Netzwerkqualitäts-Test für Vogel-Kamera-System
 Testet die Verbindung zwischen lokalem PC und Raspberry Pi
 
-Aufruf: python test-network-quality.py
+Aufruf: python3 network-tools/test-network-quality.py
+Version: 1.2.0
 """
 
 import paramiko

@@ -93,7 +93,7 @@ Version 1.2.0 führt das **Auto-Trigger System** ein - eine vollautomatische Vog
 
 #### Network Quality Test Tool
 ```bash
-python test-network-quality.py
+python3 network-tools/test-network-quality.py
 ```
 **Messungen:**
 - 🏓 **Ping-Test**: Latenz und Paketverlust
@@ -222,9 +222,15 @@ config/
 └── ssh-config.sh                          # SSH-Key Setup
 ```
 
-### Tools
+### Network Tools
 ```
-test-network-quality.py                     # Netzwerk-Diagnostics ⭐
+network-tools/
+├── test-network-quality.py                 # Netzwerk-Qualitäts-Test ⭐
+└── README.md                               # Tool-Dokumentation ⭐
+```
+
+### Root Level
+```
 requirements.txt                            # Root-Level Dependencies
 ```
 

@@ -189,5 +189,5 @@ Issues und Pull Requests sind willkommen!
 
 ---
 
-**Version:** 1.1.9  
+**Version:** 1.2.0  
 **Zuletzt aktualisiert:** 1. Oktober 2025

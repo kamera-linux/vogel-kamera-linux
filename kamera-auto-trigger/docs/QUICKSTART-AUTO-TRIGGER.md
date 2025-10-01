@@ -75,7 +75,7 @@ python python-skripte/ai-had-kamera-auto-trigger.py \
 **Erwartete Ausgabe:**
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  🐦 Vogel-Kamera Auto-Trigger v1.1.9                         ║
+║  🐦 Vogel-Kamera Auto-Trigger v1.2.0                         ║
 ╚══════════════════════════════════════════════════════════════╝
 
 ✅ Verbindung zu raspberrypi-5-ai-had erfolgreich
