@@ -6,9 +6,201 @@ Dieses Verzeichnis enthält verschiedene Entwicklungs- und Test-Tools für das V
 
 | Tool | Beschreibung | Verwendung |
 |------|--------------|------------|
+| `local-system-status.py` | Lokaler System-Monitor | Prüft CPU, RAM, Festplatte, Last (ohne SSH) |
 | `check_emojis.py` | Emoji-Validator für Markdown-Dateien | Prüft alle Dokumente auf defekte Emojis |
 | `test_ai_features.py` | AI-Feature Tests | Testet KI-Funktionen |
 | `automation_test.txt` | Automatisierungs-Tests | Test-Dokumentation |
+
+---
+
+## 📊 local-system-status.py - Lokaler System-Monitor
+
+### Beschreibung
+Liest lokale Systemparameter aus (CPU-Temperatur, RAM, Festplatte, Last) direkt auf dem Host - analog zu den Remote-Status-Abfragen, aber **ohne SSH**. Ideal für Preflight-Checks, lokales Debugging und System-Monitoring.
+
+### Features
+- 🌡️ **CPU-Temperatur**: vcgencmd (Raspberry Pi) oder /sys/class/thermal (Linux)
+- 💾 **Festplattenbelegung**: df-basiert mit Prozent-Anzeige
+- 💭 **RAM-Auslastung**: free-basiert mit Prozent-Berechnung
+- ⚡ **System-Last**: Load Average (1min, 5min, 15min)
+- 🎨 **Farbcodierte Ausgabe**: Status-Emojis (🟢 🟡 🔴)
+- 📊 **JSON-Export**: Für Automatisierung und Skript-Integration
+- ⚠️ **Schwellenwert-Prüfung**: Warnungen bei kritischen Werten
+- 🔄 **Exit-Codes**: 0=OK, 1=Kritisch (für Bash-Integration)
+
+### Verwendung
+
+#### Standard-Ausgabe (formatiert mit Farben)
+```bash
+python3 tools/local-system-status.py
+```
+
+**Beispiel-Ausgabe:**
+```
+======================================================================
+📊 Lokaler System-Status
+======================================================================
+🖥️  Host: raspberrypi-5-nvme-04
+🕐 Zeit: 2025-10-01 23:33:12
+⏱️  Uptime: 1 hour, 11 minutes
+🐧 Kernel: 6.12.47+rpt-rpi-2712
+
+Hardware & Ressourcen:
+   🌡️  CPU-Temp: 45.5°C 🟢
+   ⚡ CPU-Load: 0.89 🟢 (5min: 0.92, 15min: 0.87)
+   💭 RAM: 2.5Gi / 8Gi (31.3%) 🟢
+      └─ Verfügbar: 5.2Gi
+   💾 Festplatte: 45G / 197G (23%) 🟢
+      ├─ Verfügbar: 142G
+      └─ Mount: / (/dev/nvme0n1p2)
+
+System-Status:
+   ✅ System läuft im normalen Bereich
+======================================================================
+```
+
+#### JSON-Format (für Automatisierung)
+```bash
+python3 tools/local-system-status.py --json
+```
+
+**Beispiel-Ausgabe:**
+```json
+{
+  "cpu_temperature": 45.5,
+  "disk_usage": {
+    "filesystem": "/dev/nvme0n1p2",
+    "size": "197G",
+    "used": "45G",
+    "available": "142G",
+    "use_percent": 23,
+    "mount_point": "/"
+  },
+  "memory_usage": {
+    "total": "8Gi",
+    "used": "2.5Gi",
+    "free": "4.8Gi",
+    "available": "5.2Gi",
+    "use_percent": 31.3
+  },
+  "system_load": {
+    "load_1min": 0.89,
+    "load_5min": 0.92,
+    "load_15min": 0.87
+  },
+  "uptime": "1 hour, 11 minutes",
+  "timestamp": "2025-10-01T23:33:12.123456",
+  "hostname": "raspberrypi-5-nvme-04",
+  "kernel": "6.12.47+rpt-rpi-2712",
+  "healthy": true,
+  "thresholds": {
+    "cpu_temp": {"good": 50.0, "warning": 60.0, "critical": 70.0},
+    "disk_usage": {"good": 70, "warning": 80, "critical": 90},
+    "cpu_load": {"good": 1.0, "warning": 2.0, "critical": 3.0},
+    "memory_percent": {"good": 70, "warning": 85, "critical": 95}
+  }
+}
+```
+
+#### Health-Check (nur Exit-Code)
+```bash
+python3 tools/local-system-status.py --check
+# Exit-Code: 0=OK, 1=Kritisch
+```
+
+**Verwendung in Bash-Skripten:**
+```bash
+if python3 tools/local-system-status.py --check; then
+    echo "✅ System OK - starte Aufnahme..."
+    python3 ai-had-kamera-auto-trigger.py
+else
+    echo "⚠️ System kritisch - Aufnahme übersprungen"
+    exit 1
+fi
+```
+
+#### Mit Schwellenwerten
+```bash
+python3 tools/local-system-status.py --thresholds
+```
+
+Zeigt die konfigurierten Schwellenwerte für jeden Parameter an.
+
+### Schwellenwerte
+
+| Parameter | Gut 🟢 | Warnung 🟡 | Kritisch 🔴 |
+|-----------|--------|------------|-------------|
+| CPU-Temp | < 50°C | 50-60°C | > 70°C |
+| CPU-Load | < 1.0 | 1.0-2.0 | > 3.0 |
+| RAM | < 70% | 70-85% | > 95% |
+| Festplatte | < 70% | 70-80% | > 90% |
+
+### Anwendungsfälle
+
+#### 1. Preflight-Check vor Aufnahme
+```bash
+#!/bin/bash
+echo "🔍 Prüfe System-Status..."
+if python3 tools/local-system-status.py --check; then
+    echo "✅ System bereit"
+    python3 python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py
+else
+    echo "❌ System nicht bereit - bitte prüfen"
+    python3 tools/local-system-status.py  # Zeige Details
+    exit 1
+fi
+```
+
+#### 2. Monitoring-Dashboard (JSON)
+```bash
+# Hole Status als JSON und verarbeite mit jq
+python3 tools/local-system-status.py --json | jq '.cpu_temperature'
+python3 tools/local-system-status.py --json | jq '.memory_usage.use_percent'
+```
+
+#### 3. Cron-Job für Alarm
+```bash
+# /etc/cron.d/system-check
+*/15 * * * * user cd /path/to/vogel-kamera && python3 tools/local-system-status.py --check || mail -s "System kritisch" admin@example.com
+```
+
+#### 4. Integration in Auto-Trigger
+```python
+import subprocess
+import json
+
+# Hole System-Status
+result = subprocess.run(
+    ["python3", "tools/local-system-status.py", "--json"],
+    capture_output=True, text=True
+)
+status = json.loads(result.stdout)
+
+if status['healthy']:
+    print("✅ System OK - starte Auto-Trigger")
+else:
+    print(f"⚠️ CPU-Temp: {status['cpu_temperature']}°C - überspringe Trigger")
+```
+
+### Kompatibilität
+
+- ✅ **Raspberry Pi**: Volle Unterstützung mit vcgencmd
+- ✅ **Linux (generic)**: Fallback auf /sys/class/thermal
+- ✅ **Debian/Ubuntu**: Getestet
+- ⚠️ **macOS/Windows**: Eingeschränkte Unterstützung (keine CPU-Temp)
+
+### Unterschied zu Remote-Monitoring
+
+| Feature | `local-system-status.py` | Remote-Monitoring (SSH) |
+|---------|-------------------------|-------------------------|
+| **Ausführung** | Lokal auf Host | Remote via SSH |
+| **Benötigt SSH** | ❌ Nein | ✅ Ja |
+| **Verwendung** | Preflight, Debugging | Remote-Host Status |
+| **Authentifizierung** | Keine | SSH-Keys |
+| **Latenz** | Minimal | Abhängig von Netzwerk |
+| **Use-Case** | Lokale Checks | Raspberry Pi Monitoring |
+
+---
 
 ## 🔍 check_emojis.py - Emoji-Validator
 
