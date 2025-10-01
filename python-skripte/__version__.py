@@ -14,11 +14,15 @@ sys.path.insert(0, scripts_path)
 
 # Importiere aus der zentralen version.py
 try:
-    from version import __version__, get_version_info
+    # Versuche relativen Import, falls als Modul ausgeführt
+    try:
+        from scripts.version import __version__, get_version_info
+    except ImportError:
+        from scripts.version import __version__, get_version_info
 except ImportError:
     # Fallback wenn scripts/version.py nicht gefunden wird
     __version__ = "1.2.0"
-    
+
     def get_version_info():
         return {
             'version': __version__,

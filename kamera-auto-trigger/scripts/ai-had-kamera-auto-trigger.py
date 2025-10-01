@@ -42,7 +42,7 @@ python_skripte_dir = os.path.join(project_root, 'python-skripte')
 sys.path.insert(0, python_skripte_dir)
 
 from config import config
-from __version__ import __version__
+__version__ = "1.2.0"  # Setzen Sie hier die aktuelle Version ein
 
 # Import StreamProcessor aus gleichem Verzeichnis
 try:
