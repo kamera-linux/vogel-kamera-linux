@@ -3,7 +3,14 @@
 [![Version](https://img.shields.io/badge/Version-v1.2.0-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.2.0)
 [![GitHub Issues](https://img.shields.io/github/issues/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/pulls)
-[![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)### 🆕 Neu in v1.2.0 (01. Oktober 2025)
+[![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)### 🆕 Neu in v1.2.0 (01. Ok### 🆕 Neu in v1.2.0 (01. Oktober 2025)
+- 🎯 **Auto-Trigger System:** Automatische Vogelerkennung mit KI-basierter Aufnahmesteuerung
+- 📺 **Preview-Stream:** RTSP-Stream für Echtzeit-Überwachung (640x480 @ 5fps)
+- ⏱️ **Trigger-Duration Logic:** 2-Sekunden-Check mit 70% Detection Rate
+- 🔄 **Stream-Management:** Automatischer Stream-Restart nach HD-Aufnahmen
+- 🌐 **Network-Diagnostics:** Umfassendes Netzwerk-Qualitäts-Test-Tool
+- 📊 **Status-Reports Optimierung:** Pausierung während Aufnahme und Cooldown
+- 🛠️ **Wrapper-Skripte:** Interaktive Benutzerführung für Auto-Trigger25)
 - 🎯 **Auto-Trigger System:** Automatische Vogelerkennung mit KI-basierter Aufnahmesteuerung
 - 📺 **Preview-Stream:** RTSP-Stream für Echtzeit-Überwachung (640x480 @ 5fps)
 - ⏱️ **Trigger-Duration Logic:** 2-Sekunden-Check mit 70% Detection Rate
