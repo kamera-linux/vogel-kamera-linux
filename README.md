@@ -519,10 +519,10 @@ Bei Fragen oder Problemen:
 Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
 
 ### 🆕 Neu in v1.1.9 (30. September 2025)
-- � **System-Monitoring:** Automatische CPU-Load, Temperatur und Speicher-Überwachung
+- 📊 **System-Monitoring:** Automatische CPU-Load, Temperatur und Speicher-Überwachung
 - ⚡ **Performance-Optimierung:** Load-Balancing für verschiedene Aufnahmemodi
 - 🚨 **Bereitschaftschecks:** Kritische System-Validierung vor Aufnahmestart
-- �️ **Temperatur-Überwachung:** Warnstufen für thermische Performance
+- 🌡️ **Temperatur-Überwachung:** Warnstufen für thermische Performance
 - 💾 **Speicher-Management:** Festplatten-Auslastung mit automatischen Warnungen
 - 📈 **Load-Awareness:** Spezielle Schwellenwerte für Standard-, Zeitlupe- und Audio-Modi
 

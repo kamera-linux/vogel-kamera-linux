@@ -25,7 +25,7 @@ Hier befinden sich alle STEP-Konstruktionsdateien (*.stp) für die 3D-Komponente
 - ✅ **Standard:** ISO 10303 International Standard
 - ✅ **Editierbar:** Vollständig modifizierbar in CAD-Software
 
-## �️ 3D-Druck Empfehlungen
+## ❓️ 3D-Druck Empfehlungen
 
 ### Material-Auswahl
 - **Outdoor-Einsatz:** PETG oder ABS (UV- und witterungsbeständig)

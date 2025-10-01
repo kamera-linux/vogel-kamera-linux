@@ -1,9 +1,9 @@
 # Terminal Emoji Display Fix
 
 ## Problem
-Git-Log zeigt Emoji-Zeichen als "��" anstatt korrekte Emojis in der Ausgabe:
+Git-Log zeigt Emoji-Zeichen als "❓❓" anstatt korrekte Emojis in der Ausgabe:
 ```
-88ecbf9 �� Release v1.1.5
+88ecbf9 ❓❓ Release v1.1.5
 ```
 
 ## Lösung
