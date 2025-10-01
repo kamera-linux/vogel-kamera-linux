@@ -172,6 +172,7 @@ vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
 ├── .gitignore                                                    # Git-Ignore-Regeln
+├── PROJEKT-REORGANISATION.md                                     # Projekt-Reorganisations-Dokumentation
 ├── config/                                                       # 🔧 Konfigurationsdateien
 │   └── requirements.txt                                          # Python-Abhängigkeiten
 ├── scripts/                                                      # 🔧 Build/Deploy-Skripte  

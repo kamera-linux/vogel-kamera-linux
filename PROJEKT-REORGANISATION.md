@@ -1,4 +1,7 @@
-# Projekt-Reorganisation v1.1.8 - Professionelle Ordnerstruktur und AI-Erweiterungen
+# Projekt-Reorganisation - Professionelle Ordnerstruktur und Modulare Architektur
+
+> **Letzte Aktualisierung:** v1.2.0 (01. Oktober 2025)  
+> **Ursprüngliche Version:** v1.1.8 (29. September 2025)
 
 ## 📋 Durchgeführte Änderungen
 
@@ -158,8 +161,62 @@ python3 tools/test_ai_features.py
 - ✅ `ai-training-tools/` - Spezialisierte AI-Tools
 - ✅ `assets/` - Medien und Grafiken
 - ✅ `3d-konstruktion/` - CAD und Hardware-Dateien
-- ✅ `releases/` - Versionierte Release-Archive
+- ✅ `releases/` - Versionierte Release-Archive (inkl. v1.1.9)
 - ✅ `git-automation/` - Git-Workflow-Tools
+- ✅ `kamera-auto-trigger/` - Auto-Trigger System *(v1.2.0)*
+- ✅ `raspberry-pi-scripts/` - Raspberry Pi Skripte *(v1.2.0)*
+- ✅ `network-tools/` - Netzwerk-Diagnose-Tools *(v1.2.0)*
+
+## 🆕 Erweiterungen in v1.2.0 (01. Oktober 2025)
+
+### Neue Ordnerstruktur:
+
+#### 🎯 kamera-auto-trigger/ - Auto-Trigger System
+```
+kamera-auto-trigger/
+├── start-vogel-beobachtung.sh           # Interaktiver Wrapper
+├── docs/                                # Umfassende Dokumentation
+│   ├── QUICKSTART-AUTO-TRIGGER.md       # Schnellstart-Anleitung
+│   ├── PREVIEW-STREAM-SETUP.md          # Stream-Setup Guide
+│   ├── FIREWALL-SETUP-SUMMARY.md        # Firewall-Konfiguration
+│   └── AUTO-TRIGGER-OVERVIEW.md         # System-Überblick
+├── tests/                               # Test-Skripte
+│   ├── guided-test.sh                   # Interaktiver Test
+│   └── test-auto-trigger.sh             # Automatisierter Test
+└── README.md                            # Auto-Trigger Dokumentation
+```
+
+#### 🍓 raspberry-pi-scripts/ - Raspberry Pi Skripte
+```
+raspberry-pi-scripts/
+├── start-rtsp-stream.sh                 # RTSP-Stream Management
+├── start-preview-stream.sh              # Preview-Stream (Legacy)
+├── start-preview-stream-v2.sh           # Preview-Stream v2
+└── start-preview-stream-watchdog.sh     # Stream-Watchdog
+```
+
+#### 🌐 network-tools/ - Netzwerk-Diagnose
+```
+network-tools/
+├── test-network-quality.py              # Netzwerk-Qualitäts-Test
+└── README.md                            # Vollständige Dokumentation
+```
+
+#### 📋 releases/ - Erweitert
+```
+releases/
+├── README.md                            # Release-Übersicht
+├── RELEASE_NOTES_v1.2.0.md              # Aktuelle Release Notes
+├── v1.1.9/                              # Archivierte v1.1.9
+│   └── RELEASE_NOTES_v1.1.9.md
+└── vX.X.X/                              # Weitere Archive
+```
+
+### Aktualisierte README.md:
+- ✅ Projektstruktur vollständig dokumentiert
+- ✅ Alle neuen v1.2.0 Ordner aufgenommen
+- ✅ Auto-Trigger System erklärt
+- ✅ Network-Tools dokumentiert
 
 ## ✅ Resultat
 
@@ -169,3 +226,12 @@ python3 tools/test_ai_features.py
 - 🔧 **Logische Gruppierung** für einfache Navigation  
 - 📚 **Zentrale Dokumentation** für bessere Benutzererfahrung
 - 🛠️ **Entwickler-freundlich** für zukünftige Beiträge
+- 🎯 **Modulare Architektur** mit Auto-Trigger System *(v1.2.0)*
+- 🌐 **Spezialisierte Tools** für Netzwerk-Diagnose *(v1.2.0)*
+- 📋 **Versionierte Archive** für alle Releases *(v1.2.0)*
+
+## 📚 Versionshistorie
+
+- **v1.2.0** (01.10.2025): Auto-Trigger System, Network-Tools, Raspberry Pi Scripts
+- **v1.1.9** (30.09.2025): System-Monitoring und Performance-Optimierung  
+- **v1.1.8** (29.09.2025): Initiale Projekt-Reorganisation

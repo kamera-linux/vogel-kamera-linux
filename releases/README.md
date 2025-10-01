@@ -12,7 +12,7 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 ## 📚 Archivierte Versionen
 
 ### Version 1.1.9
-- **Release Notes:** [RELEASE_NOTES_v1.1.9.md](../RELEASE_NOTES_v1.1.9.md) *(im Root-Verzeichnis)*
+- **Release Notes:** [v1.1.9/RELEASE_NOTES_v1.1.9.md](v1.1.9/RELEASE_NOTES_v1.1.9.md)
 - **Release Date:** 2025-09-30
 - **Features:** System-Monitoring, CPU-Load-Überwachung, Performance-Optimierung
 
