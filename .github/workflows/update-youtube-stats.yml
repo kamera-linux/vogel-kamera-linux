@@ -19,20 +19,15 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: true
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-      
-      - name: Install Dependencies
         run: |
-          pip install google-api-python-client python-dotenv
+          git clone --depth=1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+      
+      - name: Setup Python and Install Dependencies
+        run: |
+          python3 --version
+          pip install --user google-api-python-client python-dotenv
       
       - name: Update YouTube Statistics
         env:
@@ -68,9 +63,6 @@ jobs:
       - name: Commit and Push Changes
         if: steps.git-check.outputs.changed == 'true'
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          
           # Versuche zuerst direkten Commit auf main
           git add README.md
           git commit -m "docs: Update YouTube video statistics [skip ci]"
