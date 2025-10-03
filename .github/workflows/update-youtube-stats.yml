@@ -71,31 +71,37 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Erstelle Branch für die Änderungen
-          BRANCH_NAME="youtube-stats-update-$(date +%Y%m%d-%H%M%S)"
-          git checkout -b "$BRANCH_NAME"
-          
+          # Versuche zuerst direkten Commit auf main
           git add README.md
           git commit -m "docs: Update YouTube video statistics [skip ci]"
           
-          # Pushe Branch
-          git push origin "$BRANCH_NAME"
+          # Pull latest changes
+          git pull --rebase origin main || {
+            echo "⚠️ Rebase fehlgeschlagen, versuche erneut..."
+            git rebase --abort
+            git pull --rebase origin main
+          }
           
-          # Versuche direkten Push auf main (falls erlaubt)
-          git checkout main
-          git pull --rebase origin main
-          
+          # Versuche direkten Push auf main
           if git push origin main; then
+            echo ""
             echo "✅ Direkter Push auf main erfolgreich"
-            # Lösche temporären Branch
-            git push origin --delete "$BRANCH_NAME" || true
           else
+            echo ""
             echo "❌ Direkter Push fehlgeschlagen - Branch Protection aktiv"
-            echo "📋 Branch '$BRANCH_NAME' wurde erstellt"
-            echo "� Bitte manuell mergen oder Branch Protection für GitHub Actions deaktivieren"
+            echo ""
+            
+            # Fallback: Erstelle Branch für manuellen Merge
+            BRANCH_NAME="youtube-stats-update-$(date +%Y%m%d-%H%M%S)"
+            git checkout -b "$BRANCH_NAME"
+            git push origin "$BRANCH_NAME"
+            
+            echo "ℹ️ Branch Protection ist aktiv - GitHub Actions benötigt Bypass-Berechtigung"
+            echo "📋 Branch '$BRANCH_NAME' enthält die Updates"
+            echo "�� Lösung: Aktiviere 'Deploy keys' in den Branch Protection Bypass-Regeln"
             echo ""
             echo "🔗 Merge-Link: https://github.com/${{ github.repository }}/compare/$BRANCH_NAME?expand=1"
-            echo "📖 Setup-Anleitung: .github/BRANCH_PROTECTION_SETUP.md"
+            echo "📖 Anleitung: .github/BRANCH_PROTECTION_SETUP.md"
           fi
       
       - name: Summary
