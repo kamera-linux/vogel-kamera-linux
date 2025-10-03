@@ -174,30 +174,51 @@ python ai-had-kamera-auto-trigger.py \
 | **Lösung 4** | 4 | 320×240 | 1.5s | 6 | 70% (4.2 Frames) | ⭐⭐⭐ |
 | **Lösung 5 (BESTE)** | 5 | 480×360 | 1.5s | 7.5 | 70% (5.25 Frames) | ⭐⭐⭐⭐⭐ |
 
-## 🚀 Empfohlene Sofort-Maßnahmen
+## 🚀 Implementierte Lösung
 
-### Quick Fix (Ohne Code-Änderung):
+### Version 1: Aggressive Optimierung (82.6% CPU - zu hoch)
 
 ```bash
-# Start mit optimierten Parametern
+# Erste Implementierung (zu CPU-intensiv)
+--preview-fps 5
+--preview-width 480
+--preview-height 360
+--trigger-threshold 0.38
+```
+
+**Problem:** Gute Erkennungsrate aber 82.6% CPU-Auslastung
+
+### Version 2: CPU-optimierter Kompromiss (AKTUELL)
+
+```bash
+# Moderierte Parameter für CPU/Performance-Balance
 python kamera-auto-trigger/scripts/ai-had-kamera-auto-trigger.py \
-    --trigger-duration 1.5 \
-    --preview-fps 5 \
-    --preview-width 480 \
-    --preview-height 360 \
-    --trigger-threshold 0.38 \
-    --cooldown 45 \
+    --trigger-duration 2 \
+    --preview-fps 4 \
+    --preview-width 400 \
+    --preview-height 300 \
+    --trigger-threshold 0.40 \
+    --cooldown 30 \
     --ai-model bird-species
 ```
 
-### Permanente Lösung (Code-Änderung):
+**Begründung:**
+- 4 FPS × 2 Sek = 8 Frames
+- 65% Konsistenz = 5.2 Frames (gut erreichbar)
+- 400×300 = ~30% weniger Pixel als 480×360
+- Threshold 0.40 = Weniger sensitiv als 0.38
+- **Erwartete CPU-Last:** 50-60% (akzeptabel)
+- **Erwartete Trigger-Rate:** 2-2.5 pro Stunde
 
-**1. Ändere Default-Werte:**
+### Permanente Lösung (Code-Änderung implementiert):
+
+**Default-Werte angepasst:**
 ```python
 # ai-had-kamera-auto-trigger.py Zeile 115-117
-parser.add_argument('--trigger-threshold', type=float, default=0.38, help='...')  # 0.45 → 0.38
-parser.add_argument('--preview-fps', type=int, default=5, help='...')  # 3 → 5
-parser.add_argument('--preview-width', type=int, default=480, help='...')  # 320 → 480
+parser.add_argument('--trigger-threshold', type=float, default=0.40, help='...')  # 0.38 → 0.40
+parser.add_argument('--preview-fps', type=int, default=4, help='...')  # 5 → 4
+parser.add_argument('--preview-width', type=int, default=400, help='...')  # 480 → 400
+parser.add_argument('--preview-height', type=int, default=300, help='...')  # 360 → 300
 parser.add_argument('--preview-height', type=int, default=360, help='...')  # 240 → 360
 ```
 
