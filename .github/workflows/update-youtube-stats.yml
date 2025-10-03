@@ -85,16 +85,17 @@ jobs:
           git checkout main
           git pull --rebase origin main
           
-          if git push origin main 2>/dev/null; then
+          if git push origin main; then
             echo "✅ Direkter Push auf main erfolgreich"
             # Lösche temporären Branch
             git push origin --delete "$BRANCH_NAME" || true
           else
-            echo "ℹ️ Direkter Push nicht möglich (Branch Protection)"
+            echo "❌ Direkter Push fehlgeschlagen - Branch Protection aktiv"
             echo "📋 Branch '$BRANCH_NAME' wurde erstellt"
             echo "� Bitte manuell mergen oder Branch Protection für GitHub Actions deaktivieren"
             echo ""
             echo "🔗 Merge-Link: https://github.com/${{ github.repository }}/compare/$BRANCH_NAME?expand=1"
+            echo "📖 Setup-Anleitung: .github/BRANCH_PROTECTION_SETUP.md"
           fi
       
       - name: Summary
