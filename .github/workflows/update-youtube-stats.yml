@@ -12,11 +12,16 @@ jobs:
   update-stats:
     runs-on: ubuntu-latest
     
+    # Permissions für GITHUB_TOKEN
+    permissions:
+      contents: write  # Erlaubt Commit und Push
+    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
       
       - name: Setup Python
         uses: actions/setup-python@v5
