@@ -428,15 +428,15 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='🔐 Sichere Git-Automatisierung v1.1.4',
+        description='🔐 Sichere Git-Automatisierung v1.2.0',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Beispiele:
   %(prog)s --push                          # Push aktuellen Branch
   %(prog)s --push --branch devel-v1.2.0    # Push spezifischen Branch
   %(prog)s --push-all                      # Push alle Branches
-  %(prog)s --tag v1.1.4                    # Erstelle und pushe Tag
-  %(prog)s --release v1.1.4                # Release auf aktuellem Branch
+  %(prog)s --tag v1.2.0                    # Erstelle und pushe Tag
+  %(prog)s --release v1.2.0                # Release auf aktuellem Branch
   %(prog)s --release v1.2.0 --branch devel-v1.2.0  # Release auf spezifischem Branch
   %(prog)s --commit "Fix bug"              # Commit und Push auf aktuellem Branch
   %(prog)s --commit "Feature" --branch devel-v1.2.0  # Commit auf spezifischem Branch
@@ -451,7 +451,7 @@ Beispiele:
     action_group.add_argument('--push-all', action='store_true',
                              help='Push alle lokalen Branches')
     action_group.add_argument('--tag', metavar='VERSION',
-                             help='Erstelle und pushe Tag (z.B. v1.1.4)')
+                             help='Erstelle und pushe Tag (z.B. v1.2.0)')
     action_group.add_argument('--release', metavar='VERSION',
                              help='Vollständiger Release-Workflow mit Tag')
     action_group.add_argument('--commit', metavar='MESSAGE',
@@ -470,7 +470,7 @@ Beispiele:
     args = parser.parse_args()
     
     try:
-        print("🔐 Git-Automatisierung v1.1.4")
+        print("🔐 Git-Automatisierung v1.2.0")
         print("=" * 40)
         
         # Git-Automation initialisieren

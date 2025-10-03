@@ -65,7 +65,7 @@ python3 git_automation.py --push-all
 
 ### **Tag erstellen und pushen:**
 ```bash
-python3 git_automation.py --tag v1.1.4
+python3 git_automation.py --tag v1.2.0
 ```
 
 ### **Committen mit Nachricht:**
@@ -80,7 +80,7 @@ python3 git_automation.py --commit "✨ Feature" --branch devel-v1.2.0
 ### **Vollständiger Release-Workflow:**
 ```bash
 # Auf aktuellem Branch
-python3 git_automation.py --release v1.1.4
+python3 git_automation.py --release v1.2.0
 
 # Auf spezifischem Branch
 python3 git_automation.py --release v1.2.0 --branch devel-v1.2.0
