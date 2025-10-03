@@ -3,7 +3,30 @@
 [![Version](https://img.shields.io/badge/Version-v1.2.0-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.2.0)
 [![GitHub Issues](https://img.shields.io/github/issues/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/pulls)
-[![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)### 🆕 Neu in v1.2.0 (01. Ok### 🆕 N- 🎯 **Auto-Trigger System:** Automatische Vogelerkennung mit KI-basierter Aufnahmesteuerung
+[![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)### 🆕 Neu in v1.2.0 (01. Ok### 🆕 - 💬 **DisBei Fragen oder Problemen:
+- 💬### Sicherheit & Entwicklung
+- **[docs/SECURITY.md](docs/SECURITY.md)** - Sicherheitsrichtlinien
+- **[git-automation/README.md](git-automation/README.md)** - Git-Automation Dokumentation (v1.2.0)
+
+## 📋 Changelog
+
+Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentiert.ussionen starten** in [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
+- 🐛 **Bugs melden** über [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
+
+## 📚 Dokumentation
+
+### Hauptdokumentationen starten** in [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
+- 🐛 **Bugs melden** über [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
+
+## 📚 Dokumentation
+
+### Hauptdokumentation**Auto-Trigger Sys### Sicherheit & Entwicklung
+- **[docs/SECURITY.md](docs/SECURITY.md)** - Sicherheitsrichtlinien
+- **[git-automation/README.md](git-automation/README.md)** - Git-Automation Dokumentation (v1.2.0)
+
+## 📋 Changelog
+
+Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentiert.Automatische Vogelerkennung mit KI-basierter Aufnahmesteuerung
 - 📺 **Preview-Stream:** RTSP-Stream für Echtzeit-Überwachung (640x480 @ 5fps)
 - ⏱️ **Trigger-Duration Logic:** 2-Sekunden-Check mit 70% Detection Rate
 - 🔄 **Stream-Management:** Automatischer Stream-Restart nach HD-Aufnahmen
@@ -185,7 +208,6 @@ vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
 ├── .gitignore                                                    # Git-Ignore-Regeln
-├── PROJEKT-REORGANISATION.md                                     # Projekt-Reorganisations-Dokumentation
 ├── config/                                                       # 🔧 Konfigurationsdateien
 │   └── requirements.txt                                          # Python-Abhängigkeiten
 ├── scripts/                                                      # 🔧 Build/Deploy-Skripte  
@@ -193,7 +215,9 @@ vogel-kamera-linux/
 │   ├── release_workflow.py                                     # Release-Automatisierung
 │   └── update_version.py                                       # Versions-Update-Skript
 ├── docs/                                                         # 📚 Dokumentation
-│   ├── CHANGELOG.md                                             # Versionshistorie
+│   ├── CHANGELOG.md                                             # Versionshistorie (v1.2.0)
+│   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur mit Mermaid-Diagrammen *(v1.2.0)*
+│   ├── PROJEKT-REORGANISATION.md                                # Projekt-Reorganisations-Dokumentation
 │   ├── SECURITY.md                                              # Sicherheitsrichtlinien
 │   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
 │   └── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
@@ -565,9 +589,34 @@ Bei Fragen oder Problemen:
 - 💬 **Diskussionen starten** in [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
 - 🐛 **Bugs melden** über [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
 
+## 📚 Dokumentation
+
+### Hauptdokumentation
+- **[docs/CHANGELOG.md](docs/CHANGELOG.md)** - Vollständige Versionshistorie mit allen Änderungen
+- **[docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)** - 🏗️ **NEU in v1.2.0!** Detaillierte Systemarchitektur mit Mermaid-Diagrammen
+  - Kommunikationsflüsse (PC ↔ Raspberry Pi)
+  - CPU-Optimierungs-Visualisierung (107% → 40%)
+  - Video- und Audio-Pipeline-Diagramme
+  - Erkennungs-Workflow und Fehlerbehandlung
+- **[docs/PROJEKT-REORGANISATION.md](docs/PROJEKT-REORGANISATION.md)** - Projekt-Reorganisations-Historie
+
+### Auto-Trigger System *(v1.2.0)*
+- **[kamera-auto-trigger/README.md](kamera-auto-trigger/README.md)** - Hauptdokumentation Auto-Trigger
+- **[kamera-auto-trigger/docs/QUICKSTART-AUTO-TRIGGER.md](kamera-auto-trigger/docs/QUICKSTART-AUTO-TRIGGER.md)** - 3-Minuten Quick-Start
+- **[kamera-auto-trigger/docs/AUTO-TRIGGER-DOKUMENTATION.md](kamera-auto-trigger/docs/AUTO-TRIGGER-DOKUMENTATION.md)** - Vollständige Feature-Dokumentation
+- **[kamera-auto-trigger/docs/AUTO-TRIGGER-OVERVIEW.md](kamera-auto-trigger/docs/AUTO-TRIGGER-OVERVIEW.md)** - System-Überblick
+
+### AI & Training
+- **[docs/AI-MODELLE-VOGELARTEN.md](docs/AI-MODELLE-VOGELARTEN.md)** - AI-Modell-Dokumentation
+- **[docs/ANLEITUNG-EIGENES-AI-MODELL.md](docs/ANLEITUNG-EIGENES-AI-MODELL.md)** - Training eigener Modelle
+
+### Sicherheit & Entwicklung
+- **[docs/SECURITY.md](docs/SECURITY.md)** - Sicherheitsrichtlinien
+- **[git-automation/README.md](git-automation/README.md)** - Git-Automation Dokumentation (v1.2.0)
+
 ## 📋 Changelog
 
-Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
+Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentiert.
 
 ### 🆕 Neu in v1.2.0 (01. Oktober 2025)
 - 🎯 **Auto-Trigger System:** Automatische Vogelerkennung mit KI-basierter Aufnahmesteuerung

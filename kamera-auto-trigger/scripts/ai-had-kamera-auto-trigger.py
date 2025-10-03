@@ -139,13 +139,13 @@ if config_errors:
 
 # Bestimme Aufnahme-Modus (Priorität: Zeitlupe > AI > Standard)
 if args.recording_slowmo:
-    recording_mode = "🎬 Zeitlupe (120fps)"
+    recording_mode = "🎬 Zeitlupe (120fps + Audio)"
     recording_model = ""
 elif args.recording_ai:
-    recording_mode = "🤖 Mit KI"
+    recording_mode = "🤖 Mit KI + Audio"
     recording_model = f" ({args.recording_ai_model})"
 else:
-    recording_mode = "📹 Ohne KI (nur Video)"
+    recording_mode = "📹 Ohne KI (Video + Audio)"
     recording_model = ""
 
 print(f"""

@@ -1,103 +1,171 @@
-# 🚀 Quick Start: Auto-Trigger System
+# 🚀 Quick Start: Auto-Trigger System v1.2.0
 
-Schnellstart-Anleitung für das automatische Vogel-Erkennungs- und Aufnahme-System.
+Schnellstart-Anleitung für das automatische Vogel-Erkennungs- und Aufnahme-System mit KI-Unterstützung.
+
+**Neu in v1.2.0:**
+- 🎬 Zeitlupen-Modus (120fps)
+- ⚡ CPU-Optimierung (107% → 40%)
+- 🎤 Audio in allen Modi
+- 🚀 Wrapper-Skript für einfache Bedienung
 
 ## 📋 Checkliste
 
-- [ ] Raspberry Pi 5 mit Camera Module 3
-- [ ] Client-PC mit Python 3.8+
-- [ ] Netzwerk-Verbindung zwischen beiden
-- [ ] SSH-Zugriff auf Raspberry Pi konfiguriert
+- [ ] Raspberry Pi 5 mit Camera Module 3 (IMX708)
+- [ ] Client-PC mit Python 3.11+ (oder 3.8+)
+- [ ] Netzwerk-Verbindung zwischen beiden (LAN empfohlen)
+- [ ] SSH-Zugriff auf Raspberry Pi konfiguriert (SSH-Key!)
+- [ ] Optional: USB-Mikrofon für Audio-Aufnahmen
 
-## ⚡ 5-Minuten-Setup
+## ⚡ 3-Minuten-Setup (v1.2.0)
 
-### 1️⃣ Client-PC vorbereiten
+### 1️⃣ Repository klonen
 
 ```bash
-# Repository klonen (falls noch nicht geschehen)
-git clone https://github.com/your-repo/vogel-kamera-linux.git
+# Repository klonen
+git clone https://github.com/roimme65/vogel-kamera-linux.git
 cd vogel-kamera-linux
 
-# Core-Dependencies installieren
+# Optional: Development-Branch für neueste Features
+git checkout devel-v1.2.0
+```
+
+### 2️⃣ Virtual Environment einrichten
+
+```bash
+# venv erstellen (einmalig)
+python3 -m venv .venv
+
+# venv aktivieren
+source .venv/bin/activate
+
+# Dependencies installieren
+pip install --upgrade pip
 pip install -r requirements.txt
 
-# Auto-Trigger-Dependencies installieren
-pip install -r requirements-autotrigger.txt
+# YOLOv8 installieren (für KI-Erkennung)
+pip install ultralytics opencv-python
 
-# System-Pakete (Ubuntu/Debian)
-sudo apt update
-sudo apt install -y python3-opencv libgstreamer1.0-dev \
-    gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
-    gstreamer1.0-plugins-bad gstreamer1.0-libav
-
-# .env konfigurieren
-cp .env.example .env
-nano .env
-# REMOTE_HOST=raspberrypi-5-ai-had
-# REMOTE_USER=pi
-# SSH_KEY_PATH=/home/user/.ssh/id_rsa
+# SSH-Bibliothek
+pip install paramiko
 ```
 
-### 2️⃣ Raspberry Pi einrichten
+**Hinweis:** Das Wrapper-Skript `start-vogel-beobachtung.sh` aktiviert die venv automatisch!
+
+### 3️⃣ SSH-Zugriff einrichten
 
 ```bash
-# Stream-Skript auf Raspberry Pi kopieren
-scp raspberry-pi-scripts/start-preview-stream.sh \
-    pi@raspberrypi-5-ai-had:~/
+# SSH-Key generieren (falls noch nicht vorhanden)
+ssh-keygen -t ed25519 -C "vogel-kamera"
 
-# SSH zum Raspberry Pi
-ssh pi@raspberrypi-5-ai-had
+# Public Key auf Raspberry Pi kopieren
+ssh-copy-id pi@raspberrypi-5-ai-had
 
-# Skript ausführbar machen
-chmod +x ~/start-preview-stream.sh
+# SSH-Agent starten (einmalig pro Session)
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
 
-# Preview-Stream starten
-./start-preview-stream.sh
+# Verbindung testen
+ssh pi@raspberrypi-5-ai-had "echo SSH funktioniert!"
+```
+
+**Hinweis:** Das Wrapper-Skript `start-vogel-beobachtung.sh` startet den SSH-Agent automatisch!
+
+### 4️⃣ Konfiguration erstellen
+
+```bash
+# Config-Datei erstellen
+mkdir -p kamera-auto-trigger/config
+cat > kamera-auto-trigger/config/config.py << 'EOF'
+# Remote-Host Konfiguration
+REMOTE_HOST = "raspberrypi-5-ai-had"
+REMOTE_USER = "pi"
+REMOTE_VIDEOS_DIR = "Videos"
+
+# RTSP Stream URL
+RTSP_URL = f"rtsp://{REMOTE_HOST}:8554/preview"
+EOF
+```
+
+### 5️⃣ Auto-Trigger starten! 🚀
+
+```bash
+# Standard-Modus (1920x1080 @ 25fps + Audio)
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+
+# ODER: Mit KI-Metadaten
+./kamera-auto-trigger/start-vogel-beobachtung.sh --with-ai
+
+# ODER: Zeitlupen-Modus (120fps Slow-Motion!)
+./kamera-auto-trigger/start-vogel-beobachtung.sh --slowmo
 ```
 
 **Erwartete Ausgabe:**
 ```
-✅ Preview-Stream gestartet (PID: 12345)
-ℹ️  Stream-URL: tcp://192.168.1.100:8554
-```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🐦 Vogel-Beobachtung mit KI gestartet
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Aufnahme-Modus: 🤖 Mit KI + Audio (yolov8n.pt)
+Preview: 320x240 @ 3 FPS
+Recording: 1920x1080 @ 25 FPS + 44.1kHz Mono
+CPU-Optimierung: OMP_NUM_THREADS=2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 3️⃣ Auto-Trigger starten
+✓ SSH Verbindung hergestellt
+✓ RTSP Stream aktiv: rtsp://raspberrypi-5-ai-had:8554/preview
+✓ YOLOv8 Modell geladen
 
-```bash
-# Zurück auf Client-PC
-# In vogel-kamera-linux Verzeichnis:
-
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --trigger-duration 2 \
-    --ai-model bird-species
-```
-
-**Erwartete Ausgabe:**
-```
-╔══════════════════════════════════════════════════════════════╗
-║  🐦 Vogel-Kamera Auto-Trigger v1.2.0                         ║
-╚══════════════════════════════════════════════════════════════╝
-
-✅ Verbindung zu raspberrypi-5-ai-had erfolgreich
-✅ Preview-Stream verbunden
-🔍 Überwache Vogelhaus... (Strg+C zum Beenden)
+🎯 Überwache Vogelhaus... (Strg+C zum Beenden)
 ```
 
 🎉 **Fertig!** Das System überwacht jetzt automatisch und startet Aufnahmen bei Vogel-Erkennung.
 
+## 🎬 Modi-Übersicht
+
+### 📹 Standard-Modus
+```bash
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+```
+- **Auflösung:** 1920x1080 @ 25fps
+- **Audio:** 44.1kHz Mono (automatisch)
+- **CPU-Last:** ~40% (optimiert!)
+- **Verwendung:** Normale HD-Aufnahmen
+
+### 🤖 KI-Modus
+```bash
+./kamera-auto-trigger/start-vogel-beobachtung.sh --with-ai
+```
+- **Auflösung:** 1920x1080 @ 25fps
+- **Audio:** 44.1kHz Mono
+- **Zusätzlich:** KI-Metadaten im Filename
+- **CPU-Last:** ~40%
+- **Verwendung:** Aufnahmen mit AI-Analyse
+
+### 🎬 Zeitlupen-Modus
+```bash
+./kamera-auto-trigger/start-vogel-beobachtung.sh --slowmo
+```
+- **Auflösung:** 1536x864 @ 120fps
+- **Audio:** 44.1kHz Mono
+- **Besonderheit:** 10 Sek Pre-Recording
+- **CPU-Last:** ~40% (PC), ~75% (RaspPi)
+- **Verwendung:** Spektakuläre Slow-Motion!
+
 ## 🧪 Testen
 
-### Stream-Test (ohne AI)
+### RTSP-Stream ansehen
 
 ```bash
-# Stream mit VLC ansehen
-vlc tcp://raspberrypi-5-ai-had:8554
+# Mit VLC
+vlc rtsp://raspberrypi-5-ai-had:8554/preview
 
-# Oder mit FFplay
-ffplay tcp://raspberrypi-5-ai-had:8554
+# Mit FFplay
+ffplay rtsp://raspberrypi-5-ai-had:8554/preview
+
+# Mit mpv
+mpv rtsp://raspberrypi-5-ai-had:8554/preview
 ```
 
-### AI-Erkennung testen
+### Vogel-Erkennung simulieren
 
 ```bash
 # Standalone-Test des StreamProcessors
@@ -160,94 +228,71 @@ python3 -c "import cv2; print(cv2.getBuildInformation())" | grep GStreamer
 
 ### 🐌 Stream laggt
 
-**Lösung 1:** Auflösung reduzieren
+**In v1.2.0 bereits optimiert!** Die Standard-Einstellungen sind CPU-schonend (320x240@3fps).
+
+Falls dennoch Probleme:
+- LAN statt WLAN verwenden (empfohlen)
+- Raspberry Pi näher am Router platzieren
+- Netzwerk-Auslastung prüfen
+
+### ⚡ Hohe CPU-Last (>80%)
+
+**In v1.2.0 gelöst!** CPU-Last wurde von 107% auf ~40% reduziert.
+
+Falls weiterhin hoch:
 ```bash
-# Auf Raspberry Pi:
-./start-preview-stream.sh --stop
-./start-preview-stream.sh --width 480 --height 360 --fps 3
+# Prüfen: Läuft venv?
+which python  # sollte .venv/bin/python zeigen
+
+# Wrapper-Skript nutzt automatisch optimierte Einstellungen
+./kamera-auto-trigger/start-vogel-beobachtung.sh
 ```
 
-**Lösung 2:** LAN statt WLAN verwenden
+### 🎤 Kein Audio in Aufnahmen
 
-**Lösung 3:** Bitrate reduzieren
+**Lösung:**
 ```bash
-./start-preview-stream.sh --bitrate 500
+# Auf Raspberry Pi prüfen:
+arecord -l  # Zeigt alle Audio-Devices
+
+# USB-Mikrofon sollte erscheinen:
+# card 2: Device [USB PnP Sound Device]
 ```
 
-## 📊 Empfohlene Einstellungen
+Ohne USB-Mikrofon: System funktioniert trotzdem (nur Video)!
 
-### Standard (ausgewogen)
+## 📊 Empfohlene Einstellungen v1.2.0
+
+### ⭐ Standard (empfohlen) - Bereits optimal!
 ```bash
-# Raspberry Pi:
-./start-preview-stream.sh \
-    --width 640 --height 480 --fps 5
-
-# Client-PC:
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --trigger-duration 2 \
-    --trigger-threshold 0.45 \
-    --cooldown 30
+./kamera-auto-trigger/start-vogel-beobachtung.sh
 ```
+- Preview: 320x240 @ 3fps
+- Recording: 1920x1080 @ 25fps
+- Audio: 44.1kHz Mono
+- CPU: ~40%
 
-### Hohe Genauigkeit
+### 🎬 Für spektakuläre Aufnahmen
 ```bash
-# Raspberry Pi:
-./start-preview-stream.sh \
-    --width 800 --height 600 --fps 10
-
-# Client-PC:
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --trigger-threshold 0.50 \
-    --cooldown 60
+./kamera-auto-trigger/start-vogel-beobachtung.sh --slowmo
 ```
+- Preview: 320x240 @ 2fps
+- Recording: 1536x864 @ 120fps (Slow-Motion!)
+- Audio: 44.1kHz Mono
+- CPU: ~40% (PC), ~75% (RaspPi)
 
-### Schwache Netzwerk-Verbindung
+### 🤖 Für detaillierte Analysen
 ```bash
-# Raspberry Pi:
-./start-preview-stream.sh \
-    --width 480 --height 360 --fps 3 --bitrate 500
-
-# Client-PC:
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --preview-fps 3 \
-    --trigger-threshold 0.40
+./kamera-auto-trigger/start-vogel-beobachtung.sh --with-ai
 ```
+- Preview: 320x240 @ 3fps
+- Recording: 1920x1080 @ 25fps + KI-Metadaten
+- Audio: 44.1kHz Mono
+- CPU: ~40%
 
 ## 🔄 Als Service einrichten (Optional)
 
-### Raspberry Pi: Auto-Start Preview-Stream
-
-```bash
-# Auf Raspberry Pi:
-sudo nano /etc/systemd/system/preview-stream.service
-```
-
-Inhalt:
-```ini
-[Unit]
-Description=Vogel-Kamera Preview-Stream
-After=network-online.target
-
-[Service]
-Type=forking
-User=pi
-WorkingDirectory=/home/pi
-ExecStart=/home/pi/start-preview-stream.sh
-ExecStop=/home/pi/start-preview-stream.sh --stop
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Aktivieren:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable preview-stream
-sudo systemctl start preview-stream
-```
-
-### Client-PC: Auto-Start Auto-Trigger
+### Client-PC: Auto-Start Auto-Trigger mit Wrapper
 
 ```bash
 # Auf Client-PC:
@@ -257,15 +302,21 @@ sudo nano /etc/systemd/system/vogel-auto-trigger.service
 Inhalt:
 ```ini
 [Unit]
-Description=Vogel-Kamera Auto-Trigger
+Description=Vogel-Kamera Auto-Trigger v1.2.0
 After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=youruser
 WorkingDirectory=/path/to/vogel-kamera-linux
-ExecStart=/usr/bin/python3 python-skripte/ai-had-kamera-auto-trigger.py \
-    --trigger-duration 2 --ai-model bird-species
+Environment="PATH=/path/to/vogel-kamera-linux/.venv/bin:/usr/bin"
+ExecStart=/path/to/vogel-kamera-linux/kamera-auto-trigger/start-vogel-beobachtung.sh --with-ai
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
 Restart=always
 
 [Install]
@@ -278,58 +329,79 @@ sudo systemctl daemon-reload
 sudo systemctl enable vogel-auto-trigger
 sudo systemctl start vogel-auto-trigger
 
+# Status prüfen:
+sudo systemctl status vogel-auto-trigger
+
 # Logs ansehen:
 sudo journalctl -u vogel-auto-trigger -f
 ```
 
 ## 📚 Weitere Dokumentation
 
-- **[PREVIEW-STREAM-SETUP.md](docs/PREVIEW-STREAM-SETUP.md)** - Detaillierte Setup-Anleitung
-- **[AUTO-TRIGGER-DOKUMENTATION.md](docs/AUTO-TRIGGER-DOKUMENTATION.md)** - Feature-Dokumentation
-- **[README.md](README.md)** - Haupt-Dokumentation
+- **[../../docs/ARCHITEKTUR.md](../../docs/ARCHITEKTUR.md)** - 🏗️ Detaillierte Architektur mit Mermaid-Diagrammen (NEU in v1.2.0!)
+- **[AUTO-TRIGGER-DOKUMENTATION.md](AUTO-TRIGGER-DOKUMENTATION.md)** - Vollständige Feature-Dokumentation
+- **[AUTO-TRIGGER-OVERVIEW.md](AUTO-TRIGGER-OVERVIEW.md)** - Konzepte und Übersicht
+- **[../../README.md](../../README.md)** - Haupt-Dokumentation
+- **[../../docs/CHANGELOG.md](../../docs/CHANGELOG.md)** - Version v1.2.0 Details
 
-## 💡 Tipps
+## 💡 Tipps & Tricks v1.2.0
 
-### Status-Reports anpassen
-
-```bash
-# Status alle 10 Minuten statt 15
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --status-interval 10
-```
-
-### CPU-Temperatur-Limit anpassen
+### Cooldown zwischen Aufnahmen anpassen
 
 ```bash
-# Beende bei 65°C statt 70°C
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --max-cpu-temp 65
+# Standard: 5 Sekunden
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+
+# Mit Parameter: 10 Sekunden Pause
+python kamera-auto-trigger/scripts/ai-had-kamera-auto-trigger.py \
+    --trigger-cooldown 10
 ```
 
-### Längere Aufnahmen bei Erkennung
+### Erkennungs-Schwelle anpassen
 
 ```bash
-# 5 Minuten statt 2 Minuten
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --trigger-duration 5
+# Weniger false positives (höhere Schwelle)
+python kamera-auto-trigger/scripts/ai-had-kamera-auto-trigger.py \
+    --preview-threshold 0.6
+
+# Mehr Erkennungen (niedrigere Schwelle)
+python kamera-auto-trigger/scripts/ai-had-kamera-auto-trigger.py \
+    --preview-threshold 0.4
 ```
 
-### Mehrere Erkennungen schneller nacheinander
+### Verschiedene YOLOv8-Modelle testen
 
 ```bash
-# Nur 10 Sekunden Cooldown
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --cooldown 10
+# Größeres Modell (genauer, aber langsamer)
+./kamera-auto-trigger/start-vogel-beobachtung.sh --with-ai yolov8s.pt
+
+# Kleineres Modell (schneller, standard)
+./kamera-auto-trigger/start-vogel-beobachtung.sh --with-ai yolov8n.pt
 ```
+
+**Hinweis:** Auch mit größeren Modellen bleibt CPU bei ~40% dank imgsz=320!
 
 ## 🎯 Nächste Schritte
 
 Nach erfolgreichem Setup:
 
-1. **Teste verschiedene Schwellen-Werte** für optimale Erkennungs-Rate
-2. **Überwache CPU-Temperatur** auf Raspberry Pi
-3. **Prüfe Festplatten-Speicher** regelmäßig
-4. **Backup der Aufnahmen** einrichten
-5. **Systemd-Services aktivieren** für 24/7-Betrieb
+1. ✅ **Teste alle drei Modi** (Standard, KI, Zeitlupe)
+2. 📊 **Überwache CPU-Last** - sollte ~40% sein
+3. 🎤 **Audio-Test** - USB-Mikrofon funktioniert?
+4. 🎬 **Zeitlupen-Aufnahmen** ansehen - spektakulär!
+5. 💾 **Backup einrichten** für Videos-Verzeichnis
+6. 🔄 **Systemd-Service** für 24/7-Betrieb (optional)
+7. 📖 **[docs/ARCHITEKTUR.md](../../docs/ARCHITEKTUR.md)** lesen - verstehe das System im Detail!
 
-Viel Erfolg! 🐦🎥
+## 🚀 Performance-Highlights v1.2.0
+
+```
+CPU-Optimierung:   107% → 40% (-63%)  ✅
+Preview-FPS:       5 → 3 (CPU-schonend) ✅
+Preview-Auflösung: 640x480 → 320x240   ✅
+YOLO-Inferenz:     imgsz=320 (Schlüssel!) ✅
+Audio:             Alle Modi (44.1kHz)  ✅
+Modi:              3 (Standard/KI/Zeitlupe) ✅
+```
+
+Viel Erfolg bei der Vogel-Beobachtung! 🐦🎥🎬

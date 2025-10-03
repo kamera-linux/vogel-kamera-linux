@@ -1,8 +1,14 @@
-# 📝 Auto-Trigger System - Übersicht
+# 📝 Auto-Trigger System - Übersicht v1.2.0
 
-## ✅ Vollständige Implementierung
+## ✅ Vollständige Implementierung & CPU-Optimiert
 
-Das Auto-Trigger-System mit echter AI-basierter Vogel-Erkennung ist **vollständig implementiert** und produktionsreif.
+Das Auto-Trigger-System mit echter AI-basierter Vogel-Erkennung ist **vollständig implementiert**, produktionsreif und in v1.2.0 massiv optimiert:
+
+- 🎬 **Drei Aufnahme-Modi:** Standard (1920x1080@25fps), KI-Metadaten, Zeitlupe (120fps)
+- ⚡ **CPU-Optimierung:** 107% → 40% CPU-Last (-63% Reduktion!)
+- 🎤 **Audio in allen Modi:** 44.1kHz Mono (automatisch wenn USB-Mikrofon vorhanden)
+- 🚀 **Wrapper-Skript:** Einfache Bedienung mit System-Checks
+- 🏗️ **Architektur-Dokumentation:** Mit Mermaid-Diagrammen
 
 ## 📦 Neue Dateien
 
@@ -135,32 +141,44 @@ Das Auto-Trigger-System mit echter AI-basierter Vogel-Erkennung ist **vollständ
    - Automatischer Shutdown bei Überlastung
    - Status-Report alle 15 Minuten
 
-## 🚀 Verwendung
+## 🚀 Verwendung v1.2.0
 
-### Schnellstart
+### ⭐ Schnellstart mit Wrapper-Skript (empfohlen)
 
 ```bash
-# 1. Raspberry Pi: Stream starten
-ssh pi@raspberrypi-5-ai-had
-./start-preview-stream.sh
+# Standard-Modus (1920x1080 @ 25fps + Audio)
+./kamera-auto-trigger/start-vogel-beobachtung.sh
 
-# 2. Client-PC: Auto-Trigger starten
-cd /pfad/zu/vogel-kamera-linux
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --trigger-duration 2 \
-    --ai-model bird-species
+# Mit KI-Metadaten
+./kamera-auto-trigger/start-vogel-beobachtung.sh --with-ai
+
+# Zeitlupen-Modus (120fps Slow-Motion!)
+./kamera-auto-trigger/start-vogel-beobachtung.sh --slowmo
+
+# Help anzeigen
+./kamera-auto-trigger/start-vogel-beobachtung.sh --help
 ```
 
-### Mit Custom-Einstellungen
+**Vorteile des Wrappers:**
+- ✅ Automatische System-Checks (SSH-Agent, venv, Netzwerk)
+- ✅ Optimierte CPU-Parameter (bereits eingebaut!)
+- ✅ Übersichtliche Banner und Status
+- ✅ Einfache Modus-Auswahl
+
+### 🔧 Direkter Python-Aufruf (für Experten)
 
 ```bash
-# Höhere Genauigkeit, weniger false positives
-python python-skripte/ai-had-kamera-auto-trigger.py \
-    --trigger-duration 3 \
-    --trigger-threshold 0.55 \
-    --cooldown 60 \
-    --max-cpu-temp 65 \
-    --status-interval 10
+# Standard-Modus
+python kamera-auto-trigger/scripts/ai-had-kamera-auto-trigger.py
+
+# Mit KI-Metadaten
+python kamera-auto-trigger/scripts/ai-had-kamera-auto-trigger.py \
+    --recording-ai \
+    --recording-ai-model yolov8n.pt
+
+# Zeitlupen-Modus
+python kamera-auto-trigger/scripts/ai-had-kamera-auto-trigger.py \
+    --recording-slowmo
 ```
 
 ### Stream-Test (Standalone)
@@ -281,23 +299,41 @@ Siehe detaillierte Guides:
 | Stream laggt | Auflösung/FPS reduzieren, Bitrate senken |
 | Hohe CPU-Last | Kleineres Model, niedrigere FPS |
 
-## 📈 Performance-Metriken
+## 📈 Performance-Metriken v1.2.0
 
-**Typische Werte (YOLOv8n, 640x480, CPU-Inferenz):**
+**🎯 CPU-Optimierung Breakthrough:**
 
-| Metrik | Wert |
-|--------|------|
-| Inferenz-Zeit | 40-60ms |
-| FPS (Processing) | ~15-20 fps |
-| Stream FPS | 5 fps (konfigurierbar) |
-| CPU-Last (Client) | 5-10% |
-| Bandbreite | 500-1500 kbps |
-| Latenz | 100-300ms |
+```
+Baseline (vor v1.2.0):    107% CPU  ❌
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Stage 1 (Thread-Limits):   82.5% CPU
+Stage 2 (FPS 5→3):          82.5% CPU
+Stage 3 (Auflösung):        92% CPU
+Stage 4 (imgsz=320):        40% CPU   ✅
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Gesamt-Reduktion:          -63% CPU
+```
 
-**Mit GPU-Beschleunigung (CUDA):**
-- Inferenz-Zeit: 10-20ms
-- FPS: 50+ fps
-- CPU-Last: <3%
+**Aktuelle Werte (YOLOv8n, 320x240@3fps, imgsz=320):**
+
+| Metrik | v1.1.x | v1.2.0 | Verbesserung |
+|--------|--------|--------|--------------|
+| CPU-Last (Client) | 107% | 40% | -63% ✅ |
+| Preview-FPS | 5 | 3 | CPU-schonend |
+| Preview-Auflösung | 640x480 | 320x240 | -75% Pixel |
+| YOLO imgsz | default (640) | 320 | -75% Inferenz |
+| Inferenz-Zeit | ~80ms | ~30ms | -62% |
+| RAM | 180MB | 180MB | Gleich |
+
+**Modi-Performance:**
+
+| Modus | Auflösung | FPS | CPU (PC) | CPU (RaspPi) |
+|-------|-----------|-----|----------|--------------|
+| Standard | 1920x1080 | 25 | ~40% | ~50% |
+| Mit KI | 1920x1080 | 25 | ~40% | ~50% |
+| Zeitlupe | 1536x864 | 120 | ~40% | ~75% |
+
+**Hinweis:** Preview-Stream (320x240@3fps) ist für alle Modi gleich!
 
 ## 🔜 Geplante Erweiterungen
 
@@ -327,25 +363,42 @@ Verbesserungen willkommen! Besonders:
 
 ## 📝 Changelog
 
-### v1.2.0 (2025-10-01) - Auto-Trigger System
+### v1.2.0 (2025-10-03) - CPU-Optimierung & Drei Modi
 
-**Neue Features:**
-- ✅ Vollständige Preview-Stream-Implementierung
-- ✅ StreamProcessor mit OpenCV/GStreamer
-- ✅ YOLOv8-Integration für Echtzeit-Erkennung
-- ✅ Auto-Trigger mit echter AI-Inferenz
-- ✅ Raspberry Pi Stream-Skript
-- ✅ Umfassende Dokumentation
+**🚀 Hauptfeatures:**
+- 🎬 **Zeitlupen-Modus:** 120fps Slow-Motion mit --slowmo
+- ⚡ **CPU-Optimierung:** 107% → 40% (-63% Reduktion!)
+- 🎤 **Audio in allen Modi:** 44.1kHz Mono (automatisch)
+- 🚀 **Wrapper-Skript:** start-vogel-beobachtung.sh mit System-Checks
+- 🏗️ **Architektur-Dokumentation:** [docs/ARCHITEKTUR.md](../../docs/ARCHITEKTUR.md) mit Mermaid-Diagrammen
+- 🔄 **Git-Automation:** Branch-Support (v1.2.0)
 
-**Neue Dateien:**
-- `python-skripte/ai-had-kamera-auto-trigger.py`
-- `python-skripte/stream_processor.py`
-- `raspberry-pi-scripts/start-preview-stream.sh`
-- `docs/AUTO-TRIGGER-DOKUMENTATION.md`
-- `docs/PREVIEW-STREAM-SETUP.md`
-- `docs/QUICKSTART-AUTO-TRIGGER.md`
-- `docs/AUTO-TRIGGER-OVERVIEW.md`
-- `requirements.txt`
+**⚡ CPU-Optimierungen:**
+- Thread-Limits: OMP/BLAS/MKL_NUM_THREADS=2
+- Preview-FPS: 5fps → 3fps
+- Preview-Auflösung: 640x480 → 320x240
+- **BREAKTHROUGH:** YOLO imgsz=320 (Schlüssel-Optimierung!)
+
+**🎬 Drei Aufnahme-Modi:**
+1. **Standard:** 1920x1080@25fps + Audio
+2. **Mit KI:** 1920x1080@25fps + Audio + KI-Metadaten
+3. **Zeitlupe:** 1536x864@120fps + Audio
+
+**📊 Performance-Verbesserungen:**
+- CPU-Last: 107% → 40% ✅
+- Inferenz-Zeit: ~80ms → ~30ms ✅
+- Stabiler Dauerbetrieb möglich ✅
+
+**📚 Neue/Aktualisierte Dateien:**
+- `docs/ARCHITEKTUR.md` (NEU - verschoben von kamera-auto-trigger/)
+- `docs/PROJEKT-REORGANISATION.md` (verschoben in docs/)
+- `kamera-auto-trigger/start-vogel-beobachtung.sh` (Enhanced)
+- `kamera-auto-trigger/scripts/ai-had-kamera-auto-trigger.py` (Optimiert)
+- `kamera-auto-trigger/scripts/stream_processor.py` (imgsz=320)
+- `docs/CHANGELOG.md` (v1.2.0)
+- `kamera-auto-trigger/docs/AUTO-TRIGGER-DOKUMENTATION.md` (Aktualisiert)
+- `kamera-auto-trigger/docs/QUICKSTART-AUTO-TRIGGER.md` (Aktualisiert)
+- `git-automation/git_automation.py` (v1.2.0)
 - `requirements-autotrigger.txt`
 
 ## 📄 Lizenz

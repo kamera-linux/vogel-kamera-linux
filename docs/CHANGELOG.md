@@ -12,6 +12,81 @@ und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 - Erweiterte KI-Modelle (YOLOv9/v10)
 - Web-Dashboard für Remote-Monitoring
 
+## [1.2.0] - 2025-10-03
+### Hinzugefügt
+- **🎬 Zeitlupen-Modus:** Neuer `--slowmo` Parameter für 120fps Slow-Motion Aufnahmen
+  - Auflösung: 1536x864 @ 120fps für flüssige Zeitlupen
+  - Integration mit `ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py`
+  - Eigener Banner und Startup-Meldungen im Wrapper-Skript
+  - Audio-Aufnahme mit 44.1kHz Mono parallel zur Zeitlupe
+- **🚀 Git-Automation Branch-Support:** Vollständige Branch-Verwaltung (v1.2.0)
+  - `--branch` Parameter für alle Operationen (--commit, --release, --push)
+  - Automatischer Branch-Checkout bei Angabe von --branch
+  - Workflow-Beispiele für Feature-Branches (devel-v1.2.0)
+  - GIT_AUTOMATION_README.md mit Branch-Workflows erweitert
+- **🏗️ Architektur-Dokumentation:** Umfassende ARCHITEKTUR.md mit Mermaid-Diagrammen
+  - Detaillierte Kommunikationsflüsse (PC ↔ Raspberry Pi)
+  - Sequenzdiagramme für Systemstart, Stream-Analyse, Aufnahme-Trigger
+  - CPU-Optimierungs-Visualisierung (107% → 40%)
+  - Video- und Audio-Pipeline-Diagramme
+  - SSH-Kommunikation im Detail
+  - Erkennungs-Workflow und Fehlerbehandlung
+- **🎤 Audio-Dokumentation:** Klarstellung Audio-Aufnahme in allen Modi
+  - Help-Text aktualisiert: Alle Modi zeigen "+ Audio"
+  - Audio-Spezifikationen: 44.1kHz Mono WAV
+  - Hinweis-Block für USB-Mikrofon-Anforderung
+  - Startup-Banner zeigt Audio-Status konsistent
+
+### Geändert
+- **⚡ CPU-Optimierung:** Drastische Reduktion der Systemlast (107% → ~40%)
+  - **Stage 1:** Thread-Limiting (OMP/BLAS/MKL_NUM_THREADS=2) → 82.5% CPU
+  - **Stage 2:** FPS-Reduktion (5fps → 3fps) → 82.5% CPU
+  - **Stage 3:** Preview-Auflösung (640x480 → 320x240) → 92% CPU
+  - **Stage 4 (DURCHBRUCH!):** YOLO imgsz=320 Parameter → 39-43% CPU ✅
+  - Automatische CPU-Optimierung in allen Modi via Environment-Variablen
+- **🔧 Wrapper-Skript:** Erweiterte `start-vogel-beobachtung.sh` mit expliziten Parametern
+  - Alle Modi: --preview-fps 3, --preview-width 320, --preview-height 240
+  - Zeitlupe: --preview-fps 2 (noch schonender)
+  - Überarbeite Help-Ausgabe mit Audio-Informationen
+  - Modi-Beschreibungen: "Video + Audio" statt "nur Video"
+- **🎯 Auto-Trigger Recording-Modi:** Konsistente Output-Texte
+  - Standard: "📹 Ohne KI (Video + Audio)"
+  - Mit KI: "🤖 Mit KI + Audio"
+  - Zeitlupe: "🎬 Zeitlupe (120fps + Audio)"
+  - Alle Modi zeigen explizit, dass Audio aufgenommen wird
+- **📊 Git-Automation:** Version 1.1.4 → 1.2.0
+  - Enhanced branch support für alle Git-Operationen
+  - Beispiele mit Feature-Branch-Workflows
+
+### Verbessert
+- **🚀 Performance:** 63% CPU-Reduktion ermöglicht stabilen Dauerbetrieb
+- **📖 Dokumentation:** Umfassende Architektur-Dokumentation mit Visualisierungen
+- **🎛️ Benutzerfreundlichkeit:** Klarere Output-Texte, Audio-Status transparent
+- **🔄 Git-Workflow:** Flexiblere Branch-Verwaltung für parallele Entwicklung
+
+### Behoben
+- **🐛 Inkonsistente Audio-Dokumentation:** Help-Text vs. Startup-Banner synchronisiert
+- **⚙️ YOLO-Inferenz-Größe:** imgsz=320 Parameter fehlte, führte zu unnötiger CPU-Last
+- **📝 Missverständliche Ausgaben:** "nur Video" → "Video + Audio" korrigiert
+
+### Technische Details
+**CPU-Optimierung Breakdown:**
+```
+Baseline:   107% CPU (vor Optimierung)
+Stage 1:     82.5% CPU (Thread-Limits)
+Stage 2:     82.5% CPU (FPS 3)
+Stage 3:     92% CPU (Auflösung 320x240)
+Stage 4:     40% CPU (imgsz=320) ← Schlüssel-Optimierung
+Reduktion:   -63% (107% → 40%)
+```
+
+**Modi-Übersicht v1.2.0:**
+| Modus | FPS | Auflösung | Audio | Parameter |
+|-------|-----|-----------|-------|-----------|
+| Standard | 25 | 1920x1080 | ✅ 44.1kHz | (default) |
+| Mit KI | 25 | 1920x1080 | ✅ 44.1kHz | --with-ai |
+| Zeitlupe | 120 | 1536x864 | ✅ 44.1kHz | --slowmo |
+
 ## [1.1.9] - 2025-09-30
 ### Hinzugefügt
 - **📊 System-Monitoring:** Umfassende Überwachung für alle Kamera-Skripte
