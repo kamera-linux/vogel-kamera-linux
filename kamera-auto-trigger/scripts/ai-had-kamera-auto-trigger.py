@@ -21,6 +21,12 @@ Verwendung:
     Strg+C zum sauberen Beenden
 """
 
+# CPU-Optimierung: Begrenze Thread-Nutzung für AI-Inferenz
+import os
+os.environ['OMP_NUM_THREADS'] = '2'  # OpenMP auf 2 Threads begrenzen
+os.environ['OPENBLAS_NUM_THREADS'] = '2'  # OpenBLAS auf 2 Threads begrenzen
+os.environ['MKL_NUM_THREADS'] = '2'  # Intel MKL auf 2 Threads begrenzen
+
 import paramiko
 from scp import SCPClient
 from datetime import datetime, timedelta
@@ -105,7 +111,7 @@ parser.add_argument('--recording-slowmo', action='store_true',
                     help='Zeitlupen-Aufnahme (120fps, 1536x864). Überschreibt --recording-ai und Auflösungsparameter')
 parser.add_argument('--cooldown', type=int, default=30, help='Wartezeit zwischen Aufnahmen in Sekunden (default: 30)')
 parser.add_argument('--trigger-threshold', type=float, default=0.45, help='AI-Schwelle für Trigger (default: 0.45)')
-parser.add_argument('--preview-fps', type=int, default=5, help='FPS für Monitoring-Modus (default: 5)')
+parser.add_argument('--preview-fps', type=int, default=3, help='FPS für Monitoring-Modus (default: 3, optimiert für CPU-Last)')
 parser.add_argument('--preview-width', type=int, default=640, help='Breite für Monitoring-Vorschau (default: 640)')
 parser.add_argument('--preview-height', type=int, default=480, help='Höhe für Monitoring-Vorschau (default: 480)')
 parser.add_argument('--max-cpu-temp', type=float, default=70.0, help='Maximale CPU-Temperatur in °C (default: 70)')

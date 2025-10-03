@@ -120,6 +120,9 @@ Drücke **Strg+C** im Terminal - das System beendet sich sauber und räumt auf.
 
 # Zeitlupen-Aufnahme (120fps, 1536x864)
 ./run-auto-trigger.sh --recording-slowmo --trigger-duration 1
+
+# CPU-Optimierung: Niedrigere FPS für weniger Last
+./run-auto-trigger.sh --preview-fps 2  # Minimal für sehr langsame Systeme
 ```
 
 ## 📁 Verzeichnisstruktur
