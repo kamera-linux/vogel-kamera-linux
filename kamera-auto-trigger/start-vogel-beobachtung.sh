@@ -161,8 +161,9 @@ echo ""
 echo -e "${CYAN}⚙️  EINSTELLUNGEN:${NC}"
 echo ""
 echo "  📹 Aufnahme-Dauer:      1 Minute"
-echo "  🎯 Erkennungs-Schwelle: 0.50 (ausgewogen)"
-echo "  ⏱️  Cooldown:           15 Sekunden"
+echo "  🎯 Erkennungs-Schwelle: 0.38 (optimiert für CPU-Limit)"
+echo "  📺 Preview-Auflösung:   400x300 @ 4fps (CPU-optimiert)"
+echo "  ⏱️  Cooldown:           30 Sekunden"
 echo "  🤖 Trigger-AI:          bird-species (nur Vögel)"
 
 if [ "$WITH_AI" = true ]; then
@@ -235,38 +236,38 @@ echo -e "${YELLOW}   (Drücke CTRL+C zum Beenden)${NC}"
 echo ""
 
 if [ "$SLOWMO" = true ]; then
-    # ZEITLUPE (120fps, 1536x864) mit aggressiver CPU-Optimierung
+    # ZEITLUPE (120fps, 1536x864) - hier etwas konservativer (Zeitlupe ist CPU-intensiv)
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
-        --trigger-threshold 0.50 \
-        --cooldown 15 \
+        --trigger-threshold 0.40 \
+        --cooldown 30 \
         --status-interval 5 \
         --recording-slowmo \
-        --preview-fps 2 \
-        --preview-width 320 \
-        --preview-height 240
+        --preview-fps 4 \
+        --preview-width 400 \
+        --preview-height 300
 elif [ "$WITH_AI" = true ]; then
-    # MIT KI-Aufnahme mit CPU-Optimierung
+    # MIT KI-Aufnahme mit CPU-optimierten Parametern
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
-        --trigger-threshold 0.50 \
-        --cooldown 15 \
+        --trigger-threshold 0.40 \
+        --cooldown 30 \
         --status-interval 5 \
         --recording-ai \
         --recording-ai-model bird-species \
-        --preview-fps 3 \
-        --preview-width 320 \
-        --preview-height 240
+        --preview-fps 4 \
+        --preview-width 400 \
+        --preview-height 300
 else
-    # OHNE KI-Aufnahme (Standard) mit CPU-Optimierung
+    # OHNE KI-Aufnahme (Standard) mit CPU-optimierten Parametern
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
-        --trigger-threshold 0.50 \
-        --cooldown 15 \
+        --trigger-threshold 0.40 \
+        --cooldown 30 \
         --status-interval 5 \
-        --preview-fps 3 \
-        --preview-width 320 \
-        --preview-height 240
+        --preview-fps 4 \
+        --preview-width 400 \
+        --preview-height 300
 fi
 
 # Cleanup wird durch trap automatisch ausgeführt
