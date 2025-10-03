@@ -313,12 +313,12 @@ def trigger_recording():
             except Exception as e:
                 print(f"   ⚠️  Konnte Stream auf Raspberry Pi nicht stoppen: {e}")
         
-        # Wähle Aufnahme-Skript basierend auf Modus
+        # Verwende immer das AI-Modul-Skript (mit --ai-modul on/off)
         script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py')
         
         if args.recording_ai:
             # MIT KI: Objekterkennung während Aufnahme
-            recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py')
             print(f"   🤖 Modus: Aufnahme MIT KI ({args.recording_ai_model})")
             
             cmd = [
@@ -338,7 +338,6 @@ def trigger_recording():
                 cmd.extend(['--ai-model-path', args.ai_model_path])
         else:
             # OHNE KI: Nur Video-Aufnahme (schneller, weniger CPU-Last)
-            recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-single.py')
             print(f"   📹 Modus: Aufnahme OHNE KI (nur Video)")
             
             cmd = [
@@ -348,7 +347,9 @@ def trigger_recording():
                 '--width', str(args.width),
                 '--height', str(args.height),
                 '--rotation', str(args.rotation),
-                '--cam', str(args.cam)
+                '--cam', str(args.cam),
+                '--ai-modul', 'off',  # KI deaktiviert = nur Video
+                '--no-stream-restart'  # Auto-Trigger managed Stream-Neustart selbst
             ]
         
         # Führe Aufnahme-Skript aus
