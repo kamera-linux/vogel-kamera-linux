@@ -40,7 +40,25 @@ git commit -m "ci: Add automated YouTube stats update workflow"
 git push origin devel-v1.2.0
 ```
 
-### Schritt 3: Erste Ausführung (Optional)
+### Schritt 3: API-Key testen (Lokal)
+
+**Teste deinen API-Key bevor du ihn in GitHub einfügst:**
+
+```bash
+# Setze Umgebungsvariable
+export YOUTUBE_API_KEY='AIzaSy...'
+
+# Führe Test-Skript aus
+./tools/test_api_key.sh
+```
+
+**Erwartete Ausgabe:**
+```
+✅ Test erfolgreich!
+Der API Key funktioniert korrekt.
+```
+
+### Schritt 4: Erste Ausführung (Optional)
 
 **Manueller Test** über GitHub UI:
 
@@ -155,15 +173,32 @@ GitHub → Settings → Notifications → Actions
 
 ## 🔧 Troubleshooting
 
-### Problem: "Authentication failed"
+### Problem: "YOUTUBE_API_KEY secret ist nicht gesetzt"
 
-**Ursache:** YouTube API Key fehlt oder ist ungültig
+**Ursache:** YouTube API Key fehlt in GitHub Secrets
 
 **Lösung:**
 ```bash
-1. GitHub → Settings → Secrets → Actions
-2. Prüfe: YOUTUBE_API_KEY existiert
-3. Falls falsch: Bearbeiten/Neu erstellen
+1. GitHub → Settings → Secrets and variables → Actions
+2. Klicke "New repository secret"
+3. Name: YOUTUBE_API_KEY
+4. Value: Dein YouTube API Key (AIzaSy...)
+5. Klicke "Add secret"
+```
+
+**Wichtig:** Der Secret-Name MUSS exakt `YOUTUBE_API_KEY` lauten (Groß-/Kleinschreibung beachten).
+
+### Problem: "Authentication failed" oder "Invalid API Key"
+
+**Ursache:** YouTube API Key ist ungültig oder hat keine Berechtigung
+
+**Lösung:**
+```bash
+1. Google Cloud Console → APIs & Services → Credentials
+2. Prüfe API Key Status
+3. Prüfe: "YouTube Data API v3" ist aktiviert
+4. Falls nötig: Erstelle neuen API Key
+5. Aktualisiere GitHub Secret mit neuem Key
 ```
 
 ### Problem: "Quota exceeded"

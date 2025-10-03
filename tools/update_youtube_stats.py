@@ -366,12 +366,23 @@ API-Key erhalten:
         print("   Installiere mit: pip install google-api-python-client")
         sys.exit(1)
     
-    # Hole API-Key
+    # Hole API-Key (Priorität: CLI-Argument > Umgebungsvariable)
     api_key = args.api_key or os.getenv('YOUTUBE_API_KEY')
+    
+    # Debug: Zeige Quellen
+    if args.api_key:
+        print("🔑 API-Key Quelle: CLI-Argument\n")
+    elif os.getenv('YOUTUBE_API_KEY'):
+        print("🔑 API-Key Quelle: Umgebungsvariable YOUTUBE_API_KEY\n")
+    
     if not api_key:
         print("❌ Kein YouTube API Key gefunden!")
-        print("   Verwende: --api-key YOUR_KEY")
-        print("   Oder setze: export YOUTUBE_API_KEY='YOUR_KEY'")
+        print("\n📋 Möglichkeiten:")
+        print("   1. CLI: python3 tools/update_youtube_stats.py --api-key YOUR_KEY")
+        print("   2. ENV: export YOUTUBE_API_KEY='YOUR_KEY'")
+        print("   3. GitHub Actions: Setze YOUTUBE_API_KEY Secret in Repository Settings")
+        print("\n🔍 Aktuelle Umgebungsvariablen:")
+        print(f"   YOUTUBE_API_KEY: {'✅ gesetzt' if os.getenv('YOUTUBE_API_KEY') else '❌ nicht gesetzt'}")
         sys.exit(1)
     
     print(f"""

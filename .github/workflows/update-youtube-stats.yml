@@ -32,6 +32,26 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
+          # Prüfe ob API-Key gesetzt ist
+          if [ -z "${YOUTUBE_API_KEY}" ]; then
+            echo "❌ YOUTUBE_API_KEY secret ist nicht gesetzt!"
+            echo ""
+            echo "📋 Setup-Anleitung:"
+            echo "1. Gehe zu: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "2. Klicke 'New repository secret'"
+            echo "3. Name: YOUTUBE_API_KEY"
+            echo "4. Value: Dein YouTube API Key"
+            echo "5. Klicke 'Add secret'"
+            echo ""
+            echo "📚 Dokumentation: tools/README_YOUTUBE_STATS.md"
+            exit 1
+          fi
+          
+          # Zeige dass API-Key verfügbar ist (ohne Wert zu zeigen)
+          echo "✅ YOUTUBE_API_KEY ist gesetzt (${#YOUTUBE_API_KEY} Zeichen)"
+          echo ""
+          
+          # Führe Update aus
           python3 tools/update_youtube_stats.py
       
       - name: Check for Changes
