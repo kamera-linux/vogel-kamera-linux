@@ -303,8 +303,32 @@ def update_readme(video_table: str, dry_run: bool = False) -> bool:
             print("   <!-- YOUTUBE_VIDEOS_END -->")
             return False
         
-        # Erstelle neue Video-Sektion
-        video_section = f"<!-- YOUTUBE_VIDEOS_START -->\n**📺 Aktuelle Videos:**\n\n{video_table}\n\n*Automatisch aktualisiert: {datetime.now().strftime('%d.%m.%Y %H:%M')} Uhr*\n<!-- YOUTUBE_VIDEOS_END -->"
+        # Erstelle neue Video-Sektion mit Zeitstempel (IMMER aktualisiert)
+        # Format: DD.MM.YYYY HH:MM Uhr (ohne Sekunden für bessere Lesbarkeit)
+        timestamp = datetime.now().strftime('%d.%m.%Y %H:%M')
+        
+        # Prüfe ob sich Video-Daten geändert haben (für Kommentar)
+        old_video_section = re.search(
+            r'<!-- YOUTUBE_VIDEOS_START -->.*?<!-- YOUTUBE_VIDEOS_END -->',
+            content,
+            flags=re.DOTALL
+        )
+        
+        # Vergleiche nur die Tabelle (ohne Zeitstempel)
+        videos_changed = True
+        if old_video_section:
+            old_table = re.search(r'\| \*\*.*?\| Views', old_video_section.group(), flags=re.DOTALL)
+            new_table = re.search(r'\| \*\*.*?\| Views', video_table, flags=re.DOTALL)
+            if old_table and new_table:
+                videos_changed = old_table.group() != new_table.group()
+        
+        # Erstelle Footer mit Status
+        if videos_changed:
+            footer = f"*Automatisch aktualisiert: {timestamp} Uhr*\n"
+        else:
+            footer = f"*Automatisch aktualisiert: {timestamp} Uhr (keine neuen Daten)*\n"
+        
+        video_section = f"<!-- YOUTUBE_VIDEOS_START -->\n**📺 Aktuelle Videos:**\n\n{video_table}\n\n{footer}<!-- YOUTUBE_VIDEOS_END -->"
         
         # Ersetze Video-Sektion
         new_content = re.sub(
