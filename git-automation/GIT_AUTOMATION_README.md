@@ -53,6 +53,11 @@ python3 git_automation.py --status
 python3 git_automation.py --push
 ```
 
+### **Spezifischen Branch pushen:**
+```bash
+python3 git_automation.py --push --branch devel-v1.2.0
+```
+
 ### **Alle Branches pushen:**
 ```bash
 python3 git_automation.py --push-all
@@ -65,12 +70,20 @@ python3 git_automation.py --tag v1.1.4
 
 ### **Committen mit Nachricht:**
 ```bash
+# Auf aktuellem Branch
 python3 git_automation.py --commit "🔧 Feature: Neue Funktionalität hinzugefügt"
+
+# Auf spezifischem Branch
+python3 git_automation.py --commit "✨ Feature" --branch devel-v1.2.0
 ```
 
 ### **Vollständiger Release-Workflow:**
 ```bash
+# Auf aktuellem Branch
 python3 git_automation.py --release v1.1.4
+
+# Auf spezifischem Branch
+python3 git_automation.py --release v1.2.0 --branch devel-v1.2.0
 ```
 
 ### **Nur lokale Operationen (ohne Push):**
@@ -160,23 +173,42 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 - ✅ **Temporäre Dateien** werden sicher gelöscht
 - ✅ **Passphrase-Überschreibung** im RAM
 
-## 📊 Beispiel-Workflow
+## 📊 Beispiel-Workflows
 
+### **Workflow 1: Feature auf Development-Branch**
 ```bash
 # 1. Git-Status überprüfen
 python3 git_automation.py --status
 
-# 2. Neue Features entwickeln und committen
-python3 git_automation.py --commit "✨ Neue Feature: GitHub Discussions"
+# 2. Auf devel-v1.2.0 Branch committen
+python3 git_automation.py --commit "✨ Feature: Zeitlupen-Modus" --branch devel-v1.2.0
 
-# 3. Alle Branches aktualisieren
+# 3. Spezifischen Branch pushen
+python3 git_automation.py --push --branch devel-v1.2.0
+```
+
+### **Workflow 2: Release auf spezifischem Branch**
+```bash
+# 1. Vollständiger Release auf devel-v1.2.0
+python3 git_automation.py --release v1.2.0 --branch devel-v1.2.0
+
+# 2. Tag für Version erstellen
+python3 git_automation.py --tag v1.2.0
+
+# 3. Oder alles pushen
 python3 git_automation.py --push-all
+```
 
-# 4. Tag für neue Version erstellen
-python3 git_automation.py --tag v1.1.4
+### **Workflow 3: Multi-Branch Development**
+```bash
+# Feature auf Development-Branch
+python3 git_automation.py --commit "✨ Neue Feature" --branch devel-v1.2.0
 
-# 5. Oder kompletter Release-Workflow
-python3 git_automation.py --release v1.1.4
+# Bugfix auf Main-Branch
+python3 git_automation.py --commit "🐛 Bugfix" --branch main
+
+# Kompletter Release
+python3 git_automation.py --release v1.2.0 --branch devel-v1.2.0
 ```
 
 ## ⚠️ Wichtige Hinweise
