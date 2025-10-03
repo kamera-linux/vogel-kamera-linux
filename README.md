@@ -306,7 +306,7 @@ python python-skripte/config.py
 python python-skripte/ai-had-audio-remote-param-vogel-libcamera-single.py --duration 1
 
 # Video mit KI (1 Minute, HD)
-python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 1 --width 1920 --height 1080 --ai-modul on
+python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 1 --width 1920 --height 1080 --ai-modul on --no-stream-restart
 ```
 
 ### 4. Version prüfen
@@ -351,7 +351,8 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --duration 5 \
     --width 1920 \
-    --height 1080
+    --height 1080 \
+    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
 ```
 
 ### Mit KI-Objekterkennung
@@ -360,7 +361,8 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --duration 5 \
     --width 1920 \
     --height 1080 \
-    --ai-modul on
+    --ai-modul on \
+    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
 ```
 
 ### Erweiterte Konfiguration
@@ -374,7 +376,8 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --rotation 180 \
     --fps 30 \
     --cam 0 \
-    --ai-modul on
+    --ai-modul on \
+    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
 ```
 
 ### Parameter-Übersicht

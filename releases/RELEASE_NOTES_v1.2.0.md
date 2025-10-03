@@ -253,8 +253,11 @@ docs/
 
 ### python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py
 - **Kein** Stream-Restart im Fehlerfall (für Auto-Trigger)
-- `--no-stream-restart` Flag hinzugefügt
+- `--no-stream-restart` Flag hinzugefügt und implementiert (v1.2.0)
 - Stream-Neustart nur wenn Skript vorhanden
+- Parameter empfohlen für On-Demand Aufnahmen (spart 2 Sekunden)
+- Auto-Trigger setzt Parameter automatisch
+- Dokumentation: [`docs/PARAMETER-NO-STREAM-RESTART.md`](../docs/PARAMETER-NO-STREAM-RESTART.md)
 
 ---
 
