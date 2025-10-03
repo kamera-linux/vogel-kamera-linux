@@ -4,12 +4,17 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 1.1.9** - "System-Monitoring und Performance-Optimierung" 
-- **Release Notes:** [RELEASE_NOTES_v1.1.9.md](../RELEASE_NOTES_v1.1.9.md) *(im Root-Verzeichnis)*
-- **Release Date:** 2025-09-30
-- **Features:** System-Monitoring, CPU-Load-Überwachung, Performance-Optimierung für alle Kamera-Modi
+**Version 1.2.0** - "Auto-Trigger System & Stream-Management" 
+- **Release Notes:** [RELEASE_NOTES_v1.2.0.md](RELEASE_NOTES_v1.2.0.md)
+- **Release Date:** 2025-10-01
+- **Features:** Auto-Trigger System, Preview-Stream (RTSP), Trigger-Duration Logic, Stream-Management, Network-Diagnostics
 
 ## 📚 Archivierte Versionen
+
+### Version 1.1.9
+- **Release Notes:** [v1.1.9/RELEASE_NOTES_v1.1.9.md](v1.1.9/RELEASE_NOTES_v1.1.9.md)
+- **Release Date:** 2025-09-30
+- **Features:** System-Monitoring, CPU-Load-Überwachung, Performance-Optimierung
 
 ### Version 1.1.8
 - **Release Notes:** [v1.1.8/RELEASE_NOTES_v1.1.8.md](v1.1.8/RELEASE_NOTES_v1.1.8.md)
@@ -52,8 +57,8 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🔄 Versionierungsrichtlinien
 
-**Aktueller Release:** Bleibt im Root-Verzeichnis für einfachen Zugang
+**Aktueller Release:** In `/releases/` Verzeichnis
 **Archivierte Releases:** Organisiert in `/releases/vX.X.X/` Struktur  
 **Format:** Semantic Versioning (MAJOR.MINOR.PATCH)
 
-*Bei Release von v1.1.9 wird v1.1.8 automatisch in dieses Archiv verschoben.*
+*Bei Release von v1.3.0 wird v1.2.0 automatisch in ein Archiv verschoben.*

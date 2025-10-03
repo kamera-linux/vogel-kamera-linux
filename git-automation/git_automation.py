@@ -428,16 +428,19 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='🔐 Sichere Git-Automatisierung v1.1.4',
+        description='🔐 Sichere Git-Automatisierung v1.2.0',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Beispiele:
-  %(prog)s --push                    # Push aktuellen Branch
-  %(prog)s --push-all               # Push alle Branches
-  %(prog)s --tag v1.1.4             # Erstelle und pushe Tag
-  %(prog)s --release v1.1.4         # Vollständiger Release-Workflow
-  %(prog)s --commit "Fix bug"       # Add, Commit und Push
-  %(prog)s --status                 # Git Status anzeigen
+  %(prog)s --push                          # Push aktuellen Branch
+  %(prog)s --push --branch devel-v1.2.0    # Push spezifischen Branch
+  %(prog)s --push-all                      # Push alle Branches
+  %(prog)s --tag v1.2.0                    # Erstelle und pushe Tag
+  %(prog)s --release v1.2.0                # Release auf aktuellem Branch
+  %(prog)s --release v1.2.0 --branch devel-v1.2.0  # Release auf spezifischem Branch
+  %(prog)s --commit "Fix bug"              # Commit und Push auf aktuellem Branch
+  %(prog)s --commit "Feature" --branch devel-v1.2.0  # Commit auf spezifischem Branch
+  %(prog)s --status                        # Git Status anzeigen
         """
     )
     
@@ -448,7 +451,7 @@ Beispiele:
     action_group.add_argument('--push-all', action='store_true',
                              help='Push alle lokalen Branches')
     action_group.add_argument('--tag', metavar='VERSION',
-                             help='Erstelle und pushe Tag (z.B. v1.1.4)')
+                             help='Erstelle und pushe Tag (z.B. v1.2.0)')
     action_group.add_argument('--release', metavar='VERSION',
                              help='Vollständiger Release-Workflow mit Tag')
     action_group.add_argument('--commit', metavar='MESSAGE',
@@ -467,7 +470,7 @@ Beispiele:
     args = parser.parse_args()
     
     try:
-        print("🔐 Git-Automatisierung v1.1.4")
+        print("🔐 Git-Automatisierung v1.2.0")
         print("=" * 40)
         
         # Git-Automation initialisieren
@@ -532,7 +535,20 @@ Beispiele:
         elif args.release:
             # Vollständiger Release-Workflow
             version = args.release
-            print(f"🚀 Vollständiger Release-Workflow für '{version}'...")
+            
+            # Branch bestimmen
+            success, current_branch = automation.run_command("git branch --show-current", cwd=automation.repo_path)
+            branch = args.branch or current_branch.strip()
+            
+            # Ggf. zu spezifischem Branch wechseln
+            if args.branch and args.branch != current_branch.strip():
+                print(f"🔄 Wechsle zu Branch '{branch}'...")
+                success, output = automation.run_command(f"git checkout {branch}", cwd=automation.repo_path)
+                if not success:
+                    print(f"❌ Branch-Wechsel fehlgeschlagen: {output}")
+                    return
+            
+            print(f"🚀 Vollständiger Release-Workflow für '{version}' auf Branch '{branch}'...")
             
             # 1. Add und Commit alle Änderungen
             success, status = automation.run_command("git status --porcelain", cwd=automation.repo_path)
@@ -548,11 +564,8 @@ Beispiele:
                     print(f"❌ Commit fehlgeschlagen: {output}")
                     return
             
-            # 2. Push aktuellen Branch
+            # 2. Push Branch
             if not args.no_push:
-                success, current_branch = automation.run_command("git branch --show-current", cwd=automation.repo_path)
-                branch = current_branch.strip()
-                
                 print(f"🚀 Push Branch '{branch}'...")
                 success, output = automation.run_command(f"git push origin {branch}", cwd=automation.repo_path)
                 if success:
@@ -583,7 +596,20 @@ Beispiele:
         elif args.commit:
             # Add, Commit und Push
             commit_msg = args.commit
-            print(f"📝 Add, Commit und Push: '{commit_msg}'")
+            
+            # Branch bestimmen
+            success, current_branch = automation.run_command("git branch --show-current", cwd=automation.repo_path)
+            branch = args.branch or current_branch.strip()
+            
+            # Ggf. zu spezifischem Branch wechseln
+            if args.branch and args.branch != current_branch.strip():
+                print(f"� Wechsle zu Branch '{branch}'...")
+                success, output = automation.run_command(f"git checkout {branch}", cwd=automation.repo_path)
+                if not success:
+                    print(f"❌ Branch-Wechsel fehlgeschlagen: {output}")
+                    return
+            
+            print(f"�📝 Add, Commit und Push auf Branch '{branch}': '{commit_msg}'")
             
             # Add all changes (vom Repository-Root)
             automation.run_command("git add .", cwd=automation.repo_path)
@@ -594,10 +620,10 @@ Beispiele:
                 print(f"✅ Commit: {commit_msg}")
                 
                 if not args.no_push:
-                    # Push (vom Repository-Root)
-                    success, output = automation.run_command("git push", cwd=automation.repo_path)
+                    # Push mit Branch-Namen (vom Repository-Root)
+                    success, output = automation.run_command(f"git push origin {branch}", cwd=automation.repo_path)
                     if success:
-                        print("✅ Push erfolgreich!")
+                        print(f"✅ Branch '{branch}' erfolgreich gepusht!")
                     else:
                         print(f"❌ Push fehlgeschlagen: {output}")
             else:

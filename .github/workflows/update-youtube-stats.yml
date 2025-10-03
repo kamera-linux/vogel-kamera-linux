@@ -1,0 +1,81 @@
+name: Update YouTube Statistics
+
+on:
+  schedule:
+    # Täglich um 06:00 UTC (08:00 Uhr deutscher Zeit Sommer / 07:00 Winter)
+    - cron: '0 6 * * *'
+  
+  # Erlaubt manuelles Triggern über GitHub UI
+  workflow_dispatch:
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install Dependencies
+        run: |
+          pip install google-api-python-client python-dotenv
+      
+      - name: Update YouTube Statistics
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: |
+          # Prüfe ob API-Key gesetzt ist
+          if [ -z "${YOUTUBE_API_KEY}" ]; then
+            echo "❌ YOUTUBE_API_KEY secret ist nicht gesetzt!"
+            echo ""
+            echo "📋 Setup-Anleitung:"
+            echo "1. Gehe zu: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "2. Klicke 'New repository secret'"
+            echo "3. Name: YOUTUBE_API_KEY"
+            echo "4. Value: Dein YouTube API Key"
+            echo "5. Klicke 'Add secret'"
+            echo ""
+            echo "📚 Dokumentation: tools/README_YOUTUBE_STATS.md"
+            exit 1
+          fi
+          
+          # Zeige dass API-Key verfügbar ist (ohne Wert zu zeigen)
+          echo "✅ YOUTUBE_API_KEY ist gesetzt (${#YOUTUBE_API_KEY} Zeichen)"
+          echo ""
+          
+          # Führe Update aus
+          python3 tools/update_youtube_stats.py
+      
+      - name: Check for Changes
+        id: git-check
+        run: |
+          git diff --exit-code README.md || echo "changed=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and Push Changes
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add README.md
+          git commit -m "docs: Update YouTube video statistics [skip ci]"
+          git push
+      
+      - name: Summary
+        run: |
+          echo "## 📊 YouTube Stats Update" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.git-check.outputs.changed }}" == "true" ]; then
+            echo "✅ README.md wurde aktualisiert" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ Keine Änderungen - README.md bereits aktuell" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🕐 Nächste Ausführung: Morgen um 06:00 UTC" >> $GITHUB_STEP_SUMMARY

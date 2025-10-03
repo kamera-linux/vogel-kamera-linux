@@ -1,55 +1,77 @@
 # 🐦 Vogel-Kamera-Linux
 
-[![Version](https://img.shields.io/badge/Version-v1.1.9-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.1.9)
+[![Version](https://img.shields.io/badge/Version-v1.2.0-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.2.0)
 [![GitHub Issues](https://img.shields.io/github/issues/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/pulls)
 [![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)
 
 ![Komplettes Vogel-Kamera System](assets/vogelhaus-kamera-komplett.png)
 
-**Professionelles Vogelhaus mit integrierter Raspberry Pi Kamera - Komplettsystem bereit für den Einsatz**
+**🐦 Professionelles Vogel-Beobachtungssystem mit KI-gestützter Objekterkennung**
 
-Ferngesteuerte Kameraüberwachung für Vogelhäuser mit KI-gestützter Objekterkennung.
+`vogel-kamera-linux` ist ein **Open-Source-Projekt** zur ferngesteuerten Überwachung von Vogelhäusern mittels Raspberry Pi 5 Kamera. Das System kombiniert hochauflösende Video-/Audio-Aufnahmen mit **YOLOv8 KI-Erkennung** für automatische Vogelerkennung und -aufzeichnung.
 
-### Basis-Aufnahme
+### 🚀 Quickstart
 ```bash
+# Automatische Vogelerkennung mit KI-Trigger
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+
+# Manuelle HD-Aufnahme mit KI
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-    --duration 5 \
-    --width 1920 \
-    --height 1080 \
-    --ai-modul on
+    --duration 5 --width 1920 --height 1080 --ai-modul on
 ```
 
-> 📺 **Beispielaufnahmen verfügbar:** [Vogel-Kamera Aufnahmen](https://www.youtube.com/@vogel-kamera-linux) - Echte Aufnahmen mit der Kamera
+> 📺 **Live-Demo:** [YouTube-Kanal](https://www.youtube.com/@vogel-kamera-linux) - Echte Aufnahmen vom vogel-kamera-linux System!
 
 ## 📖 Überblick
 
-Dieses Projekt ermöglicht die Fernsteuerung von Raspberry Pi-Kameras zur Überwachung von Vogelhäusern. Es bietet hochauflösende Video- und Audioaufnahmen mit KI-basierter Objekterkennung (YOLOv8) und automatischer Dateiorganisation.
+**vogel-kamera-linux** ist ein vollständiges Remote-Kamera-System für Naturbeobachtung, entwickelt für **Raspberry Pi 5** mit Python 3.11+. Das Projekt kombiniert moderne Kamera-Hardware (IMX708) mit fortgeschrittener KI-Objekterkennung (YOLOv8) für automatische Vogelerkennung.
+
+**🎯 Hauptanwendung:** Ferngesteuerte Vogelhaus-Überwachung mit automatischer Aufnahme bei Vogel-Erkennung, inklusive HD-Video (bis 4K), Zeitlupe (120fps) und synchroner Audio-Aufzeichnung über USB-Mikrofon.
 
 ### 🎬 YouTube-Kanal & Beispielaufnahmen
 
 [![YouTube Channel](https://img.shields.io/badge/📺_YouTube_Kanal-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@vogel-kamera-linux)
 
+**Echte Aufnahmen vom vogel-kamera-linux System!** Sehen Sie die Kamera in Aktion mit Live-Vogelerkennung, Zeitlupen-Aufnahmen und 4K-Videos aus unserem Vogelhaus.
+
 **📱 QR-Code für mobilen Zugriff:**
 
 ![YouTube QR Code](assets/qr-youtube-channel.png)
 
-| Beispielaufnahmen | Beschreibung |
-|-------------------|--------------|
-| 🐦 **Vogelerkennung Live** | Echte KI-Objekterkennung in Aktion |
-| ⚡ **Zeitlupe-Aufnahmen** | 120fps Slow-Motion Beispiele |
-| 🎥 **4K Aufnahmen** | Hochauflösende Vogelhaus-Videos |
-| 🎵 **Audio-Aufnahmen** | Synchrone Vogel-Audio Beispiele |
+<!-- YOUTUBE_VIDEOS_START -->
+**📺 Aktuelle Videos:**
 
-> 💡 **Hinweis:** Tutorial-Videos sind in Planung - aktuell zeigen wir echte Aufnahmen unserer Vogel-Kamera!
+| 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes |
+|----------|----------|----------|----------|----------|
+| [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 16 | 4 |
+| [**Vogelhaus mit Kleiber  (Futtersuche in Zeitlupe)**](https://www.youtube.com/watch?v=QALijFTA_s8) | 29.09.2025 | 5:07 | 26 | 4 |
+| [**Vogelhaus mit junge Haussperlinge**](https://www.youtube.com/watch?v=3na90KiJ-J8) | 06.06.2025 | 3:11 | 48 | 6 |
+| [**Vogelhaus mit Kohlmeise  (Am Futterspender in Zeit...**](https://www.youtube.com/watch?v=kFXR03Lv0X0) | 30.05.2025 | 7:23 | 26 | 6 |
+| [**Vogelhaus mit Kohlmeisen  (Fütterung Jungtiere mit...**](https://www.youtube.com/watch?v=sqvd99Pbubc) | 18.05.2025 | 3:22 | 36 | 6 |
+| [**Vogelhaus mit Kohlmeise  (Fütterung Jungtier mit 2...**](https://www.youtube.com/watch?v=vXWDleJ-18Q) | 17.05.2025 | 2:44 | 20 | 6 |
+| [**Vogelhaus mit Kernbeißer (2 Kameras)**](https://www.youtube.com/watch?v=dvCXPdMdNCg) | 27.04.2025 | 2:12 | 74 | 7 |
+| [**Vogelhaus mit Kernbeißer und Blaumeise (Vogel-Paar...**](https://www.youtube.com/watch?v=61Szkcp9hcM) | 23.04.2025 | 2:59 | 50 | 5 |
+| [**Vogelhaus mit Blaumeise, Kernbeißer und Kohlmeise ...**](https://www.youtube.com/watch?v=kElfd64dWrY) | 21.04.2025 | 4:16 | 94 | 7 |
+| [**Vogelhaus mit Blaumeise, Haussperling und Kohlmeis...**](https://www.youtube.com/watch?v=hjrYji0A9Hs) | 18.04.2025 | 3:04 | 63 | 6 |
+| [**Vogelhaus mit Blaumeise und Kohlmeise (Zeitlupe)**](https://www.youtube.com/watch?v=lshb68RrF_A) | 13.04.2025 | 5:11 | 72 | 7 |
+| [**Vogelhaus mit Blaumeisen, Rotkehlchen, Kernbeißer ...**](https://www.youtube.com/watch?v=6-OFxA__GL8) | 10.04.2025 | 5:05 | 106 | 7 |
+| [**Vogelhaus mit Kernbeißer, Blaumeise, Rotkehlchen, ...**](https://www.youtube.com/watch?v=MKb3yUKS_ww) | 09.04.2025 | 4:28 | 80 | 7 |
+| [**Vogelhaus mit Blaumeise, Rotkehlchen, Haussperling...**](https://www.youtube.com/watch?v=K0FhU73F6jo) | 08.04.2025 | 5:17 | 90 | 7 |
+
+*Automatisch aktualisiert: 03.10.2025 17:30 Uhr*
+<!-- YOUTUBE_VIDEOS_END -->
 
 ## ✨ Features
 
 - 🎥 **Hochauflösende Videoaufnahme** (bis zu 4K)
 - 🎵 **Synchrone Audioaufnahme** über USB-Mikrofon
 - 🤖 **KI-Objekterkennung** mit YOLOv8 und eigenen Vogelarten-Modellen
-- 📊 **System-Monitoring** mit CPU-Load und Temperaturüberwachung *(Neu in v1.1.9)*
-- ⚡ **Performance-Optimierung** für verschiedene Aufnahmemodi *(Neu in v1.1.9)*
+- 🎯 **Auto-Trigger System** mit automatischer Vogelerkennung *(Neu in v1.2.0)*
+- 📺 **Preview-Stream** (RTSP) für Live-Überwachung *(Neu in v1.2.0)*
+- 🌐 **Netzwerk-Diagnostics** für Performance-Analyse *(Neu in v1.2.0)*
+- 📊 **System-Monitoring** mit CPU-Load und Temperaturüberwachung *(Seit v1.1.9)*
+- ⚡ **Performance-Optimierung** für verschiedene Aufnahmemodi *(Seit v1.1.9)*
 - 🌐 **Remote-Steuerung** über SSH
 - 📁 **Automatische Dateiorganisation** nach Jahr/Woche
 - ⚙️ **Flexible Konfiguration** über .env-Dateien
@@ -163,7 +185,6 @@ python python-skripte/config.py
 vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
-├── RELEASE_NOTES_v1.1.9.md                                      # Aktuelle Release-Dokumentation
 ├── .gitignore                                                    # Git-Ignore-Regeln
 ├── config/                                                       # 🔧 Konfigurationsdateien
 │   └── requirements.txt                                          # Python-Abhängigkeiten
@@ -172,15 +193,39 @@ vogel-kamera-linux/
 │   ├── release_workflow.py                                     # Release-Automatisierung
 │   └── update_version.py                                       # Versions-Update-Skript
 ├── docs/                                                         # 📚 Dokumentation
-│   ├── CHANGELOG.md                                             # Versionshistorie
+│   ├── CHANGELOG.md                                             # Versionshistorie (v1.2.0)
+│   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur mit Mermaid-Diagrammen *(v1.2.0)*
+│   ├── PROJEKT-REORGANISATION.md                                # Projekt-Reorganisations-Dokumentation
 │   ├── SECURITY.md                                              # Sicherheitsrichtlinien
 │   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
 │   └── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
 ├── tools/                                                        # 🛠️ Test & Entwicklungstools
+│   ├── check_emojis.py                                          # Emoji-Validator für Markdown
 │   ├── automation_test.txt                                      # Automatisierungs-Tests
-│   └── test_ai_features.py                                      # AI-Feature Tests
+│   ├── test_ai_features.py                                      # AI-Feature Tests
+│   └── README.md                                                # Tools-Dokumentation
+├── network-tools/                                               # 🌐 Netzwerk-Diagnose-Tools *(v1.2.0)*
+│   ├── test-network-quality.py                                  # Netzwerk-Qualitäts-Test
+│   └── README.md                                                # Netzwerk-Tools Dokumentation
+├── kamera-auto-trigger/                                         # 🎯 Auto-Trigger System *(v1.2.0)*
+│   ├── start-vogel-beobachtung.sh                               # Interaktiver Wrapper
+│   ├── docs/                                                    # Auto-Trigger Dokumentation
+│   │   ├── QUICKSTART-AUTO-TRIGGER.md                           # Schnellstart-Anleitung
+│   │   ├── PREVIEW-STREAM-SETUP.md                              # Stream-Setup Guide
+│   │   ├── FIREWALL-SETUP-SUMMARY.md                            # Firewall-Konfiguration
+│   │   └── AUTO-TRIGGER-OVERVIEW.md                             # System-Überblick
+│   ├── tests/                                                   # Test-Skripte
+│   │   ├── guided-test.sh                                       # Interaktiver Test
+│   │   └── test-auto-trigger.sh                                 # Automatisierter Test
+│   └── README.md                                                # Auto-Trigger Dokumentation
+├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v1.2.0)*
+│   ├── start-rtsp-stream.sh                                     # RTSP-Stream Management
+│   ├── start-preview-stream.sh                                  # Preview-Stream (Legacy)
+│   ├── start-preview-stream-v2.sh                               # Preview-Stream v2
+│   └── start-preview-stream-watchdog.sh                         # Stream-Watchdog
 ├── releases/                                                     # 📋 Release-Dokumentation
 │   ├── README.md                                                # Release-Übersicht
+│   ├── RELEASE_NOTES_v1.2.0.md                                  # Aktuelle Release Notes *(v1.2.0)*
 │   └── vX.X.X/                                                  # Versionierte Release-Archive
 │       └── RELEASE_NOTES_vX.X.X.md                              # Archivierte Release-Notes
 ├── assets/                                                       # 📸 QR-Codes & Medien
@@ -223,6 +268,7 @@ vogel-kamera-linux/
     ├── ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py  # 🤖 Hauptskript mit KI
     ├── ai-had-audio-remote-param-vogel-libcamera-single.py            # 🎵 Audio-Aufnahme
     ├── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py         # ⚡ Zeitlupe-Aufnahmen
+    ├── ai-had-kamera-auto-trigger.py                                  # 🎯 Auto-Trigger System *(v1.2.0)*
     ├── remote_system_monitor.py                                       # 📊 Umfassendes System-Monitoring *(v1.1.9)*
     ├── quick_system_check.py                                          # ⚡ Schnelle System-Checks *(v1.1.9)*
     └── check_ai_models.py                                             # 🔍 AI-Modell-Validierung
@@ -260,18 +306,24 @@ python python-skripte/config.py
 python python-skripte/ai-had-audio-remote-param-vogel-libcamera-single.py --duration 1
 
 # Video mit KI (1 Minute, HD)
-python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 1 --width 1920 --height 1080 --ai-modul on
+python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 1 --width 1920 --height 1080 --ai-modul on --no-stream-restart
 ```
 
 ### 4. Version prüfen
 ```bash
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
-# Ausgabe: Vogel-Kamera-Linux v1.1.9
+# Ausgabe: Vogel-Kamera-Linux v1.2.0
 ```
 
-### 🆕 System-Überwachung (v1.1.9)
+### 🆕 Auto-Trigger System (v1.2.0)
 ```bash
-# Alle Skripte zeigen jetzt automatisch System-Status vor der Aufnahme:
+# Automatische Vogelerkennung mit KI-basiertem Trigger
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+
+# Oder direkt mit Python:
+python python-skripte/ai-had-kamera-auto-trigger.py --trigger-duration 2
+
+# System-Status (alle Skripte zeigen automatisch vor der Aufnahme):
 # 🌡️ CPU-Temperatur mit Warnstufen
 # 💾 Festplattenspeicher mit Auslastung
 # 🧠 Arbeitsspeicher-Anzeige
@@ -299,7 +351,8 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --duration 5 \
     --width 1920 \
-    --height 1080
+    --height 1080 \
+    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
 ```
 
 ### Mit KI-Objekterkennung
@@ -308,7 +361,8 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --duration 5 \
     --width 1920 \
     --height 1080 \
-    --ai-modul on
+    --ai-modul on \
+    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
 ```
 
 ### Erweiterte Konfiguration
@@ -322,7 +376,8 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
     --rotation 180 \
     --fps 30 \
     --cam 0 \
-    --ai-modul on
+    --ai-modul on \
+    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
 ```
 
 ### Parameter-Übersicht
@@ -344,6 +399,7 @@ python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 | `--ai-model-path` | Pfad zu eigenem AI-Modell *(v1.1.8)* | - | Dateipfad zu .json |
 | `--roi` | Region of Interest | - | x,y,w,h |
 | `--system-status` | Nur System-Status anzeigen *(v1.1.9)* | - | Flag ohne Wert |
+| `--no-stream-restart` | Preview-Stream nicht neu starten *(v1.2.0)* | - | Flag ohne Wert |
 
 ## 🔐 Git-Automatisierung
 
@@ -514,17 +570,48 @@ Bei Fragen oder Problemen:
 - 💬 **Diskussionen starten** in [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
 - 🐛 **Bugs melden** über [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
 
+## 📚 Dokumentation
+
+### Hauptdokumentation
+- **[docs/CHANGELOG.md](docs/CHANGELOG.md)** - Vollständige Versionshistorie mit allen Änderungen
+- **[docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)** - 🏗️ **NEU in v1.2.0!** Detaillierte Systemarchitektur mit Mermaid-Diagrammen
+  - Kommunikationsflüsse (PC ↔ Raspberry Pi)
+  - CPU-Optimierungs-Visualisierung (107% → 40%)
+  - Video- und Audio-Pipeline-Diagramme
+  - Erkennungs-Workflow und Fehlerbehandlung
+- **[docs/PROJEKT-REORGANISATION.md](docs/PROJEKT-REORGANISATION.md)** - Projekt-Reorganisations-Historie
+
+### Auto-Trigger System *(v1.2.0)*
+- **[kamera-auto-trigger/README.md](kamera-auto-trigger/README.md)** - Hauptdokumentation Auto-Trigger
+- **[kamera-auto-trigger/docs/QUICKSTART-AUTO-TRIGGER.md](kamera-auto-trigger/docs/QUICKSTART-AUTO-TRIGGER.md)** - 3-Minuten Quick-Start
+- **[kamera-auto-trigger/docs/AUTO-TRIGGER-DOKUMENTATION.md](kamera-auto-trigger/docs/AUTO-TRIGGER-DOKUMENTATION.md)** - Vollständige Feature-Dokumentation
+- **[kamera-auto-trigger/docs/AUTO-TRIGGER-OVERVIEW.md](kamera-auto-trigger/docs/AUTO-TRIGGER-OVERVIEW.md)** - System-Überblick
+
+### AI & Training
+- **[docs/AI-MODELLE-VOGELARTEN.md](docs/AI-MODELLE-VOGELARTEN.md)** - AI-Modell-Dokumentation
+- **[docs/ANLEITUNG-EIGENES-AI-MODELL.md](docs/ANLEITUNG-EIGENES-AI-MODELL.md)** - Training eigener Modelle
+
+### Sicherheit & Entwicklung
+- **[docs/SECURITY.md](docs/SECURITY.md)** - Sicherheitsrichtlinien
+- **[git-automation/README.md](git-automation/README.md)** - Git-Automation Dokumentation (v1.2.0)
+
 ## 📋 Changelog
 
-Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
+Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentiert.
 
-### 🆕 Neu in v1.1.9 (30. September 2025)
-- 📊 **System-Monitoring:** Automatische CPU-Load, Temperatur und Speicher-Überwachung
-- ⚡ **Performance-Optimierung:** Load-Balancing für verschiedene Aufnahmemodi
-- 🚨 **Bereitschaftschecks:** Kritische System-Validierung vor Aufnahmestart
-- 🌡️ **Temperatur-Überwachung:** Warnstufen für thermische Performance
-- 💾 **Speicher-Management:** Festplatten-Auslastung mit automatischen Warnungen
-- 📈 **Load-Awareness:** Spezielle Schwellenwerte für Standard-, Zeitlupe- und Audio-Modi
+### 🆕 Neu in v1.2.0 (01. Oktober 2025)
+- 🎯 **Auto-Trigger System:** Automatische Vogelerkennung mit KI-basierter Aufnahmesteuerung
+- 📺 **Preview-Stream:** RTSP-Stream für Echtzeit-Überwachung (640x480 @ 5fps)
+- ⏱️ **Trigger-Duration Logic:** 2-Sekunden-Check mit 70% Detection Rate
+- 🔄 **Stream-Management:** Automatischer Stream-Restart nach HD-Aufnahmen
+- 🌐 **Network-Diagnostics:** Umfassendes Netzwerk-Qualitäts-Test-Tool
+- 📊 **Status-Reports Optimierung:** Pausierung während Aufnahme und Cooldown
+- 🛠️ **Wrapper-Skripte:** Interaktive Benutzerführung für Auto-Trigger
+
+### 📊 System-Monitoring in v1.1.9 (30. September 2025)
+- System-Überwachung: CPU-Load, Temperatur und Speicher-Checks
+- Performance-Optimierung für alle Aufnahmemodi
+- Bereitschaftschecks vor Aufnahmestart
 
 ### 🎯 Hochpräzise Modelle in v1.1.8
 - 🤖 **Automatische bird-species Modelle:** Dynamische Erstellung optimierter AI-Modelle
@@ -540,6 +627,7 @@ Alle Änderungen werden in [docs/CHANGELOG.md](docs/CHANGELOG.md) dokumentiert.
 
 ## 🔖 Versionen
 
-- **Aktuelle Version:** v1.1.9
-- **Entwicklungszweig:** `devel`
-- **Stabile Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)
+- **Aktuelle Version:** v1.2.0
+- **Entwicklungszweig:** `devel-v1.2.0`
+- **Stabile Version (main):** v1.1.9
+- **Alle Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)

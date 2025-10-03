@@ -48,6 +48,7 @@ parser.add_argument('--ai-modul', choices=['on', 'off'], default='off', help='KI
 parser.add_argument('--ai-model', type=str, default='yolov8', choices=['yolov8', 'bird-species', 'custom'], help='AI-Modell für Objekterkennung (default: yolov8)')
 parser.add_argument('--ai-model-path', type=str, help='Pfad zu benutzerdefiniertem AI-Modell (für --ai-model custom)')
 parser.add_argument('--system-status', action='store_true', help='Zeige nur System-Status ohne Aufnahme')
+parser.add_argument('--no-stream-restart', action='store_true', help='Preview-Stream nicht automatisch neu starten (sinnvoll für On-Demand Aufnahmen, unnötig ohne Auto-Trigger)')
 args = parser.parse_args()
 
 # Erzeuge den Zeitstempel mit deutschem Wochentag
@@ -115,22 +116,27 @@ def kill_remote_processes():
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
         
-        # Beende alle relevanten Prozesse (libcamera-vid und ffmpeg)
+        # Beende alle relevanten Prozesse (inkl. Preview-Stream)
+        # WICHTIG: Stoppe stream-wrapper.sh ZUERST (verhindert Auto-Restart von rpicam-vid)
+        ssh.exec_command("pkill -9 -f stream-wrapper.sh")
+        ssh.exec_command("pkill -9 -f rpicam-vid")
         ssh.exec_command("pkill -f libcamera-vid")
         ssh.exec_command("pkill -f ffmpeg")
+        # Lösche PID-Files für sauberen Neustart
+        ssh.exec_command("rm -f /tmp/rtsp-stream.pid /tmp/*.pid")
         ssh.close()
-        print("Alle relevanten Prozesse auf dem Remote-Host wurden beendet.")
+        print("✅ Alle relevanten Prozesse auf dem Remote-Host wurden beendet.")
+        print("   (inkl. Preview-Stream für exklusiven Kamera-Zugriff)")
     except Exception as e:
         print(f"Fehler beim Beenden der Prozesse auf dem Remote-Host: {e}")
 
-# Ermitteln des aktiven USB-Audio-Geräts
+# Ermitteln des aktiven USB-Audio-Geräts (optional)
 audio_device = get_usb_audio_device_remote()
 if not audio_device:
-    print("Kein USB-Audio-Gerät auf dem Remote-Host gefunden. Beende das Skript.")
-    kill_remote_processes()
-    exit(1)
-
-print(f"Verwendetes Audio-Gerät auf dem Remote-Host: {audio_device}")
+    print("⚠️  Kein USB-Audio-Gerät auf dem Remote-Host gefunden.")
+    print("ℹ️  Aufnahme wird OHNE Audio fortgesetzt (nur Video).")
+else:
+    print(f"Verwendetes Audio-Gerät auf dem Remote-Host: {audio_device}")
 
 # Funktion zur Überprüfung der Modell-Verfügbarkeit auf Remote-Host
 def check_ai_model_availability():
@@ -382,8 +388,20 @@ def get_remote_video_command():
     return f"""
     mkdir -p {remote_path} && \
     cd {remote_path} && \
-    rpicam-vid --camera {args.cam} --hdr {args.hdr} {ai_param} --width {args.width} --height {args.height} --codec {args.codec} --rotation {args.rotation} --framerate {args.fps} --autofocus-mode {args.autofocus_mode} --autofocus-range {args.autofocus_range} {roi_param} -o "video.h264" -t {recording_duration_s * 1000} & \
-    arecord -D {audio_device} -f S16_LE -r 44100 -c 1 -t wav -d {recording_duration_s} {remote_path}/audio.wav
+    rpicam-vid --camera {args.cam} --hdr {args.hdr} {ai_param} --width {args.width} --height {args.height} --codec {args.codec} --rotation {args.rotation} --framerate {args.fps} --autofocus-mode {args.autofocus_mode} --autofocus-range {args.autofocus_range} {roi_param} -o "video.h264" -t {recording_duration_s * 1000}
+    """
+
+def get_remote_audio_command():
+    """Audio-Aufnahme parallel zum Video (nur wenn Audio-Gerät verfügbar)"""
+    if not audio_device:
+        return None
+    
+    remote_path = config.get_remote_video_path(year, timestamp)
+    # Audio-Aufnahme mit arecord (Mono, S16_LE Format)
+    return f"""
+    mkdir -p {remote_path} && \
+    cd {remote_path} && \
+    arecord -D {audio_device} -f S16_LE -r 44100 -c 1 -t wav -d {recording_duration_s} audio.wav
     """
 
 # Funktion zum Überprüfen der Erreichbarkeit des Remote-Hosts
@@ -423,20 +441,32 @@ def execute_remote_command(command):
 def copy_files_from_remote():
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    has_audio = False
     try:
         ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
         scp = create_scp_client(ssh)
         
-        # Kopiere die Video- und Audiodateien
+        # Kopiere die Videodatei
         remote_path = config.get_remote_video_path(year, timestamp)
+        print(f"📥 Kopiere Video von {remote_path}/video.h264...")
         scp.get(f"{remote_path}/video.h264", base_path)
-        scp.get(f"{remote_path}/audio.wav", base_path)
+        
+        # Prüfe ob Audio-Datei existiert (optional)
+        stdin, stdout, stderr = ssh.exec_command(f"test -f {remote_path}/audio.wav && echo 'exists'")
+        has_audio = stdout.read().decode().strip() == 'exists'
+        
+        if has_audio:
+            print(f"📥 Kopiere Audio von {remote_path}/audio.wav...")
+            scp.get(f"{remote_path}/audio.wav", base_path)
+        else:
+            print(f"ℹ️  Keine Audio-Datei gefunden (nur Video)")
         
         scp.close()
         ssh.close()
-        print(f"Dateien vom Remote-Host {remote_host['hostname']} erfolgreich kopiert.")
+        print(f"✅ Dateien vom Remote-Host {remote_host['hostname']} erfolgreich kopiert.")
     except Exception as e:
-        print(f"Fehler beim Kopieren der Dateien von {remote_host['hostname']}: {e}")
+        print(f"❌ Fehler beim Kopieren der Dateien von {remote_host['hostname']}: {e}")
+    return has_audio
 
 # Signal-Handler zum Beenden des Skripts mit Ctrl+C
 def signal_handler(sig, frame):
@@ -466,13 +496,30 @@ if not check_system_readiness():
         print("❌ Aufnahme abgebrochen.")
         exit(1)
 
+# WICHTIG: Beende alle laufenden Kamera-Prozesse (inkl. Preview-Stream)
+# für exklusiven Kamera-Zugriff bei HD-Aufnahme
+print("🔧 Bereite Kamera vor (stoppe laufende Prozesse)...")
+kill_remote_processes()
+time.sleep(2)  # Warte bis Prozesse sicher beendet sind
+
 # Threads zum gleichzeitigen Ausführen der Befehle auf dem Remote-Host
 stop_event = threading.Event()
 threads = []
 
+# Video-Aufnahme starten
 video_thread = threading.Thread(target=execute_remote_command, args=(get_remote_video_command(),))
 threads.append(video_thread)
 video_thread.start()
+
+# Audio-Aufnahme starten (nur wenn Gerät verfügbar)
+audio_command = get_remote_audio_command()
+if audio_command:
+    print("🎤 Starte parallele Audio-Aufnahme...")
+    audio_thread = threading.Thread(target=execute_remote_command, args=(audio_command,))
+    threads.append(audio_thread)
+    audio_thread.start()
+else:
+    print("ℹ️  Keine Audio-Aufnahme (Gerät nicht verfügbar)")
 
 # Fortschrittsanzeige initialisieren
 progress = tqdm(total=recording_duration_s, desc="Fortschritt", unit="s")
@@ -495,19 +542,25 @@ for thread in threads:
     thread.join()
 
 # Kopiere die Dateien vom Remote-Host
-copy_files_from_remote()
+has_audio = copy_files_from_remote()
 
-# Konvertiere die .h264- und .wav-Dateien in eine .mp4-Datei
+# Konvertiere die .h264-Datei (mit oder ohne Audio) in eine .mp4-Datei
 video_file = f"{base_path}/video.h264"
 audio_file = f"{base_path}/audio.wav"
 mp4_file = f"{base_path}/{timestamp}__{args.width}x{args.height}.mp4"  # MP4-Datei mit Zeitstempel und Auflösung
 
-# Überprüfen, ob die Audio-Datei existiert
-if not os.path.exists(audio_file):
-    print(f"Fehler: Die Audio-Datei {audio_file} wurde nicht gefunden.")
+# Überprüfen, ob die Video-Datei existiert
+if not os.path.exists(video_file):
+    print(f"❌ Fehler: Die Video-Datei {video_file} wurde nicht gefunden.")
     exit(1)
 
-ffmpeg_command = f"ffmpeg -fflags +genpts -r {args.fps} -i {video_file} -i {audio_file} -c:v copy -c:a aac {mp4_file}"
+# FFmpeg-Befehl mit oder ohne Audio
+if has_audio and os.path.exists(audio_file):
+    print(f"🎬 Konvertiere Video mit Audio...")
+    ffmpeg_command = f"ffmpeg -fflags +genpts -r {args.fps} -i {video_file} -i {audio_file} -c:v copy -c:a aac {mp4_file}"
+else:
+    print(f"🎬 Konvertiere Video ohne Audio...")
+    ffmpeg_command = f"ffmpeg -fflags +genpts -r {args.fps} -i {video_file} -c:v copy {mp4_file}"
 process = subprocess.Popen(ffmpeg_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 stdout, stderr = process.communicate()
 if process.returncode == 0:
@@ -516,12 +569,43 @@ if process.returncode == 0:
     
     # Lösche die ursprünglichen Dateien
     os.remove(video_file)
-    os.remove(audio_file)
+    if os.path.exists(audio_file):
+        os.remove(audio_file)
 else:
     print(f"Fehler beim Ausführen von ffmpeg: {stderr.decode()}")
+
 # Führe ls -lah auf das Zielverzeichnis aus
 subprocess.run(["ls", "-lah", base_path])
 
 progress.close()
+
+# Optionaler Stream-Neustart (falls Preview-Stream verwendet wird)
+# Wird übersprungen wenn --no-stream-restart gesetzt (z.B. bei Auto-Trigger)
+if not args.no_stream_restart:
+    # Preview-Stream nur neu starten wenn nicht explizit deaktiviert
+    # (sinnvoll für Auto-Trigger, überflüssig für On-Demand Aufnahmen)
+    if not args.no_stream_restart:
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+            
+            # Prüfe ob Stream-Skript existiert
+            stdin, stdout, stderr = ssh.exec_command("test -f ~/start-rtsp-stream.sh && echo 'EXISTS'")
+            if 'EXISTS' in stdout.read().decode():
+                print("\n🔄 Starte Preview-Stream neu...")
+                ssh.exec_command("nohup ~/start-rtsp-stream.sh > /dev/null 2>&1 &")
+                time.sleep(2)
+                print("✅ Preview-Stream wurde neu gestartet")
+            
+            ssh.close()
+        except Exception as e:
+            # Ignoriere Fehler beim Stream-Neustart (nicht kritisch)
+            pass
+    else:
+        print("\n⏭️  Preview-Stream Neustart übersprungen (--no-stream-restart)")
+
+
+print("\n✅ Aufnahme erfolgreich abgeschlossen!")
 
 print("Befehl auf dem Remote-Host ausgeführt und Dateien kopiert.")
