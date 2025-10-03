@@ -3,6 +3,10 @@
 # Vogel-Beobachtung Starter
 # =============================================================================
 # Komfort-Wrapper mit System-Checks und optimierten Einstellungen
+# 
+# Verwendung:
+#   ./start-vogel-beobachtung.sh           # Ohne KI-Aufnahme (Standard, schnell)
+#   ./start-vogel-beobachtung.sh --with-ai # Mit KI-Aufnahme (Objekterkennung)
 # =============================================================================
 
 set -e
@@ -15,17 +19,73 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m'
+
+# Hilfe-Funktion
+show_help() {
+    cat << 'EOF'
+🐦 Vogel-Beobachtung Starter
+
+Verwendung:
+  ./start-vogel-beobachtung.sh              Standard-Modus (ohne KI-Aufnahme)
+  ./start-vogel-beobachtung.sh --with-ai    Mit KI-Aufnahme
+
+Modi:
+  📹 Standard (ohne --with-ai):
+     - Trigger MIT KI (erkennt Vögel)
+     - Aufnahme OHNE KI (nur Video)
+     - Schneller, weniger CPU-Last
+     - Empfohlen für längere Sessions
+
+  🤖 Mit KI (--with-ai):
+     - Trigger MIT KI (erkennt Vögel)
+     - Aufnahme MIT KI (Objekterkennung während Aufnahme)
+     - Höhere CPU-Last auf Raspberry Pi
+     - Objekt-Metadaten in Videos
+
+Optionen:
+  -h, --help     Zeige diese Hilfe
+
+Beispiele:
+  ./start-vogel-beobachtung.sh              # Standard, schnell
+  ./start-vogel-beobachtung.sh --with-ai    # Mit KI-Analyse
+
+EOF
+    exit 0
+}
+
+# Parse Parameter
+WITH_AI=false
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+    show_help
+elif [[ "$1" == "--with-ai" ]]; then
+    WITH_AI=true
+elif [[ -n "$1" ]]; then
+    echo "❌ Unbekannter Parameter: $1"
+    echo "Nutze --help für Hilfe"
+    exit 1
+fi
 
 clear
 
-cat << 'EOF'
+if [ "$WITH_AI" = true ]; then
+    cat << 'EOF'
+╔══════════════════════════════════════════════════════════════════╗
+                                                                  
+   🐦 VOGEL-BEOBACHTUNG - MIT KI-AUFNAHME 🤖🎥                    
+                                                                  
+╚══════════════════════════════════════════════════════════════════╝
+EOF
+else
+    cat << 'EOF'
 ╔══════════════════════════════════════════════════════════════════╗
                                                                   
    🐦 VOGEL-BEOBACHTUNG - PRODUKTIV-BETRIEB 🎥                    
                                                                   
 ╚══════════════════════════════════════════════════════════════════╝
 EOF
+fi
 
 echo ""
 echo -e "${CYAN}📋 SYSTEM-CHECK...${NC}"
@@ -70,19 +130,47 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 echo ""
 echo -e "${CYAN}⚙️  EINSTELLUNGEN:${NC}"
 echo ""
-echo "  📹 Aufnahme-Dauer:      2 Minuten"
-echo "  🎯 Erkennungs-Schwelle: 0.60 (präzise)"
-echo "  ⏱️  Cooldown:           10 Sekunden"
-echo "  🤖 AI-Model:            bird-species (nur Vögel)"
+echo "  📹 Aufnahme-Dauer:      1 Minute"
+echo "  🎯 Erkennungs-Schwelle: 0.50 (ausgewogen)"
+echo "  ⏱️  Cooldown:           15 Sekunden"
+echo "  🤖 Trigger-AI:          bird-species (nur Vögel)"
+
+if [ "$WITH_AI" = true ]; then
+    echo -e "  ${MAGENTA}🤖 Aufnahme-Modus:      MIT KI (Objekterkennung während Aufnahme)${NC}"
+    echo -e "  ${YELLOW}⚠️  CPU-Last:            Höher (KI läuft auf Raspberry Pi)${NC}"
+else
+    echo -e "  ${GREEN}📹 Aufnahme-Modus:      OHNE KI (nur Video, schneller)${NC}"
+    echo -e "  ${GREEN}✅ CPU-Last:            Niedriger (optimiert)${NC}"
+fi
+
 echo ""
-echo -e "${CYAN}📊 STATUS-UPDATES:      Alle 5 Sekunden${NC}"
+echo -e "${CYAN}📊 STATUS-UPDATES:      Alle 5 Minuten${NC}"
 echo ""
 echo -e "${YELLOW}💡 TIPP: Beobachte die Ausgabe!${NC}"
 echo "   Bei Vogel-Erkennung siehst du:"
 echo "   🐦 Vogel-Trigger wird aktiviert!"
-echo "   📹 Starte HD-Aufnahme..."
+if [ "$WITH_AI" = true ]; then
+    echo "   🤖 Starte HD-Aufnahme MIT KI-Analyse..."
+else
+    echo "   📹 Starte HD-Aufnahme (nur Video)..."
+fi
 echo ""
-echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+if [ "$WITH_AI" = true ]; then
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}⚠️  HINWEIS: KI-Aufnahme-Modus aktiviert${NC}"
+    echo -e "${YELLOW}   - Objekterkennung läuft während der Aufnahme${NC}"
+    echo -e "${YELLOW}   - Höhere CPU-Last auf Raspberry Pi${NC}"
+    echo -e "${YELLOW}   - Erkannte Objekte werden in Video-Metadaten gespeichert${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+else
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}✅ Standard-Modus: Schnelle Aufnahmen ohne KI-Overhead${NC}"
+    echo -e "${GREEN}   - Trigger nutzt KI (erkannt = Aufnahme startet)${NC}"
+    echo -e "${GREEN}   - Aufnahme ohne KI = weniger CPU-Last${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+fi
+
 echo ""
 read -p "$(echo -e ${GREEN}Bereit? Drücke ENTER zum Starten...${NC})" -r
 echo ""
@@ -106,14 +194,30 @@ cleanup() {
 trap cleanup SIGINT SIGTERM EXIT
 
 # Starte Auto-Trigger
-echo -e "${GREEN}🚀 Starte Vogel-Beobachtung...${NC}"
+if [ "$WITH_AI" = true ]; then
+    echo -e "${MAGENTA}🚀 Starte Vogel-Beobachtung MIT KI-Aufnahme...${NC}"
+else
+    echo -e "${GREEN}🚀 Starte Vogel-Beobachtung (Standard-Modus)...${NC}"
+fi
 echo -e "${YELLOW}   (Drücke CTRL+C zum Beenden)${NC}"
 echo ""
 
-"$AUTO_TRIGGER" \
-    --trigger-duration 2 \
-    --trigger-threshold 0.60 \
-    --cooldown 10 \
-    --status-interval 5
+if [ "$WITH_AI" = true ]; then
+    # MIT KI-Aufnahme
+    "$AUTO_TRIGGER" \
+        --trigger-duration 1 \
+        --trigger-threshold 0.50 \
+        --cooldown 15 \
+        --status-interval 5 \
+        --recording-ai \
+        --recording-ai-model bird-species
+else
+    # OHNE KI-Aufnahme (Standard)
+    "$AUTO_TRIGGER" \
+        --trigger-duration 1 \
+        --trigger-threshold 0.50 \
+        --cooldown 15 \
+        --status-interval 5
+fi
 
 # Cleanup wird durch trap automatisch ausgeführt

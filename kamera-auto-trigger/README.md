@@ -50,13 +50,30 @@ pip install -r requirements.txt
 **Option A: Mit Komfort-Wrapper (empfohlen)**
 ```bash
 cd kamera-auto-trigger
+
+# Standard-Modus: Aufnahme OHNE KI (schnell, weniger CPU-Last)
 ./start-vogel-beobachtung.sh
+
+# Mit KI-Aufnahme: Objekterkennung während Aufnahme
+./start-vogel-beobachtung.sh --with-ai
 ```
+
+**Modi erklärt:**
+
+| Modus | Trigger | Aufnahme | CPU-Last | Verwendung |
+|-------|---------|----------|----------|------------|
+| Standard | 🤖 MIT KI | 📹 OHNE KI | Niedrig | Längere Sessions, schnelle Aufnahmen |
+| `--with-ai` | 🤖 MIT KI | 🤖 MIT KI | Höher | Objekt-Analyse während Aufnahme |
 
 **Option B: Manuell mit Parametern**
 ```bash
 cd kamera-auto-trigger
+
+# Ohne KI-Aufnahme (Standard)
 ./run-auto-trigger.sh --trigger-duration 2 --trigger-threshold 0.45
+
+# Mit KI-Aufnahme
+./run-auto-trigger.sh --trigger-duration 2 --trigger-threshold 0.45 --recording-ai
 ```
 
 ### 3. Beenden
@@ -72,9 +89,11 @@ Drücke **Strg+C** im Terminal - das System beendet sich sauber und räumt auf.
 | `--trigger-duration` | 2 | Aufnahme-Dauer in Minuten |
 | `--trigger-threshold` | 0.45 | AI-Erkennungs-Schwelle (0.0-1.0) |
 | `--cooldown` | 30 | Pause nach Aufnahme (Sekunden) |
+| `--recording-ai` | false | Aufnahme MIT KI (Flag, kein Wert) |
+| `--recording-ai-model` | bird-species | AI-Modell für Aufnahme (nur mit --recording-ai) |
 | `--width` | 4096 | HD-Auflösung Breite |
 | `--height` | 2160 | HD-Auflösung Höhe |
-| `--ai-model` | bird-species | AI-Model (yolov8n oder bird-species) |
+| `--ai-model` | bird-species | AI-Model für Trigger (yolov8/bird-species/custom) |
 
 ### Beispiele
 
@@ -87,6 +106,12 @@ Drücke **Strg+C** im Terminal - das System beendet sich sauber und räumt auf.
 
 # Längere Aufnahmen mit mehr Cooldown
 ./run-auto-trigger.sh --trigger-duration 5 --cooldown 60
+
+# Aufnahme MIT KI-Analyse (Objekterkennung während Aufnahme)
+./run-auto-trigger.sh --recording-ai --recording-ai-model bird-species
+
+# Aufnahme OHNE KI (Standard, schneller)
+./run-auto-trigger.sh --trigger-duration 2
 ```
 
 ## 📁 Verzeichnisstruktur

@@ -71,11 +71,15 @@ parser = argparse.ArgumentParser(
     description='''🐦 Vogel-Kamera Auto-Trigger mit AI-Objekterkennung
     
     Überwacht kontinuierlich das Vogelhaus und startet automatisch HD-Aufnahmen,
-    wenn ein Vogel erkannt wird.
+    wenn ein Vogel erkannt wird. Die Erkennung erfolgt IMMER mit KI, aber die
+    Aufnahme kann mit oder ohne KI-Modul erfolgen.
     
     Beispiele:
-    # Standard: 2 Minuten Aufnahme, bird-species Modell
+    # Standard: Trigger MIT KI, Aufnahme OHNE KI (schneller)
     python ai-had-kamera-auto-trigger.py --trigger-duration 2 --ai-model bird-species
+    
+    # Trigger UND Aufnahme mit KI (Objekterkennung während Aufnahme)
+    python ai-had-kamera-auto-trigger.py --trigger-duration 2 --recording-ai --recording-ai-model bird-species
     
     # Mit Custom-Einstellungen
     python ai-had-kamera-auto-trigger.py --trigger-duration 3 --cooldown 60 --trigger-threshold 0.5
@@ -87,8 +91,12 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--version', action='version', version=f'Vogel-Kamera-Linux Auto-Trigger v{__version__}')
 parser.add_argument('--trigger-duration', type=int, default=2, help='Aufnahmedauer bei Vogel-Erkennung in Minuten (default: 2)')
 parser.add_argument('--ai-model', type=str, default='bird-species', choices=['yolov8', 'bird-species', 'custom'], 
-                    help='AI-Modell für Objekterkennung (default: bird-species)')
+                    help='AI-Modell für Vogel-Erkennung (default: bird-species)')
 parser.add_argument('--ai-model-path', type=str, help='Pfad zu benutzerdefiniertem AI-Modell (für --ai-model custom)')
+parser.add_argument('--recording-ai', action='store_true', 
+                    help='Aufnahme mit KI-Modul (Objekterkennung während Aufnahme). Default: Ohne KI (nur Trigger nutzt KI)')
+parser.add_argument('--recording-ai-model', type=str, default='bird-species', choices=['yolov8', 'bird-species', 'custom'],
+                    help='AI-Modell für Aufnahme (nur mit --recording-ai, default: bird-species)')
 parser.add_argument('--cooldown', type=int, default=30, help='Wartezeit zwischen Aufnahmen in Sekunden (default: 30)')
 parser.add_argument('--trigger-threshold', type=float, default=0.45, help='AI-Schwelle für Trigger (default: 0.45)')
 parser.add_argument('--preview-fps', type=int, default=5, help='FPS für Monitoring-Modus (default: 5)')
@@ -116,17 +124,80 @@ if config_errors:
     print("\nBitte konfigurieren Sie das System entsprechend der README.md")
     exit(1)
 
+recording_mode = "🤖 Mit KI" if args.recording_ai else "📹 Ohne KI (nur Video)"
+recording_model = f" ({args.recording_ai_model})" if args.recording_ai else ""
+
 print(f"""
 ╔══════════════════════════════════════════════════════════════╗
   🐦 Vogel-Kamera Auto-Trigger v{__version__}
 ╠══════════════════════════════════════════════════════════════╣
   Modus: Automatische Vogel-Erkennung
-  AI-Modell: {args.ai_model}
+  Trigger-KI: {args.ai_model}
+  Aufnahme-Modus: {recording_mode}{recording_model}
   Trigger-Dauer: {args.trigger_duration} Minuten
   Cooldown: {args.cooldown} Sekunden
   Schwelle: {args.trigger_threshold}
 ╚══════════════════════════════════════════════════════════════╝
 """)
+
+def get_local_system_status():
+    """Hole System-Status vom lokalen Host"""
+    try:
+        # CPU-Temperatur (vcgencmd oder /sys/class/thermal)
+        temp_val = None
+        try:
+            result = subprocess.run(["vcgencmd", "measure_temp"], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                temp_output = result.stdout.strip()
+                temp_val = float(temp_output.replace("temp=", "").replace("'C", "").replace("°C", ""))
+        except:
+            # Fallback: /sys/class/thermal
+            try:
+                with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+                    temp_millidegrees = int(f.read().strip())
+                    temp_val = temp_millidegrees / 1000.0
+            except:
+                pass
+        
+        # CPU Load
+        result = subprocess.run(["uptime"], capture_output=True, text=True, timeout=5)
+        uptime_output = result.stdout.strip()
+        load_1min = 0.0
+        if "load average:" in uptime_output:
+            load_1min = float(uptime_output.split("load average:")[1].split(',')[0].strip().replace(',', '.'))
+        
+        # Festplatte
+        result = subprocess.run(["df", "-h", "/"], capture_output=True, text=True, timeout=5)
+        disk_output = result.stdout.strip()
+        disk_lines = disk_output.splitlines()
+        used_percent = 0
+        if len(disk_lines) > 1:
+            disk_parts = disk_lines[1].split()
+            used_percent = int(disk_parts[4].replace('%', '')) if len(disk_parts) >= 5 else 0
+        
+        # Memory
+        result = subprocess.run(["free", "-h"], capture_output=True, text=True, timeout=5)
+        mem_output = result.stdout.strip()
+        mem_parts = []
+        for line in mem_output.splitlines():
+            if "Mem:" in line or "Speicher:" in line:
+                mem_parts = line.split()
+                break
+        mem_used = mem_parts[2] if len(mem_parts) >= 3 else "N/A"
+        mem_total = mem_parts[1] if len(mem_parts) >= 2 else "N/A"
+        
+        return {
+            'temp': temp_val,
+            'load': load_1min,
+            'disk_percent': used_percent,
+            'mem_used': mem_used,
+            'mem_total': mem_total,
+            'healthy': (temp_val is None or temp_val < args.max_cpu_temp) and load_1min < args.max_cpu_load
+        }
+    
+    except Exception as e:
+        print(f"⚠️ Fehler beim Abrufen des lokalen System-Status: {e}")
+        return None
 
 def get_system_status():
     """Hole System-Status vom Remote-Host"""
@@ -242,25 +313,43 @@ def trigger_recording():
             except Exception as e:
                 print(f"   ⚠️  Konnte Stream auf Raspberry Pi nicht stoppen: {e}")
         
-        # Rufe das Haupt-Aufnahme-Skript auf (im Hauptverzeichnis)
+        # Wähle Aufnahme-Skript basierend auf Modus
         script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py')
         
-        cmd = [
-            'python3',
-            recording_script,
-            '--duration', str(args.trigger_duration),
-            '--width', str(args.width),
-            '--height', str(args.height),
-            '--rotation', str(args.rotation),
-            '--cam', str(args.cam),
-            '--ai-modul', 'on',
-            '--ai-model', args.ai_model,
-            '--no-stream-restart'  # Auto-Trigger managed Stream-Neustart selbst
-        ]
-        
-        if args.ai_model == 'custom' and args.ai_model_path:
-            cmd.extend(['--ai-model-path', args.ai_model_path])
+        if args.recording_ai:
+            # MIT KI: Objekterkennung während Aufnahme
+            recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py')
+            print(f"   🤖 Modus: Aufnahme MIT KI ({args.recording_ai_model})")
+            
+            cmd = [
+                'python3',
+                recording_script,
+                '--duration', str(args.trigger_duration),
+                '--width', str(args.width),
+                '--height', str(args.height),
+                '--rotation', str(args.rotation),
+                '--cam', str(args.cam),
+                '--ai-modul', 'on',
+                '--ai-model', args.recording_ai_model,
+                '--no-stream-restart'  # Auto-Trigger managed Stream-Neustart selbst
+            ]
+            
+            if args.recording_ai_model == 'custom' and args.ai_model_path:
+                cmd.extend(['--ai-model-path', args.ai_model_path])
+        else:
+            # OHNE KI: Nur Video-Aufnahme (schneller, weniger CPU-Last)
+            recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-single.py')
+            print(f"   📹 Modus: Aufnahme OHNE KI (nur Video)")
+            
+            cmd = [
+                'python3',
+                recording_script,
+                '--duration', str(args.trigger_duration),
+                '--width', str(args.width),
+                '--height', str(args.height),
+                '--rotation', str(args.rotation),
+                '--cam', str(args.cam)
+            ]
         
         # Führe Aufnahme-Skript aus
         result = subprocess.run(cmd, capture_output=False, text=True)
@@ -342,6 +431,7 @@ def print_status_report():
     minutes = int((uptime.total_seconds() % 3600) // 60)
     
     status = get_system_status()
+    local_status = get_local_system_status()
     
     print(f"\n{'='*70}")
     print(f"📊 STATUS-REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -355,6 +445,22 @@ def print_status_report():
     else:
         print(f"🕐 Letzte Aufnahme: Noch keine")
     
+    # Lokaler Host Status
+    if local_status:
+        print(f"\n💻 Localhost:")
+        
+        if local_status['temp'] is not None:
+            temp_status = "🟢" if local_status['temp'] < 50 else "🟡" if local_status['temp'] < 60 else "🔴"
+            print(f"   🌡️  CPU-Temp: {local_status['temp']:.1f}°C {temp_status}")
+        
+        load_status = "🟢" if local_status['load'] < 1.0 else "🟡" if local_status['load'] < 2.0 else "🔴"
+        disk_status = "🟢" if local_status['disk_percent'] < 80 else "🟡" if local_status['disk_percent'] < 90 else "🔴"
+        
+        print(f"   ⚡ CPU-Load: {local_status['load']:.2f} {load_status}")
+        print(f"   💾 Festplatte: {local_status['disk_percent']}% belegt {disk_status}")
+        print(f"   💭 RAM: {local_status['mem_used']} / {local_status['mem_total']}")
+    
+    # Remote-Host Status
     if status:
         temp_status = "🟢" if status['temp'] < 50 else "🟡" if status['temp'] < 60 else "🔴"
         load_status = "🟢" if status['load'] < 1.0 else "🟡" if status['load'] < 2.0 else "🔴"
@@ -366,7 +472,7 @@ def print_status_report():
         print(f"   💾 Festplatte: {status['disk_percent']}% belegt {disk_status}")
         print(f"   💭 RAM: {status['mem_used']} / {status['mem_total']}")
         
-        if not status['healthy']:
+        if not status['healthy'] or (local_status and not local_status['healthy']):
             print(f"\n⚠️  WARNUNG: System-Ressourcen kritisch!")
     
     print(f"{'='*70}\n")
@@ -388,13 +494,27 @@ def resource_monitor():
                 # Wenn pausiert, warte einfach bis zur Fortsetzung
                 # (last_status_report wird NICHT aktualisiert, Report kommt nach Pause)
             
-            # Prüfe System-Status
+            # Prüfe System-Status (Remote & Local)
             status = get_system_status()
+            local_status = get_local_system_status()
             
+            # Prüfe Remote-Host
             if status and not status['healthy']:
-                print(f"\n🚨 KRITISCH: System-Ressourcen überschritten!")
+                print(f"\n🚨 KRITISCH: Remote-Host Ressourcen überschritten!")
+                print(f"   🖥️  Host: {remote_host['hostname']}")
                 print(f"   🌡️  CPU-Temp: {status['temp']:.1f}°C (Max: {args.max_cpu_temp}°C)")
                 print(f"   ⚡ CPU-Load: {status['load']:.2f} (Max: {args.max_cpu_load})")
+                print(f"\n⛔ Beende Auto-Trigger aus Sicherheitsgründen...")
+                
+                shutdown()
+                break
+            
+            # Prüfe Localhost
+            if local_status and not local_status['healthy']:
+                print(f"\n🚨 KRITISCH: Localhost Ressourcen überschritten!")
+                if local_status['temp'] is not None:
+                    print(f"   🌡️  CPU-Temp: {local_status['temp']:.1f}°C (Max: {args.max_cpu_temp}°C)")
+                print(f"   ⚡ CPU-Load: {local_status['load']:.2f} (Max: {args.max_cpu_load})")
                 print(f"\n⛔ Beende Auto-Trigger aus Sicherheitsgründen...")
                 
                 shutdown()
