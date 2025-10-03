@@ -222,6 +222,7 @@ def get_local_system_status():
 
 def get_system_status():
     """Hole System-Status vom Remote-Host"""
+    ssh = None
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -253,8 +254,6 @@ def get_system_status():
         mem_used = mem_parts[2] if len(mem_parts) >= 3 else "N/A"
         mem_total = mem_parts[1] if len(mem_parts) >= 2 else "N/A"
         
-        ssh.close()
-        
         return {
             'temp': temp_val,
             'load': load_1min,
@@ -265,8 +264,18 @@ def get_system_status():
         }
     
     except Exception as e:
-        print(f"⚠️ Fehler beim Abrufen des System-Status: {e}")
+        # Detailliertere Fehlerausgabe mit Fehlertyp
+        error_type = type(e).__name__
+        print(f"⚠️ Fehler beim Abrufen des System-Status ({error_type}): {e}")
         return None
+    
+    finally:
+        # Stelle sicher, dass SSH-Verbindung immer geschlossen wird
+        if ssh is not None:
+            try:
+                ssh.close()
+            except:
+                pass
 
 def check_for_bird_detection():
     """
@@ -290,8 +299,7 @@ def check_for_bird_detection():
             return bird_detected
             
         except Exception as e:
-            if args.debug:
-                print(f"⚠️ Fehler bei Stream-Verarbeitung: {e}")
+            print(f"⚠️ Fehler bei Stream-Verarbeitung: {e}")
             return False
     
     # Fallback: Keine echte Erkennung möglich

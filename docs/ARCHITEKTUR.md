@@ -15,28 +15,28 @@ Das Kamera-Auto-Trigger System ist eine verteilte Anwendung zur automatischen Vo
 
 ```mermaid
 graph TB
-    subgraph "PC (Lokales System)"
-        A[start-vogel-beobachtung.sh<br/>🚀 Wrapper Script]
-        B[ai-had-kamera-auto-trigger.py<br/>🧠 Haupt-Controller]
-        C[stream_processor.py<br/>🤖 YOLOv8 KI-Modul]
-        D[config.py<br/>⚙️ Konfiguration]
+    subgraph PC["PC (Lokales System)"]
+        A["start-vogel-beobachtung.sh<br/>🚀 Wrapper Script"]
+        B["ai-had-kamera-auto-trigger.py<br/>🧠 Haupt-Controller"]
+        C["stream_processor.py<br/>🤖 YOLOv8 KI-Modul"]
+        D["config.py<br/>⚙️ Konfiguration"]
     end
     
-    subgraph "Raspberry Pi 5 (Remote)"
-        E[libcamera-vid<br/>📹 Preview Stream]
-        F[Aufnahme-Skript<br/>🎬 HD Recording]
-        G[USB-Mikrofon<br/>🎤 Audio Input]
+    subgraph RaspPi["Raspberry Pi 5 (Remote)"]
+        E["libcamera-vid<br/>📹 Preview Stream"]
+        F["Aufnahme-Skript<br/>🎬 HD Recording"]
+        G["USB-Mikrofon<br/>🎤 Audio Input"]
     end
     
     A -->|Parameter| B
     B -->|Konfiguration| D
-    B -->|RTSP Verbindung| E
-    E -->|Stream 640x480@5fps| C
-    C -->|Vogel erkannt?| B
-    B -->|SSH Befehl| F
+    B -->|"RTSP Verbindung"| E
+    E -->|"Stream 640x480@5fps"| C
+    C -->|"Vogel erkannt?"| B
+    B -->|"SSH Befehl"| F
     F -->|Aufnahme| G
-    F -->|Video Output| H[📁 Videos/]
-    F -->|Audio Output| H
+    F -->|"Video Output"| H["📁 Videos/"]
+    F -->|"Audio Output"| H
 
     style A fill:#e1f5ff
     style B fill:#fff4e1
@@ -118,29 +118,29 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    Start([🎯 Vogel erkannt!])
+    Start(["🎯 Vogel erkannt!"])
     
-    Start --> Check{Welcher Modus?}
+    Start --> Check{"Welcher Modus?"}
     
-    Check -->|--slowmo| Slowmo[🎬 Zeitlupe-Modus]
-    Check -->|--with-ai| AI[🤖 KI-Modus]
-    Check -->|Standard| Standard[📹 Standard-Modus]
+    Check -->|--slowmo| Slowmo["🎬 Zeitlupe-Modus"]
+    Check -->|--with-ai| AI["🤖 KI-Modus"]
+    Check -->|Standard| Standard["📹 Standard-Modus"]
     
-    Slowmo --> SlowmoScript[ai-had-kamera-remote-param-vogel-<br/>libcamera-zeitlupe.py]
-    AI --> AIScript[ai-had-kamera-remote-param-vogel-<br/>libcamera-single-AI-Modul.py]
-    Standard --> StandardScript[ai-had-kamera-remote-param-vogel-<br/>libcamera-single-AI-Modul.py]
+    Slowmo --> SlowmoScript["ai-had-kamera-remote-param-vogel-<br/>libcamera-zeitlupe.py"]
+    AI --> AIScript["ai-had-kamera-remote-param-vogel-<br/>libcamera-single-AI-Modul.py"]
+    Standard --> StandardScript["ai-had-kamera-remote-param-vogel-<br/>libcamera-single-AI-Modul.py"]
     
-    SlowmoScript --> SlowmoParams[📊 Parameter:<br/>- 120 FPS<br/>- 1536x864<br/>- 10 Sek Pre-Record<br/>- 44.1kHz Audio Mono]
-    AIScript --> AIParams[📊 Parameter:<br/>- 25 FPS<br/>- 1920x1080<br/>- 5 Sek Pre-Record<br/>- 44.1kHz Audio Mono<br/>- KI-Metadaten]
-    StandardScript --> StandardParams[📊 Parameter:<br/>- 25 FPS<br/>- 1920x1080<br/>- 5 Sek Pre-Record<br/>- 44.1kHz Audio Mono]
+    SlowmoScript --> SlowmoParams["📊 Parameter:<br/>- 120 FPS<br/>- 1536x864<br/>- 10 Sek Pre-Record<br/>- 44.1kHz Audio Mono"]
+    AIScript --> AIParams["📊 Parameter:<br/>- 25 FPS<br/>- 1920x1080<br/>- 5 Sek Pre-Record<br/>- 44.1kHz Audio Mono<br/>- KI-Metadaten"]
+    StandardScript --> StandardParams["📊 Parameter:<br/>- 25 FPS<br/>- 1920x1080<br/>- 5 Sek Pre-Record<br/>- 44.1kHz Audio Mono"]
     
-    SlowmoParams --> Record[🎬 Aufnahme auf RaspPi]
+    SlowmoParams --> Record["🎬 Aufnahme auf RaspPi"]
     AIParams --> Record
     StandardParams --> Record
     
-    Record --> Save[💾 Speichern:<br/>Videos/YYYY-MM-DD_HH-MM-SS.mp4<br/>Videos/YYYY-MM-DD_HH-MM-SS.wav]
+    Record --> Save["💾 Speichern:<br/>Videos/YYYY-MM-DD_HH-MM-SS.mp4<br/>Videos/YYYY-MM-DD_HH-MM-SS.wav"]
     
-    Save --> End([✅ Aufnahme beendet])
+    Save --> End(["✅ Aufnahme beendet"])
 
     style Start fill:#ffe1e1
     style Check fill:#fff4e1
@@ -206,11 +206,11 @@ sequenceDiagram
 
 ```mermaid
 graph LR
-    subgraph "🎯 CPU-Optimierung"
-        A[Original<br/>107% CPU] -->|Thread-Limit| B[82.5% CPU<br/>OMP/BLAS=2]
-        B -->|FPS 5→3| C[82.5% CPU<br/>Weniger Frames]
-        C -->|Preview 320x240| D[92% CPU<br/>⚠️ Anstieg!]
-        D -->|imgsz=320| E[40% CPU<br/>✅ -63%]
+    subgraph Optimization["🎯 CPU-Optimierung"]
+        A["Original<br/>107% CPU"] -->|"Thread-Limit"| B["82.5% CPU<br/>OMP/BLAS=2"]
+        B -->|"FPS 5→3"| C["82.5% CPU<br/>Weniger Frames"]
+        C -->|"Preview 320x240"| D["92% CPU<br/>⚠️ Anstieg!"]
+        D -->|"imgsz=320"| E["40% CPU<br/>✅ -63%"]
     end
     
     style A fill:#ff9999
@@ -219,11 +219,11 @@ graph LR
     style D fill:#ffcc99
     style E fill:#99ff99
 
-    Note1[📊 Optimierungs-Strategien]
-    Note1 -.->|1| F[Thread-Beschränkung<br/>OMP_NUM_THREADS=2]
-    Note1 -.->|2| G[Frame-Rate reduzieren<br/>5fps → 3fps]
-    Note1 -.->|3| H[Preview-Auflösung<br/>640x480 → 320x240]
-    Note1 -.->|4| I[YOLO Inferenz-Größe<br/>imgsz=320]
+    Note1["📊 Optimierungs-Strategien"]
+    Note1 -.->|1| F["Thread-Beschränkung<br/>OMP_NUM_THREADS=2"]
+    Note1 -.->|2| G["Frame-Rate reduzieren<br/>5fps → 3fps"]
+    Note1 -.->|3| H["Preview-Auflösung<br/>640x480 → 320x240"]
+    Note1 -.->|4| I["YOLO Inferenz-Größe<br/>imgsz=320"]
 ```
 
 **Erklärung:**
@@ -241,25 +241,25 @@ graph LR
 ```mermaid
 flowchart LR
     subgraph RaspPi["📹 Raspberry Pi 5"]
-        A1[Camera<br/>IMX708] -->|RAW| A2[libcamera-vid]
-        A2 -->|H.264| A3[RTSP Server<br/>Port 8554]
+        A1["Camera<br/>IMX708"] -->|RAW| A2["libcamera-vid"]
+        A2 -->|H.264| A3["RTSP Server<br/>Port 8554"]
     end
     
     subgraph Network["🌐 Netzwerk"]
-        A3 -->|RTSP Stream<br/>320x240@3fps| B1[rtsp://raspi:8554/preview]
+        A3 -->|"RTSP Stream<br/>320x240@3fps"| B1["rtsp://raspi:8554/preview"]
     end
     
     subgraph PC["💻 PC"]
-        B1 -->|OpenCV| B2[VideoCapture]
-        B2 -->|Frame| B3[YOLOv8]
-        B3 -->|Ergebnis| B4[Controller]
+        B1 -->|OpenCV| B2["VideoCapture"]
+        B2 -->|Frame| B3["YOLOv8"]
+        B3 -->|Ergebnis| B4["Controller"]
     end
     
-    B4 -->|SSH Trigger| C1[HD Aufnahme]
+    B4 -->|"SSH Trigger"| C1["HD Aufnahme"]
     
     subgraph Recording["🎬 Aufnahme"]
-        C1 -->|1920x1080@25fps| C2[MP4 Video]
-        C1 -->|120fps @ Zeitlupe| C3[MP4 Zeitlupe]
+        C1 -->|"1920x1080@25fps"| C2["MP4 Video"]
+        C1 -->|"120fps @ Zeitlupe"| C3["MP4 Zeitlupe"]
     end
 
     style A2 fill:#e1ffe1
@@ -267,6 +267,27 @@ flowchart LR
     style B3 fill:#ffe1f5
     style C2 fill:#ffe1e1
     style C3 fill:#fff4e1
+```
+
+### Audio-Pipeline
+
+```mermaid
+flowchart LR
+    subgraph RaspPi["🎤 Raspberry Pi 5"]
+        A1["USB-Mikrofon<br/>hw:2,0"] -->|PCM| A2["arecord"]
+        A2 -->|"S16_LE<br/>44.1kHz Mono"| A3["WAV Datei"]
+    end
+    
+    subgraph Optional["🔧 Optional"]
+        A3 -.->|ffmpeg| B1["In MP4 muxen"]
+    end
+    
+    A3 --> C1["💾 Videos/<br/>YYYY-MM-DD_HH-MM-SS.wav"]
+    B1 -.-> C2["💾 Videos/<br/>YYYY-MM-DD_HH-MM-SS.mp4<br/>mit Audio-Spur"]
+
+    style A1 fill:#f5e1ff
+    style A2 fill:#e1f5ff
+    style A3 fill:#ffe1e1
 ```
 
 ### Audio-Pipeline
@@ -297,28 +318,28 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    User[👤 Benutzer]
+    User["👤 Benutzer"]
     
-    User -->|Modus wählen| Wrapper[start-vogel-beobachtung.sh]
+    User -->|"Modus wählen"| Wrapper["start-vogel-beobachtung.sh"]
     
-    Wrapper -->|Default Parameter| Config{Konfigurations-<br/>Ebenen}
+    Wrapper -->|"Default Parameter"| Config{"Konfigurations-<br/>Ebenen"}
     
-    Config -->|Ebene 1| HardCoded[Hardcodierte Defaults<br/>in Python-Skript]
-    Config -->|Ebene 2| WrapperParams[Wrapper-Parameter<br/>--preview-fps 3 etc.]
-    Config -->|Ebene 3| UserArgs[Benutzer-Argumente<br/>CLI-Übersteuerung]
+    Config -->|"Ebene 1"| HardCoded["Hardcodierte Defaults<br/>in Python-Skript"]
+    Config -->|"Ebene 2"| WrapperParams["Wrapper-Parameter<br/>--preview-fps 3 etc."]
+    Config -->|"Ebene 3"| UserArgs["Benutzer-Argumente<br/>CLI-Übersteuerung"]
     
-    HardCoded --> Merge[⚙️ Parameter Merge]
+    HardCoded --> Merge["⚙️ Parameter Merge"]
     WrapperParams --> Merge
     UserArgs --> Merge
     
-    Merge --> Final[Finale Konfiguration]
+    Merge --> Final["Finale Konfiguration"]
     
-    Final --> Execute[🚀 Ausführung]
+    Final --> Execute["🚀 Ausführung"]
     
     subgraph Examples["📋 Beispiele"]
-        E1[Standard: 25fps, 1920x1080]
-        E2[Zeitlupe: 120fps, 1536x864]
-        E3[Preview: 3fps, 320x240]
+        E1["Standard: 25fps, 1920x1080"]
+        E2["Zeitlupe: 120fps, 1536x864"]
+        E3["Preview: 3fps, 320x240"]
     end
 
     style Config fill:#fff4e1
@@ -334,23 +355,23 @@ flowchart TD
 
 ```mermaid
 graph TD
-    subgraph "Python Dependencies"
-        A[ai-had-kamera-auto-trigger.py]
-        B[stream_processor.py]
-        C[config.py]
+    subgraph PyDeps["Python Dependencies"]
+        A["ai-had-kamera-auto-trigger.py"]
+        B["stream_processor.py"]
+        C["config.py"]
     end
     
-    subgraph "Externe Libraries"
-        D[OpenCV<br/>cv2]
-        E[Ultralytics<br/>YOLOv8]
-        F[Paramiko<br/>SSH]
-        G[NumPy]
+    subgraph ExtLibs["Externe Libraries"]
+        D["OpenCV<br/>cv2"]
+        E["Ultralytics<br/>YOLOv8"]
+        F["Paramiko<br/>SSH"]
+        G["NumPy"]
     end
     
-    subgraph "System"
-        H[libcamera-vid<br/>RaspPi]
-        I[RTSP Server<br/>MediaMTX]
-        J[USB Audio<br/>ALSA]
+    subgraph Sys["System"]
+        H["libcamera-vid<br/>RaspPi"]
+        I["RTSP Server<br/>MediaMTX"]
+        J["USB Audio<br/>ALSA"]
     end
     
     A --> B
@@ -365,7 +386,7 @@ graph TD
     H -.Stream.-> I
     I -.RTSP.-> D
     
-    A -.SSH Trigger.-> J
+    A -.->|"SSH Trigger"| J
 
     style A fill:#fff4e1
     style B fill:#ffe1f5
@@ -590,32 +611,32 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    Start([Fehler aufgetreten])
+    Start(["Fehler aufgetreten"])
     
-    Start --> Type{Fehler-Typ?}
+    Start --> Type{"Fehler-Typ?"}
     
-    Type -->|Netzwerk| N1[Ping RaspPi]
-    Type -->|SSH| S1[SSH-Agent prüfen]
-    Type -->|Stream| St1[RTSP Server prüfen]
-    Type -->|KI| K1[YOLO Modell prüfen]
+    Type -->|Netzwerk| N1["Ping RaspPi"]
+    Type -->|SSH| S1["SSH-Agent prüfen"]
+    Type -->|Stream| St1["RTSP Server prüfen"]
+    Type -->|KI| K1["YOLO Modell prüfen"]
     
-    N1 --> N2{Erreichbar?}
-    N2 -->|Ja| N3[Firewall prüfen]
-    N2 -->|Nein| N4[❌ RaspPi offline]
+    N1 --> N2{"Erreichbar?"}
+    N2 -->|Ja| N3["Firewall prüfen"]
+    N2 -->|Nein| N4["❌ RaspPi offline"]
     
-    S1 --> S2{Agent läuft?}
-    S2 -->|Ja| S3[SSH-Key hinzufügen]
-    S2 -->|Nein| S4[ssh-agent starten]
+    S1 --> S2{"Agent läuft?"}
+    S2 -->|Ja| S3["SSH-Key hinzufügen"]
+    S2 -->|Nein| S4["ssh-agent starten"]
     
-    St1 --> St2{Stream läuft?}
-    St2 -->|Ja| St3[Neu verbinden]
-    St2 -->|Nein| St4[libcamera-vid neu starten]
+    St1 --> St2{"Stream läuft?"}
+    St2 -->|Ja| St3["Neu verbinden"]
+    St2 -->|Nein| St4["libcamera-vid neu starten"]
     
-    K1 --> K2{Modell vorhanden?}
-    K2 -->|Ja| K3[Ultralytics neu installieren]
-    K2 -->|Nein| K4[❌ Modell fehlt]
+    K1 --> K2{"Modell vorhanden?"}
+    K2 -->|Ja| K3["Ultralytics neu installieren"]
+    K2 -->|Nein| K4["❌ Modell fehlt"]
     
-    N3 --> Retry[♻️ Verbindung wiederholen]
+    N3 --> Retry["♻️ Verbindung wiederholen"]
     S3 --> Retry
     S4 --> Retry
     St3 --> Retry
@@ -643,26 +664,26 @@ flowchart TD
 
 ```mermaid
 graph TB
-    subgraph "Logging-System"
-        A[Auto-Trigger] -->|stdout| B[Konsole]
-        A -->|stderr| C[Fehler-Log]
-        A -->|Statistiken| D[Performance-Metriken]
+    subgraph LogSys["Logging-System"]
+        A["Auto-Trigger"] -->|stdout| B["Konsole"]
+        A -->|stderr| C["Fehler-Log"]
+        A -->|Statistiken| D["Performance-Metriken"]
     end
     
-    subgraph "Ausgaben"
-        B --> B1[🚀 System-Start]
-        B --> B2[🎯 Erkennungen]
-        B --> B3[📹 Aufnahmen]
-        B --> B4[⚙️ Status-Updates]
+    subgraph Outputs["Ausgaben"]
+        B --> B1["🚀 System-Start"]
+        B --> B2["🎯 Erkennungen"]
+        B --> B3["📹 Aufnahmen"]
+        B --> B4["⚙️ Status-Updates"]
         
-        C --> C1[❌ SSH-Fehler]
-        C --> C2[⚠️ Stream-Probleme]
-        C --> C3[🐛 Python-Exceptions]
+        C --> C1["❌ SSH-Fehler"]
+        C --> C2["⚠️ Stream-Probleme"]
+        C --> C3["🐛 Python-Exceptions"]
         
-        D --> D1[📈 CPU-Auslastung]
-        D --> D2[🖼️ FPS Counter]
-        D --> D3[🎯 Erkennungs-Rate]
-        D --> D4[💾 Speicher-Nutzung]
+        D --> D1["📈 CPU-Auslastung"]
+        D --> D2["🖼️ FPS Counter"]
+        D --> D3["🎯 Erkennungs-Rate"]
+        D --> D4["💾 Speicher-Nutzung"]
     end
 
     style A fill:#fff4e1
