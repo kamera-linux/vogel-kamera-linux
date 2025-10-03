@@ -227,14 +227,14 @@ echo -e "${YELLOW}   (Drücke CTRL+C zum Beenden)${NC}"
 echo ""
 
 if [ "$SLOWMO" = true ]; then
-    # ZEITLUPE (120fps, 1536x864) mit CPU-Optimierung
+    # ZEITLUPE (120fps, 1536x864) mit aggressiver CPU-Optimierung
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
         --trigger-threshold 0.50 \
         --cooldown 15 \
         --status-interval 5 \
         --recording-slowmo \
-        --preview-fps 3 \
+        --preview-fps 2 \
         --preview-width 320 \
         --preview-height 240
 elif [ "$WITH_AI" = true ]; then

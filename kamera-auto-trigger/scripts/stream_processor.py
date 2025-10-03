@@ -299,13 +299,14 @@ class StreamProcessor:
         start_time = time.time()
         
         try:
-            # YOLOv8-Inferenz
+            # YOLOv8-Inferenz mit CPU-Optimierung
             results = self.model(
                 frame,
                 verbose=False,
                 conf=self.threshold,
                 iou=0.45,
-                max_det=5  # Limitiere Detektionen für Performance
+                max_det=5,  # Limitiere Detektionen für Performance
+                imgsz=320   # CPU-Optimierung: Kleinere Inferenz-Auflösung (statt 640)
             )
             
             inference_time = time.time() - start_time
