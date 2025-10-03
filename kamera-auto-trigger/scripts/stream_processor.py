@@ -409,12 +409,13 @@ class StreamProcessor:
                 detection_duration = current_time - self.first_detection_time
                 
                 if detection_duration >= self.trigger_duration:
-                    # Prüfe Konsistenz: Mindestens 70% der letzten Frames müssen Vogel zeigen
+                    # Prüfe Konsistenz: Mindestens 65% der letzten Frames müssen Vogel zeigen
+                    # (Reduziert von 70% auf 65% für bessere Performance bei CPU-Limitierung)
                     recent_detections = [d for t, d in self.detection_history]
                     if len(recent_detections) > 0:
                         detection_rate = sum(recent_detections) / len(recent_detections)
                         
-                        if detection_rate >= 0.7:  # 70% Konsistenz
+                        if detection_rate >= 0.65:  # 65% Konsistenz (optimiert)
                             if self.debug:
                                 logger.debug(f"✅ TRIGGER! Vogel konsistent erkannt ({detection_duration:.1f}s, {detection_rate*100:.0f}% Rate)")
                             
