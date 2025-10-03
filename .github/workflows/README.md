@@ -229,6 +229,44 @@ gh workflow run update-youtube-stats.yml
 # Oder via GitHub UI: Actions → Run workflow
 ```
 
+### Problem: "Permission denied" oder "Error 403"
+
+**Fehlermeldung:**
+```
+remote: Permission to roimme65/vogel-kamera-linux.git denied to github-actions[bot].
+fatal: unable to access 'https://github.com/...': The requested URL returned error: 403
+Error: Process completed with exit code 128.
+```
+
+**Ursache:** GitHub Actions Bot hat keine Schreibrechte
+
+**Lösung:** Permissions im Workflow setzen
+```yaml
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    
+    # Wichtig: Schreibrechte für GITHUB_TOKEN
+    permissions:
+      contents: write  # ← Erlaubt Commit und Push
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true  # ← Token bleibt verfügbar
+```
+
+**Wichtig:** 
+- ✅ `permissions.contents: write` gibt Schreibrechte
+- ✅ `persist-credentials: true` hält Token aktiv
+- ✅ Ohne diese Settings: 403 Permission Error
+
+**Weitere Informationen:**
+- [Automatic token authentication](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
+- [Workflow permissions](https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs)
+
 ## 🎯 Workflow anpassen
 
 ### Nur an Werktagen ausführen
