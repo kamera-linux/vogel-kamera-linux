@@ -35,24 +35,32 @@ Verwendung:
 Modi:
   📹 Standard (ohne Parameter):
      - Trigger MIT KI (erkennt Vögel)
-     - Aufnahme OHNE KI (nur Video)
+     - Aufnahme OHNE KI (nur Video + Audio)
      - 4096x2160 @ 30fps
+     - Audio: 44.1kHz Mono (falls USB-Mikrofon vorhanden)
      - Schneller, weniger CPU-Last
      - Empfohlen für längere Sessions
 
   🤖 Mit KI (--with-ai):
      - Trigger MIT KI (erkennt Vögel)
-     - Aufnahme MIT KI (Objekterkennung während Aufnahme)
+     - Aufnahme MIT KI (Objekterkennung während Aufnahme + Audio)
      - 4096x2160 @ 30fps
+     - Audio: 44.1kHz Mono (falls USB-Mikrofon vorhanden)
      - Höhere CPU-Last auf Raspberry Pi
      - Objekt-Metadaten in Videos
 
   🎬 Zeitlupe (--slowmo):
      - Trigger MIT KI (erkennt Vögel)
-     - Aufnahme in Zeitlupe (120fps)
+     - Aufnahme in Zeitlupe (120fps + Audio)
      - 1536x864 @ 120fps
+     - Audio: 44.1kHz Mono (falls USB-Mikrofon vorhanden)
      - Für spektakuläre Zeitlupen-Aufnahmen
      - Niedrigere Auflösung für Performance
+
+Hinweis:
+  🎤 Audio wird automatisch aufgenommen, wenn ein USB-Mikrofon
+     am Raspberry Pi angeschlossen ist. Ohne Mikrofon wird nur
+     Video aufgenommen (mit Warnung im Log).
 
 Optionen:
   -h, --help     Zeige diese Hilfe
