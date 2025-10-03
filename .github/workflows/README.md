@@ -267,6 +267,62 @@ jobs:
 - [Automatic token authentication](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
 - [Workflow permissions](https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs)
 
+### Problem: "rejected main -> main (fetch first)"
+
+**Fehlermeldung:**
+```
+To https://github.com/roimme65/vogel-kamera-linux
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'https://github.com/...'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing
+```
+
+**Ursache:** Race Condition - Remote wurde parallel von anderem Prozess aktualisiert
+
+**Lösung:** Rebase vor Push + Retry-Logik
+```yaml
+- name: Commit and Push Changes
+  if: steps.git-check.outputs.changed == 'true'
+  run: |
+    git config --local user.email "github-actions[bot]@users.noreply.github.com"
+    git config --local user.name "github-actions[bot]"
+    git add README.md
+    git commit -m "docs: Update YouTube statistics [skip ci]"
+    
+    # Pull mit rebase um Race Conditions zu vermeiden
+    git pull --rebase origin main
+    
+    # Push mit retry bei Fehler
+    for i in {1..3}; do
+      if git push; then
+        echo "✅ Push erfolgreich"
+        break
+      else
+        echo "⚠️ Push fehlgeschlagen, Versuch $i/3"
+        if [ $i -lt 3 ]; then
+          echo "🔄 Hole aktuelle Änderungen..."
+          git pull --rebase origin main
+          sleep 2
+        else
+          echo "❌ Push nach 3 Versuchen fehlgeschlagen"
+          exit 1
+        fi
+      fi
+    done
+```
+
+**Warum funktioniert das?**
+- ✅ `git pull --rebase` holt remote Änderungen vor dem Push
+- ✅ Retry-Logik (3 Versuche) für Timing-Probleme
+- ✅ `sleep 2` gibt Zeit für andere Prozesse
+- ✅ Vermeidet Merge-Commits durch rebase
+
+**Wann tritt das auf?**
+- Manuelle Commits während Action läuft
+- Mehrere Actions laufen gleichzeitig
+- Branch Protection Rules mit Required Status Checks
+
 ## 🎯 Workflow anpassen
 
 ### Nur an Werktagen ausführen
