@@ -48,7 +48,7 @@ parser.add_argument('--ai-modul', choices=['on', 'off'], default='off', help='KI
 parser.add_argument('--ai-model', type=str, default='yolov8', choices=['yolov8', 'bird-species', 'custom'], help='AI-Modell für Objekterkennung (default: yolov8)')
 parser.add_argument('--ai-model-path', type=str, help='Pfad zu benutzerdefiniertem AI-Modell (für --ai-model custom)')
 parser.add_argument('--system-status', action='store_true', help='Zeige nur System-Status ohne Aufnahme')
-parser.add_argument('--no-stream-restart', action='store_true', help='Preview-Stream nicht automatisch neu starten (für Auto-Trigger)')
+parser.add_argument('--no-stream-restart', action='store_true', help='Preview-Stream nicht automatisch neu starten (sinnvoll für On-Demand Aufnahmen, unnötig ohne Auto-Trigger)')
 args = parser.parse_args()
 
 # Erzeuge den Zeitstempel mit deutschem Wochentag
@@ -582,23 +582,29 @@ progress.close()
 # Optionaler Stream-Neustart (falls Preview-Stream verwendet wird)
 # Wird übersprungen wenn --no-stream-restart gesetzt (z.B. bei Auto-Trigger)
 if not args.no_stream_restart:
-    try:
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
-        
-        # Prüfe ob Stream-Skript existiert
-        stdin, stdout, stderr = ssh.exec_command("test -f ~/start-rtsp-stream.sh && echo 'EXISTS'")
-        if 'EXISTS' in stdout.read().decode():
-            print("\n🔄 Starte Preview-Stream neu...")
-            ssh.exec_command("nohup ~/start-rtsp-stream.sh > /dev/null 2>&1 &")
-            time.sleep(2)
-            print("✅ Preview-Stream wurde neu gestartet")
-        
-        ssh.close()
-    except Exception as e:
-        # Ignoriere Fehler beim Stream-Neustart (nicht kritisch)
-        pass
+    # Preview-Stream nur neu starten wenn nicht explizit deaktiviert
+    # (sinnvoll für Auto-Trigger, überflüssig für On-Demand Aufnahmen)
+    if not args.no_stream_restart:
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
+            
+            # Prüfe ob Stream-Skript existiert
+            stdin, stdout, stderr = ssh.exec_command("test -f ~/start-rtsp-stream.sh && echo 'EXISTS'")
+            if 'EXISTS' in stdout.read().decode():
+                print("\n🔄 Starte Preview-Stream neu...")
+                ssh.exec_command("nohup ~/start-rtsp-stream.sh > /dev/null 2>&1 &")
+                time.sleep(2)
+                print("✅ Preview-Stream wurde neu gestartet")
+            
+            ssh.close()
+        except Exception as e:
+            # Ignoriere Fehler beim Stream-Neustart (nicht kritisch)
+            pass
+    else:
+        print("\n⏭️  Preview-Stream Neustart übersprungen (--no-stream-restart)")
+
 
 print("\n✅ Aufnahme erfolgreich abgeschlossen!")
 
