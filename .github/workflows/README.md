@@ -323,6 +323,53 @@ hint: have locally. This is usually caused by another repository pushing
 - Mehrere Actions laufen gleichzeitig
 - Branch Protection Rules mit Required Status Checks
 
+### Problem: "push declined due to repository rule violations"
+
+**Fehlermeldung:**
+```
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: - Cannot update this protected ref.
+remote: - Changes must be made through a pull request.
+error: failed to push some refs
+```
+
+**Ursache:** Branch Protection Rules blockieren alle Pushes auf `main`
+
+**Lösung 1: GitHub Actions von Branch Protection ausnehmen (EMPFOHLEN)**
+
+1. Gehe zu: `Settings` → `Rules` → `Rulesets`
+2. Finde die Rule für `main` Branch
+3. Klicke "Edit"
+4. Scroll zu "Bypass list"
+5. Klicke "Add bypass"
+6. Wähle "GitHub Actions" aus dem Dropdown
+7. Speichere die Änderungen
+
+**Ergebnis:**
+- ✅ Branch Protection bleibt für normale Pushes aktiv
+- ✅ GitHub Actions kann direkt pushen
+- ✅ Keine manuellen Merges nötig
+- ✅ Vollautomatischer Workflow
+
+**Lösung 2: Workflow erstellt automatisch Branch**
+
+Falls Branch Protection aktiv bleibt:
+- Action erstellt Branch: `youtube-stats-update-YYYYMMDD-HHMMSS`
+- Pusht Änderungen auf diesen Branch
+- Du musst Branch manuell mergen
+
+**Branches finden:**
+```
+https://github.com/roimme65/vogel-kamera-linux/branches
+```
+
+**Detaillierte Anleitung:**
+Siehe: `.github/BRANCH_PROTECTION_SETUP.md`
+
+**GitHub Docs:**
+- [Managing rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/managing-rulesets-for-a-repository)
+- [Bypass lists](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#bypass-lists)
+
 ## 🎯 Workflow anpassen
 
 ### Nur an Werktagen ausführen
