@@ -7,41 +7,60 @@
 
 ![Komplettes Vogel-Kamera System](assets/vogelhaus-kamera-komplett.png)
 
-**Professionelles Vogelhaus mit integrierter Raspberry Pi Kamera - Komplettsystem bereit für den Einsatz**
+**🐦 Professionelles Vogel-Beobachtungssystem mit KI-gestützter Objekterkennung**
 
-Ferngesteuerte Kameraüberwachung für Vogelhäuser mit KI-gestützter Objekterkennung.
+`vogel-kamera-linux` ist ein **Open-Source-Projekt** zur ferngesteuerten Überwachung von Vogelhäusern mittels Raspberry Pi 5 Kamera. Das System kombiniert hochauflösende Video-/Audio-Aufnahmen mit **YOLOv8 KI-Erkennung** für automatische Vogelerkennung und -aufzeichnung.
 
-### Basis-Aufnahme
+### 🚀 Quickstart
 ```bash
+# Automatische Vogelerkennung mit KI-Trigger
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+
+# Manuelle HD-Aufnahme mit KI
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-    --duration 5 \
-    --width 1920 \
-    --height 1080 \
-    --ai-modul on
+    --duration 5 --width 1920 --height 1080 --ai-modul on
 ```
 
-> 📺 **Beispielaufnahmen verfügbar:** [Vogel-Kamera Aufnahmen](https://www.youtube.com/@vogel-kamera-linux) - Echte Aufnahmen mit der Kamera
+> 📺 **Live-Demo:** [YouTube-Kanal](https://www.youtube.com/@vogel-kamera-linux) - Echte Aufnahmen vom vogel-kamera-linux System!
 
 ## 📖 Überblick
 
-Dieses Projekt ermöglicht die Fernsteuerung von Raspberry Pi-Kameras zur Überwachung von Vogelhäusern. Es bietet hochauflösende Video- und Audioaufnahmen mit KI-basierter Objekterkennung (YOLOv8) und automatischer Dateiorganisation.
+**vogel-kamera-linux** ist ein vollständiges Remote-Kamera-System für Naturbeobachtung, entwickelt für **Raspberry Pi 5** mit Python 3.11+. Das Projekt kombiniert moderne Kamera-Hardware (IMX708) mit fortgeschrittener KI-Objekterkennung (YOLOv8) für automatische Vogelerkennung.
+
+**🎯 Hauptanwendung:** Ferngesteuerte Vogelhaus-Überwachung mit automatischer Aufnahme bei Vogel-Erkennung, inklusive HD-Video (bis 4K), Zeitlupe (120fps) und synchroner Audio-Aufzeichnung über USB-Mikrofon.
 
 ### 🎬 YouTube-Kanal & Beispielaufnahmen
 
 [![YouTube Channel](https://img.shields.io/badge/📺_YouTube_Kanal-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@vogel-kamera-linux)
 
+**Echte Aufnahmen vom vogel-kamera-linux System!** Sehen Sie die Kamera in Aktion mit Live-Vogelerkennung, Zeitlupen-Aufnahmen und 4K-Videos aus unserem Vogelhaus.
+
 **📱 QR-Code für mobilen Zugriff:**
 
 ![YouTube QR Code](assets/qr-youtube-channel.png)
 
-| Beispielaufnahmen | Beschreibung |
-|-------------------|--------------|
-| 🐦 **Vogelerkennung Live** | Echte KI-Objekterkennung in Aktion |
-| ⚡ **Zeitlupe-Aufnahmen** | 120fps Slow-Motion Beispiele |
-| 🎥 **4K Aufnahmen** | Hochauflösende Vogelhaus-Videos |
-| 🎵 **Audio-Aufnahmen** | Synchrone Vogel-Audio Beispiele |
+<!-- YOUTUBE_VIDEOS_START -->
+**📺 Aktuelle Videos:**
 
-> 💡 **Hinweis:** Tutorial-Videos sind in Planung - aktuell zeigen wir echte Aufnahmen unserer Vogel-Kamera!
+| 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes |
+|----------|----------|----------|----------|----------|
+| [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 16 | 4 |
+| [**Vogelhaus mit Kleiber  (Futtersuche in Zeitlupe)**](https://www.youtube.com/watch?v=QALijFTA_s8) | 29.09.2025 | 5:07 | 26 | 4 |
+| [**Vogelhaus mit junge Haussperlinge**](https://www.youtube.com/watch?v=3na90KiJ-J8) | 06.06.2025 | 3:11 | 48 | 6 |
+| [**Vogelhaus mit Kohlmeise  (Am Futterspender in Zeit...**](https://www.youtube.com/watch?v=kFXR03Lv0X0) | 30.05.2025 | 7:23 | 26 | 6 |
+| [**Vogelhaus mit Kohlmeisen  (Fütterung Jungtiere mit...**](https://www.youtube.com/watch?v=sqvd99Pbubc) | 18.05.2025 | 3:22 | 36 | 6 |
+| [**Vogelhaus mit Kohlmeise  (Fütterung Jungtier mit 2...**](https://www.youtube.com/watch?v=vXWDleJ-18Q) | 17.05.2025 | 2:44 | 20 | 6 |
+| [**Vogelhaus mit Kernbeißer (2 Kameras)**](https://www.youtube.com/watch?v=dvCXPdMdNCg) | 27.04.2025 | 2:12 | 74 | 7 |
+| [**Vogelhaus mit Kernbeißer und Blaumeise (Vogel-Paar...**](https://www.youtube.com/watch?v=61Szkcp9hcM) | 23.04.2025 | 2:59 | 50 | 5 |
+| [**Vogelhaus mit Blaumeise, Kernbeißer und Kohlmeise ...**](https://www.youtube.com/watch?v=kElfd64dWrY) | 21.04.2025 | 4:16 | 94 | 7 |
+| [**Vogelhaus mit Blaumeise, Haussperling und Kohlmeis...**](https://www.youtube.com/watch?v=hjrYji0A9Hs) | 18.04.2025 | 3:04 | 63 | 6 |
+| [**Vogelhaus mit Blaumeise und Kohlmeise (Zeitlupe)**](https://www.youtube.com/watch?v=lshb68RrF_A) | 13.04.2025 | 5:11 | 72 | 7 |
+| [**Vogelhaus mit Blaumeisen, Rotkehlchen, Kernbeißer ...**](https://www.youtube.com/watch?v=6-OFxA__GL8) | 10.04.2025 | 5:05 | 106 | 7 |
+| [**Vogelhaus mit Kernbeißer, Blaumeise, Rotkehlchen, ...**](https://www.youtube.com/watch?v=MKb3yUKS_ww) | 09.04.2025 | 4:28 | 80 | 7 |
+| [**Vogelhaus mit Blaumeise, Rotkehlchen, Haussperling...**](https://www.youtube.com/watch?v=K0FhU73F6jo) | 08.04.2025 | 5:17 | 90 | 7 |
+
+*Automatisch aktualisiert: 03.10.2025 17:30 Uhr*
+<!-- YOUTUBE_VIDEOS_END -->
 
 ## ✨ Features
 
