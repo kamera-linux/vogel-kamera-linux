@@ -359,7 +359,58 @@ docs/
 
 ---
 
-## 🔮 Ausblick auf v1.3.0
+## � Performance-Optimierungen (v1.2.0 Updates)
+
+### CPU-Last Optimierung (Oktober 2025)
+
+**Problem:** Nach Aktivierung der CPU-Thread-Limitierung (`OMP_NUM_THREADS=2`) sank die Auto-Trigger Performance dramatisch:
+- ❌ Von 33 Trigger in 10h 52min → 3 Trigger in 4h (-75%)
+- ❌ Grund: 3 FPS × 2s = nur 6 Frames (zu wenig für 70% Konsistenz)
+
+**Lösung 1 - Aggressive Optimierung:**
+```bash
+--preview-fps 5           # 3 → 5 (+67% Frames)
+--preview-width 480       # 320 → 480 (+50% Breite)
+--preview-height 360      # 240 → 360 (+50% Höhe)
+--trigger-threshold 0.38  # 0.45 → 0.38 (sensitiver)
+```
+- ✅ Trigger-Rate wiederhergestellt
+- ❌ CPU-Last: 82.6% (zu hoch für Dauerbetrieb)
+
+**Lösung 2 - CPU-optimierter Kompromiss (AKTUELL):**
+```bash
+--preview-fps 4           # 5 → 4 (-20% Frames)
+--preview-width 400       # 480 → 400 
+--preview-height 300      # 360 → 300 (-30% Pixel)
+--trigger-threshold 0.40  # 0.38 → 0.40 (weniger sensitiv)
+```
+
+**Mathematik:**
+- 4 FPS × 2s = 8 Frames
+- 65% Konsistenz = 5.2 Frames müssen Vogel zeigen
+- 400×300 = 120.000 Pixel/Frame × 4 FPS = 480.000 Pixel/Sek
+- Vergleich zu aggressiv: 576.000 Pixel/Sek → **-16.7% Daten**
+
+**Erwartete Ergebnisse:**
+- 🎯 CPU-Auslastung: 50-60% (statt 82.6%)
+- 🐦 Trigger-Rate: 2-2.5 pro Stunde
+- ⚡ Erkennungsqualität: Gut (400x300 > 320x240 ursprünglich)
+
+### Stream-Restart Optimierung
+
+**Neuer Parameter:** `--no-stream-restart` (v1.2.0)
+
+**Anwendung:**
+- ✅ **On-Demand Aufnahmen**: Spart 2 Sekunden, Stream nicht benötigt
+- ⚙️ **Auto-Trigger**: Automatisch gesetzt, Stream-Management durch Auto-Trigger
+
+**Dokumentation:**
+- 📄 `docs/PARAMETER-NO-STREAM-RESTART.md`
+- 📄 `docs/AUTO-TRIGGER-STREAM-RESTART.md`
+
+---
+
+## �🔮 Ausblick auf v1.3.0
 
 ### Geplante Features
 - **Web-Interface**: Browser-basierte Steuerung
@@ -401,13 +452,19 @@ Vielen Dank an alle, die zu diesem Release beigetragen haben!
 - 🐛 Cleanup-Traps für Remote-Prozesse
 
 ### Changed
-- 🔧 Threshold Standard: 0.45 → 0.60
+- 🔧 Threshold Standard: 0.45 → 0.40 (CPU-optimiert)
+- 🔧 Preview-FPS: 3 → 4 (CPU/Performance Balance)
+- 🔧 Preview-Auflösung: 320x240 → 400x300 (bessere Erkennung)
+- 🔧 Konsistenz-Rate: 70% → 65% (realistischer mit niedrigem FPS)
 - 🔧 Stream-Management verbessert
 - 🔧 Audio-Format: Stereo → Mono
 - 🔧 SSH-Persistenz für Background-Prozesse
 
 ### Documentation
 - 📝 AUTO-TRIGGER-DOKUMENTATION.md
+- 📝 AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md (Performance-Analyse)
+- 📝 PARAMETER-NO-STREAM-RESTART.md (Stream-Management)
+- 📝 AUTO-TRIGGER-STREAM-RESTART.md (Auto-Trigger Verhalten)
 - 📝 QUICKSTART-AUTO-TRIGGER.md
 - 📝 PREVIEW-STREAM-SETUP.md
 - 📝 FIREWALL-SETUP-SUMMARY.md

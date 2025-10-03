@@ -73,11 +73,14 @@ cd kamera-auto-trigger
 ```bash
 cd kamera-auto-trigger
 
-# Ohne KI-Aufnahme (Standard)
-./run-auto-trigger.sh --trigger-duration 2 --trigger-threshold 0.45
+# Ohne KI-Aufnahme (Standard, nutzt neue Defaults)
+./run-auto-trigger.sh --trigger-duration 2
 
 # Mit KI-Aufnahme
-./run-auto-trigger.sh --trigger-duration 2 --trigger-threshold 0.45 --recording-ai
+./run-auto-trigger.sh --trigger-duration 2 --recording-ai
+
+# Mit Custom-Schwellenwert (wenn nötig)
+./run-auto-trigger.sh --trigger-duration 2 --trigger-threshold 0.45
 ```
 
 ### 3. Beenden
@@ -91,8 +94,11 @@ Drücke **Strg+C** im Terminal - das System beendet sich sauber und räumt auf.
 | Parameter | Standard | Beschreibung |
 |-----------|----------|--------------|
 | `--trigger-duration` | 2 | Aufnahme-Dauer in Minuten |
-| `--trigger-threshold` | 0.45 | AI-Erkennungs-Schwelle (0.0-1.0) |
+| `--trigger-threshold` | 0.40 | AI-Erkennungs-Schwelle (0.0-1.0) CPU-optimiert |
 | `--cooldown` | 30 | Pause nach Aufnahme (Sekunden) |
+| `--preview-fps` | 4 | Preview-Stream FPS (CPU/Performance Balance) |
+| `--preview-width` | 400 | Preview-Breite (CPU-optimiert) |
+| `--preview-height` | 300 | Preview-Höhe (CPU-optimiert) |
 | `--recording-ai` | false | Aufnahme MIT KI (Flag, kein Wert) |
 | `--recording-ai-model` | bird-species | AI-Modell für Aufnahme (nur mit --recording-ai) |
 | `--recording-slowmo` | false | Zeitlupen-Aufnahme 120fps (Flag, überschreibt AI-Modus) |
@@ -103,8 +109,14 @@ Drücke **Strg+C** im Terminal - das System beendet sich sauber und räumt auf.
 ### Beispiele
 
 ```bash
+# Standard mit CPU-optimierten Defaults (4fps @ 400x300, threshold 0.40)
+./run-auto-trigger.sh --trigger-duration 2
+
 # Höhere Präzision (weniger false positives)
 ./run-auto-trigger.sh --trigger-threshold 0.55
+
+# Niedrigere Schwelle (mehr Trigger, aber ggf. mehr false positives)
+./run-auto-trigger.sh --trigger-threshold 0.35
 
 # Full HD statt 4K (kleinere Dateien)
 ./run-auto-trigger.sh --width 1920 --height 1080
@@ -115,14 +127,14 @@ Drücke **Strg+C** im Terminal - das System beendet sich sauber und räumt auf.
 # Aufnahme MIT KI-Analyse (Objekterkennung während Aufnahme)
 ./run-auto-trigger.sh --recording-ai --recording-ai-model bird-species
 
-# Aufnahme OHNE KI (Standard, schneller)
-./run-auto-trigger.sh --trigger-duration 2
-
 # Zeitlupen-Aufnahme (120fps, 1536x864)
 ./run-auto-trigger.sh --recording-slowmo --trigger-duration 1
 
-# CPU-Optimierung: Niedrigere FPS für weniger Last
-./run-auto-trigger.sh --preview-fps 2  # Minimal für sehr langsame Systeme
+# Performance-Tuning: Höhere FPS für bessere Erkennung (mehr CPU-Last)
+./run-auto-trigger.sh --preview-fps 5 --preview-width 480 --preview-height 360
+
+# Performance-Tuning: Niedrigere FPS für weniger CPU-Last
+./run-auto-trigger.sh --preview-fps 3 --preview-width 320 --preview-height 240
 ```
 
 ## 📁 Verzeichnisstruktur
