@@ -56,14 +56,18 @@ cd kamera-auto-trigger
 
 # Mit KI-Aufnahme: Objekterkennung während Aufnahme
 ./start-vogel-beobachtung.sh --with-ai
+
+# Zeitlupen-Modus: 120fps für spektakuläre Aufnahmen
+./start-vogel-beobachtung.sh --slowmo
 ```
 
 **Modi erklärt:**
 
-| Modus | Trigger | Aufnahme | CPU-Last | Verwendung |
-|-------|---------|----------|----------|------------|
-| Standard | 🤖 MIT KI | 📹 OHNE KI | Niedrig | Längere Sessions, schnelle Aufnahmen |
-| `--with-ai` | 🤖 MIT KI | 🤖 MIT KI | Höher | Objekt-Analyse während Aufnahme |
+| Modus | Trigger | Aufnahme | Auflösung | FPS | CPU-Last | Verwendung |
+|-------|---------|----------|-----------|-----|----------|------------|
+| Standard | 🤖 MIT KI | 📹 OHNE KI | 4096x2160 | 30 | Niedrig | Längere Sessions, schnelle Aufnahmen |
+| `--with-ai` | 🤖 MIT KI | 🤖 MIT KI | 4096x2160 | 30 | Höher | Objekt-Analyse während Aufnahme |
+| `--slowmo` | 🤖 MIT KI | 🎬 ZEITLUPE | 1536x864 | 120 | Mittel | Spektakuläre Zeitlupen-Aufnahmen |
 
 **Option B: Manuell mit Parametern**
 ```bash
@@ -91,8 +95,9 @@ Drücke **Strg+C** im Terminal - das System beendet sich sauber und räumt auf.
 | `--cooldown` | 30 | Pause nach Aufnahme (Sekunden) |
 | `--recording-ai` | false | Aufnahme MIT KI (Flag, kein Wert) |
 | `--recording-ai-model` | bird-species | AI-Modell für Aufnahme (nur mit --recording-ai) |
-| `--width` | 4096 | HD-Auflösung Breite |
-| `--height` | 2160 | HD-Auflösung Höhe |
+| `--recording-slowmo` | false | Zeitlupen-Aufnahme 120fps (Flag, überschreibt AI-Modus) |
+| `--width` | 4096 | HD-Auflösung Breite (außer Zeitlupe: 1536) |
+| `--height` | 2160 | HD-Auflösung Höhe (außer Zeitlupe: 864) |
 | `--ai-model` | bird-species | AI-Model für Trigger (yolov8/bird-species/custom) |
 
 ### Beispiele
@@ -112,6 +117,9 @@ Drücke **Strg+C** im Terminal - das System beendet sich sauber und räumt auf.
 
 # Aufnahme OHNE KI (Standard, schneller)
 ./run-auto-trigger.sh --trigger-duration 2
+
+# Zeitlupen-Aufnahme (120fps, 1536x864)
+./run-auto-trigger.sh --recording-slowmo --trigger-duration 1
 ```
 
 ## 📁 Verzeichnisstruktur

@@ -66,6 +66,10 @@ start_time = datetime.now()
 stream_processor = None  # StreamProcessor-Instanz
 monitoring_paused = False  # Flag zum Pausieren der Status-Reports während Aufnahme
 
+# Tracking für anhaltende Last-Probleme
+high_load_start_time = None  # Zeitpunkt, wann Last-Problem begann
+high_load_host = None  # 'local' oder 'remote'
+
 # Argumente parsen
 parser = argparse.ArgumentParser(
     description='''🐦 Vogel-Kamera Auto-Trigger mit AI-Objekterkennung
@@ -97,13 +101,16 @@ parser.add_argument('--recording-ai', action='store_true',
                     help='Aufnahme mit KI-Modul (Objekterkennung während Aufnahme). Default: Ohne KI (nur Trigger nutzt KI)')
 parser.add_argument('--recording-ai-model', type=str, default='bird-species', choices=['yolov8', 'bird-species', 'custom'],
                     help='AI-Modell für Aufnahme (nur mit --recording-ai, default: bird-species)')
+parser.add_argument('--recording-slowmo', action='store_true',
+                    help='Zeitlupen-Aufnahme (120fps, 1536x864). Überschreibt --recording-ai und Auflösungsparameter')
 parser.add_argument('--cooldown', type=int, default=30, help='Wartezeit zwischen Aufnahmen in Sekunden (default: 30)')
 parser.add_argument('--trigger-threshold', type=float, default=0.45, help='AI-Schwelle für Trigger (default: 0.45)')
 parser.add_argument('--preview-fps', type=int, default=5, help='FPS für Monitoring-Modus (default: 5)')
 parser.add_argument('--preview-width', type=int, default=640, help='Breite für Monitoring-Vorschau (default: 640)')
 parser.add_argument('--preview-height', type=int, default=480, help='Höhe für Monitoring-Vorschau (default: 480)')
 parser.add_argument('--max-cpu-temp', type=float, default=70.0, help='Maximale CPU-Temperatur in °C (default: 70)')
-parser.add_argument('--max-cpu-load', type=float, default=3.0, help='Maximale CPU-Load (default: 3.0)')
+parser.add_argument('--max-cpu-load', type=float, default=4.0, help='Maximale CPU-Load (default: 4.0)')
+parser.add_argument('--max-cpu-load-duration', type=int, default=300, help='CPU-Load muss für X Sekunden über Schwelle sein (default: 300s = 5min)')
 parser.add_argument('--status-interval', type=int, default=15, help='Status-Report Intervall in Minuten (default: 15)')
 parser.add_argument('--width', type=int, default=4096, help='Breite für HD-Aufnahme (default: 4096)')
 parser.add_argument('--height', type=int, default=2160, help='Höhe für HD-Aufnahme (default: 2160)')
@@ -124,8 +131,16 @@ if config_errors:
     print("\nBitte konfigurieren Sie das System entsprechend der README.md")
     exit(1)
 
-recording_mode = "🤖 Mit KI" if args.recording_ai else "📹 Ohne KI (nur Video)"
-recording_model = f" ({args.recording_ai_model})" if args.recording_ai else ""
+# Bestimme Aufnahme-Modus (Priorität: Zeitlupe > AI > Standard)
+if args.recording_slowmo:
+    recording_mode = "🎬 Zeitlupe (120fps)"
+    recording_model = ""
+elif args.recording_ai:
+    recording_mode = "🤖 Mit KI"
+    recording_model = f" ({args.recording_ai_model})"
+else:
+    recording_mode = "📹 Ohne KI (nur Video)"
+    recording_model = ""
 
 print(f"""
 ╔══════════════════════════════════════════════════════════════╗
@@ -313,41 +328,61 @@ def trigger_recording():
             except Exception as e:
                 print(f"   ⚠️  Konnte Stream auf Raspberry Pi nicht stoppen: {e}")
         
-        # Verwende immer das AI-Modul-Skript (mit --ai-modul on/off)
+        # Wähle das richtige Recording-Skript basierend auf Modus (Priorität: Zeitlupe > AI > Standard)
         script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py')
         
-        if args.recording_ai:
-            # MIT KI: Objekterkennung während Aufnahme
-            print(f"   🤖 Modus: Aufnahme MIT KI ({args.recording_ai_model})")
+        if args.recording_slowmo:
+            # ZEITLUPE: Nutze Zeitlupen-Skript (120fps, 1536x864)
+            print(f"   🎬 Modus: Zeitlupen-Aufnahme (120fps, 1536x864)")
+            
+            recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py')
             
             cmd = [
                 'python3',
                 recording_script,
                 '--duration', str(args.trigger_duration),
-                '--width', str(args.width),
-                '--height', str(args.height),
+                '--width', '1536',  # Zeitlupe: feste Auflösung für Performance
+                '--height', '864',
+                '--fps', '120',     # Zeitlupe: 120fps
                 '--rotation', str(args.rotation),
                 '--cam', str(args.cam),
-                '--ai-modul', 'on',
-                '--ai-model', args.recording_ai_model,
-                '--no-stream-restart'  # Auto-Trigger managed Stream-Neustart selbst
+                '--slowmotion'      # Aktiviere Zeitlupen-Flag
             ]
-            
-            if args.recording_ai_model == 'custom' and args.ai_model_path:
-                cmd.extend(['--ai-model-path', args.ai_model_path])
         else:
-            # OHNE KI: Nur Video-Aufnahme (schneller, weniger CPU-Last)
-            print(f"   📹 Modus: Aufnahme OHNE KI (nur Video)")
+            # Standard oder AI: Nutze AI-Modul-Skript
+            recording_script = os.path.join(script_dir, 'python-skripte', 'ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py')
             
-            cmd = [
-                'python3',
-                recording_script,
-                '--duration', str(args.trigger_duration),
-                '--width', str(args.width),
-                '--height', str(args.height),
-                '--rotation', str(args.rotation),
-                '--cam', str(args.cam),
+            if args.recording_ai:
+                # MIT KI: Objekterkennung während Aufnahme
+                print(f"   🤖 Modus: Aufnahme MIT KI ({args.recording_ai_model})")
+                
+                cmd = [
+                    'python3',
+                    recording_script,
+                    '--duration', str(args.trigger_duration),
+                    '--width', str(args.width),
+                    '--height', str(args.height),
+                    '--rotation', str(args.rotation),
+                    '--cam', str(args.cam),
+                    '--ai-modul', 'on',
+                    '--ai-model', args.recording_ai_model,
+                    '--no-stream-restart'  # Auto-Trigger managed Stream-Neustart selbst
+                ]
+                
+                if args.recording_ai_model == 'custom' and args.ai_model_path:
+                    cmd.extend(['--ai-model-path', args.ai_model_path])
+            else:
+                # OHNE KI: Nur Video-Aufnahme (schneller, weniger CPU-Last)
+                print(f"   📹 Modus: Aufnahme OHNE KI (nur Video)")
+                
+                cmd = [
+                    'python3',
+                    recording_script,
+                    '--duration', str(args.trigger_duration),
+                    '--width', str(args.width),
+                    '--height', str(args.height),
+                    '--rotation', str(args.rotation),
+                    '--cam', str(args.cam),
                 '--ai-modul', 'off',  # KI deaktiviert = nur Video
                 '--no-stream-restart'  # Auto-Trigger managed Stream-Neustart selbst
             ]
@@ -479,8 +514,8 @@ def print_status_report():
     print(f"{'='*70}\n")
 
 def resource_monitor():
-    """Überwache System-Ressourcen"""
-    global running, monitoring_paused
+    """Überwache System-Ressourcen mit zeitlicher Toleranz für Last-Spitzen"""
+    global running, monitoring_paused, high_load_start_time, high_load_host
     
     last_status_report = datetime.now()
     status_interval = timedelta(minutes=args.status_interval)
@@ -499,27 +534,90 @@ def resource_monitor():
             status = get_system_status()
             local_status = get_local_system_status()
             
-            # Prüfe Remote-Host
-            if status and not status['healthy']:
-                print(f"\n🚨 KRITISCH: Remote-Host Ressourcen überschritten!")
-                print(f"   🖥️  Host: {remote_host['hostname']}")
-                print(f"   🌡️  CPU-Temp: {status['temp']:.1f}°C (Max: {args.max_cpu_temp}°C)")
-                print(f"   ⚡ CPU-Load: {status['load']:.2f} (Max: {args.max_cpu_load})")
-                print(f"\n⛔ Beende Auto-Trigger aus Sicherheitsgründen...")
+            # Prüfe Remote-Host mit zeitlicher Toleranz
+            remote_critical = False
+            if status:
+                # Temperatur: Sofortiges Beenden (keine Toleranz)
+                if status['temp'] >= args.max_cpu_temp:
+                    print(f"\n🚨 KRITISCH: Remote-Host CPU-Temperatur zu hoch!")
+                    print(f"   🖥️  Host: {remote_host['hostname']}")
+                    print(f"   🌡️  CPU-Temp: {status['temp']:.1f}°C (Max: {args.max_cpu_temp}°C)")
+                    print(f"\n⛔ Beende Auto-Trigger aus Sicherheitsgründen...")
+                    shutdown()
+                    break
                 
-                shutdown()
-                break
+                # Load: Zeitliche Toleranz (muss anhaltend sein)
+                if status['load'] >= args.max_cpu_load:
+                    if high_load_start_time is None or high_load_host != 'remote':
+                        # Erste Erkennung der hohen Last
+                        high_load_start_time = datetime.now()
+                        high_load_host = 'remote'
+                        print(f"\n⚠️  WARNUNG: Remote-Host hohe CPU-Last erkannt")
+                        print(f"   ⚡ CPU-Load: {status['load']:.2f} (Max: {args.max_cpu_load})")
+                        print(f"   ⏱️  Toleranz: {args.max_cpu_load_duration}s (beende wenn anhaltend)")
+                    else:
+                        # Prüfe ob Last schon zu lange anhält
+                        duration = (datetime.now() - high_load_start_time).total_seconds()
+                        if duration >= args.max_cpu_load_duration:
+                            print(f"\n🚨 KRITISCH: Remote-Host CPU-Last anhaltend zu hoch!")
+                            print(f"   🖥️  Host: {remote_host['hostname']}")
+                            print(f"   ⚡ CPU-Load: {status['load']:.2f} (Max: {args.max_cpu_load})")
+                            print(f"   ⏱️  Dauer: {int(duration)}s (Max: {args.max_cpu_load_duration}s)")
+                            print(f"\n⛔ Beende Auto-Trigger aus Sicherheitsgründen...")
+                            shutdown()
+                            break
+                        else:
+                            # Noch in Toleranz-Phase
+                            remaining = args.max_cpu_load_duration - int(duration)
+                            print(f"   ⏳ Hohe Last seit {int(duration)}s (beende in {remaining}s wenn anhaltend)")
+                else:
+                    # Last wieder normal - reset Timer
+                    if high_load_start_time is not None and high_load_host == 'remote':
+                        duration = (datetime.now() - high_load_start_time).total_seconds()
+                        print(f"\n✅ Remote-Host CPU-Last wieder normal (war {int(duration)}s erhöht)")
+                        high_load_start_time = None
+                        high_load_host = None
             
-            # Prüfe Localhost
-            if local_status and not local_status['healthy']:
-                print(f"\n🚨 KRITISCH: Localhost Ressourcen überschritten!")
-                if local_status['temp'] is not None:
+            # Prüfe Localhost mit zeitlicher Toleranz
+            if local_status:
+                # Temperatur: Sofortiges Beenden (keine Toleranz)
+                if local_status['temp'] is not None and local_status['temp'] >= args.max_cpu_temp:
+                    print(f"\n🚨 KRITISCH: Localhost CPU-Temperatur zu hoch!")
                     print(f"   🌡️  CPU-Temp: {local_status['temp']:.1f}°C (Max: {args.max_cpu_temp}°C)")
-                print(f"   ⚡ CPU-Load: {local_status['load']:.2f} (Max: {args.max_cpu_load})")
-                print(f"\n⛔ Beende Auto-Trigger aus Sicherheitsgründen...")
+                    print(f"\n⛔ Beende Auto-Trigger aus Sicherheitsgründen...")
+                    shutdown()
+                    break
                 
-                shutdown()
-                break
+                # Load: Zeitliche Toleranz (muss anhaltend sein)
+                if local_status['load'] >= args.max_cpu_load:
+                    if high_load_start_time is None or high_load_host != 'local':
+                        # Erste Erkennung der hohen Last
+                        high_load_start_time = datetime.now()
+                        high_load_host = 'local'
+                        print(f"\n⚠️  WARNUNG: Localhost hohe CPU-Last erkannt")
+                        print(f"   ⚡ CPU-Load: {local_status['load']:.2f} (Max: {args.max_cpu_load})")
+                        print(f"   ⏱️  Toleranz: {args.max_cpu_load_duration}s (beende wenn anhaltend)")
+                    else:
+                        # Prüfe ob Last schon zu lange anhält
+                        duration = (datetime.now() - high_load_start_time).total_seconds()
+                        if duration >= args.max_cpu_load_duration:
+                            print(f"\n🚨 KRITISCH: Localhost CPU-Last anhaltend zu hoch!")
+                            print(f"   ⚡ CPU-Load: {local_status['load']:.2f} (Max: {args.max_cpu_load})")
+                            print(f"   ⏱️  Dauer: {int(duration)}s (Max: {args.max_cpu_load_duration}s)")
+                            print(f"\n⛔ Beende Auto-Trigger aus Sicherheitsgründen...")
+                            shutdown()
+                            break
+                        else:
+                            # Noch in Toleranz-Phase
+                            remaining = args.max_cpu_load_duration - int(duration)
+                            print(f"   ⏳ Hohe Last seit {int(duration)}s (beende in {remaining}s wenn anhaltend)")
+                else:
+                    # Last wieder normal - reset Timer
+                    if high_load_start_time is not None and high_load_host == 'local':
+                        duration = (datetime.now() - high_load_start_time).total_seconds()
+                        print(f"\n✅ Localhost CPU-Last wieder normal (war {int(duration)}s erhöht)")
+                        high_load_start_time = None
+                        high_load_host = None
             
             time.sleep(60)  # Prüfe jede Minute
         

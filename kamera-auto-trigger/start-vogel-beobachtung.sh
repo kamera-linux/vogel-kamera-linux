@@ -30,19 +30,29 @@ show_help() {
 Verwendung:
   ./start-vogel-beobachtung.sh              Standard-Modus (ohne KI-Aufnahme)
   ./start-vogel-beobachtung.sh --with-ai    Mit KI-Aufnahme
+  ./start-vogel-beobachtung.sh --slowmo     Zeitlupen-Aufnahme
 
 Modi:
-  📹 Standard (ohne --with-ai):
+  📹 Standard (ohne Parameter):
      - Trigger MIT KI (erkennt Vögel)
      - Aufnahme OHNE KI (nur Video)
+     - 4096x2160 @ 30fps
      - Schneller, weniger CPU-Last
      - Empfohlen für längere Sessions
 
   🤖 Mit KI (--with-ai):
      - Trigger MIT KI (erkennt Vögel)
      - Aufnahme MIT KI (Objekterkennung während Aufnahme)
+     - 4096x2160 @ 30fps
      - Höhere CPU-Last auf Raspberry Pi
      - Objekt-Metadaten in Videos
+
+  🎬 Zeitlupe (--slowmo):
+     - Trigger MIT KI (erkennt Vögel)
+     - Aufnahme in Zeitlupe (120fps)
+     - 1536x864 @ 120fps
+     - Für spektakuläre Zeitlupen-Aufnahmen
+     - Niedrigere Auflösung für Performance
 
 Optionen:
   -h, --help     Zeige diese Hilfe
@@ -50,6 +60,7 @@ Optionen:
 Beispiele:
   ./start-vogel-beobachtung.sh              # Standard, schnell
   ./start-vogel-beobachtung.sh --with-ai    # Mit KI-Analyse
+  ./start-vogel-beobachtung.sh --slowmo     # Zeitlupe 120fps
 
 EOF
     exit 0
@@ -57,10 +68,13 @@ EOF
 
 # Parse Parameter
 WITH_AI=false
+SLOWMO=false
 if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
     show_help
 elif [[ "$1" == "--with-ai" ]]; then
     WITH_AI=true
+elif [[ "$1" == "--slowmo" ]]; then
+    SLOWMO=true
 elif [[ -n "$1" ]]; then
     echo "❌ Unbekannter Parameter: $1"
     echo "Nutze --help für Hilfe"
@@ -69,7 +83,15 @@ fi
 
 clear
 
-if [ "$WITH_AI" = true ]; then
+if [ "$SLOWMO" = true ]; then
+    cat << 'EOF'
+╔══════════════════════════════════════════════════════════════════╗
+                                                                  
+   🐦 VOGEL-BEOBACHTUNG - ZEITLUPEN-MODUS 🎬🐦                 
+                                                                  
+╚══════════════════════════════════════════════════════════════════╝
+EOF
+elif [ "$WITH_AI" = true ]; then
     cat << 'EOF'
 ╔══════════════════════════════════════════════════════════════════╗
                                                                   
@@ -194,7 +216,9 @@ cleanup() {
 trap cleanup SIGINT SIGTERM EXIT
 
 # Starte Auto-Trigger
-if [ "$WITH_AI" = true ]; then
+if [ "$SLOWMO" = true ]; then
+    echo -e "${CYAN}🚀 Starte Vogel-Beobachtung ZEITLUPEN-MODUS (120fps)...${NC}"
+elif [ "$WITH_AI" = true ]; then
     echo -e "${MAGENTA}🚀 Starte Vogel-Beobachtung MIT KI-Aufnahme...${NC}"
 else
     echo -e "${GREEN}🚀 Starte Vogel-Beobachtung (Standard-Modus)...${NC}"
@@ -202,7 +226,15 @@ fi
 echo -e "${YELLOW}   (Drücke CTRL+C zum Beenden)${NC}"
 echo ""
 
-if [ "$WITH_AI" = true ]; then
+if [ "$SLOWMO" = true ]; then
+    # ZEITLUPE (120fps, 1536x864)
+    "$AUTO_TRIGGER" \
+        --trigger-duration 1 \
+        --trigger-threshold 0.50 \
+        --cooldown 15 \
+        --status-interval 5 \
+        --recording-slowmo
+elif [ "$WITH_AI" = true ]; then
     # MIT KI-Aufnahme
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
