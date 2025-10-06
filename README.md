@@ -59,7 +59,7 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 | [**Vogelhaus mit Kernbeißer, Blaumeise, Rotkehlchen, ...**](https://www.youtube.com/watch?v=MKb3yUKS_ww) | 09.04.2025 | 4:28 | 80 | 7 |
 | [**Vogelhaus mit Blaumeise, Rotkehlchen, Haussperling...**](https://www.youtube.com/watch?v=K0FhU73F6jo) | 08.04.2025 | 5:17 | 91 | 7 |
 
-*Automatisch aktualisiert: 06.10.2025 09:02 Uhr*
+*Automatisch aktualisiert: 06.10.2025 12:26 Uhr (Sommerzeit (MESZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## ✨ Features
