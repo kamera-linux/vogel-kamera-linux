@@ -110,12 +110,12 @@ parser.add_argument('--recording-ai-model', type=str, default='bird-species', ch
 parser.add_argument('--recording-slowmo', action='store_true',
                     help='Zeitlupen-Aufnahme (120fps, 1536x864). Überschreibt --recording-ai und Auflösungsparameter')
 parser.add_argument('--cooldown', type=int, default=30, help='Wartezeit zwischen Aufnahmen in Sekunden (default: 30)')
-parser.add_argument('--trigger-threshold', type=float, default=0.40, help='AI-Schwelle für Trigger (default: 0.40, CPU-optimierter Kompromiss)')
-parser.add_argument('--preview-fps', type=int, default=4, help='FPS für Monitoring-Modus (default: 4, CPU-optimierter Kompromiss)')
-parser.add_argument('--preview-width', type=int, default=400, help='Breite für Monitoring-Vorschau (default: 400, CPU-optimierter Kompromiss)')
-parser.add_argument('--preview-height', type=int, default=300, help='Höhe für Monitoring-Vorschau (default: 300, CPU-optimierter Kompromiss)')
+parser.add_argument('--trigger-threshold', type=float, default=0.50, help='AI-Schwelle für Trigger (default: 0.40, CPU-optimierter Kompromiss)')
+parser.add_argument('--preview-fps', type=int, default=5, help='FPS für Monitoring-Modus (default: 5, CPU-optimierter Kompromiss)')
+parser.add_argument('--preview-width', type=int, default=640, help='Breite für Monitoring-Vorschau (default: 640, CPU-optimierter Kompromiss)')
+parser.add_argument('--preview-height', type=int, default=480, help='Höhe für Monitoring-Vorschau (default: 480, CPU-optimierter Kompromiss)')
 parser.add_argument('--max-cpu-temp', type=float, default=70.0, help='Maximale CPU-Temperatur in °C (default: 70)')
-parser.add_argument('--max-cpu-load', type=float, default=4.0, help='Maximale CPU-Load (default: 4.0)')
+parser.add_argument('--max-cpu-load', type=float, default=5.0, help='Maximale CPU-Load (default: 5.0)')
 parser.add_argument('--max-cpu-load-duration', type=int, default=300, help='CPU-Load muss für X Sekunden über Schwelle sein (default: 300s = 5min)')
 parser.add_argument('--status-interval', type=int, default=15, help='Status-Report Intervall in Minuten (default: 15)')
 parser.add_argument('--width', type=int, default=4096, help='Breite für HD-Aufnahme (default: 4096)')
@@ -754,7 +754,7 @@ def main():
             width=args.preview_width,
             height=args.preview_height,
             fps=args.preview_fps,
-            trigger_duration=2.0,  # Vogel muss 2 Sekunden erkannt werden für Trigger
+            trigger_duration=1.0,  # Vogel muss 1 Sekunde erkannt werden für Trigger
             debug=False
         )
         

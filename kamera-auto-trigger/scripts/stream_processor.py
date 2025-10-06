@@ -60,12 +60,12 @@ class StreamProcessor:
         port: int = 8554,
         model_type: str = "bird-species",
         model_path: Optional[str] = None,
-        threshold: float = 0.45,
+        threshold: float = 0.55,
         width: int = 640,
         height: int = 480,
         fps: int = 5,
         timeout: int = 10,
-        trigger_duration: float = 2.0,
+        trigger_duration: float = 1.0,
         debug: bool = False
     ):
         """
@@ -81,7 +81,7 @@ class StreamProcessor:
             height: Stream-Höhe
             fps: Erwartete Framerate
             timeout: Timeout für Stream-Verbindung (Sekunden)
-            trigger_duration: Mindest-Dauer in Sekunden für Trigger (default: 2.0)
+            trigger_duration: Mindest-Dauer in Sekunden für Trigger (default: 1.0)
             debug: Debug-Modus aktivieren
         """
         self.host = host
@@ -306,7 +306,7 @@ class StreamProcessor:
                 conf=self.threshold,
                 iou=0.45,
                 max_det=5,  # Limitiere Detektionen für Performance
-                imgsz=320   # CPU-Optimierung: Kleinere Inferenz-Auflösung (statt 640)
+                imgsz=640   # CPU-Optimierung: Kleinere Inferenz-Auflösung (statt 640)
             )
             
             inference_time = time.time() - start_time
@@ -414,8 +414,8 @@ class StreamProcessor:
                     recent_detections = [d for t, d in self.detection_history]
                     if len(recent_detections) > 0:
                         detection_rate = sum(recent_detections) / len(recent_detections)
-                        
-                        if detection_rate >= 0.65:  # 65% Konsistenz (optimiert)
+
+                        if detection_rate >= 0.55:  # 55% Konsistenz (optimiert)
                             if self.debug:
                                 logger.debug(f"✅ TRIGGER! Vogel konsistent erkannt ({detection_duration:.1f}s, {detection_rate*100:.0f}% Rate)")
                             
@@ -496,7 +496,7 @@ if __name__ == "__main__":
     parser.add_argument("--host", default="raspberrypi-5-ai-had", help="Raspberry Pi Host")
     parser.add_argument("--port", type=int, default=8554, help="Stream Port")
     parser.add_argument("--model", default="bird-species", help="AI Model Type")
-    parser.add_argument("--threshold", type=float, default=0.45, help="Detection Threshold")
+    parser.add_argument("--threshold", type=float, default=0.55, help="Detection Threshold")
     parser.add_argument("--duration", type=int, default=60, help="Test Duration (seconds)")
     parser.add_argument("--debug", action="store_true", help="Debug Mode")
     

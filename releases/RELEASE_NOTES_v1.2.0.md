@@ -1,8 +1,9 @@
-# 🚀 Release Notes v1.2.0 - Auto-Trigger System & Stream-Management
+# 🚀 Release Notes v1.2.0
 
-**Release-Datum:** 01. Oktober 2025  
-**Branch:** `devel-v1.2.0`  
-**Status:** 🟢 Production Ready
+**Release:** Auto-Trigger System & Stream-Management  
+**Datum:** 01. Oktober 2025  
+**Version:** v1.2.0  
+**Branch:** main  
 
 ---
 
