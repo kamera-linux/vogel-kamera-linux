@@ -13,6 +13,7 @@ Features:
 - 📅 Veröffentlichungsdatum
 - 🔄 Automatische README.md Update
 - 🎯 Sortierung nach Erscheinungsdatum
+- 🕐 Deutsche Zeitzone mit Sommer-/Winterzeit-Erkennung
 
 Verwendung:
     # Mit API-Key als Argument
@@ -304,8 +305,15 @@ def update_readme(video_table: str, dry_run: bool = False) -> bool:
             return False
         
         # Erstelle neue Video-Sektion mit Zeitstempel (IMMER aktualisiert)
-        # Format: DD.MM.YYYY HH:MM Uhr (ohne Sekunden für bessere Lesbarkeit)
-        timestamp = datetime.now().strftime('%d.%m.%Y %H:%M')
+        # Format: DD.MM.YYYY HH:MM Uhr (deutsche Zeit mit Sommer-/Winterzeit)
+        from zoneinfo import ZoneInfo
+        now_de = datetime.now(ZoneInfo('Europe/Berlin'))
+        
+        # Prüfe ob Sommerzeit oder Winterzeit
+        timezone_name = "Sommerzeit (MESZ)" if now_de.dst() else "Winterzeit (MEZ)"
+        
+        timestamp = now_de.strftime('%d.%m.%Y %H:%M')
+        timezone_suffix = f" Uhr ({timezone_name})"
         
         # Prüfe ob sich Video-Daten geändert haben (für Kommentar)
         old_video_section = re.search(
@@ -324,9 +332,9 @@ def update_readme(video_table: str, dry_run: bool = False) -> bool:
         
         # Erstelle Footer mit Status
         if videos_changed:
-            footer = f"*Automatisch aktualisiert: {timestamp} Uhr*\n"
+            footer = f"*Automatisch aktualisiert: {timestamp}{timezone_suffix}*\n"
         else:
-            footer = f"*Automatisch aktualisiert: {timestamp} Uhr (keine neuen Daten)*\n"
+            footer = f"*Automatisch aktualisiert: {timestamp}{timezone_suffix} (keine neuen Daten)*\n"
         
         video_section = f"<!-- YOUTUBE_VIDEOS_START -->\n**📺 Aktuelle Videos:**\n\n{video_table}\n\n{footer}<!-- YOUTUBE_VIDEOS_END -->"
         
