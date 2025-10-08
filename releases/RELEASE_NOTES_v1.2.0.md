@@ -475,11 +475,11 @@ Vielen Dank an alle, die zu diesem Release beigetragen haben!
 
 ## 🔗 Links
 
-- **GitHub Release**: https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.2.0
+- **GitHub Release**: https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v1.2.0
 - **Branch**: `devel-v1.2.0`
-- **Wiki**: https://github.com/roimme65/vogel-kamera-linux/wiki
-- **Issues**: https://github.com/roimme65/vogel-kamera-linux/issues
-- **Discussions**: https://github.com/roimme65/vogel-kamera-linux/discussions
+- **Wiki**: https://github.com/kamera-linux/vogel-kamera-linux/wiki
+- **Issues**: https://github.com/kamera-linux/vogel-kamera-linux/issues
+- **Discussions**: https://github.com/kamera-linux/vogel-kamera-linux/discussions
 
 ---
 

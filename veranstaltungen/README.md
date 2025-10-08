@@ -37,7 +37,7 @@ Das Vogel-Kamera-Linux Projekt bietet verschiedene Vortragsthemen:
 ## 📞 Kontakt für Vortragsanfragen
 
 Interessiert an einem Vortrag über das Projekt?
-- GitHub: https://github.com/roimme65/vogel-kamera-linux
+- GitHub: https://github.com/kamera-linux/vogel-kamera-linux
 - Issues: Öffnen Sie ein Issue für Vortragsanfragen
 
 ---

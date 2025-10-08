@@ -1,9 +1,9 @@
 # 🐦 Vogel-Kamera-Linux
 
-[![Version](https://img.shields.io/badge/Version-v1.2.0-brightgreen)](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.2.0)
-[![GitHub Issues](https://img.shields.io/github/issues/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/issues)
-[![GitHub PRs](https://img.shields.io/github/issues-pr/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/pulls)
-[![License](https://img.shields.io/github/license/roimme65/vogel-kamera-linux)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-v1.2.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v1.2.0)
+[![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
+[![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
+[![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](LICENSE)
 
 ![Komplettes Vogel-Kamera System](assets/vogelhaus-kamera-komplett.png)
 
@@ -280,7 +280,7 @@ vogel-kamera-linux/
 ### 1. Installation
 ```bash
 # Repository klonen
-git clone https://github.com/roimme65/vogel-kamera-linux.git
+git clone https://github.com/kamera-linux/vogel-kamera-linux.git
 cd vogel-kamera-linux
 
 # Virtuelle Umgebung erstellen (empfohlen)
@@ -557,7 +557,7 @@ Siehe [LICENSE](LICENSE) Datei für Details.
 
 ## 👥 Community & Diskussionen
 
-[![GitHub Discussions](https://img.shields.io/github/discussions/roimme65/vogel-kamera-linux)](https://github.com/roimme65/vogel-kamera-linux/discussions)
+[![GitHub Discussions](https://img.shields.io/github/discussions/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
 
 Tauschen Sie sich mit anderen Nutzern aus:
 - 🙋 **Fragen stellen** zu Installation und Konfiguration  
@@ -568,8 +568,8 @@ Tauschen Sie sich mit anderen Nutzern aus:
 ## 📞 Support
 
 Bei Fragen oder Problemen:
-- 💬 **Diskussionen starten** in [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
-- 🐛 **Bugs melden** über [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
+- 💬 **Diskussionen starten** in [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+- 🐛 **Bugs melden** über [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 
 ## 📚 Dokumentation
 

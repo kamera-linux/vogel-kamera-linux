@@ -70,7 +70,7 @@ Der `resources/` Ordner enthält:
 ## 📞 Kontakt
 
 Für Fragen zum Projekt oder Vortrag:
-- GitHub: https://github.com/roimme65/vogel-kamera-linux
+- GitHub: https://github.com/kamera-linux/vogel-kamera-linux
 - Projekt Repository: [Vogel-Kamera-Linux](../../)
 
 ---

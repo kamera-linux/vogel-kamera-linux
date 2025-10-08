@@ -91,5 +91,5 @@ Verbesserungen an den 3D-Konstruktionen sind willkommen:
 ## 📞 Support
 
 Bei Fragen zu den 3D-Konstruktionen:
-- 💬 [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
-- 🐛 [Issues](https://github.com/roimme65/vogel-kamera-linux/issues) für Konstruktionsfehler
+- 💬 [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+- 🐛 [Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues) für Konstruktionsfehler

@@ -16,7 +16,7 @@ Die GitHub Action **aktualisiert automatisch** die YouTube-Video-Statistiken in 
 
 1. **Gehe zu deinem GitHub Repository:**
    ```
-   https://github.com/roimme65/vogel-kamera-linux
+   https://github.com/kamera-linux/vogel-kamera-linux
    ```
 
 2. **Navigiere zu Settings:**
@@ -151,7 +151,7 @@ graph LR
 
 Sehe alle Ausführungen unter:
 ```
-https://github.com/roimme65/vogel-kamera-linux/actions
+https://github.com/kamera-linux/vogel-kamera-linux/actions
 ```
 
 **Informationen pro Ausführung:**
