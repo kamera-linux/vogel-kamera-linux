@@ -169,9 +169,9 @@ Nach der Installation können Sie:
 
 ## 📞 Support & Community
 
-- **🐛 Bug Reports:** [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
-- **💬 Fragen & Diskussionen:** [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
-- **📖 Dokumentation:** [Wiki](https://github.com/roimme65/vogel-kamera-linux/wiki)
+- **🐛 Bug Reports:** [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
+- **💬 Fragen & Diskussionen:** [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+- **📖 Dokumentation:** [Wiki](https://github.com/kamera-linux/vogel-kamera-linux/wiki)
 - **🔐 Git-Automation:** [`git-automation/README.md`](git-automation/README.md)
 
 ---

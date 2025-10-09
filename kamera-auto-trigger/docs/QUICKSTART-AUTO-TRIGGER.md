@@ -22,7 +22,7 @@ Schnellstart-Anleitung für das automatische Vogel-Erkennungs- und Aufnahme-Syst
 
 ```bash
 # Repository klonen
-git clone https://github.com/roimme65/vogel-kamera-linux.git
+git clone https://github.com/kamera-linux/vogel-kamera-linux.git
 cd vogel-kamera-linux
 
 # Optional: Development-Branch für neueste Features

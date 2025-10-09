@@ -2,7 +2,7 @@
 
 **Veröffentlicht:** 24. September 2025  
 **Autor:** Vogel-Kamera-Team  
-**Repository:** [vogel-kamera-linux](https://github.com/roimme65/vogel-kamera-linux)
+**Repository:** [vogel-kamera-linux](https://github.com/kamera-linux/vogel-kamera-linux)
 
 ---
 
@@ -70,8 +70,8 @@
    ```
 
 ### Für Community-Mitglieder:
-- **Neue Fragen?** → [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
-- **Bug gefunden?** → [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
+- **Neue Fragen?** → [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+- **Bug gefunden?** → [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 - **Aufnahmen teilen?** → Discussions "Show and Tell" Kategorie
 
 ---
@@ -104,6 +104,6 @@ Vielen Dank an alle Community-Mitglieder, die Feedback für bessere Nutzer-Inter
 
 ---
 
-**📥 Download:** [v1.1.3 Release](https://github.com/roimme65/vogel-kamera-linux/releases/tag/v1.1.3)  
-**🐛 Issues:** [Bug Reports](https://github.com/roimme65/vogel-kamera-linux/issues)  
-**💬 Diskussionen:** [Community Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
+**📥 Download:** [v1.1.3 Release](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v1.1.3)  
+**🐛 Issues:** [Bug Reports](https://github.com/kamera-linux/vogel-kamera-linux/issues)  
+**💬 Diskussionen:** [Community Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)

@@ -10,9 +10,10 @@ Wir bieten Sicherheits-Updates für die folgenden Versionen:
 
 | Version | Unterstützt        |
 | ------- | ------------------ |
-| 1.1.x   | ✅ Vollständig     |
-| 1.0.x   | ⚠️ Kritische Fixes |
-| < 1.0   | ❌ Nicht mehr      |
+| 1.2.x   | ✅ Vollständig     |
+| 1.1.x   | ⚠️ Kritische Fixes |
+| 1.0.x   | ⚠️ Nur kritische Sicherheitsfixes |
+| < 1.0   | ❌ Nicht mehr unterstützt |
 
 ## 🐛 Sicherheitslücken melden
 
@@ -20,7 +21,7 @@ Wir bieten Sicherheits-Updates für die folgenden Versionen:
 
 Für **kritische Sicherheitsprobleme** nutzen Sie bitte eine der folgenden vertraulichen Kanäle:
 
-- **GitHub Security Advisories:** [Private Vulnerability Report](https://github.com/roimme65/vogel-kamera-linux/security/advisories/new)
+- **GitHub Security Advisories:** [Private Vulnerability Report](https://github.com/kamera-linux/vogel-kamera-linux/security/advisories/new)
 - **E-Mail:** kamerawagen.linux@gmail.com *(falls verfügbar)*
 
 ### 📋 Informationen für Sicherheitsberichte
@@ -181,8 +182,8 @@ sudo fail2ban-client status
 - E-Mail: kamerawagen.linux@gmail.com
 
 **💬 Für allgemeine Fragen:**
-- [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
-- [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
+- [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
+- [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
 
 ---
 

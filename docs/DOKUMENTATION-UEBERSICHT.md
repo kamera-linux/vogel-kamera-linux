@@ -204,12 +204,12 @@
 ## 📞 Hilfe & Support
 
 ### Dokumentation fehlt?
-- **Erstelle ein Issue**: [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues)
-- **Schlage Änderungen vor**: [Pull Request](https://github.com/roimme65/vogel-kamera-linux/pulls)
+- **Erstelle ein Issue**: [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
+- **Schlage Änderungen vor**: [Pull Request](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
 
 ### Fragen?
-- **Diskussionen**: [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
-- **Wiki**: [GitHub Wiki](https://github.com/roimme65/vogel-kamera-linux/wiki)
+- **Diskussionen**: [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+- **Wiki**: [GitHub Wiki](https://github.com/kamera-linux/vogel-kamera-linux/wiki)
 
 ---
 

@@ -20,12 +20,12 @@ Das betrifft auch **GitHub Actions** - sie können nicht direkt committen und pu
 
 1. **Gehe zu Repository Settings:**
    ```
-   https://github.com/roimme65/vogel-kamera-linux/settings
+   https://github.com/kamera-linux/vogel-kamera-linux/settings
    ```
 
 2. **Navigiere zu Rules:**
    - Sidebar → "Rules" → "Rulesets"
-   - Oder direkt: https://github.com/roimme65/vogel-kamera-linux/rules
+   - Oder direkt: https://github.com/kamera-linux/vogel-kamera-linux/rules
 
 3. **Finde die aktive Rule für main:**
    - Klicke auf die Ruleset die `main` betrifft
@@ -111,7 +111,7 @@ Die GitHub Action funktioniert **bereits** mit folgendem Hybrid-Ansatz:
 6. ℹ️ Branch bleibt für manuelles Merge
 
 **Was du tun musst:**
-- Gehe zu: https://github.com/roimme65/vogel-kamera-linux/branches
+- Gehe zu: https://github.com/kamera-linux/vogel-kamera-linux/branches
 - Finde Branch: `youtube-stats-update-...`
 - Klicke "Compare & pull request"
 - Merge den PR
@@ -153,7 +153,7 @@ git push origin --delete youtube-stats-update-YYYYMMDD-HHMMSS
 
 ## ❓ Fragen?
 
-Öffne ein Issue: https://github.com/roimme65/vogel-kamera-linux/issues
+Öffne ein Issue: https://github.com/kamera-linux/vogel-kamera-linux/issues
 
 ---
 

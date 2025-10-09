@@ -233,7 +233,7 @@ gh workflow run update-youtube-stats.yml
 
 **Fehlermeldung:**
 ```
-remote: Permission to roimme65/vogel-kamera-linux.git denied to github-actions[bot].
+remote: Permission to kamera-linux/vogel-kamera-linux.git denied to github-actions[bot].
 fatal: unable to access 'https://github.com/...': The requested URL returned error: 403
 Error: Process completed with exit code 128.
 ```
@@ -271,7 +271,7 @@ jobs:
 
 **Fehlermeldung:**
 ```
-To https://github.com/roimme65/vogel-kamera-linux
+To https://github.com/kamera-linux/vogel-kamera-linux
  ! [rejected]        main -> main (fetch first)
 error: failed to push some refs to 'https://github.com/...'
 hint: Updates were rejected because the remote contains work that you do not
@@ -360,7 +360,7 @@ Falls Branch Protection aktiv bleibt:
 
 **Branches finden:**
 ```
-https://github.com/roimme65/vogel-kamera-linux/branches
+https://github.com/kamera-linux/vogel-kamera-linux/branches
 ```
 
 **Detaillierte Anleitung:**

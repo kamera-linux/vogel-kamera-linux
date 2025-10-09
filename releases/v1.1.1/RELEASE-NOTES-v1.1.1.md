@@ -33,7 +33,7 @@
 
 ### 📋 Installation Commands
 ```bash
-git clone https://github.com/roimme65/vogel-kamera-linux.git
+git clone https://github.com/kamera-linux/vogel-kamera-linux.git
 cd vogel-kamera-linux
 pip install -r requirements.txt
 cp python-skripte/.env.example python-skripte/.env
@@ -49,7 +49,7 @@ python python-skripte/config.py  # Test configuration
 
 ---
 
-**Full Changelog:** https://github.com/roimme65/vogel-kamera-linux/blob/main/CHANGELOG.md
+**Full Changelog:** https://github.com/kamera-linux/vogel-kamera-linux/blob/main/CHANGELOG.md
 
 **Download:** Use git clone or download ZIP from this release page
 

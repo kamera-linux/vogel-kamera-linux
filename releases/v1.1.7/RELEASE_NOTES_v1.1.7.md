@@ -161,11 +161,11 @@
 
 ## 🔗 Links & Resources
 
-- **Repository:** [vogel-kamera-linux](https://github.com/roimme65/vogel-kamera-linux)
-- **3D-Konstruktionen:** [3d-konstruktion/](https://github.com/roimme65/vogel-kamera-linux/tree/main/3d-konstruktion)
-- **Wiki:** [Projekt-Dokumentation](https://github.com/roimme65/vogel-kamera-linux/wiki)
+- **Repository:** [vogel-kamera-linux](https://github.com/kamera-linux/vogel-kamera-linux)
+- **3D-Konstruktionen:** [3d-konstruktion/](https://github.com/kamera-linux/vogel-kamera-linux/tree/main/3d-konstruktion)
+- **Wiki:** [Projekt-Dokumentation](https://github.com/kamera-linux/vogel-kamera-linux/wiki)
 - **YouTube:** [Vogel-Kamera Videos](https://www.youtube.com/@vogel-kamera-linux)
-- **Community:** [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
+- **Community:** [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
 - **Previous Release:** [v1.1.6 Release Notes](releases/v1.1.6/RELEASE_NOTES_v1.1.6.md)
 - **All Releases:** [Release Archive](releases/README.md)
 

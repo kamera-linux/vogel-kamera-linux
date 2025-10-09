@@ -156,10 +156,10 @@ Dank an alle Community-Mitglieder, die Feedback zu den vorherigen Templates gege
 
 ## 📞 Support & Feedback
 
-- **🐛 Bug Reports:** [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues/new?template=bug_report.md)
-- **💡 Feature Requests:** [GitHub Issues](https://github.com/roimme65/vogel-kamera-linux/issues/new?template=feature_request.md)
-- **💬 Diskussionen:** [GitHub Discussions](https://github.com/roimme65/vogel-kamera-linux/discussions)
-- **📖 Dokumentation:** [Project Wiki](https://github.com/roimme65/vogel-kamera-linux/wiki)
+- **🐛 Bug Reports:** [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues/new?template=bug_report.md)
+- **💡 Feature Requests:** [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues/new?template=feature_request.md)
+- **💬 Diskussionen:** [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+- **📖 Dokumentation:** [Project Wiki](https://github.com/kamera-linux/vogel-kamera-linux/wiki)
 
 ---
 

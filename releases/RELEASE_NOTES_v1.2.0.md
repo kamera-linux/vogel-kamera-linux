@@ -426,8 +426,8 @@ docs/
 
 Vielen Dank an alle, die zu diesem Release beigetragen haben!
 
-- **Development & Testing**: @roimme65
-- **Documentation**: @roimme65
+- **Development & Testing**: @kamera-linux
+- **Documentation**: @kamera-linux
 - **QA & Bug Reports**: Community Members
 
 ---

@@ -178,7 +178,7 @@ ls -la veranstaltungen/
 ## 📞 Support und Feedback
 
 ### Für Vortragsteilnehmer
-- **GitHub Repository**: https://github.com/roimme65/vogel-kamera-linux
+- **GitHub Repository**: https://github.com/kamera-linux/vogel-kamera-linux
 - **Issues**: Fragen und Feedback willkommen
 - **Discussions**: Community-Austausch über Implementierungen
 

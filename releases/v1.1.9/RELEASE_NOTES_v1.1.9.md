@@ -126,7 +126,7 @@ Bei System-Warnungen erscheint automatisch eine Bestätigungsabfrage:
 
 ### Für neue Installationen:
 ```bash
-git clone https://github.com/roimme65/vogel-kamera-linux.git
+git clone https://github.com/kamera-linux/vogel-kamera-linux.git
 cd vogel-kamera-linux
 pip install -r config/requirements.txt
 ```

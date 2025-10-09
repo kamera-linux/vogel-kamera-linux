@@ -155,7 +155,7 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 
 ### **Neue Installation** (empfohlen)
 ```bash
-git clone https://github.com/roimme65/vogel-kamera-linux.git
+git clone https://github.com/kamera-linux/vogel-kamera-linux.git
 cd vogel-kamera-linux
 
 # Abhängigkeiten aus neuer Struktur
