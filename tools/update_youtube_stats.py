@@ -257,8 +257,8 @@ def generate_video_table(videos: List[Dict]) -> str:
     sorted_videos = sorted(videos, key=lambda x: x['published_at'], reverse=True)
     
     table = []
-    table.append("| 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Kommentare |")
-    table.append("|----------|----------|----------|----------|----------|---------------|")
+    table.append("| 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |")
+    table.append("|----------|----------|----------|----------|----------|---------|")
     
     for video in sorted_videos:
         title = video['title'][:50] + "..." if len(video['title']) > 50 else video['title']
@@ -326,8 +326,8 @@ def update_readme(video_table: str, dry_run: bool = False) -> bool:
         # Vergleiche nur die Tabelle (ohne Zeitstempel)
         videos_changed = True
         if old_video_section:
-            old_table = re.search(r'\| \*\*.*?\| Kommentare', old_video_section.group(), flags=re.DOTALL)
-            new_table = re.search(r'\| \*\*.*?\| Kommentare', video_table, flags=re.DOTALL)
+            old_table = re.search(r'\| \*\*.*?\| Komm\.', old_video_section.group(), flags=re.DOTALL)
+            new_table = re.search(r'\| \*\*.*?\| Komm\.', video_table, flags=re.DOTALL)
             if old_table and new_table:
                 videos_changed = old_table.group() != new_table.group()
         
