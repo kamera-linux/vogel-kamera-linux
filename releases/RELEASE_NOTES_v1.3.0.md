@@ -1,12 +1,12 @@
-# 🚀 Release Notes v1.3.0-dev (Trixie Development)
+# 🚀 Release Notes v1.3.0 (Trixie Support)
 
-**Release-Datum:** In Entwicklung  
-**Branch:** feat/trixie-support  
+**Release-Datum:** 1. November 2025  
+**Branch:** main  
 **Target:** Raspberry Pi OS Trixie (Debian 13)
 
 > ⚠️ **BREAKING CHANGES - Trixie Only!**  
 > Diese Version ist **NICHT** kompatibel mit Raspberry Pi OS Bookworm (Debian 12).  
-> Für Bookworm verwenden Sie bitte [v1.2.x vom main-Branch](https://github.com/kamera-linux/vogel-kamera-linux/tree/main).
+> Für Bookworm verwenden Sie bitte [v1.2.x vom bookworm-legacy-Branch](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy).
 
 ---
 

@@ -4,12 +4,28 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## � In Entwicklung
 
-**Version 1.3.0-dev** - "Raspberry Pi OS Trixie (Debian 13) Support"
-- **Branch:** feat/trixie-support
-- **Release Notes:** [RELEASE_NOTES_v1.3.0-dev.md](RELEASE_NOTES_v1.3.0-dev.md)
-- **Status:** In Entwicklung
-- **Features:** MediaMTX RTSP-Server, On-Demand Streaming, Dual-Kamera-Strategie, Optimierte Trigger-Logik
-- **Breaking Changes:** Nur für Trixie! Nicht kompatibel mit Bookworm (v1.2.x)
+# 📋 Release Documentation
+
+Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera-linux Projekts.
+
+## 🚀 Aktuelle Version
+
+**Version 1.3.0** - "Raspberry Pi OS Trixie (Debian 13) Support"
+- **Branch:** main
+- **Release Notes:** [RELEASE_NOTES_v1.3.0.md](RELEASE_NOTES_v1.3.0.md)
+- **Release Date:** 2025-11-01
+- **Features:** MediaMTX RTSP-Server, On-Demand Streaming, Dual-Kamera-Strategie, Optimierte Trigger-Logik (1.0s)
+- **Breaking Changes:** Nur für Trixie! Nicht kompatibel mit Bookworm
+- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
+
+## 📚 Archivierte Versionen
+
+### Version 1.2.0 (Bookworm Legacy)
+- **Branch:** [bookworm-legacy](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)
+- **Release Notes:** [v1.2.0/RELEASE_NOTES_v1.2.0.md](v1.2.0/RELEASE_NOTES_v1.2.0.md)
+- **Release Date:** 2025-10-01
+- **Features:** Auto-Trigger System, Preview-Stream (TCP), Trigger-Duration Logic
+- **Kompatibel:** Raspberry Pi OS Bookworm (Debian 12)
 
 ##  Aktuelle Stable Version
 

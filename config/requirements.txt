@@ -1,4 +1,4 @@
-# Vogel-Kamera-Linux Requirements - v1.3.0-dev (Trixie)
+# Vogel-Kamera-Linux Requirements - v1.3.0 (Trixie)
 # Python dependencies for the CLIENT-PC
 
 # NOTE: On Raspberry Pi with Trixie (Debian 13), use apt instead of pip!

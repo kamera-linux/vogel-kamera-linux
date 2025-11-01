@@ -5,10 +5,10 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
-## [1.3.0-dev] - In Entwicklung (feat/trixie-support Branch)
+## [1.3.0] - 2025-11-01
 
 > ⚠️ **BREAKING CHANGES:** Diese Version ist **NUR** für Raspberry Pi OS Trixie (Debian 13).  
-> 📘 **Für Bookworm:** Verwenden Sie [main-Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/main)
+> 📘 **Für Bookworm:** Verwenden Sie [bookworm-legacy-Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)
 
 ### 🔴 BREAKING CHANGES
 - **FFmpeg 7.1.2:** TCP-Streaming mit `tcp://...?listen=1` nicht mehr unterstützt

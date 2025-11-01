@@ -1,13 +1,13 @@
 # 🐦 Vogel-Kamera-Linux
 
-[![Version](https://img.shields.io/badge/Version-v1.3.0--dev-orange)](https://github.com/kamera-linux/vogel-kamera-linux/tree/feat/trixie-support)
+[![Version](https://img.shields.io/badge/Version-v1.3.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v1.3.0)
 [![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](docs/TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
 [![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](LICENSE)
 
-> ⚠️ **Trixie Development Branch:** Diese Version ist für **Raspberry Pi OS Trixie (Debian 13)** optimiert.  
-> 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [main-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/main)  
+> ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
+> 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)  
 > 📖 **Migration-Guide:** [TRIXIE-MIGRATION.md](docs/TRIXIE-MIGRATION.md)
 
 ![Komplettes Vogel-Kamera System](assets/vogelhaus-kamera-komplett.png)
@@ -351,7 +351,7 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 ### 5. Version prüfen
 ```bash
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
-# Ausgabe: Vogel-Kamera-Linux v1.3.0-dev (Trixie)
+# Ausgabe: Vogel-Kamera-Linux v1.3.0 (Trixie)
 ```
 
 ### 🆕 Auto-Trigger System (v1.2.0)
