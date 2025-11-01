@@ -51,7 +51,7 @@ Modi:
 
   🎬 Zeitlupe (--slowmo):
      - Trigger MIT KI (erkennt Vögel)
-     - Aufnahme in Zeitlupe (120fps + Audio)
+     - Aufnahme in Zeitlupe (120fps, OHNE Audio)
      - 1536x864 @ 120fps
      - Audio: 44.1kHz Mono (falls USB-Mikrofon vorhanden)
      - Für spektakuläre Zeitlupen-Aufnahmen
@@ -121,21 +121,21 @@ echo ""
 echo -e "${CYAN}📋 SYSTEM-CHECK...${NC}"
 echo ""
 
-# Prüfe Stream
-echo -n "🔍 Preview-Stream... "
-if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had './start-rtsp-stream.sh --status' > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ läuft bereits${NC}"
+# Prüfe Stream (MediaMTX RTSP-Server)
+echo -n "🔍 Preview-Stream (MediaMTX)... "
+if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'systemctl is-active --quiet mediamtx' 2>/dev/null; then
+    echo -e "${GREEN}✅ läuft${NC}"
 else
     echo -e "${YELLOW}⚠️  läuft nicht${NC}"
-    echo -n "   🚀 Starte Stream automatisch... "
-    if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'nohup ./start-rtsp-stream.sh > /dev/null 2>&1 &' && sleep 3; then
-        if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had './start-rtsp-stream.sh --status' > /dev/null 2>&1; then
+    echo -n "   🚀 Starte MediaMTX... "
+    if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'sudo systemctl start mediamtx' 2>/dev/null && sleep 3; then
+        if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'systemctl is-active --quiet mediamtx' 2>/dev/null; then
             echo -e "${GREEN}✅ gestartet${NC}"
         else
             echo -e "${RED}❌ fehlgeschlagen${NC}"
             echo ""
-            echo -e "${RED}Stream konnte nicht gestartet werden!${NC}"
-            echo -e "${YELLOW}Bitte prüfe manuell auf dem Raspberry Pi.${NC}"
+            echo -e "${RED}MediaMTX konnte nicht gestartet werden!${NC}"
+            echo -e "${YELLOW}Prüfe Status: ssh roimme@raspberrypi-5-ai-had 'sudo systemctl status mediamtx'${NC}"
             exit 1
         fi
     else

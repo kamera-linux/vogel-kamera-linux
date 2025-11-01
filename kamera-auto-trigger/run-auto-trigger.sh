@@ -19,15 +19,15 @@ if [ ! -f "$VENV_PYTHON" ]; then
     exit 1
 fi
 
-# Prüfe Preview-Stream und starte automatisch falls nötig
+# Prüfe Preview-Stream (MediaMTX RTSP-Server)
 echo -n "🔍 Prüfe Preview-Stream... "
-if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had './start-rtsp-stream.sh --status' > /dev/null 2>&1; then
+if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'sudo systemctl is-active mediamtx' > /dev/null 2>&1; then
     echo "✅ läuft"
 else
     echo "⚠️  läuft nicht"
     echo -n "🚀 Starte Stream automatisch... "
-    if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'nohup ./start-rtsp-stream.sh > /dev/null 2>&1 &' && sleep 3; then
-        if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had './start-rtsp-stream.sh --status' > /dev/null 2>&1; then
+    if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'sudo systemctl start mediamtx' > /dev/null 2>&1 && sleep 3; then
+        if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'sudo systemctl is-active mediamtx' > /dev/null 2>&1; then
             echo "✅ gestartet"
         else
             echo "❌ fehlgeschlagen - fahre trotzdem fort"
@@ -66,5 +66,12 @@ echo ""
 # Wechsle ins Projektverzeichnis (wichtig für Pfade)
 cd "$PROJECT_ROOT"
 
-# Führe Auto-Trigger aus (Cleanup wird durch trap automatisch ausgeführt)
-exec "$VENV_PYTHON" "$AUTO_TRIGGER_SCRIPT" "$@"
+# Setze Umgebungsvariablen für FFmpeg/H.264-Fehlerunterdrückung
+export OPENCV_FFMPEG_CAPTURE_OPTIONS='loglevel;quiet'
+export OPENCV_LOG_LEVEL='ERROR'
+export AV_LOG_FORCE_NOCOLOR='1'
+export FFREPORT='level=quiet'
+
+# Führe Auto-Trigger aus und filtere H.264-Fehler aus stderr
+# Cleanup wird durch trap automatisch ausgeführt
+exec "$VENV_PYTHON" "$AUTO_TRIGGER_SCRIPT" "$@" 2> >(grep -v '\[h264' >&2)

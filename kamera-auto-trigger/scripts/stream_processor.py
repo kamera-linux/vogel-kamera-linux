@@ -29,6 +29,13 @@ Verwendung:
             print("🐦 Vogel erkannt!")
 """
 
+# WICHTIG: Umgebungsvariablen MÜSSEN vor cv2-Import gesetzt werden!
+import os
+import sys
+os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'loglevel;quiet'
+os.environ['OPENCV_LOG_LEVEL'] = 'ERROR'
+os.environ['AV_LOG_FORCE_NOCOLOR'] = '1'
+
 import cv2
 import numpy as np
 import time
@@ -99,11 +106,12 @@ class StreamProcessor:
         # Stream-Verbindung
         self.cap: Optional[cv2.VideoCapture] = None
         self.connected = False
-        self.stream_url = f"tcp://{host}:{port}"
+        self.stream_url = f"rtsp://{host}:{port}/cam"
         
         # Detection History für Trigger-Dauer
         self.detection_history = []  # Liste von (timestamp, detected) Tuples
         self.first_detection_time = None
+        self.last_detection_time = None  # Zeitpunkt der letzten Vogel-Erkennung
         
         # AI-Model
         self.model: Optional[Any] = None
@@ -190,6 +198,9 @@ class StreamProcessor:
             logger.info(f"Verbinde mit Stream: {self.stream_url}...")
             logger.info(f"   Timeout: {self.timeout}s")
             
+            # Setze OpenCV Log-Level auf ERROR (unterdrückt H.264 Warnungen)
+            cv2.setLogLevel(3)  # 3 = ERROR, unterdrückt INFO und WARNING
+            
             # GStreamer-Pipeline für TCP-Stream
             gst_pipeline = (
                 f"tcpclientsrc host={self.host} port={self.port} timeout={self.timeout * 1000000} ! "
@@ -199,38 +210,58 @@ class StreamProcessor:
                 "appsink drop=1 sync=0"
             )
             
-            # Versuche verschiedene Backends
+            # Versuche verschiedene Backends (GStreamer überspringen - funktioniert nicht zuverlässig)
             backends = [
-                (cv2.CAP_GSTREAMER, gst_pipeline),
+                # (cv2.CAP_GSTREAMER, gst_pipeline),  # Deaktiviert - blockiert bei RTSP
                 (cv2.CAP_FFMPEG, self.stream_url),
             ]
             
-            logger.info("   Versuche Backend: GStreamer...")
+            print("   Versuche Backend: FFMPEG...")
+            sys.stdout.flush()
             for backend, source in backends:
                 try:
                     self.cap = cv2.VideoCapture(source, backend)
                     
-                    # Warte kurz auf Verbindung
+                    # Setze Timeout-Properties für FFMPEG-Backend (nur bei RTSP)
+                    if backend == cv2.CAP_FFMPEG:
+                        self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 30000)  # 30 Sekunden für Verbindungsaufbau (On-Demand Stream braucht Zeit)
+                        self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 60000)  # 60 Sekunden für Frame-Lesen
+                        # Reduziere Buffer für niedrigere Latenz
+                        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                    
+                    # Warte auf Stream-Initialisierung (On-Demand kann 5-10s dauern)
                     import time
-                    time.sleep(1)
+                    time.sleep(3)
                     
                     if self.cap.isOpened():
-                        logger.info(f"   VideoCapture geöffnet, lese Test-Frame...")
-                        # Test-Frame lesen mit Timeout
-                        ret, frame = self.cap.read()
+                        print("   VideoCapture geöffnet, lese Test-Frame...")
+                        sys.stdout.flush()
+                        # Mehrere Versuche für Test-Frame (RTSP braucht Zeit bis erste Frames kommen)
+                        ret, frame = None, None
+                        for attempt in range(10):  # Bis zu 10 Sekunden warten
+                            ret, frame = self.cap.read()
+                            if ret and frame is not None:
+                                break
+                            time.sleep(1)
+                            print(f"   Warte auf ersten Frame... (Versuch {attempt+1}/10)")
+                            sys.stdout.flush()
+                        
                         if ret and frame is not None:
-                            logger.info(f"✅ Stream-Verbindung erfolgreich (Backend: {backend})")
-                            logger.info(f"   Frame-Size: {frame.shape[1]}x{frame.shape[0]}")
+                            print(f"✅ Stream-Verbindung erfolgreich (Backend: {backend})")
+                            print(f"   Frame-Size: {frame.shape[1]}x{frame.shape[0]}")
+                            sys.stdout.flush()
                             self.connected = True
                             
                             # AI-Model laden
                             if not self.model_loaded:
                                 if not self._load_model():
-                                    logger.warning("Model konnte nicht geladen werden, verwende Fallback")
+                                    print("⚠️  Model konnte nicht geladen werden, verwende Fallback")
+                                    sys.stdout.flush()
                             
                             return True
                         else:
-                            logger.warning(f"   Kein Frame empfangen von Backend {backend}")
+                            print(f"   Kein Frame empfangen von Backend {backend}")
+                            sys.stdout.flush()
                             self.cap.release()
                             
                 except Exception as e:
@@ -359,6 +390,10 @@ class StreamProcessor:
             if bird_detected:
                 self.birds_detected += 1
                 self.last_detection_time = time.time()
+                # Debug-Ausgabe für Vogel-Erkennungen
+                if self.debug:
+                    for det in detections:
+                        print(f"🐦 Vogel erkannt! Confidence: {det['confidence']:.2f}, BBox: {det['bbox']}")
             
             return bird_detected, detection_info
             
@@ -398,11 +433,14 @@ class StreamProcessor:
             
             # Prüfe ob Vogel konsistent erkannt wurde
             if bird_detected:
+                # Aktualisiere letzte Erkennungszeit
+                self.last_detection_time = current_time
+                
                 # Erste Erkennung? Starte Timer
                 if self.first_detection_time is None:
                     self.first_detection_time = current_time
                     if self.debug:
-                        logger.debug(f"🐦 Vogel erkannt (Start)! Warte {self.trigger_duration}s für Trigger...")
+                        print(f"🐦 Vogel erkannt (Start)! Warte {self.trigger_duration}s für Trigger...")
                     return False  # Noch nicht lange genug
                 
                 # Prüfe ob Vogel lange genug erkannt wurde
@@ -417,10 +455,11 @@ class StreamProcessor:
 
                         if detection_rate >= 0.55:  # 55% Konsistenz (optimiert)
                             if self.debug:
-                                logger.debug(f"✅ TRIGGER! Vogel konsistent erkannt ({detection_duration:.1f}s, {detection_rate*100:.0f}% Rate)")
+                                print(f"✅ TRIGGER! Vogel konsistent erkannt ({detection_duration:.1f}s, {detection_rate*100:.0f}% Rate)")
                             
                             # Reset für nächsten Trigger
                             self.first_detection_time = None
+                            self.last_detection_time = None
                             self.detection_history.clear()
                             return True
                     
@@ -431,11 +470,18 @@ class StreamProcessor:
                     return False
             
             else:
-                # Kein Vogel mehr erkannt - Reset Timer
-                if self.first_detection_time is not None:
-                    if self.debug:
-                        logger.debug(f"❌ Vogel-Erkennung verloren (war {current_time - self.first_detection_time:.1f}s)")
-                    self.first_detection_time = None
+                # Kein Vogel mehr erkannt
+                if self.first_detection_time is not None and self.last_detection_time is not None:
+                    # Toleranz: Maximal 0.5s Lücke seit letzter Erkennung erlauben (2-3 Frames @ 5fps)
+                    # Verhindert Timer-Reset bei kurzen Unterbrechungen durch Bewegung
+                    gap_since_last = current_time - self.last_detection_time
+                    if gap_since_last > 0.5:
+                        total_duration = current_time - self.first_detection_time
+                        if self.debug:
+                            logger.debug(f"❌ Vogel-Erkennung verloren (war {total_duration:.1f}s, Lücke: {gap_since_last:.1f}s)")
+                        self.first_detection_time = None
+                        self.last_detection_time = None
+                    # Sonst: Timer läuft weiter, kurze Lücke wird toleriert
                 
                 return False
     

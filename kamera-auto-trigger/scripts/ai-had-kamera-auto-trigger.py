@@ -21,8 +21,43 @@ Verwendung:
     Strg+C zum sauberen Beenden
 """
 
-# CPU-Optimierung: Begrenze Thread-Nutzung für AI-Inferenz
+# Unterdrücke FFmpeg/H.264 stderr Ausgaben (MUSS VOR allen Imports sein!)
+import sys
 import os
+
+class H264ErrorFilter:
+    """Filter für stderr der H.264-Dekodierungsfehler ausfiltert"""
+    def __init__(self, stream):
+        self.stream = stream
+        self.buffer = []
+        
+    def write(self, text):
+        # Filtere H.264/FFmpeg-Fehler und -Warnungen
+        filtered_patterns = [
+            '[h264',
+            'error while decoding',
+            'corrupted macroblock',
+            'negative number of zero',
+            'cbp too large',
+            'left block unavailable',
+            'Invalid level prefix',
+            'reference picture missing',
+            'concealing',
+        ]
+        
+        text_lower = text.lower()
+        should_filter = any(pattern.lower() in text_lower for pattern in filtered_patterns)
+        
+        if not should_filter and text.strip():  # Nur nicht-leere, nicht-gefilterte Zeilen
+            self.stream.write(text)
+            
+    def flush(self):
+        self.stream.flush()
+
+# Ersetze stderr durch gefilterte Version
+sys.stderr = H264ErrorFilter(sys.stderr)
+
+# CPU-Optimierung: Begrenze Thread-Nutzung für AI-Inferenz
 os.environ['OMP_NUM_THREADS'] = '2'  # OpenMP auf 2 Threads begrenzen
 os.environ['OPENBLAS_NUM_THREADS'] = '2'  # OpenBLAS auf 2 Threads begrenzen
 os.environ['MKL_NUM_THREADS'] = '2'  # Intel MKL auf 2 Threads begrenzen
@@ -110,7 +145,7 @@ parser.add_argument('--recording-ai-model', type=str, default='bird-species', ch
 parser.add_argument('--recording-slowmo', action='store_true',
                     help='Zeitlupen-Aufnahme (120fps, 1536x864). Überschreibt --recording-ai und Auflösungsparameter')
 parser.add_argument('--cooldown', type=int, default=30, help='Wartezeit zwischen Aufnahmen in Sekunden (default: 30)')
-parser.add_argument('--trigger-threshold', type=float, default=0.50, help='AI-Schwelle für Trigger (default: 0.40, CPU-optimierter Kompromiss)')
+parser.add_argument('--trigger-threshold', type=float, default=0.25, help='AI-Schwelle für Trigger (default: 0.25, optimiert für Vogelerkennung)')
 parser.add_argument('--preview-fps', type=int, default=5, help='FPS für Monitoring-Modus (default: 5, CPU-optimierter Kompromiss)')
 parser.add_argument('--preview-width', type=int, default=640, help='Breite für Monitoring-Vorschau (default: 640, CPU-optimierter Kompromiss)')
 parser.add_argument('--preview-height', type=int, default=480, help='Höhe für Monitoring-Vorschau (default: 480, CPU-optimierter Kompromiss)')
@@ -139,7 +174,7 @@ if config_errors:
 
 # Bestimme Aufnahme-Modus (Priorität: Zeitlupe > AI > Standard)
 if args.recording_slowmo:
-    recording_mode = "🎬 Zeitlupe (120fps + Audio)"
+    recording_mode = "🎬 Zeitlupe (120fps, OHNE Audio)"
     recording_model = ""
 elif args.recording_ai:
     recording_mode = "🤖 Mit KI + Audio"
@@ -322,25 +357,10 @@ def trigger_recording():
     print(f"   ⏸️  Status-Reports pausiert während Aufnahme")
     
     try:
-        # WICHTIG: Stream temporär trennen und auf Pi stoppen, da Kamera exklusiv genutzt wird
-        if stream_processor and stream_processor.connected:
-            print("   📡 Trenne Preview-Stream (Kamera wird für HD-Aufnahme benötigt)...")
-            stream_processor.disconnect()
-            
-            # Stoppe Stream-Prozess auf Raspberry Pi (inkl. Wrapper!)
-            try:
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh.connect(remote_host['hostname'], username=remote_host['username'], 
-                           key_filename=remote_host['key_filename'], timeout=5)
-                # Stoppe Wrapper (der rpicam-vid automatisch neu startet)
-                # UND rpicam-vid selbst
-                ssh.exec_command("pkill -9 -f stream-wrapper.sh; pkill -9 -f rpicam-vid; rm -f /tmp/rtsp-stream.pid")
-                ssh.close()
-                time.sleep(2)  # Warte bis Prozesse sicher beendet sind
-                print("   ✅ Preview-Stream auf Raspberry Pi gestoppt")
-            except Exception as e:
-                print(f"   ⚠️  Konnte Stream auf Raspberry Pi nicht stoppen: {e}")
+        # HINWEIS: Bei Nutzung verschiedener Kameras für Preview (Trigger) und Aufnahme
+        # ist kein Stream-Stop nötig. Preview läuft auf Kamera 1 (MediaMTX), Aufnahme auf Kamera 0.
+        # Falls beide die gleiche Kamera nutzen, siehe git history für Stream-Stop-Logik.
+        print("   📹 Preview läuft weiter (andere Kamera) - keine Unterbrechung nötig")
         
         # Wähle das richtige Recording-Skript basierend auf Modus (Priorität: Zeitlupe > AI > Standard)
         script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -411,58 +431,19 @@ def trigger_recording():
         else:
             print(f"❌ Fehler bei Aufnahme: Exit Code {result.returncode}")
         
-        # Stream wieder starten und verbinden nach Aufnahme
-        if stream_processor:
-            print("   📡 Starte Preview-Stream auf Raspberry Pi neu...")
-            try:
-                # Starte Stream-Skript auf Raspberry Pi neu
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh.connect(remote_host['hostname'], username=remote_host['username'], 
-                           key_filename=remote_host['key_filename'], timeout=5)
-                # Starte Stream im Hintergrund mit bash -c für persistente Ausführung
-                ssh.exec_command("bash -c 'nohup ~/start-rtsp-stream.sh > /tmp/stream-restart.log 2>&1 & disown'")
-                ssh.close()
-                print("   ✅ Preview-Stream-Start initiiert")
-                
-                # Warte bis Stream bereit ist (rpicam-vid braucht ~5-8 Sekunden für Init)
-                print("   ⏳ Warte auf Stream-Initialisierung (8 Sekunden)...")
-                time.sleep(8)
-                
-                # Verbinde Client wieder
-                print("   📡 Verbinde Client zum Preview-Stream...")
-                if stream_processor.connect():
-                    print("   ✅ Preview-Stream wieder verbunden")
-                else:
-                    print("   ⚠️  Konnte Client nicht verbinden, versuche später erneut")
-            except Exception as e:
-                print(f"   ⚠️  Fehler beim Neustart des Preview-Streams: {e}")
-            
-            # Cooldown-Phase NACH der Aufnahme (Status-Reports bleiben pausiert)
-            print(f"   ⏳ Cooldown: {args.cooldown} Sekunden (keine weiteren Trigger)...")
-            time.sleep(args.cooldown)
-            
-            # Setze Status-Reports fort nach Cooldown
-            monitoring_paused = False
-            print("   ▶️  Status-Reports wieder aktiv - Überwachung läuft\n")
+        # Preview-Stream läuft weiter (andere Kamera) - kein Neustart nötig
+        # Nur Cooldown-Phase
+        print(f"   ⏳ Cooldown: {args.cooldown} Sekunden (keine weiteren Trigger)...")
+        time.sleep(args.cooldown)
+        
+        # Setze Status-Reports fort nach Cooldown
+        monitoring_paused = False
+        print("   ▶️  Status-Reports wieder aktiv - Überwachung läuft\n")
     
     except Exception as e:
         print(f"❌ Fehler beim Triggern der Aufnahme: {e}")
-        # Versuche Stream neu zu starten bei Fehler
-        if stream_processor:
-            print("   📡 Versuche Preview-Stream neu zu starten...")
-            try:
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh.connect(remote_host['hostname'], username=remote_host['username'], 
-                           key_filename=remote_host['key_filename'], timeout=5)
-                # Nutze bash -c mit disown für persistente Ausführung
-                ssh.exec_command("bash -c 'nohup ~/start-rtsp-stream.sh > /tmp/stream-restart.log 2>&1 & disown'")
-                ssh.close()
-                time.sleep(8)  # Warte länger bei Fehler-Recovery
-                stream_processor.connect()
-            except:
-                pass
+        # Preview-Stream läuft weiter (andere Kamera) - kein Recovery nötig
+        monitoring_paused = False
         
         # Cooldown auch bei Fehler einhalten
         print(f"   ⏳ Cooldown: {args.cooldown} Sekunden...")
@@ -701,13 +682,14 @@ def shutdown():
         if stats['avg_inference_time'] > 0:
             print(f"   Ø Inferenz-Zeit: {stats['avg_inference_time']*1000:.1f}ms")
     
-    # Beende alle Remote-Prozesse
+    # Beende alle Remote-Prozesse (MediaMTX bleibt als systemd Service aktiv)
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(remote_host['hostname'], username=remote_host['username'], 
                    key_filename=remote_host['key_filename'], timeout=10)
         
+        # Cleanup: Alte Prozesse beenden (falls vorhanden)
         ssh.exec_command("pkill -f rpicam-vid")
         ssh.exec_command("pkill -f arecord")
         ssh.close()
@@ -754,17 +736,17 @@ def main():
             width=args.preview_width,
             height=args.preview_height,
             fps=args.preview_fps,
-            trigger_duration=1.0,  # Vogel muss 1 Sekunde erkannt werden für Trigger
-            debug=False
+            trigger_duration=1.0,  # Vogel muss 1 Sekunde erkannt werden für Trigger (5 Frames @ 5fps, responsive für bewegliche Vögel)
+            debug=True  # Aktiviere Debug-Ausgaben um Erkennungen zu sehen
         )
         
         # Verbinde mit Preview-Stream
-        print(f"📡 Verbinde mit Preview-Stream: tcp://{remote_host['hostname']}:8554...")
+        print(f"📡 Verbinde mit Preview-Stream: rtsp://{remote_host['hostname']}:8554/cam...")
         if stream_processor.connect():
             print("✅ Preview-Stream verbunden")
             print(f"   AI-Model: {args.ai_model}")
             print(f"   Threshold: {args.trigger_threshold}")
-            print(f"   Trigger-Dauer: 2.0s (Vogel muss konsistent erkannt werden)")
+            print(f"   Trigger-Dauer: 1.0s (Vogel muss konsistent erkannt werden)")
             print(f"   Resolution: {args.preview_width}x{args.preview_height} @ {args.preview_fps}fps\n")
         else:
             print("❌ Konnte nicht mit Preview-Stream verbinden")
