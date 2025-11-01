@@ -8,12 +8,15 @@ Wir nehmen die Sicherheit unseres Projekts ernst und schätzen die Hilfe der Com
 
 Wir bieten Sicherheits-Updates für die folgenden Versionen:
 
-| Version | Unterstützt        |
-| ------- | ------------------ |
-| 1.2.x   | ✅ Vollständig     |
-| 1.1.x   | ⚠️ Kritische Fixes |
-| 1.0.x   | ⚠️ Nur kritische Sicherheitsfixes |
-| < 1.0   | ❌ Nicht mehr unterstützt |
+| Version | Unterstützt        | OS-Basis |
+| ------- | ------------------ | -------- |
+| 1.3.x   | ✅ Vollständig     | Trixie (Debian 13) |
+| 1.2.x   | ⚠️ Kritische Fixes | Bookworm (Debian 12) |
+| 1.1.x   | ⚠️ Nur kritische Sicherheitsfixes | Bookworm |
+| 1.0.x   | ⚠️ Nur kritische Sicherheitsfixes | Bookworm |
+| < 1.0   | ❌ Nicht mehr unterstützt | - |
+
+> ⚠️ **Wichtig:** v1.3.x ist **nicht kompatibel** mit Bookworm (Debian 12). Verwenden Sie [bookworm-legacy Branch](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy) für v1.2.x.
 
 ## 🐛 Sicherheitslücken melden
 
@@ -113,6 +116,17 @@ echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 sudo ufw enable
 sudo ufw allow ssh
 sudo ufw deny 22/tcp from 0.0.0.0/0  # Nur bekannte IPs erlauben
+
+# MediaMTX RTSP-Server absichern (v1.3.0+)
+sudo ufw allow from 192.168.178.0/24 to any port 8554 proto tcp  # Nur lokales Netzwerk
+sudo ufw deny 8554/tcp  # Blockiere alle anderen
+
+# Optional: MediaMTX mit Authentifizierung
+sudo nano /etc/mediamtx/mediamtx.yml
+# authMethod: internal
+# authInternalUsers:
+#   - user: vogel
+#     pass: <sicheres-passwort>
 ```
 
 **⚙️ System-Härtung:**
@@ -149,6 +163,12 @@ sudo fail2ban-client status
 - Netzwerk-Abhängigkeit für alle Funktionen
 - Potenzielle Man-in-the-Middle Angriffe
 
+**MediaMTX RTSP-Server (v1.3.0+):**
+- Port 8554 (RTSP) exponiert im Netzwerk
+- Potenzielle unbefugte Stream-Zugriffe
+- On-Demand Camera-Aktivierung durch externe Clients
+- systemd-Service läuft permanent
+
 **AI-Module Dependencies:**
 - Externe Python-Pakete (YOLOv8, OpenCV)
 - Potenzielle Supply-Chain-Angriffe
@@ -157,6 +177,8 @@ sudo fail2ban-client status
 ### 🛠️ Mitigationen
 
 - **SSH-Schlüssel-Authentifizierung** standardmäßig aktiviert
+- **RTSP-Port-Restriktion** über Firewall (nur vertrauenswürdige Clients)
+- **MediaMTX Authentication** konfigurierbar in /etc/mediamtx/mediamtx.yml
 - **Dependency-Pinning** in requirements.txt
 - **Input-Validation** für alle Parameter
 - **Error-Handling** verhindert Information Disclosure
@@ -189,4 +211,4 @@ sudo fail2ban-client status
 
 **🔒 Diese Security Policy wird regelmäßig überprüft und aktualisiert.**
 
-*Letzte Aktualisierung: 23. September 2025*
+*Letzte Aktualisierung: 1. November 2025 (v1.3.0 - Trixie Support)*
