@@ -1,5 +1,9 @@
-# Vogel-Kamera-Linux Requirements
-# Python dependencies for the bird camera system
+# Vogel-Kamera-Linux Requirements - v1.3.0-dev (Trixie)
+# Python dependencies for the CLIENT-PC
+
+# NOTE: On Raspberry Pi with Trixie (Debian 13), use apt instead of pip!
+# See: docs/INSTALLATION-TRIXIE.md
+# sudo apt-get install python3-scp python3-paramiko
 
 # SSH and file transfer
 paramiko>=3.0.0

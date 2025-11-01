@@ -5,12 +5,99 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.3.0-dev] - In Entwicklung (feat/trixie-support Branch)
+
+> ⚠️ **BREAKING CHANGES:** Diese Version ist **NUR** für Raspberry Pi OS Trixie (Debian 13).  
+> 📘 **Für Bookworm:** Verwenden Sie [main-Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/main)
+
+### 🔴 BREAKING CHANGES
+- **FFmpeg 7.1.2:** TCP-Streaming mit `tcp://...?listen=1` nicht mehr unterstützt
+  - Migration zu MediaMTX RTSP-Server erforderlich
+  - Alte TCP-basierte Skripte funktionieren NICHT auf Trixie
+- **Python PEP 668:** Externally-Managed Environment
+  - `pip install` blockiert → `apt-get install python3-*` erforderlich
+  - Betrifft: python3-scp, python3-paramiko, python3-opencv
+- **libcamera Limitierung:** Nur 1 Kamera-Session gleichzeitig
+  - On-Demand Streaming erforderlich für Dual-Kamera-Betrieb
+
+### ✨ Hinzugefügt
+- **MediaMTX RTSP-Server Integration:**
+  - Native rpiCamera-Unterstützung für IMX708
+  - On-Demand Modus für Kamera-Zugriff-Sharing
+  - Systemd-Service Management
+  - Konfiguration: 640x480 @ 5fps, 1Mbps Bitrate
+- **Dual-Kamera-Strategie:**
+  - Kamera 1 (i2c@80000): Preview/Trigger-Stream
+  - Kamera 0 (i2c@88000): High-Quality Aufnahmen
+  - Automatisches Umschalten via On-Demand
+- **Stream-Processor Optimierungen:**
+  - GStreamer-Backend deaktiviert (blockiert RTSP)
+  - FFMPEG-Timeouts erhöht: 30s (open), 60s (read)
+  - Retry-Logik: Bis zu 10 Versuche für ersten Frame
+  - Output-Buffering gelöst: print() + sys.stdout.flush()
+  - H.264-Fehler-Unterdrückung via Environment
+- **Trigger-Logik Verbesserungen:**
+  - Duration reduziert: 2.0s → 1.0s (responsive für Bewegung)
+  - Toleranz-Fenster: 0.5s Gap erlaubt ohne Timer-Reset
+  - last_detection_time Tracking für präzise Gap-Messung
+- **Trixie-Dokumentation:**
+  - `docs/TRIXIE-MIGRATION.md` - Vollständiger Migration-Guide
+  - README.md aktualisiert mit Trixie-Requirements
+  - MediaMTX Setup-Anleitung
+  - Branch-Strategie dokumentiert
+
+### 🔧 Geändert
+- **run-auto-trigger.sh:**
+  - MediaMTX systemd-Check statt TCP-Port-Probe
+  - `systemctl is-active mediamtx` Validierung
+- **ai-had-kamera-auto-trigger.py:**
+  - UI-Label korrigiert: "120fps, OHNE Audio" (Zeitlupe)
+  - trigger_duration=1.0 (war 2.0)
+- **start-vogel-beobachtung.sh:**
+  - Help-Text Audio-Status korrigiert
+
+### 🐛 Behoben
+- **Stream-Processor sys-Import:** Fehlte, verursachte Crashes
+- **GStreamer RTSP-Blockade:** Backend deaktiviert
+- **Trigger-Timer zu strikt:** 0% Toleranz → 0.5s Fenster
+- **Output-Buffering:** Logging verzögert → Sofortiger Print
+- **python3-scp Installation:** pip blockiert → apt-get Lösung
+
+### 📦 Abhängigkeiten (Raspberry Pi)
+- MediaMTX v1.9.1+
+- FFmpeg 7.1.2+
+- rpicam-apps v1.9.1+
+- Python 3.13.5+
+- python3-scp (via apt)
+- python3-paramiko (via apt)
+
+### 🧪 Tests
+- ✅ MediaMTX On-Demand Modus funktional
+- ✅ RTSP-Stream stabil (rtsp://host:8554/cam)
+- ✅ Auto-Trigger verbindet und erkennt Vögel
+- ✅ Dual-Kamera-Betrieb (sequenziell)
+- ✅ Manual-Trigger: 5 Videos erfolgreich
+- ✅ Trigger-Logik: 1.0s Duration, 0.5s Toleranz
+
+### ⚠️ Bekannte Probleme
+- Hailo AI HAT nicht funktional (Trixie DKMS fehlt)
+- H.264 stderr Warnungen (kosmetisch, funktioniert)
+- Paralleler Kamera-Betrieb nicht möglich (libcamera Limit)
+
+### 📚 Ressourcen
+- [MediaMTX GitHub](https://github.com/bluenviron/mediamtx)
+- [Raspberry Pi OS Trixie](https://www.raspberrypi.com/software/operating-systems/)
+- [FFmpeg 7.x Release Notes](https://ffmpeg.org/download.html)
+
+---
+
 ## [Unreleased]
 ### Geplant
 - GUI-Interface für einfachere Bedienung
 - Automatische Backup-Funktionalität
 - Erweiterte KI-Modelle (YOLOv9/v10)
 - Web-Dashboard für Remote-Monitoring
+- Hailo AI HAT Support für Trixie (wartet auf DKMS)
 
 ## [1.2.0] - 2025-10-03
 ### Hinzugefügt

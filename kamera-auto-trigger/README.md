@@ -1,48 +1,67 @@
 # 🐦 Kamera Auto-Trigger System
 
+> ⚠️ **Trixie Version (v1.3.0-dev):** Diese Dokumentation gilt für Raspberry Pi OS Trixie (Debian 13).  
+> 📘 **Für Bookworm:** Verwenden Sie [main-Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/main)
+
 Automatisches Vogel-Erkennungs- und Aufnahme-System mit KI-Unterstützung für Raspberry Pi.
 
 ## 📋 Übersicht
 
-Das Auto-Trigger-System überwacht kontinuierlich einen Preview-Stream vom Raspberry Pi und startet automatisch HD-Aufnahmen, wenn ein Vogel erkannt wird. Es nutzt YOLOv8 für die Echtzeit-Objekterkennung über Netzwerk.
+Das Auto-Trigger-System überwacht kontinuierlich einen **MediaMTX RTSP-Stream** vom Raspberry Pi und startet automatisch HD-Aufnahmen, wenn ein Vogel erkannt wird. Es nutzt YOLOv8 für die Echtzeit-Objekterkennung über Netzwerk.
 
 ### ✨ Features
 
 - 🐦 **Automatische Vogel-Erkennung** mit YOLOv8 AI
-- 📡 **Preview-Stream über Netzwerk** (TCP/H.264, 640x480@5fps)
+- 📡 **RTSP-Stream über Netzwerk** (MediaMTX, 640x480@5fps) - **NEU in Trixie**
 - 🎥 **HD-Aufnahmen** (bis zu 4K, nur bei Erkennung)
 - 📊 **System-Monitoring** (CPU, Temperatur, RAM, Festplatte)
 - 🔄 **Cooldown-System** (verhindert Duplikate)
 - 🛑 **Sicheres Beenden** (Strg+C, automatisches Cleanup)
 - ⚙️ **Konfigurierbar** (Threshold, Aufnahme-Dauer, Cooldown)
+- 🎯 **Optimierte Trigger-Logik** (1.0s Duration, 0.5s Toleranz) - **NEU in v1.3.0**
 
 ## 🚀 Quick Start
 
 ### 1. Voraussetzungen
 
-**Firewall konfigurieren (einmalig):**
-```bash
-# Auf Client-PC
-cd kamera-auto-trigger
-sudo ./setup-firewall-client-pc.sh
+> 📘 **Vollständige Installation:** Siehe [docs/INSTALLATION-TRIXIE.md](../docs/INSTALLATION-TRIXIE.md)
 
-# Auf Raspberry Pi (kopiere Skript zuerst)
-scp -i ~/.ssh/id_rsa_ai-had setup-firewall-raspberry-pi.sh roimme@raspberrypi-5-ai-had:~/
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had
-sudo ./setup-firewall-raspberry-pi.sh
-```
-
-**Raspberry Pi (Stream-Server):**
+**Raspberry Pi (MediaMTX RTSP-Server):**
 ```bash
-# Preview-Stream starten
+# MediaMTX installieren (einmalig)
+# Siehe: docs/INSTALLATION-TRIXIE.md
+
+# MediaMTX Status prüfen
 ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had
-./start-rtsp-stream.sh
+sudo systemctl status mediamtx
+# Sollte: "active (running)"
+
+# MediaMTX läuft im On-Demand Modus:
+# - Stream startet automatisch bei Client-Verbindung
+# - Stoppt automatisch nach ~10s ohne Client
+# - Keine manuelle Verwaltung nötig!
 ```
 
 **Client-PC (AI-Verarbeitung):**
 ```bash
 # Dependencies installieren (einmalig)
 pip install -r requirements.txt
+
+# ODER in venv:
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Firewall konfigurieren (einmalig, falls UFW/iptables aktiv):**
+```bash
+# Auf Client-PC (falls nötig)
+cd kamera-auto-trigger
+sudo ./setup-firewall-client-pc.sh
+
+# Auf Raspberry Pi: Port 8554 öffnen
+ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had
+sudo ufw allow 8554/tcp comment 'MediaMTX RTSP'
 ```
 
 ### 2. System starten

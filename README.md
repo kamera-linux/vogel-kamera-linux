@@ -1,9 +1,14 @@
 # 🐦 Vogel-Kamera-Linux
 
-[![Version](https://img.shields.io/badge/Version-v1.2.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v1.2.0)
+[![Version](https://img.shields.io/badge/Version-v1.3.0--dev-orange)](https://github.com/kamera-linux/vogel-kamera-linux/tree/feat/trixie-support)
+[![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](docs/TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
 [![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](LICENSE)
+
+> ⚠️ **Trixie Development Branch:** Diese Version ist für **Raspberry Pi OS Trixie (Debian 13)** optimiert.  
+> 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [main-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/main)  
+> 📖 **Migration-Guide:** [TRIXIE-MIGRATION.md](docs/TRIXIE-MIGRATION.md)
 
 ![Komplettes Vogel-Kamera System](assets/vogelhaus-kamera-komplett.png)
 
@@ -136,14 +141,25 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 ## 🛠️ Voraussetzungen
 
 ### Hardware
-- Raspberry Pi 5 mit Kamera-Modul
+- Raspberry Pi 5 mit Kamera-Modul (empfohlen: IMX708 Wide)
 - USB-Mikrofon für Audioaufnahme
-- Stabile Netzwerkverbindung
+- Stabile Netzwerkverbindung (Gigabit LAN empfohlen)
 
-### Software
+### Software (Raspberry Pi)
+- **Raspberry Pi OS Trixie (Debian 13)** - für diese Version ERFORDERLICH
+- **MediaMTX v1.9.1+** - RTSP-Server für Auto-Trigger
+- Python 3.13+
+- rpicam-apps v1.9.1+
+- FFmpeg 7.1.2+
+- SSH-Zugang konfiguriert
+
+> ⚠️ **Trixie-spezifisch:** Diese Version benötigt MediaMTX statt TCP-Streaming (FFmpeg 7.1.2 Breaking Change)  
+> 📘 **Bookworm-Nutzer:** Verwenden Sie [main-Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/main)
+
+### Software (Client-PC)
 - Python 3.8+
-- SSH-Zugang zum Raspberry Pi
-- libcamera/rpicam-vid auf dem Raspberry Pi
+- SSH-Client
+- Virtuelle Umgebung (empfohlen)
 
 ### Python-Abhängigkeiten
 
@@ -292,7 +308,28 @@ source venv/bin/activate
 pip install -r config/requirements.txt
 ```
 
-### 2. Konfiguration
+### 2. Raspberry Pi Setup (Trixie)
+```bash
+# Auf Raspberry Pi - MediaMTX installieren
+wget https://github.com/bluenviron/mediamtx/releases/download/v1.9.1/mediamtx_v1.9.1_linux_arm64v8.tar.gz
+tar -xzf mediamtx_v1.9.1_linux_arm64v8.tar.gz
+sudo mv mediamtx /usr/local/bin/
+sudo chmod +x /usr/local/bin/mediamtx
+
+# MediaMTX Konfiguration erstellen
+sudo mkdir -p /etc/mediamtx
+sudo nano /etc/mediamtx/mediamtx.yml
+# Siehe docs/TRIXIE-MIGRATION.md für Konfiguration
+
+# Systemd Service aktivieren
+sudo systemctl enable mediamtx
+sudo systemctl start mediamtx
+
+# Python-Pakete installieren (apt, nicht pip!)
+sudo apt-get install -y python3-scp python3-paramiko
+```
+
+### 3. Client-PC Konfiguration
 ```bash
 # Konfiguration kopieren und anpassen
 cp python-skripte/.env.example python-skripte/.env
@@ -302,7 +339,7 @@ nano python-skripte/.env
 python python-skripte/config.py
 ```
 
-### 3. Erste Aufnahme
+### 4. Erste Aufnahme
 ```bash
 # Audio-Test (1 Minute)
 python python-skripte/ai-had-audio-remote-param-vogel-libcamera-single.py --duration 1
@@ -311,10 +348,10 @@ python python-skripte/ai-had-audio-remote-param-vogel-libcamera-single.py --dura
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 1 --width 1920 --height 1080 --ai-modul on --no-stream-restart
 ```
 
-### 4. Version prüfen
+### 5. Version prüfen
 ```bash
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
-# Ausgabe: Vogel-Kamera-Linux v1.2.0
+# Ausgabe: Vogel-Kamera-Linux v1.3.0-dev (Trixie)
 ```
 
 ### 🆕 Auto-Trigger System (v1.2.0)
