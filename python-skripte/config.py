@@ -67,11 +67,18 @@ class Config:
         """Validiert die Konfiguration"""
         errors = []
         
-        if self.hostname == self.defaults['hostname']:
-            errors.append("Hostname nicht konfiguriert (noch Default-Wert)")
+        # Prüfe ob .env existiert
+        env_path = Path(__file__).parent / '.env'
+        if not env_path.exists():
+            errors.append(".env Datei nicht gefunden - kopieren Sie .env.example zu .env")
+            return errors
         
-        if self.username == self.defaults['username']:
-            errors.append("Username nicht konfiguriert (noch Default-Wert)")
+        # Prüfe nur, ob wichtige Werte gesetzt sind (nicht ob sie Defaults sind)
+        if not self.hostname or self.hostname == 'your-raspberry-pi-hostname':
+            errors.append("Hostname nicht konfiguriert (RPI_HOSTNAME in .env setzen)")
+        
+        if not self.username or self.username == 'your-username':
+            errors.append("Username nicht konfiguriert (RPI_USERNAME in .env setzen)")
         
         if not os.path.exists(self.ssh_key_path):
             errors.append(f"SSH-Schlüssel nicht gefunden: {self.ssh_key_path}")

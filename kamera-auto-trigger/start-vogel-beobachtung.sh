@@ -121,27 +121,12 @@ echo ""
 echo -e "${CYAN}📋 SYSTEM-CHECK...${NC}"
 echo ""
 
-# Prüfe Stream (MediaMTX RTSP-Server)
-echo -n "🔍 Preview-Stream (MediaMTX)... "
-if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'systemctl is-active --quiet mediamtx' 2>/dev/null; then
-    echo -e "${GREEN}✅ läuft${NC}"
+# BOOKWORM-MODUS: TCP Watchdog (kein MediaMTX)
+echo -n "🔍 TCP Watchdog Skript... "
+if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had '[ -f ~/vogel-kamera-linux/raspberry-pi-scripts/start-tcp-preview-watchdog.sh ]' 2>/dev/null; then
+    echo -e "${GREEN}✅ vorhanden${NC}"
 else
-    echo -e "${YELLOW}⚠️  läuft nicht${NC}"
-    echo -n "   🚀 Starte MediaMTX... "
-    if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'sudo systemctl start mediamtx' 2>/dev/null && sleep 3; then
-        if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'systemctl is-active --quiet mediamtx' 2>/dev/null; then
-            echo -e "${GREEN}✅ gestartet${NC}"
-        else
-            echo -e "${RED}❌ fehlgeschlagen${NC}"
-            echo ""
-            echo -e "${RED}MediaMTX konnte nicht gestartet werden!${NC}"
-            echo -e "${YELLOW}Prüfe Status: ssh roimme@raspberrypi-5-ai-had 'sudo systemctl status mediamtx'${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${RED}❌ fehlgeschlagen${NC}"
-        exit 1
-    fi
+    echo -e "${YELLOW}⚠️  fehlt (wird beim Start automatisch gestartet)${NC}"
 fi
 
 # Prüfe Auto-Trigger
@@ -161,7 +146,8 @@ echo ""
 echo -e "${CYAN}⚙️  EINSTELLUNGEN:${NC}"
 echo ""
 echo "  📹 Aufnahme-Dauer:      1 Minute"
-echo "  🎯 Erkennungs-Schwelle: 5 (optimiert für CPU-Limit)"
+echo "  🎯 Trigger-Dauer:       2 Sekunden (Vogel muss konsistent erkannt werden)"
+echo "  🎯 Erkennungs-Schwelle: 0.50 (50% Confidence)"
 echo "  📺 Preview-Auflösung:   640x480 @ 5fps (CPU-optimiert)"
 echo "  ⏱️  Cooldown:           15 Sekunden"
 echo "  🤖 Trigger-AI:          bird-species (nur Vögel)"
@@ -221,8 +207,8 @@ cleanup() {
     exit 0
 }
 
-# Trap für SIGINT (CTRL+C) und EXIT
-trap cleanup SIGINT SIGTERM EXIT
+# Trap nur für SIGINT (CTRL+C) und SIGTERM - NICHT für EXIT
+trap cleanup SIGINT SIGTERM
 
 # Starte Auto-Trigger
 if [ "$SLOWMO" = true ]; then
@@ -236,10 +222,10 @@ echo -e "${YELLOW}   (Drücke CTRL+C zum Beenden)${NC}"
 echo ""
 
 if [ "$SLOWMO" = true ]; then
-    # ZEITLUPE (120fps, 1536x864) - hier etwas konservativer (Zeitlupe ist CPU-intensiv)
+    # ZEITLUPE (120fps, 1536x864) - Bookworm-Einstellungen
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
-        --trigger-threshold 0.50 \
+        --trigger-threshold 0.45 \
         --cooldown 15 \
         --status-interval 5 \
         --recording-slowmo \
@@ -248,8 +234,9 @@ if [ "$SLOWMO" = true ]; then
         --preview-height 480
 elif [ "$WITH_AI" = true ]; then
     # MIT KI-Aufnahme mit CPU-optimierten Parametern
+    # Trigger-Duration: 2s (statt 1s) um Dauertrigger bei 4K zu vermeiden
     "$AUTO_TRIGGER" \
-        --trigger-duration 1 \
+        --trigger-duration 2 \
         --trigger-threshold 0.50 \
         --cooldown 15 \
         --status-interval 5 \
@@ -260,8 +247,9 @@ elif [ "$WITH_AI" = true ]; then
         --preview-height 480
 else
     # OHNE KI-Aufnahme (Standard) mit CPU-optimierten Parametern
+    # Trigger-Duration: 2s (statt 1s) um Dauertrigger bei 4K zu vermeiden
     "$AUTO_TRIGGER" \
-        --trigger-duration 1 \
+        --trigger-duration 2 \
         --trigger-threshold 0.50 \
         --cooldown 15 \
         --status-interval 5 \
@@ -270,4 +258,5 @@ else
         --preview-height 480
 fi
 
-# Cleanup wird durch trap automatisch ausgeführt
+# Bei normalem Ende auch cleanup aufrufen
+cleanup

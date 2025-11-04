@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "1.2.0"
-__version_info__ = (1, 2, 0)
+__version__ = "1.3.1"
+__version_info__ = (1, 3, 1)
 
 # Release Information
-RELEASE_NAME = "Auto-Trigger System & Stream-Management"
-RELEASE_DATE = "2025-10-01"
-RELEASE_TYPE = "minor"  # major, minor, patch
+RELEASE_NAME = "Trixie Production Release - TCP Stream Watchdog"
+RELEASE_DATE = "2025-11-04"
+RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20251001"
-GIT_TAG = "v1.2.0"
+BUILD_NUMBER = "20251104-1"
+GIT_TAG = "v1.3.1"
 
 # Feature Flags
 FEATURES = {
@@ -23,16 +23,18 @@ FEATURES = {
     "system_monitoring": True,  # Since v1.1.9
     "performance_optimization": True,  # Since v1.1.9
     "load_balancing": True,  # Since v1.1.9
-    "auto_trigger": True,  # New in v1.2.0
-    "preview_stream": True,  # New in v1.2.0
-    "trigger_duration_logic": True,  # New in v1.2.0
-    "stream_management": True,  # New in v1.2.0
-    "network_diagnostics": True,  # New in v1.2.0
+    "auto_trigger": True,  # Since v1.2.0
+    "preview_stream": True,  # Since v1.2.0
+    "trigger_duration_logic": True,  # Since v1.2.0
+    "stream_management": True,  # Since v1.2.0
+    "network_diagnostics": True,  # Since v1.2.0
+    "tcp_stream_watchdog": True,  # New in v1.3.0 - Auto-restart bei Verbindungsabbruch
+    "trixie_support": True,  # New in v1.3.0 - Debian 13 Trixie kompatibel
     "github_discussions": True,  # Since v1.1.3
     "github_templates": True,  # Since v1.1.2
     "wiki_documentation": True,  # Since v1.1.1
-    "web_interface": False,  # Planned for v1.3.0
-    "mobile_app": False,  # Planned for v1.3.0
+    "web_interface": False,  # Planned for future
+    "mobile_app": False,  # Planned for future
 }
 
 # System Requirements

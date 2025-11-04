@@ -19,23 +19,8 @@ if [ ! -f "$VENV_PYTHON" ]; then
     exit 1
 fi
 
-# Prüfe Preview-Stream (MediaMTX RTSP-Server)
-echo -n "🔍 Prüfe Preview-Stream... "
-if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'sudo systemctl is-active mediamtx' > /dev/null 2>&1; then
-    echo "✅ läuft"
-else
-    echo "⚠️  läuft nicht"
-    echo -n "🚀 Starte Stream automatisch... "
-    if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'sudo systemctl start mediamtx' > /dev/null 2>&1 && sleep 3; then
-        if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'sudo systemctl is-active mediamtx' > /dev/null 2>&1; then
-            echo "✅ gestartet"
-        else
-            echo "❌ fehlgeschlagen - fahre trotzdem fort"
-        fi
-    else
-        echo "❌ fehlgeschlagen - fahre trotzdem fort"
-    fi
-fi
+# TCP Watchdog wird vom Python-Script verwaltet
+echo "✅ TCP Stream Watchdog wird automatisch gestartet"
 echo ""
 
 # Cleanup-Funktion für sauberes Beenden

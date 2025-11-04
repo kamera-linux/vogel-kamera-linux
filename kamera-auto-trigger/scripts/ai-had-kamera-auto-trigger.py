@@ -83,7 +83,7 @@ python_skripte_dir = os.path.join(project_root, 'python-skripte')
 sys.path.insert(0, python_skripte_dir)
 
 from config import config
-__version__ = "1.2.0"  # Setzen Sie hier die aktuelle Version ein
+__version__ = "1.3.1"  # Trixie Release - TCP Stream mit Watchdog, Bookworm-Logik
 
 # Import StreamProcessor aus gleichem Verzeichnis
 try:
@@ -190,7 +190,8 @@ print(f"""
   Modus: Automatische Vogel-Erkennung
   Trigger-KI: {args.ai_model}
   Aufnahme-Modus: {recording_mode}{recording_model}
-  Trigger-Dauer: {args.trigger_duration} Minuten
+  Trigger-Dauer: {args.trigger_duration} Sekunden (Vogel muss konsistent erkannt werden)
+  Aufnahme-Länge: 1 Minute
   Cooldown: {args.cooldown} Sekunden
   Schwelle: {args.trigger_threshold}
 ╚══════════════════════════════════════════════════════════════╝
@@ -352,16 +353,11 @@ def trigger_recording():
     
     # Pausiere Status-Reports während Aufnahme (reduziert System-Last)
     monitoring_paused = True
-    print(f"\n🎬 TRIGGER! Starte {args.trigger_duration}-minütige Aufnahme...")
+    print(f"\n🎬 TRIGGER! Starte 1-minütige Aufnahme...")
     print(f"   Zeitstempel: {timestamp}")
     print(f"   ⏸️  Status-Reports pausiert während Aufnahme")
     
     try:
-        # HINWEIS: Bei Nutzung verschiedener Kameras für Preview (Trigger) und Aufnahme
-        # ist kein Stream-Stop nötig. Preview läuft auf Kamera 1 (MediaMTX), Aufnahme auf Kamera 0.
-        # Falls beide die gleiche Kamera nutzen, siehe git history für Stream-Stop-Logik.
-        print("   📹 Preview läuft weiter (andere Kamera) - keine Unterbrechung nötig")
-        
         # Wähle das richtige Recording-Skript basierend auf Modus (Priorität: Zeitlupe > AI > Standard)
         script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         
@@ -412,17 +408,58 @@ def trigger_recording():
                 cmd = [
                     'python3',
                     recording_script,
-                    '--duration', str(args.trigger_duration),
+                    '--duration', '1',  # 1 Minute (Script multipliziert mit 60)
                     '--width', str(args.width),
                     '--height', str(args.height),
                     '--rotation', str(args.rotation),
                     '--cam', str(args.cam),
-                '--ai-modul', 'off',  # KI deaktiviert = nur Video
-                '--no-stream-restart'  # Auto-Trigger managed Stream-Neustart selbst
-            ]
+                    '--ai-modul', 'off',  # KI deaktiviert = nur Video
+                    '--no-stream-restart'  # Auto-Trigger managed Stream-Neustart selbst
+                ]
+        
+        # Stoppe TCP Watchdog vor Aufnahme (gibt Kamera frei)
+        print("   ⏸️  Stoppe TCP Watchdog (Kamera wird exklusiv für Aufnahme)...")
+        try:
+            ssh_stop = paramiko.SSHClient()
+            ssh_stop.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh_stop.connect(
+                hostname=remote_host['hostname'],
+                username=remote_host['username'],
+                key_filename=remote_host['key_filename']
+            )
+            stdin, stdout, stderr = ssh_stop.exec_command('cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --stop')
+            stdout.channel.recv_exit_status()
+            ssh_stop.close()
+            time.sleep(2)  # Warte bis Kamera freigegeben ist
+            print("   ✅ Watchdog gestoppt, Kamera freigegeben")
+        except Exception as e:
+            print(f"   ⚠️  Konnte Watchdog nicht stoppen: {e}")
         
         # Führe Aufnahme-Skript aus
         result = subprocess.run(cmd, capture_output=False, text=True)
+        
+        # Starte TCP Watchdog nach Aufnahme wieder
+        print(f"   🔄 Starte TCP Watchdog neu...")
+        try:
+            ssh_start = paramiko.SSHClient()
+            ssh_start.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh_start.connect(
+                hostname=remote_host['hostname'],
+                username=remote_host['username'],
+                key_filename=remote_host['key_filename']
+            )
+            stdin, stdout, stderr = ssh_start.exec_command(
+                f'cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --port 8554 --width {args.preview_width} --height {args.preview_height} --fps {args.preview_fps} --camera {args.cam}'
+            )
+            stdout.channel.recv_exit_status()
+            ssh_start.close()
+            
+            # Warte bis Stream bereit ist
+            print(f"   ⏳ Warte auf Stream-Verfügbarkeit (15 Sekunden)...")
+            time.sleep(15)
+            print(f"   ✅ Watchdog läuft wieder (Stream bereit)")
+        except Exception as e:
+            print(f"   ⚠️  Konnte Watchdog nicht starten: {e}")
         
         if result.returncode == 0:
             trigger_count += 1
@@ -682,20 +719,22 @@ def shutdown():
         if stats['avg_inference_time'] > 0:
             print(f"   Ø Inferenz-Zeit: {stats['avg_inference_time']*1000:.1f}ms")
     
-    # Beende alle Remote-Prozesse (MediaMTX bleibt als systemd Service aktiv)
+    # Beende TCP Watchdog (NICHT MediaMTX starten - bleibt deaktiviert)
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(remote_host['hostname'], username=remote_host['username'], 
                    key_filename=remote_host['key_filename'], timeout=10)
         
-        # Cleanup: Alte Prozesse beenden (falls vorhanden)
-        ssh.exec_command("pkill -f rpicam-vid")
-        ssh.exec_command("pkill -f arecord")
+        # Cleanup: Stoppe Watchdog (beendet auch Stream)
+        print("   � Stoppe TCP Watchdog...")
+        stdin, stdout, stderr = ssh.exec_command('cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --stop')
+        stdout.channel.recv_exit_status()
+        
         ssh.close()
-        print("✅ Remote-Prozesse beendet")
+        print("✅ TCP Watchdog gestoppt")
     except Exception as e:
-        print(f"⚠️ Fehler beim Beenden der Remote-Prozesse: {e}")
+        print(f"⚠️ Fehler beim Watchdog-Cleanup: {e}")
     
     print("\n👋 Auto-Trigger sauber beendet. Auf Wiedersehen!")
     sys.exit(0)
@@ -724,24 +763,61 @@ def main():
         print(f"❌ Keine Verbindung zu {remote_host['hostname']}: {e}")
         sys.exit(1)
     
+    # Starte TCP Preview Watchdog
+    print("🔄 Prüfe TCP Preview Watchdog...")
+    try:
+        ssh_ctrl = paramiko.SSHClient()
+        ssh_ctrl.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh_ctrl.connect(
+            hostname=remote_host['hostname'],
+            username=remote_host['username'],
+            key_filename=remote_host['key_filename']
+        )
+        
+        # Prüfe ob Watchdog bereits läuft
+        stdin, stdout, stderr = ssh_ctrl.exec_command(
+            'cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --status'
+        )
+        exit_code = stdout.channel.recv_exit_status()
+        
+        if exit_code == 0:
+            # Watchdog läuft bereits
+            print("   ✅ Watchdog läuft bereits\n")
+        else:
+            # Starte Watchdog neu
+            print("   🔄 Starte Watchdog...")
+            stdin, stdout, stderr = ssh_ctrl.exec_command(
+                f'cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --port 8554 --width {args.preview_width} --height {args.preview_height} --fps {args.preview_fps} --camera {args.cam}'
+            )
+            stdout.channel.recv_exit_status()
+            
+            print("   ✅ Watchdog gestartet")
+            print("   ⏳ Warte auf Stream-Initialisierung...")
+            time.sleep(8)  # Watchdog braucht ~3s + rpicam-vid Start ~5s
+            print("   ✅ Stream sollte bereit sein\n")
+        
+        ssh_ctrl.close()
+    except Exception as e:
+        print(f"   ⚠️  Watchdog-Verwaltung fehlgeschlagen: {e}\n")
+    
     # Initialisiere StreamProcessor wenn verfügbar
     if HAS_STREAM_PROCESSOR:
         print("🎬 Initialisiere Stream-Verarbeitung...")
         stream_processor = StreamProcessor(
             host=remote_host['hostname'],
-            port=8554,  # Standard RTSP/TCP Port
+            port=8554,  # TCP Port
             model_type=args.ai_model,
             model_path=args.ai_model_path,
             threshold=args.trigger_threshold,
             width=args.preview_width,
             height=args.preview_height,
             fps=args.preview_fps,
-            trigger_duration=1.0,  # Vogel muss 1 Sekunde erkannt werden für Trigger (5 Frames @ 5fps, responsive für bewegliche Vögel)
+            trigger_duration=1.0,  # Vogel muss 1 Sekunde erkannt werden für Trigger (bewährte Einstellung von Bookworm)
             debug=True  # Aktiviere Debug-Ausgaben um Erkennungen zu sehen
         )
         
-        # Verbinde mit Preview-Stream
-        print(f"📡 Verbinde mit Preview-Stream: rtsp://{remote_host['hostname']}:8554/cam...")
+        # Verbinde mit TCP Preview-Stream
+        print(f"📡 Verbinde mit Preview-Stream: tcp://{remote_host['hostname']}:8554...")
         if stream_processor.connect():
             print("✅ Preview-Stream verbunden")
             print(f"   AI-Model: {args.ai_model}")
