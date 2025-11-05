@@ -1,8 +1,8 @@
 # 🔄 Migration zu Raspberry Pi OS Trixie (Debian 13)
 
-**Version:** v1.3.0-dev  
-**Datum:** 1. November 2025  
-**Status:** In Entwicklung
+**Version:** v1.3.1  
+**Datum:** 5. November 2025  
+**Status:** Stabil / Production Ready
 
 ## 📋 Überblick
 

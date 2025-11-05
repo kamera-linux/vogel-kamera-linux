@@ -1,7 +1,7 @@
 # 🐦 Kamera Auto-Trigger System
 
-> ⚠️ **Trixie Version (v1.3.0-dev):** Diese Dokumentation gilt für Raspberry Pi OS Trixie (Debian 13).  
-> 📘 **Für Bookworm:** Verwenden Sie [main-Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/main)
+> ⚠️ **Trixie Version (v1.3.1):** Diese Dokumentation gilt für Raspberry Pi OS Trixie (Debian 13).  
+> 📘 **Für Bookworm:** Verwenden Sie [bookworm-legacy-Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)
 
 Automatisches Vogel-Erkennungs- und Aufnahme-System mit KI-Unterstützung für Raspberry Pi.
 

@@ -211,4 +211,4 @@ sudo fail2ban-client status
 
 **🔒 Diese Security Policy wird regelmäßig überprüft und aktualisiert.**
 
-*Letzte Aktualisierung: 1. November 2025 (v1.3.0 - Trixie Support)*
+*Letzte Aktualisierung: 5. November 2025 (v1.3.1 - Production Release)*

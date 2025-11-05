@@ -1,7 +1,7 @@
 # 🔧 Installation auf Raspberry Pi OS Trixie (Debian 13)
 
-**Version:** v1.3.0-dev  
-**Branch:** feat/trixie-support  
+**Version:** v1.3.1  
+**Branch:** main  
 **Target:** Raspberry Pi 5 mit Trixie
 
 ## 📋 Inhaltsverzeichnis
@@ -555,7 +555,7 @@ python python-skripte/remote_system_monitor.py
 ## 📚 Weitere Ressourcen
 
 - **Migration-Guide:** [TRIXIE-MIGRATION.md](TRIXIE-MIGRATION.md)
-- **Changelog:** [CHANGELOG.md](CHANGELOG.md) - v1.3.0-dev
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md) - v1.3.1
 - **Architektur:** [ARCHITEKTUR.md](ARCHITEKTUR.md)
 - **Auto-Trigger Doku:** [../kamera-auto-trigger/README.md](../kamera-auto-trigger/README.md)
 

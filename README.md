@@ -353,7 +353,7 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 ### 5. Version prüfen
 ```bash
 python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
-# Ausgabe: Vogel-Kamera-Linux v1.3.0 (Trixie)
+# Ausgabe: Vogel-Kamera-Linux v1.3.1 (Trixie)
 ```
 
 ### 🆕 Auto-Trigger System (v1.2.0)
