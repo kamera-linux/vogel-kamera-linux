@@ -640,14 +640,18 @@ Bei Fragen oder Problemen:
 
 Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentiert.
 
-### 🆕 Neu in v1.2.0 (01. Oktober 2025)
-- 🎯 **Auto-Trigger System:** Automatische Vogelerkennung mit KI-basierter Aufnahmesteuerung
-- 📺 **Preview-Stream:** RTSP-Stream für Echtzeit-Überwachung (640x480 @ 5fps)
-- ⏱️ **Trigger-Duration Logic:** 2-Sekunden-Check mit 70% Detection Rate
-- 🔄 **Stream-Management:** Automatischer Stream-Restart nach HD-Aufnahmen
-- 🌐 **Network-Diagnostics:** Umfassendes Netzwerk-Qualitäts-Test-Tool
-- 📊 **Status-Reports Optimierung:** Pausierung während Aufnahme und Cooldown
-- 🛠️ **Wrapper-Skripte:** Interaktive Benutzerführung für Auto-Trigger
+### 🆕 Neu in v1.3.1 (05. November 2025)
+- � **Live-Progressbar:** Custom single-line Progressbar während Aufnahmen
+- � **TCP Watchdog Hardening:** Robuste Fehlerbehandlung, Auto-Restart mit 5s Delay
+- ⚡ **Optimierte Parameter:** 1.5s Trigger-Duration, 60% Konsistenz, 8 FPS
+- 🐛 **Cleanup-Verbesserungen:** SIGTERM → SIGKILL Cascade, sauberes Beenden
+- � **Frame-Count-Debugging:** Detaillierte Trigger-Informationen mit Frame-Statistik
+- 🐍 **Python Unbuffered Mode:** Echtzeit-Debug-Output mit `-u` Flag
+
+### � Trixie Support in v1.3.0 (01. November 2025)
+- 📡 **MediaMTX RTSP-Server:** Ersetzt TCP-Streaming (FFmpeg 7.1.2 Breaking Change)
+- 🎯 **On-Demand Stream-Modus:** Dual-Kamera-Betrieb ohne Konflikte
+- � **PEP 668 Compliance:** Python-Pakete via apt statt pip
 
 ### 📊 System-Monitoring in v1.1.9 (30. September 2025)
 - System-Überwachung: CPU-Load, Temperatur und Speicher-Checks
@@ -668,7 +672,7 @@ Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentie
 
 ## 🔖 Versionen
 
-- **Aktuelle Version:** v1.2.0
-- **Entwicklungszweig:** `devel-v1.2.0`
-- **Stabile Version (main):** v1.1.9
+- **Aktuelle Version:** v1.3.1
+- **Branch:** `main` (Trixie)
+- **Legacy Branch:** `bookworm-legacy` (v1.2.x für Debian 12)
 - **Alle Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)
