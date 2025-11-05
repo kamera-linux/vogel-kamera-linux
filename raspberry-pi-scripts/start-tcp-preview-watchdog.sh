@@ -120,17 +120,23 @@ start_stream_once() {
 watchdog_loop() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Watchdog gestartet ($SYSTEM_NAME: $CAMERA_CMD)" >> "$LOGFILE"
     
+    # Deaktiviere exit on error für robuste Loop
+    set +e
+    
     while true; do
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starte TCP Stream..." >> "$LOGFILE"
         
-        # Starte Stream und logge Output
-        start_stream_once >> "$LOGFILE" 2>&1
+        # Starte Stream und logge Output, fange alle Errors
+        start_stream_once >> "$LOGFILE" 2>&1 || true
         
         EXIT_CODE=$?
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Stream beendet (Exit: $EXIT_CODE)" >> "$LOGFILE"
         
-        # Warte 2 Sekunden vor Neustart
-        sleep 2
+        # Bereinige Port (falls belegt)
+        pkill -f "rpicam-vid.*tcp.*$PORT" 2>/dev/null || true
+        
+        # Warte 5 Sekunden vor Neustart (erhöht für Stabilität)
+        sleep 5
     done
 }
 

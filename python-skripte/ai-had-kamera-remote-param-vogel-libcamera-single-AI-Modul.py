@@ -521,18 +521,25 @@ if audio_command:
 else:
     print("ℹ️  Keine Audio-Aufnahme (Gerät nicht verfügbar)")
 
-# Fortschrittsanzeige initialisieren
-progress = tqdm(total=recording_duration_s, desc="Fortschritt", unit="s")
-
-# Warte, bis die Aufnahme abgeschlossen ist
+# Warte, bis die Aufnahme abgeschlossen ist (mit Live-Fortschritt)
+print("🎥 Aufnahme läuft...", flush=True)
 try:
-    for _ in range(recording_duration_s):
+    for i in range(recording_duration_s):
         if stop_event.is_set():
             break
         time.sleep(1)
-        progress.update(1)
+        elapsed = i + 1
+        percent = elapsed * 100 // recording_duration_s
+        remaining = recording_duration_s - elapsed
+        # Progressbar: [████████░░░░░░] 50% (30/60s, noch 30s)
+        bar_length = 20
+        filled = int(bar_length * elapsed / recording_duration_s)
+        bar = '█' * filled + '░' * (bar_length - filled)
+        print(f"\r   [{bar}] {percent}% ({elapsed}/{recording_duration_s}s, noch {remaining}s)  ", end='', flush=True)
 except KeyboardInterrupt:
     signal_handler(None, None)
+
+print("\n✅ Aufnahme abgeschlossen\n")
 
 # Setze das Stop-Event, um die Threads zu beenden
 stop_event.set()
@@ -576,8 +583,6 @@ else:
 
 # Führe ls -lah auf das Zielverzeichnis aus
 subprocess.run(["ls", "-lah", base_path])
-
-progress.close()
 
 # Optionaler Stream-Neustart (falls Preview-Stream verwendet wird)
 # Wird übersprungen wenn --no-stream-restart gesetzt (z.B. bei Auto-Trigger)

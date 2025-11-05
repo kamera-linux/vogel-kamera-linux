@@ -51,7 +51,7 @@ Modi:
 
   🎬 Zeitlupe (--slowmo):
      - Trigger MIT KI (erkennt Vögel)
-     - Aufnahme in Zeitlupe (120fps, OHNE Audio)
+     - Aufnahme in Zeitlupe (120fps + Audio)
      - 1536x864 @ 120fps
      - Audio: 44.1kHz Mono (falls USB-Mikrofon vorhanden)
      - Für spektakuläre Zeitlupen-Aufnahmen
@@ -121,12 +121,17 @@ echo ""
 echo -e "${CYAN}📋 SYSTEM-CHECK...${NC}"
 echo ""
 
-# BOOKWORM-MODUS: TCP Watchdog (kein MediaMTX)
+# TCP Watchdog Check (wird vom Python-Script automatisch gestartet)
 echo -n "🔍 TCP Watchdog Skript... "
-if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had '[ -f ~/vogel-kamera-linux/raspberry-pi-scripts/start-tcp-preview-watchdog.sh ]' 2>/dev/null; then
+if ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had '[ -f ~/vogel-kamera-linux/raspberry-pi-scripts/start-tcp-preview-watchdog.sh ]'; then
     echo -e "${GREEN}✅ vorhanden${NC}"
 else
-    echo -e "${YELLOW}⚠️  fehlt (wird beim Start automatisch gestartet)${NC}"
+    echo -e "${RED}❌ nicht gefunden${NC}"
+    echo ""
+    echo -e "${RED}FEHLER: TCP Watchdog Skript fehlt auf dem Raspberry Pi!${NC}"
+    echo "Stelle sicher dass das Skript existiert:"
+    echo "  ~/vogel-kamera-linux/raspberry-pi-scripts/start-tcp-preview-watchdog.sh"
+    exit 1
 fi
 
 # Prüfe Auto-Trigger
@@ -146,8 +151,7 @@ echo ""
 echo -e "${CYAN}⚙️  EINSTELLUNGEN:${NC}"
 echo ""
 echo "  📹 Aufnahme-Dauer:      1 Minute"
-echo "  🎯 Trigger-Dauer:       2 Sekunden (Vogel muss konsistent erkannt werden)"
-echo "  🎯 Erkennungs-Schwelle: 0.50 (50% Confidence)"
+echo "  🎯 Erkennungs-Schwelle: 5 (optimiert für CPU-Limit)"
 echo "  📺 Preview-Auflösung:   640x480 @ 5fps (CPU-optimiert)"
 echo "  ⏱️  Cooldown:           15 Sekunden"
 echo "  🤖 Trigger-AI:          bird-species (nur Vögel)"
@@ -196,10 +200,30 @@ echo ""
 cleanup() {
     echo ""
     echo -e "${YELLOW}🛑 Beende Vogel-Beobachtung...${NC}"
-    echo -n "🧹 Räume Remote-Prozesse auf... "
     
-    # Beende alle Kamera-Prozesse inklusive Watchdog auf dem Remote-Host
-    ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'pkill -9 -f stream-wrapper.sh; pkill -9 -f rpicam-vid; pkill -9 -f libcamera-vid; pkill -9 -f ffmpeg; pkill -9 -f arecord; rm -f /tmp/*.pid' > /dev/null 2>&1
+    # Sende SIGTERM an Auto-Trigger (ermöglicht sauberes Shutdown mit Watchdog-Stop)
+    if [ -n "$AUTO_TRIGGER_PID" ] && kill -0 "$AUTO_TRIGGER_PID" 2>/dev/null; then
+        echo "📡 Sende Shutdown-Signal an Auto-Trigger..."
+        kill -TERM "$AUTO_TRIGGER_PID" 2>/dev/null
+        
+        # Warte max 10 Sekunden auf sauberes Beenden (inkl. Watchdog-Stop via SSH)
+        for i in {1..20}; do
+            if ! kill -0 "$AUTO_TRIGGER_PID" 2>/dev/null; then
+                break
+            fi
+            sleep 0.5
+        done
+        
+        # Falls noch aktiv, erzwinge Beenden
+        if kill -0 "$AUTO_TRIGGER_PID" 2>/dev/null; then
+            echo "⚠️  Erzwinge Beenden..."
+            kill -9 "$AUTO_TRIGGER_PID" 2>/dev/null
+        fi
+    fi
+    
+    # Zusätzliche Bereinigung (falls Python-Cleanup fehlschlug)
+    echo -n "🧹 Bereinige Remote-Prozesse... "
+    ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had 'cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --stop 2>/dev/null; pkill -9 -f rpicam-vid 2>/dev/null; pkill -9 -f ffmpeg 2>/dev/null; pkill -9 -f arecord 2>/dev/null' > /dev/null 2>&1
     
     echo -e "${GREEN}✅${NC}"
     echo ""
@@ -222,41 +246,44 @@ echo -e "${YELLOW}   (Drücke CTRL+C zum Beenden)${NC}"
 echo ""
 
 if [ "$SLOWMO" = true ]; then
-    # ZEITLUPE (120fps, 1536x864) - Bookworm-Einstellungen
+    # ZEITLUPE (120fps, 1536x864) - gleiche Trigger-Parameter wie Standard
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
-        --trigger-threshold 0.45 \
+        --trigger-threshold 0.40 \
         --cooldown 15 \
         --status-interval 5 \
         --recording-slowmo \
-        --preview-fps 5 \
+        --preview-fps 8 \
         --preview-width 640 \
-        --preview-height 480
+        --preview-height 480 &
+    AUTO_TRIGGER_PID=$!
+    wait $AUTO_TRIGGER_PID 2>/dev/null
 elif [ "$WITH_AI" = true ]; then
     # MIT KI-Aufnahme mit CPU-optimierten Parametern
-    # Trigger-Duration: 2s (statt 1s) um Dauertrigger bei 4K zu vermeiden
     "$AUTO_TRIGGER" \
-        --trigger-duration 2 \
-        --trigger-threshold 0.50 \
+        --trigger-duration 1 \
+        --trigger-threshold 0.40 \
         --cooldown 15 \
         --status-interval 5 \
         --recording-ai \
         --recording-ai-model bird-species \
-        --preview-fps 5 \
+        --preview-fps 8 \
         --preview-width 640 \
-        --preview-height 480
+        --preview-height 480 &
+    AUTO_TRIGGER_PID=$!
+    wait $AUTO_TRIGGER_PID 2>/dev/null
 else
     # OHNE KI-Aufnahme (Standard) mit CPU-optimierten Parametern
-    # Trigger-Duration: 2s (statt 1s) um Dauertrigger bei 4K zu vermeiden
     "$AUTO_TRIGGER" \
-        --trigger-duration 2 \
-        --trigger-threshold 0.50 \
+        --trigger-duration 1 \
+        --trigger-threshold 0.40 \
         --cooldown 15 \
         --status-interval 5 \
-        --preview-fps 5 \
+        --preview-fps 8 \
         --preview-width 640 \
-        --preview-height 480
+        --preview-height 480 &
+    AUTO_TRIGGER_PID=$!
+    wait $AUTO_TRIGGER_PID 2>/dev/null
 fi
 
-# Bei normalem Ende auch cleanup aufrufen
-cleanup
+# Cleanup wird durch trap bei SIGINT/SIGTERM automatisch ausgeführt

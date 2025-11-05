@@ -274,20 +274,25 @@ class StreamProcessor:
             ret, frame = self.cap.read()
             
             if not ret or frame is None:
-                # Versuche automatisch neu zu verbinden (1x)
-                if not hasattr(self, '_reconnect_attempted') or not self._reconnect_attempted:
-                    logger.warning("⚠️  Stream unterbrochen - versuche Reconnect...")
-                    self._reconnect_attempted = True
+                # Versuche automatisch neu zu verbinden (3 Versuche mit je 5s Pause)
+                if not hasattr(self, '_reconnect_attempts'):
+                    self._reconnect_attempts = 0
+                
+                if self._reconnect_attempts < 3:
+                    self._reconnect_attempts += 1
+                    logger.warning(f"⚠️  Stream unterbrochen - versuche Reconnect (Versuch {self._reconnect_attempts}/3)...")
                     self.disconnect()
                     import time
-                    time.sleep(2)
+                    time.sleep(5)  # Warte länger für Watchdog-Neustart
                     if self.connect():
                         logger.info("✅ Reconnect erfolgreich")
                         ret, frame = self.cap.read()
                         if ret and frame is not None:
-                            self._reconnect_attempted = False
+                            self._reconnect_attempts = 0  # Reset bei Erfolg
                             return True, frame
-                    logger.error("❌ Reconnect fehlgeschlagen")
+                    logger.warning(f"⚠️  Reconnect-Versuch {self._reconnect_attempts}/3 fehlgeschlagen")
+                else:
+                    logger.error("❌ Reconnect nach 3 Versuchen fehlgeschlagen")
                 return False, None
             
             # Reset reconnect flag bei Erfolg
@@ -417,6 +422,7 @@ class StreamProcessor:
                 if self.first_detection_time is None:
                     self.first_detection_time = current_time
                     if self.debug:
+                        print(f"🐦 Vogel erkannt (Start)! Warte {self.trigger_duration}s für Trigger...")
                         logger.debug(f"🐦 Vogel erkannt (Start)! Warte {self.trigger_duration}s für Trigger...")
                     return False  # Noch nicht lange genug
                 
@@ -424,15 +430,19 @@ class StreamProcessor:
                 detection_duration = current_time - self.first_detection_time
                 
                 if detection_duration >= self.trigger_duration:
-                    # Prüfe Konsistenz: Mindestens 65% der letzten Frames müssen Vogel zeigen
-                    # (Höher als 55% um Dauertrigger bei 4K zu vermeiden)
+                    # Prüfe Konsistenz: Mindestens 60% der letzten Frames müssen Vogel zeigen
+                    # (Ausgewogen für WLAN-Betrieb und schnelle Erkennung)
                     recent_detections = [d for t, d in self.detection_history]
                     if len(recent_detections) > 0:
                         detection_rate = sum(recent_detections) / len(recent_detections)
 
-                        if detection_rate >= 0.65:  # 65% Konsistenz (4K-optimiert)
+                        if detection_rate >= 0.60:  # 60% Konsistenz (WLAN-optimiert)
                             if self.debug:
-                                logger.debug(f"✅ TRIGGER! Vogel konsistent erkannt ({detection_duration:.1f}s, {detection_rate*100:.0f}% Rate)")
+                                # Zeige mehr Details für Debugging
+                                frames_positive = sum(recent_detections)
+                                frames_total = len(recent_detections)
+                                print(f"✅ TRIGGER! Vogel konsistent erkannt ({detection_duration:.1f}s, {detection_rate*100:.0f}% Rate, {frames_positive}/{frames_total} Frames)")
+                                logger.debug(f"✅ TRIGGER! Vogel konsistent erkannt ({detection_duration:.1f}s, {detection_rate*100:.0f}% Rate, {frames_positive}/{frames_total} Frames)")
                             
                             # Reset für nächsten Trigger
                             self.first_detection_time = None
@@ -442,6 +452,7 @@ class StreamProcessor:
                     return False
                 else:
                     if self.debug and int(detection_duration) != int(detection_duration - 0.2):
+                        print(f"🐦 Vogel erkannt... {detection_duration:.1f}/{self.trigger_duration}s")
                         logger.debug(f"🐦 Vogel erkannt... {detection_duration:.1f}/{self.trigger_duration}s")
                     return False
             
@@ -449,6 +460,7 @@ class StreamProcessor:
                 # Kein Vogel mehr erkannt - Reset Timer
                 if self.first_detection_time is not None:
                     if self.debug:
+                        print(f"❌ Vogel-Erkennung verloren (war {current_time - self.first_detection_time:.1f}s)")
                         logger.debug(f"❌ Vogel-Erkennung verloren (war {current_time - self.first_detection_time:.1f}s)")
                     self.first_detection_time = None
                 

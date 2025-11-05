@@ -208,15 +208,19 @@ def get_remote_video_command():
     """
 
 # Funktion zum Ausführen eines Befehls auf dem Remote-Host
-def execute_remote_command(command):
+def execute_remote_command(command, show_output=True):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
         ssh.connect(remote_host['hostname'], username=remote_host['username'], key_filename=remote_host['key_filename'])
         stdin, stdout, stderr = ssh.exec_command(command)
         output = stdout.read().decode()
-        print(f"Ausgabe auf {remote_host['hostname']}: {output}")
-        stdout.channel.recv_exit_status()  # Warte, bis der Befehl abgeschlossen ist
+        
+        if show_output:
+            print(f"Ausgabe auf {remote_host['hostname']}: {output}")
+        
+        # Warte, bis der Befehl abgeschlossen ist
+        stdout.channel.recv_exit_status()
         ssh.close()
     except Exception as e:
         print(f"Fehler bei der Verbindung zu {remote_host['hostname']}: {e}")
@@ -290,22 +294,29 @@ if not check_system_readiness_slowmotion():
 stop_event = threading.Event()
 threads = []
 
-video_thread = threading.Thread(target=execute_remote_command, args=(get_remote_video_command(),))
+video_thread = threading.Thread(target=execute_remote_command, args=(get_remote_video_command(), False))
 threads.append(video_thread)
 video_thread.start()
 
-# Fortschrittsanzeige initialisieren
-progress = tqdm(total=recording_duration_s, desc="Fortschritt", unit="s")
-
-# Warte, bis die Aufnahme abgeschlossen ist
+# Warte, bis die Aufnahme abgeschlossen ist (mit Live-Fortschritt)
+print("🎥 Aufnahme läuft...", flush=True)
 try:
-    for _ in range(recording_duration_s):
+    for i in range(recording_duration_s):
         if stop_event.is_set():
             break
         time.sleep(1)
-        progress.update(1)
+        elapsed = i + 1
+        percent = elapsed * 100 // recording_duration_s
+        remaining = recording_duration_s - elapsed
+        # Progressbar: [████████░░░░░░] 50% (30/60s, noch 30s)
+        bar_length = 20
+        filled = int(bar_length * elapsed / recording_duration_s)
+        bar = '█' * filled + '░' * (bar_length - filled)
+        print(f"\r   [{bar}] {percent}% ({elapsed}/{recording_duration_s}s, noch {remaining}s)  ", end='', flush=True)
 except KeyboardInterrupt:
     signal_handler(None, None)
+
+print("\n✅ Aufnahme abgeschlossen\n")
 
 # Setze das Stop-Event, um die Threads zu beenden
 stop_event.set()
@@ -319,7 +330,5 @@ copy_files_from_remote()
 
 # Konvertiere die Videodatei in MP4 mit mehreren Frameraten
 convert_to_mp4()
-
-progress.close()
 
 print("Befehl auf dem Remote-Host ausgeführt und Dateien kopiert.")

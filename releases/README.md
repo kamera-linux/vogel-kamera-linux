@@ -10,15 +10,21 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 1.3.0** - "Raspberry Pi OS Trixie (Debian 13) Support"
+**Version 1.3.1** - "Trixie Production Release - TCP Stream Watchdog"
 - **Branch:** main
-- **Release Notes:** [RELEASE_NOTES_v1.3.0.md](RELEASE_NOTES_v1.3.0.md)
-- **Release Date:** 2025-11-01
-- **Features:** MediaMTX RTSP-Server, On-Demand Streaming, Dual-Kamera-Strategie, Optimierte Trigger-Logik (1.0s)
+- **Release Notes:** [RELEASE_NOTES_v1.3.1.md](RELEASE_NOTES_v1.3.1.md)
+- **Release Date:** 2025-11-05
+- **Features:** TCP Watchdog mit Auto-Restart, Live-Progressbar, Parameter-Optimierungen (0.8s/8fps), Cleanup-Verbesserungen
 - **Breaking Changes:** Nur für Trixie! Nicht kompatibel mit Bookworm
 - **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
 
 ## 📚 Archivierte Versionen
+
+### Version 1.3.0
+- **Release Notes:** [v1.3.0/RELEASE_NOTES_v1.3.0.md](v1.3.0/RELEASE_NOTES_v1.3.0.md)
+- **Release Date:** 2025-11-01
+- **Features:** MediaMTX RTSP-Server, On-Demand Streaming, Dual-Kamera-Strategie
+- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
 
 ### Version 1.2.0 (Bookworm Legacy)
 - **Branch:** [bookworm-legacy](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)

@@ -370,7 +370,7 @@ def trigger_recording():
             cmd = [
                 'python3',
                 recording_script,
-                '--duration', str(args.trigger_duration),
+                '--duration', '1',  # 1 Minute (Script multipliziert mit 60)
                 '--width', '1536',  # Zeitlupe: feste Auflösung für Performance
                 '--height', '864',
                 '--fps', '120',     # Zeitlupe: 120fps
@@ -435,7 +435,7 @@ def trigger_recording():
         except Exception as e:
             print(f"   ⚠️  Konnte Watchdog nicht stoppen: {e}")
         
-        # Führe Aufnahme-Skript aus
+        # Führe Aufnahme-Skript aus (stdout/stderr nicht capturen für tqdm-Progressbar)
         result = subprocess.run(cmd, capture_output=False, text=True)
         
         # Starte TCP Watchdog nach Aufnahme wieder
@@ -454,9 +454,9 @@ def trigger_recording():
             stdout.channel.recv_exit_status()
             ssh_start.close()
             
-            # Warte bis Stream bereit ist
-            print(f"   ⏳ Warte auf Stream-Verfügbarkeit (15 Sekunden)...")
-            time.sleep(15)
+            # Warte bis Stream bereit ist (Watchdog braucht Zeit zum Starten)
+            print(f"   ⏳ Warte auf Stream-Verfügbarkeit (20 Sekunden)...")
+            time.sleep(20)
             print(f"   ✅ Watchdog läuft wieder (Stream bereit)")
         except Exception as e:
             print(f"   ⚠️  Konnte Watchdog nicht starten: {e}")
@@ -466,7 +466,7 @@ def trigger_recording():
             last_trigger_time = datetime.now()
             print(f"✅ Aufnahme #{trigger_count} erfolgreich abgeschlossen")
         else:
-            print(f"❌ Fehler bei Aufnahme: Exit Code {result.returncode}")
+            print(f"❌ Fehler bei Aufnahme: Exit Code {result}")
         
         # Preview-Stream läuft weiter (andere Kamera) - kein Neustart nötig
         # Nur Cooldown-Phase
@@ -727,7 +727,7 @@ def shutdown():
                    key_filename=remote_host['key_filename'], timeout=10)
         
         # Cleanup: Stoppe Watchdog (beendet auch Stream)
-        print("   � Stoppe TCP Watchdog...")
+        print("   ⏸️  Stoppe TCP Watchdog...")
         stdin, stdout, stderr = ssh.exec_command('cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --stop')
         stdout.channel.recv_exit_status()
         
@@ -782,7 +782,10 @@ def main():
         
         if exit_code == 0:
             # Watchdog läuft bereits
-            print("   ✅ Watchdog läuft bereits\n")
+            print("   ✅ Watchdog läuft bereits")
+            print("   ⏳ Gebe Stream 5s Zeit zum Stabilisieren...")
+            time.sleep(5)
+            print("   ✅ Stream sollte bereit sein\n")
         else:
             # Starte Watchdog neu
             print("   🔄 Starte Watchdog...")
@@ -793,7 +796,7 @@ def main():
             
             print("   ✅ Watchdog gestartet")
             print("   ⏳ Warte auf Stream-Initialisierung...")
-            time.sleep(8)  # Watchdog braucht ~3s + rpicam-vid Start ~5s
+            time.sleep(20)  # Watchdog braucht ~3s + rpicam-vid Start ~10s + Socket-Stabilisierung + Reserve
             print("   ✅ Stream sollte bereit sein\n")
         
         ssh_ctrl.close()
@@ -812,7 +815,7 @@ def main():
             width=args.preview_width,
             height=args.preview_height,
             fps=args.preview_fps,
-            trigger_duration=1.0,  # Vogel muss 1 Sekunde erkannt werden für Trigger (bewährte Einstellung von Bookworm)
+            trigger_duration=1.5,  # Vogel muss 1.5 Sekunden erkannt werden (mehr Frames für bessere Konsistenz)
             debug=True  # Aktiviere Debug-Ausgaben um Erkennungen zu sehen
         )
         

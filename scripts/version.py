@@ -8,11 +8,11 @@ __version_info__ = (1, 3, 1)
 
 # Release Information
 RELEASE_NAME = "Trixie Production Release - TCP Stream Watchdog"
-RELEASE_DATE = "2025-11-04"
+RELEASE_DATE = "2025-11-05"
 RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20251104-1"
+BUILD_NUMBER = "20251105-1"
 GIT_TAG = "v1.3.1"
 
 # Feature Flags

@@ -5,6 +5,77 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.3.1] - 2025-11-05
+
+### ✨ Hinzugefügt
+- **Live-Progressbar während Aufnahmen:**
+  - Custom Single-Line Progressbar für alle Aufnahmemodi
+  - Echtzeit-Updates mit visueller Darstellung: `[████████████░░░░░░] 67% (40/60s, noch 20s)`
+  - Funktioniert für Zeitlupe, 4K-Video und Audio-Aufnahmen
+- **Detaillierte Trigger-Informationen:**
+  - Frame-Count und Konsistenz-Rate in Trigger-Meldungen
+  - Beispiel: `✅ TRIGGER! Vogel konsistent erkannt (1.9s, 100% Rate, 5/5 Frames)`
+  - Hilft bei Debugging und Parameter-Optimierung
+
+### 🔧 Geändert
+- **Optimierte Trigger-Parameter für WLAN-Betrieb:**
+  - Trigger-Duration: 0.8s → 1.5s (mehr Frames für bessere Statistik)
+  - Konsistenz-Rate: 65% → 60% (WLAN-optimiert)
+  - Threshold: 0.5 → 0.4 (ausgewogen zwischen Sensitivität und False Positives)
+  - FPS: 5 → 8 (Preview-Stream für optimale Performance)
+- **Python Unbuffered Mode:**
+  - `python -u` Flag in run-auto-trigger.sh für Echtzeit-Debug-Output
+  - Alle Debug-Meldungen erscheinen sofort statt gebuffert
+- **SSH Output Handling:**
+  - Wechsel von `stdout.readline()` zu `stdout.read()` für saubere Progressbar
+  - Video-Aufnahme mit `show_output=False` Parameter (keine Remote-Ausgabe während Aufnahme)
+- **Version Bumps:**
+  - Release-Datum auf 2025-11-05 aktualisiert
+  - Build-Number auf 20251105-1
+
+### 🐛 Behoben
+- **TCP Stream Watchdog Hardening:**
+  - Fehlertolerante Loop mit `set +e` und `|| true`
+  - Auto-Restart mit 5 Sekunden Cooldown zwischen Restarts
+  - Automatisches Process-Cleanup für Zombie-Prozesse
+  - Robuste Behandlung von "Connection reset by peer"
+- **Cleanup-System verbessert:**
+  - SIGTERM → SIGKILL Cascade mit 10s Timeout
+  - PID-Tracking für saubere Prozessverwaltung
+  - Remote-Cleanup stoppt Watchdog und rpicam-vid auf dem Pi
+  - Keine "Getötet"-Meldungen durch `2>/dev/null` in wait-Kommandos
+- **Progressbar-Darstellung:**
+  - tqdm-Buffering-Problem durch Custom Progressbar gelöst
+  - Verwendung von `\r`, `flush=True` und `stdout.read()` für Live-Updates
+  - Remote-Output überschreibt nicht mehr die lokale Progressbar
+- **Stream-Timing optimiert:**
+  - Differenziertes Timing: 5s bei laufendem Watchdog, 20s bei Neustart
+  - Watchdog-Status-Check vor Stream-Initialisierung
+  - Längere Wartezeiten für WLAN-Stabilität
+
+### 📊 Performance
+- **Gemessene Werte:**
+  - Real FPS: ~4 FPS (245ms Inferenz-Zeit statt angestrebter 8 FPS)
+  - 1.5s × 4 FPS = ~6 Frames Analysezeitraum
+  - 60% Konsistenz = ~4 positive Frames von 6 nötig
+  - WLAN Quality: 56/70 (80%), Signal -54 dBm, 227 Packet Retries
+- **Trigger-Algorithmus:**
+  - Mehr Frames für bessere Statistik, weniger False Positives
+  - Konsistenz-Berechnung berücksichtigt echte Frame-Rate
+
+### 📝 Bekannte Einschränkungen
+- **Frame-Rate:** Real ~4 FPS statt 8 FPS (AI-Inferenz-Zeit: 245ms)
+- **WLAN-Stabilität:** Gelegentliche "Connection refused" bei schlechter Verbindung
+- **Progressbar:** Funktioniert nur mit direktem stdout (nicht über SSH-Redirect)
+- **Trigger-Konsistenz:** Nur 3-6 Frames bei 1.5s Duration (wegen echter 4 FPS)
+
+### 🔄 Migration
+- ✅ Keine Breaking Changes - v1.3.0 Konfigurationen bleiben kompatibel
+- ✅ Parameter automatisch angepasst - Neue Trigger-Duration und Konsistenz aktiv
+- ✅ Cleanup verbessert - Sauberes Beenden ohne manuelle Anpassung
+
+---
+
 ## [1.3.0] - 2025-11-01
 
 > ⚠️ **BREAKING CHANGES:** Diese Version ist **NUR** für Raspberry Pi OS Trixie (Debian 13).  

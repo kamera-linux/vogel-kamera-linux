@@ -59,4 +59,5 @@ export FFREPORT='level=quiet'
 
 # Führe Auto-Trigger aus und filtere H.264-Fehler aus stderr
 # Cleanup wird durch trap automatisch ausgeführt
-exec "$VENV_PYTHON" "$AUTO_TRIGGER_SCRIPT" "$@" 2> >(grep -v '\[h264' >&2)
+# -u für unbuffered output (wichtig für Logs)
+exec "$VENV_PYTHON" -u "$AUTO_TRIGGER_SCRIPT" "$@" 2> >(grep -v '\[h264' >&2)
