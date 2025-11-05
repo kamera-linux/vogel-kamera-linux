@@ -2,12 +2,6 @@
 
 Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera-linux Projekts.
 
-## � In Entwicklung
-
-# 📋 Release Documentation
-
-Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera-linux Projekts.
-
 ## 🚀 Aktuelle Version
 
 **Version 1.3.1** - "Trixie Production Release - TCP Stream Watchdog"

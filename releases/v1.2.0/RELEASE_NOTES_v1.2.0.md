@@ -360,7 +360,7 @@ docs/
 
 ---
 
-## � Performance-Optimierungen (v1.2.0 Updates)
+## ⚡ Performance-Optimierungen (v1.2.0 Updates)
 
 ### CPU-Last Optimierung (Oktober 2025)
 
@@ -411,7 +411,7 @@ docs/
 
 ---
 
-## �🔮 Ausblick auf v1.3.0
+## 🔮 Ausblick auf v1.3.0
 
 ### Geplante Features
 - **Web-Interface**: Browser-basierte Steuerung
