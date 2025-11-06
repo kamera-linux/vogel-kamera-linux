@@ -1,6 +1,6 @@
 # 🐦 Vogel-Kamera-Linux
 
-[![Version](https://img.shields.io/badge/Version-v1.3.1-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v1.3.1)
+[![Version](https://img.shields.io/badge/Version-v1.3.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v1.3.2)
 [![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](docs/TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
