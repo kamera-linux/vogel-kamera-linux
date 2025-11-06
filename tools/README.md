@@ -10,7 +10,7 @@ source venv/bin/activate
 pip install -r tools/requirements.txt
 ```
 
-## � Übersicht
+## ❓ Übersicht
 
 | Tool | Beschreibung | Verwendung |
 |------|--------------|------------|
