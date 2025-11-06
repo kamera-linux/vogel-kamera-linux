@@ -7,12 +7,12 @@ Automatisches Vogel-Erkennungs- und Aufnahme-System mit KI-Unterstützung für R
 
 ## 📋 Übersicht
 
-Das Auto-Trigger-System überwacht kontinuierlich einen **MediaMTX RTSP-Stream** vom Raspberry Pi und startet automatisch HD-Aufnahmen, wenn ein Vogel erkannt wird. Es nutzt YOLOv8 für die Echtzeit-Objekterkennung über Netzwerk.
+Das Auto-Trigger-System überwacht kontinuierlich einen **TCP-Preview-Stream** vom Raspberry Pi und startet automatisch HD-Aufnahmen, wenn ein Vogel erkannt wird. Es nutzt YOLOv8 für die Echtzeit-Objekterkennung über Netzwerk.
 
 ### ✨ Features
 
 - 🐦 **Automatische Vogel-Erkennung** mit YOLOv8 AI
-- 📡 **RTSP-Stream über Netzwerk** (MediaMTX, 640x480@5fps) - **NEU in Trixie**
+- 📡 **TCP-Stream über Netzwerk** (TCP Watchdog, 640x480@8fps) - **Optimiert in v1.3.1**
 - 🎥 **HD-Aufnahmen** (bis zu 4K, nur bei Erkennung)
 - 📊 **System-Monitoring** (CPU, Temperatur, RAM, Festplatte)
 - 🔄 **Cooldown-System** (verhindert Duplikate)
@@ -26,20 +26,18 @@ Das Auto-Trigger-System überwacht kontinuierlich einen **MediaMTX RTSP-Stream**
 
 > 📘 **Vollständige Installation:** Siehe [docs/INSTALLATION-TRIXIE.md](../docs/INSTALLATION-TRIXIE.md)
 
-**Raspberry Pi (MediaMTX RTSP-Server):**
+**Raspberry Pi (TCP Watchdog):**
 ```bash
-# MediaMTX installieren (einmalig)
-# Siehe: docs/INSTALLATION-TRIXIE.md
+# Kamera-Tools prüfen
+ssh pi@your-raspberry-pi
+rpicam-hello --version  # Sollte v1.9.1+ sein
+ffmpeg -version         # Sollte 7.1.2+ sein
 
-# MediaMTX Status prüfen
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had
-sudo systemctl status mediamtx
-# Sollte: "active (running)"
-
-# MediaMTX läuft im On-Demand Modus:
-# - Stream startet automatisch bei Client-Verbindung
-# - Stoppt automatisch nach ~10s ohne Client
-# - Keine manuelle Verwaltung nötig!
+# System ist bereit!
+# TCP Watchdog läuft automatisch:
+# - Stream startet bei Bedarf (On-Demand)
+# - Auto-Restart bei Fehlern (5s Delay)
+# - Sauberes Cleanup bei Beendigung
 ```
 
 **Client-PC (AI-Verarbeitung):**
@@ -59,9 +57,9 @@ pip install -r requirements.txt
 cd kamera-auto-trigger
 sudo ./setup-firewall-client-pc.sh
 
-# Auf Raspberry Pi: Port 8554 öffnen
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had
-sudo ufw allow 8554/tcp comment 'MediaMTX RTSP'
+# Auf Raspberry Pi: TCP-Port öffnen (Port 8888 für Preview-Stream)
+ssh pi@your-raspberry-pi
+sudo ufw allow 8888/tcp comment 'TCP Preview Stream'
 ```
 
 ### 2. System starten

@@ -17,7 +17,8 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 ### Version 1.3.0
 - **Release Notes:** [v1.3.0/RELEASE_NOTES_v1.3.0.md](v1.3.0/RELEASE_NOTES_v1.3.0.md)
 - **Release Date:** 2025-11-01
-- **Features:** MediaMTX RTSP-Server, On-Demand Streaming, Dual-Kamera-Strategie
+- **Features:** Trixie-Migration, On-Demand Streaming, Dual-Kamera-Strategie
+- **Hinweis:** ⚠️ MediaMTX-Referenzen in v1.3.0 Release Notes sind historisch - System nutzt TCP Watchdog (seit v1.3.1)
 - **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
 
 ### Version 1.2.0 (Bookworm Legacy)

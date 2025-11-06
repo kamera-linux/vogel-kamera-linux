@@ -4,6 +4,10 @@
 **Branch:** main  
 **Target:** Raspberry Pi OS Trixie (Debian 13)
 
+> ⚠️ **HISTORISCHES DOKUMENT**  
+> Diese Release Notes dokumentieren v1.3.0. MediaMTX-Referenzen sind historisch - das System nutzt seit v1.3.1 **TCP Watchdog**.  
+> Für aktuelle Dokumentation siehe [RELEASE_NOTES_v1.3.1.md](../RELEASE_NOTES_v1.3.1.md)
+
 > ⚠️ **BREAKING CHANGES - Trixie Only!**  
 > Diese Version ist **NICHT** kompatibel mit Raspberry Pi OS Bookworm (Debian 12).  
 > Für Bookworm verwenden Sie bitte [v1.2.x vom bookworm-legacy-Branch](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy).

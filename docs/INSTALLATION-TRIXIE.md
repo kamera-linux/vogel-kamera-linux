@@ -8,12 +8,13 @@
 
 - [Voraussetzungen](#voraussetzungen)
 - [Raspberry Pi Setup](#raspberry-pi-setup)
-- [MediaMTX Installation](#mediamtx-installation)
 - [Python-Pakete](#python-pakete)
 - [Client-PC Setup](#client-pc-setup)
 - [Konfiguration](#konfiguration)
 - [Tests](#tests)
 - [Troubleshooting](#troubleshooting)
+
+> ⚠️ **HINWEIS:** MediaMTX ist nicht erforderlich! System nutzt TCP Watchdog (seit v1.3.1).
 
 ---
 
@@ -80,12 +81,19 @@ ffmpeg -version
 
 ---
 
-## 🎬 MediaMTX Installation
+## 🎬 ~~MediaMTX Installation~~ (NICHT MEHR ERFORDERLICH)
+
+> ⚠️ **VERALTET:** MediaMTX wird seit v1.3.1 nicht mehr verwendet.  
+> Das System nutzt TCP Watchdog für Preview-Streams.  
+> Dieser Abschnitt bleibt nur aus historischen Gründen erhalten.
+
+<details>
+<summary>📜 Historische MediaMTX-Installation (v1.3.0)</summary>
 
 ### Download & Installation
 
 ```bash
-# MediaMTX v1.9.1 herunterladen
+# MediaMTX v1.9.1 herunterladen (NICHT MEHR NÖTIG!)
 cd /tmp
 wget https://github.com/bluenviron/mediamtx/releases/download/v1.9.1/mediamtx_v1.9.1_linux_arm64v8.tar.gz
 
@@ -236,6 +244,8 @@ vlc rtsp://192.168.178.59:8554/cam
 - 640x480 @ 5fps Video
 - Kamera-LED leuchtet
 - Stream stoppt nach ~10s wenn kein Client
+
+</details>
 
 ---
 

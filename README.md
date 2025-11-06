@@ -149,14 +149,13 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 
 ### Software (Raspberry Pi)
 - **Raspberry Pi OS Trixie (Debian 13)** - für diese Version ERFORDERLICH
-- **MediaMTX v1.9.1+** - RTSP-Server für Auto-Trigger
 - Python 3.13+
 - rpicam-apps v1.9.1+
 - FFmpeg 7.1.2+
 - SSH-Zugang konfiguriert
 
-> ⚠️ **Trixie-spezifisch:** Diese Version benötigt MediaMTX statt TCP-Streaming (FFmpeg 7.1.2 Breaking Change)  
-> 📘 **Bookworm-Nutzer:** Verwenden Sie [main-Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/main)
+> ⚠️ **Trixie-spezifisch:** Diese Version nutzt TCP Watchdog für Preview-Stream (FFmpeg 7.1.2 kompatibel)  
+> 📘 **Bookworm-Nutzer:** Verwenden Sie [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)
 
 ### Software (Client-PC)
 - Python 3.8+
@@ -312,23 +311,17 @@ pip install -r config/requirements.txt
 
 ### 2. Raspberry Pi Setup (Trixie)
 ```bash
-# Auf Raspberry Pi - MediaMTX installieren
-wget https://github.com/bluenviron/mediamtx/releases/download/v1.9.1/mediamtx_v1.9.1_linux_arm64v8.tar.gz
-tar -xzf mediamtx_v1.9.1_linux_arm64v8.tar.gz
-sudo mv mediamtx /usr/local/bin/
-sudo chmod +x /usr/local/bin/mediamtx
+# Auf Raspberry Pi - Python-Pakete installieren (apt, nicht pip!)
+sudo apt-get update
+sudo apt-get install -y python3-scp python3-paramiko python3-opencv python3-numpy
 
-# MediaMTX Konfiguration erstellen
-sudo mkdir -p /etc/mediamtx
-sudo nano /etc/mediamtx/mediamtx.yml
-# Siehe docs/TRIXIE-MIGRATION.md für Konfiguration
+# Kamera-Tools prüfen
+rpicam-hello --version  # Sollte v1.9.1+ sein
+ffmpeg -version         # Sollte 7.1.2+ sein
 
-# Systemd Service aktivieren
-sudo systemctl enable mediamtx
-sudo systemctl start mediamtx
-
-# Python-Pakete installieren (apt, nicht pip!)
-sudo apt-get install -y python3-scp python3-paramiko
+# SSH-Zugang konfigurieren
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_rpi
+# Öffentlichen Schlüssel auf Raspberry Pi kopieren
 ```
 
 ### 3. Client-PC Konfiguration
@@ -649,7 +642,7 @@ Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentie
 - 🐍 **Python Unbuffered Mode:** Echtzeit-Debug-Output mit `-u` Flag
 
 ### 📡 Trixie Support in v1.3.0 (01. November 2025)
-- 📡 **MediaMTX RTSP-Server:** Ersetzt TCP-Streaming (FFmpeg 7.1.2 Breaking Change)
+- 📡 **TCP Watchdog System:** Robuste Preview-Stream-Verwaltung (FFmpeg 7.1.2 kompatibel)
 - 🎯 **On-Demand Stream-Modus:** Dual-Kamera-Betrieb ohne Konflikte
 - 🐍 **PEP 668 Compliance:** Python-Pakete via apt statt pip
 

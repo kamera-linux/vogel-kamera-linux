@@ -4,6 +4,10 @@
 **Datum:** 5. November 2025  
 **Status:** Stabil / Production Ready
 
+> ⚠️ **HINWEIS:** MediaMTX-Referenzen in diesem Dokument sind historisch (v1.3.0).  
+> Das System nutzt seit v1.3.1 **TCP Watchdog** für Preview-Streams.  
+> Siehe aktuelles Setup in [Installation Guide](INSTALLATION-TRIXIE.md).
+
 ## 📋 Überblick
 
 Dieses Dokument beschreibt die Migration von Raspberry Pi OS Bookworm (Debian 12) zu Trixie (Debian 13) und die notwendigen Anpassungen am Vogel-Kamera-System.
@@ -25,7 +29,7 @@ tcp://0.0.0.0:8888?listen=1: Invalid argument
 
 **Ursache:** FFmpeg 7.1.2 hat das `listen=1` TCP-Format entfernt.
 
-**Lösung:** Migration zu MediaMTX RTSP Server (siehe unten)
+**Lösung:** TCP Watchdog System mit automatischem Restart (implementiert in v1.3.1)
 
 ---
 
@@ -49,7 +53,7 @@ sudo apt-get install python3-scp python3-paramiko
 
 **Problem:** Raspberry Pi 5 mit 2 Kameras kann nur **eine** libcamera-Session gleichzeitig ausführen.
 
-**Lösung:** On-Demand Stream-Modus (siehe MediaMTX Konfiguration)
+**Lösung:** On-Demand Stream-Modus mit TCP Watchdog (automatisches Start/Stop)
 
 ---
 
