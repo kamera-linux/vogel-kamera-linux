@@ -2,14 +2,101 @@
 
 Dieses Verzeichnis enthält verschiedene Entwicklungs- und Test-Tools für das Vogel-Kamera-Linux Projekt.
 
-## 📋 Übersicht
+## 🔧 Installation
+
+```bash
+# Dependencies installieren (im venv empfohlen)
+source venv/bin/activate
+pip install -r tools/requirements.txt
+```
+
+## � Übersicht
 
 | Tool | Beschreibung | Verwendung |
 |------|--------------|------------|
+| `analyze_video_bird_content.py` | Video-Analyse mit YOLOv8 | Analysiert MP4-Videos auf Vogelanteil |
 | `local-system-status.py` | Lokaler System-Monitor | Prüft CPU, RAM, Festplatte, Last (ohne SSH) |
 | `check_emojis.py` | Emoji-Validator für Markdown-Dateien | Prüft alle Dokumente auf defekte Emojis |
 | `test_ai_features.py` | AI-Feature Tests | Testet KI-Funktionen |
 | `automation_test.txt` | Automatisierungs-Tests | Test-Dokumentation |
+
+---
+
+## 🎬 analyze_video_bird_content.py - Video-Analyse
+
+### Beschreibung
+Analysiert MP4-Videos auf Vogelanteil mit YOLOv8-basierter KI-Erkennung. Perfekt zum Filtern von Aufnahmen mit geringem Vogelanteil.
+
+### Features
+- 🐦 **YOLOv8-Erkennung**: State-of-the-art Bird Detection
+- 📊 **Statistiken**: Vogelanteil, Detektionen, Segmente
+- ⚡ **Sample-Rate**: Analyse jeden N-ten Frame für höhere Geschwindigkeit
+- 🗑️ **Auto-Delete**: Lösche Verzeichnisse mit 0% Vogelanteil
+- 📝 **Logging**: Speichere Output in `/var/log/vogel-kamera-linux/`
+- 💾 **JSON-Export**: Strukturierte Reports für Automatisierung
+- 🎯 **Batch-Processing**: Mehrere Videos gleichzeitig analysieren
+- 🔍 **Modell-Suche**: Automatisches Finden von Modellen in `models/` oder `config/models/`
+
+### Verwendung
+
+```bash
+# Einzelnes Video analysieren
+python3 tools/analyze_video_bird_content.py video.mp4
+
+# Mehrere Videos mit Sample-Rate (schneller)
+python3 tools/analyze_video_bird_content.py --sample-rate 5 *.mp4
+
+# Mit Logging
+python3 tools/analyze_video_bird_content.py --log *.mp4
+
+# Verzeichnisse mit 0% automatisch löschen
+python3 tools/analyze_video_bird_content.py --delete --sample-rate 5 *.mp4
+
+# Eigenes Modell verwenden (sucht in models/ oder config/models/)
+python3 tools/analyze_video_bird_content.py --model bird-species.pt video.mp4
+
+# JSON-Report exportieren
+python3 tools/analyze_video_bird_content.py --output report.json video.mp4
+```
+
+**Beispiel-Ausgabe:**
+```
+🤖 Lade YOLO-Modell: yolov8n.pt
+📝 Log-Datei: /var/log/vogel-kamera-linux/2025/45/2025-11-06_14-30-15-analyse.log
+======================================================================
+
+📊 VOGEL-ANALYSE REPORT
+======================================================================
+
+📹 Video: video.mp4
+   Dauer: 0:02:45
+   
+🐦 Ergebnisse:
+   Vogelanteil: 12.5%
+   Detektionen: 234
+   
+======================================================================
+🎯 GESAMTSTATISTIK (2 Videos)
+======================================================================
+
+Verzeichnis                              Dauer    Vögel   Status
+────────────────────────────────────────────────────────────────────
+Mittwoch__2025-11-05__14-02-06          02:45    12.5%   ✅
+Donnerstag__2025-11-06__09-15-32        01:30     0.0%   ❌
+
+Gesamt: 2 Videos, 04:15 Minuten, ⌀ 6.3% Vogelanteil
+======================================================================
+```
+
+### Modell-Verwaltung
+
+Das Skript sucht Modelle automatisch in dieser Reihenfolge:
+1. `models/` (für eigene trainierte Modelle)
+2. `config/models/` (alternative Location)
+3. Aktuelles Verzeichnis
+4. Ultralytics Cache (`~/.cache/ultralytics/`)
+
+Standard-Modelle (yolov8n.pt) werden beim ersten Aufruf automatisch heruntergeladen.
 
 ---
 
