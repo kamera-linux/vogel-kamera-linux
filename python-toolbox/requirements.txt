@@ -1,0 +1,19 @@
+# Python Toolbox Dependencies
+# ============================
+#
+# Installation:
+#   pip install -r python-toolbox/requirements.txt
+#
+# Oder im venv:
+#   source venv/bin/activate
+#   pip install -r python-toolbox/requirements.txt
+
+# Video-Analyse Tool
+# ------------------
+# Option 1: PyPI Package (empfohlen)
+vogel-video-analyzer>=0.1.0
+
+# Option 2: Direkte Dependencies (falls vogel-video-analyzer nicht via PyPI installiert)
+# opencv-python>=4.8.0
+# ultralytics>=8.0.0
+# numpy>=1.24.0

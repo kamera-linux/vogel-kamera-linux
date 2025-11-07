@@ -167,9 +167,29 @@ python tools/analyze_video_bird_content.py latest_recording.mp4 \
 
 ## 🚀 Nächste Schritte
 
-1. **Tools-Dependencies installieren:** `pip install -r tools/requirements.txt`
-2. **Video-Analyse testen:** `python tools/analyze_video_bird_content.py /pfad/zu/video.mp4`
-3. **Batch-Processing einrichten:** Cronjob oder Skript für automatische Analyse
+### Option 1: PyPI Package (Empfohlen)
+```bash
+# Sobald auf PyPI verfügbar:
+pip install vogel-video-analyzer
+vogel-analyze /pfad/zu/video.mp4
+```
+
+### Option 2: Git Submodule (Entwickler)
+```bash
+# Repository mit Submodules clonen
+git clone --recursive https://github.com/kamera-linux/vogel-kamera-linux.git
+
+# Oder Submodules nachträglich initialisieren
+git submodule update --init --recursive
+
+# Dependencies installieren
+pip install -r python-toolbox/requirements.txt
+
+# Video-Analyse nutzen
+python -m vogel_video_analyzer /pfad/zu/video.mp4
+```
+
+Weitere Informationen: [python-toolbox/README.md](../python-toolbox/README.md)
 
 ---
 

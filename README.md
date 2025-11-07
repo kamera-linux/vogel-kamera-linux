@@ -218,6 +218,10 @@ vogel-kamera-linux/
 │   ├── SECURITY.md                                              # Sicherheitsrichtlinien
 │   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
 │   └── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
+├── python-toolbox/                                             # 🐍 Python Packages & Tools *(v1.3.2)*
+│   ├── vogel-video-analyzer/                                   # Video-Analyse-Tool (Git Submodule)
+│   ├── requirements.txt                                         # Python-Dependencies
+│   └── README.md                                                # Python-Toolbox Dokumentation
 ├── tools/                                                        # 🛠️ Test & Entwicklungstools
 │   ├── check_emojis.py                                          # Emoji-Validator für Markdown
 │   ├── automation_test.txt                                      # Automatisierungs-Tests
