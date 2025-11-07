@@ -176,32 +176,31 @@ class UnifiedCameraMonitor:
         try:
             self.picam2 = Picamera2(self.camera_num)
             
-            # Dual-Stream Konfiguration
-            # Stream 0: Haupt-Stream für Aufnahme (hohe Qualität)
-            # Stream 1: Low-Res Stream für Preview/AI-Analyse
+            # Dual-Stream Konfiguration für Preview + Encoding
+            # main: Haupt-Stream für Encoding (H264)
+            # lores: Low-Res Stream für Preview/AI-Analyse
             config = self.picam2.create_video_configuration(
                 main={
                     "size": (self.recording_width, self.recording_height),
-                    "format": "RGB888"
+                    "format": "YUV420"  # Für H264-Encoding
                 },
                 lores={
                     "size": (self.preview_width, self.preview_height),
-                    "format": "RGB888"
+                    "format": "RGB888"  # Für AI-Analyse
                 },
-                display=None,
-                encode=None
+                encode="main"  # Aktiviere Encode-Stream für main
             )
             
             self.picam2.configure(config)
             
             # Setze Kamera-Parameter
             self.picam2.set_controls({
-                "FrameRate": self.preview_fps,
+                "FrameRate": self.recording_fps,  # Haupt-Stream FPS
                 "ExposureTime": 10000,  # Auto
                 "AnalogueGain": 1.0
             })
             
-            logger.info("✅ Picamera2 konfiguriert (Dual-Stream)")
+            logger.info("✅ Picamera2 konfiguriert (Dual-Stream mit Encoding)")
             return True
             
         except Exception as e:
@@ -238,9 +237,22 @@ class UnifiedCameraMonitor:
         
         if self.picam2:
             try:
-                self.picam2.stop()
+                # Stoppe laufende Aufnahme falls aktiv
+                if self.is_recording:
+                    try:
+                        self.picam2.stop_recording()
+                        logger.info("Aufnahme gestoppt")
+                    except:
+                        pass
+                
+                # Stoppe Kamera
+                if self.picam2.started:
+                    self.picam2.stop()
+                    logger.info("Kamera gestoppt")
+                
+                # Schließe Kamera
                 self.picam2.close()
-                logger.info("✅ Kamera gestoppt")
+                logger.info("✅ Kamera geschlossen")
             except Exception as e:
                 logger.error(f"Fehler beim Stoppen: {e}")
     
