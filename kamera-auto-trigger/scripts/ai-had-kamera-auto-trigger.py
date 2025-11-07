@@ -79,11 +79,18 @@ import sys
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(script_dir))
 python_skripte_dir = os.path.join(project_root, 'python-skripte')
+scripts_dir = os.path.join(project_root, 'scripts')
 
 sys.path.insert(0, python_skripte_dir)
+sys.path.insert(0, scripts_dir)
 
 from config import config
-__version__ = "1.3.1"  # Trixie Release - TCP Stream mit Watchdog, Bookworm-Logik
+
+# Importiere zentrale Version
+try:
+    from version import __version__
+except ImportError:
+    __version__ = "1.3.2"  # Fallback falls version.py nicht gefunden
 
 # Import StreamProcessor aus gleichem Verzeichnis
 try:
@@ -146,7 +153,7 @@ parser.add_argument('--recording-slowmo', action='store_true',
                     help='Zeitlupen-Aufnahme (120fps, 1536x864). Überschreibt --recording-ai und Auflösungsparameter')
 parser.add_argument('--cooldown', type=int, default=30, help='Wartezeit zwischen Aufnahmen in Sekunden (default: 30)')
 parser.add_argument('--trigger-threshold', type=float, default=0.25, help='AI-Schwelle für Trigger (default: 0.25, optimiert für Vogelerkennung)')
-parser.add_argument('--preview-fps', type=int, default=5, help='FPS für Monitoring-Modus (default: 5, CPU-optimierter Kompromiss)')
+parser.add_argument('--preview-fps', type=int, default=6, help='FPS für Monitoring-Modus (default: 6, Balance zwischen Performance und Erkennung)')
 parser.add_argument('--preview-width', type=int, default=640, help='Breite für Monitoring-Vorschau (default: 640, CPU-optimierter Kompromiss)')
 parser.add_argument('--preview-height', type=int, default=480, help='Höhe für Monitoring-Vorschau (default: 480, CPU-optimierter Kompromiss)')
 parser.add_argument('--max-cpu-temp', type=float, default=70.0, help='Maximale CPU-Temperatur in °C (default: 70)')
@@ -781,11 +788,43 @@ def main():
         exit_code = stdout.channel.recv_exit_status()
         
         if exit_code == 0:
-            # Watchdog läuft bereits
-            print("   ✅ Watchdog läuft bereits")
-            print("   ⏳ Gebe Stream 5s Zeit zum Stabilisieren...")
-            time.sleep(5)
-            print("   ✅ Stream sollte bereit sein\n")
+            # Watchdog läuft bereits - prüfe ob Stream-Prozess auch läuft
+            stdin, stdout, stderr = ssh_ctrl.exec_command(
+                'ps aux | grep "rpicam-vid.*tcp" | grep -v grep'
+            )
+            stream_running = stdout.channel.recv_exit_status() == 0
+            
+            if stream_running:
+                print("   ✅ Watchdog und Stream laufen bereits")
+                print("   ⏳ Gebe Stream 3s Zeit zum Stabilisieren...")
+                time.sleep(3)
+                print("   ✅ Stream sollte bereit sein\n")
+            else:
+                # Watchdog läuft, aber kein Stream - Neustart nötig
+                print("   ⚠️  Watchdog läuft, aber Stream-Prozess fehlt - Neustart...")
+                stdin, stdout, stderr = ssh_ctrl.exec_command(
+                    'cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --stop'
+                )
+                stdout.channel.recv_exit_status()
+                time.sleep(2)
+                
+                # Killle alle alten Prozesse
+                stdin, stdout, stderr = ssh_ctrl.exec_command(
+                    'pkill -9 rpicam-vid 2>/dev/null; exit 0'
+                )
+                stdout.channel.recv_exit_status()
+                time.sleep(1)
+                
+                # Neu starten
+                stdin, stdout, stderr = ssh_ctrl.exec_command(
+                    f'cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --port 8554 --width {args.preview_width} --height {args.preview_height} --fps {args.preview_fps} --camera {args.cam}'
+                )
+                stdout.channel.recv_exit_status()
+                
+                print("   ✅ Watchdog neu gestartet")
+                print("   ⏳ Warte auf Stream-Initialisierung...")
+                time.sleep(20)
+                print("   ✅ Stream sollte bereit sein\n")
         else:
             # Starte Watchdog neu
             print("   🔄 Starte Watchdog...")
@@ -796,7 +835,7 @@ def main():
             
             print("   ✅ Watchdog gestartet")
             print("   ⏳ Warte auf Stream-Initialisierung...")
-            time.sleep(20)  # Watchdog braucht ~3s + rpicam-vid Start ~10s + Socket-Stabilisierung + Reserve
+            time.sleep(20)
             print("   ✅ Stream sollte bereit sein\n")
         
         ssh_ctrl.close()
@@ -815,7 +854,7 @@ def main():
             width=args.preview_width,
             height=args.preview_height,
             fps=args.preview_fps,
-            trigger_duration=1.5,  # Vogel muss 1.5 Sekunden erkannt werden (mehr Frames für bessere Konsistenz)
+            trigger_duration=1.0,  # Vogel muss 1.0 Sekunden erkannt werden (schnellerer Trigger)
             debug=True  # Aktiviere Debug-Ausgaben um Erkennungen zu sehen
         )
         

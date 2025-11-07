@@ -260,6 +260,43 @@ class StreamProcessor:
         self.connected = False
         logger.info("Stream-Verbindung getrennt")
     
+    def _kill_camera_processes(self):
+        """
+        Killt blockierende Kamera-Prozesse auf dem Raspberry Pi via SSH.
+        Wird bei Reconnect-Problemen verwendet.
+        """
+        try:
+            import subprocess
+            import sys
+            import os
+            
+            # Hole SSH-Konfiguration aus config.py
+            sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'python-skripte'))
+            from config import Config
+            config = Config()
+            
+            ssh_key = config.ssh_key_path
+            username = config.username
+            
+            # Killle alte rpicam-vid Prozesse
+            cmd = f"ssh -i {ssh_key} -o StrictHostKeyChecking=no -o ConnectTimeout=5 {username}@{self.host} 'pkill -9 rpicam-vid 2>/dev/null; exit 0'"
+            
+            logger.debug(f"Versuche alte Kamera-Prozesse zu killen auf {self.host}...")
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                logger.info("🔄 Alte Kamera-Prozesse wurden beendet")
+                import time
+                time.sleep(2)  # Warte bis Prozesse wirklich weg sind
+                return True
+            else:
+                logger.warning(f"Konnte Kamera-Prozesse nicht killen (Exit: {result.returncode})")
+                return False
+                
+        except Exception as e:
+            logger.warning(f"Fehler beim Killen der Kamera-Prozesse: {e}")
+            return False
+    
     def read_frame(self) -> Tuple[bool, Optional[np.ndarray]]:
         """
         Liest einen Frame vom Stream.
@@ -282,10 +319,24 @@ class StreamProcessor:
                     self._reconnect_attempts += 1
                     logger.warning(f"⚠️  Stream unterbrochen - versuche Reconnect (Versuch {self._reconnect_attempts}/3)...")
                     self.disconnect()
-                    import time
-                    time.sleep(5)  # Warte länger für Watchdog-Neustart
+                    
+                    # Bei erneutem Reconnect-Versuch: Killle alte Kamera-Prozesse
+                    if self._reconnect_attempts >= 2:
+                        logger.info("🔧 Versuche blockierende Kamera-Prozesse zu beenden...")
+                        self._kill_camera_processes()
+                        # Warte länger nach Kill - Watchdog braucht Zeit für Neustart
+                        import time
+                        time.sleep(10)
+                    else:
+                        import time
+                        time.sleep(5)  # Normale Wartezeit
+                    
                     if self.connect():
                         logger.info("✅ Reconnect erfolgreich")
+                        # Reset Detection History nach Reconnect
+                        self.detection_history = []
+                        self.first_detection_time = None
+                        logger.debug("🔄 Detection History zurückgesetzt nach Reconnect")
                         ret, frame = self.cap.read()
                         if ret and frame is not None:
                             self._reconnect_attempts = 0  # Reset bei Erfolg

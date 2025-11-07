@@ -253,7 +253,7 @@ if [ "$SLOWMO" = true ]; then
         --cooldown 15 \
         --status-interval 5 \
         --recording-slowmo \
-        --preview-fps 8 \
+        --preview-fps 6 \
         --preview-width 640 \
         --preview-height 480 &
     AUTO_TRIGGER_PID=$!
@@ -267,7 +267,7 @@ elif [ "$WITH_AI" = true ]; then
         --status-interval 5 \
         --recording-ai \
         --recording-ai-model bird-species \
-        --preview-fps 8 \
+        --preview-fps 6 \
         --preview-width 640 \
         --preview-height 480 &
     AUTO_TRIGGER_PID=$!
@@ -279,7 +279,7 @@ else
         --trigger-threshold 0.40 \
         --cooldown 15 \
         --status-interval 5 \
-        --preview-fps 8 \
+        --preview-fps 6 \
         --preview-width 640 \
         --preview-height 480 &
     AUTO_TRIGGER_PID=$!

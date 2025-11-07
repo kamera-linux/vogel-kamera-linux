@@ -21,13 +21,13 @@ try:
         from scripts.version import __version__, get_version_info
 except ImportError:
     # Fallback wenn scripts/version.py nicht gefunden wird
-    __version__ = "1.2.0"
+    __version__ = "1.3.2"
 
     def get_version_info():
         return {
             'version': __version__,
-            'release_name': 'Auto-Trigger System & Stream-Management',
-            'release_date': '2025-10-01'
+            'release_name': 'Video Analysis Tool & Python Toolbox',
+            'release_date': '2025-11-07'
         }
 
 # Für Rückwärtskompatibilität

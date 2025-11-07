@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "1.3.1"
-__version_info__ = (1, 3, 1)
+__version__ = "1.3.2"
+__version_info__ = (1, 3, 2)
 
 # Release Information
-RELEASE_NAME = "Trixie Production Release - TCP Stream Watchdog"
-RELEASE_DATE = "2025-11-05"
-RELEASE_TYPE = "patch"  # major, minor, patch
+RELEASE_NAME = "Video Analysis Tool & Python Toolbox"
+RELEASE_DATE = "2025-11-07"
+RELEASE_TYPE = "minor"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20251105-1"
-GIT_TAG = "v1.3.1"
+BUILD_NUMBER = "20251107-1"
+GIT_TAG = "v1.3.2"
 
 # Feature Flags
 FEATURES = {
