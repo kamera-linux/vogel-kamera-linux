@@ -23,6 +23,9 @@ print_info() {
     echo -e "${YELLOW}ℹ️  $1${NC}"
 }
 
+# Virtuelle Umgebung
+VENV_DIR="$HOME/.venv/vogel-camera"
+
 # Standard-Parameter
 CAMERA=0
 THRESHOLD=0.4
@@ -127,18 +130,31 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Prüfe picamera2
+# Erstelle/Aktiviere virtuelle Umgebung
+if [ ! -d "$VENV_DIR" ]; then
+    print_info "Erstelle virtuelle Umgebung: $VENV_DIR"
+    python3 -m venv "$VENV_DIR" --system-site-packages
+    print_success "Virtuelle Umgebung erstellt"
+fi
+
+# Aktiviere venv
+source "$VENV_DIR/bin/activate"
+print_success "Virtuelle Umgebung aktiviert"
+
+# Prüfe picamera2 (sollte aus System-Packages verfügbar sein)
 if ! python3 -c "import picamera2" 2>/dev/null; then
     print_error "picamera2 nicht installiert"
     echo "Installiere mit: sudo apt install -y python3-picamera2"
     exit 1
 fi
 
-# Prüfe ultralytics
+# Prüfe/Installiere ultralytics in venv
 if ! python3 -c "import ultralytics" 2>/dev/null; then
-    print_info "ultralytics (YOLO) nicht installiert"
-    echo "Installiere mit: pip install ultralytics"
-    echo "Fahre fort im Fallback-Modus..."
+    print_info "Installiere ultralytics (YOLO) in virtuelle Umgebung..."
+    pip install --quiet ultralytics opencv-python numpy 2>/dev/null || {
+        print_error "Installation fehlgeschlagen"
+        echo "Fahre fort im Fallback-Modus..."
+    }
 fi
 
 # Konfiguration anzeigen
