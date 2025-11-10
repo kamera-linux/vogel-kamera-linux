@@ -129,9 +129,42 @@ Das System unterstützt das Training eigener AI-Modelle für spezifische Vogelar
 
 🎯 **Häufige deutsche Gartenvögel**: Amsel, Blaumeise, Kohlmeise, Rotkehlchen, Buchfink...
 
-📋 **Vollständige Anleitung**: [`docs/ANLEITUNG-EIGENES-AI-MODELL.md`](docs/ANLEITUNG-EIGENES-AI-MODELL.md)
+#### 🚀 **Empfohlen: vogel-model-trainer Package**
 
-🛠️ **Training-Tools**: [`ai-training-tools/`](ai-training-tools/) - Komplettes Toolkit für eigene Modelle
+[![PyPI](https://img.shields.io/pypi/v/vogel-model-trainer)](https://pypi.org/project/vogel-model-trainer/)
+
+**Professionelles Training-Tool für Vogelarten-KI-Modelle** - einfach installierbar via pip!
+
+```bash
+# Installation
+pip install vogel-model-trainer
+
+# Quick Start - Automatisiertes Training
+vogel-trainer train --species blaumeise --video-dir ./videos --epochs 50
+
+# Kompletter Workflow
+vogel-trainer extract --video-dir ./videos --output-dir ./frames
+vogel-trainer organize --frames-dir ./frames --output-dir ./dataset
+vogel-trainer train --dataset-dir ./dataset --epochs 100
+vogel-trainer test --model best.pt --test-dir ./test-images
+```
+
+**Vorteile:**
+- ✅ Einfache Installation via pip
+- 🚀 Automatisierte Workflows (Extract → Organize → Train → Test)
+- 📊 Integrierte Evaluierung und Metriken
+- 🎯 >90% Genauigkeit für lokale Vogelarten
+- 🔄 Iteratives Training für kontinuierliche Verbesserung
+
+📦 **Repository**: [vogel-model-trainer](https://github.com/kamera-linux/vogel-model-trainer)
+
+#### 📋 **Alternative: Lokale Training-Tools (Legacy)**
+
+📋 **Manuelle Anleitung**: [`docs/ANLEITUNG-EIGENES-AI-MODELL.md`](docs/ANLEITUNG-EIGENES-AI-MODELL.md)
+
+🛠️ **Basis-Tools**: [`ai-training-tools/`](ai-training-tools/) - Legacy Training-Scripts für fortgeschrittene Nutzer
+
+#### 🎯 **Eigenes Modell verwenden**
 
 ```bash
 # Eigenes Modell verwenden
