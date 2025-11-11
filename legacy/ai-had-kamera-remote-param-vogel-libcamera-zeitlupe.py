@@ -18,9 +18,10 @@ locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 
 # Argumente parsen
 parser = argparse.ArgumentParser(
-    description='''Kamerawagen Remote Steuerung
+    description='''Vogel-Kamera Remote Steuerung
     Beispiel für einen Aufruf:
-    python kamera-remote-param-vogel-libcamera-zeitlupe.py --duration 3 --width 1536 --height 864 --fps 120 --cam 0 --slowmotion --rotation 180 --autofocus_mode continuous'''
+    python ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py --duration 1'''
+)
 )
 parser.add_argument('--version', action='version', version=f'Vogel-Kamera-Linux v{__version__}')
 parser.add_argument('--duration', type=int, required=True, help='Aufnahmedauer in Minuten')

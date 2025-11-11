@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "1.3.2"
-__version_info__ = (1, 3, 2)
+__version__ = "2.0.0"
+__version_info__ = (2, 0, 0)
 
 # Release Information
-RELEASE_NAME = "Video Analysis Tool & Python Toolbox"
-RELEASE_DATE = "2025-11-07"
-RELEASE_TYPE = "minor"  # major, minor, patch
+RELEASE_NAME = "Unified Camera Monitor & Multilingual Documentation"
+RELEASE_DATE = "2025-11-11"
+RELEASE_TYPE = "major"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20251107-1"
-GIT_TAG = "v1.3.2"
+BUILD_NUMBER = "20251111-1"
+GIT_TAG = "v2.0.0"
 
 # Feature Flags
 FEATURES = {
@@ -28,6 +28,10 @@ FEATURES = {
     "trigger_duration_logic": True,  # Since v1.2.0
     "stream_management": True,  # Since v1.2.0
     "network_diagnostics": True,  # Since v1.2.0
+    "unified_camera_monitor": True,  # Since v2.0.0
+    "traffic_light_monitoring": True,  # Since v2.0.0
+    "auto_shutdown": True,  # Since v2.0.0
+    "multilingual_docs": True,  # Since v2.0.0
     "tcp_stream_watchdog": True,  # New in v1.3.0 - Auto-restart bei Verbindungsabbruch
     "trixie_support": True,  # New in v1.3.0 - Debian 13 Trixie kompatibel
     "github_discussions": True,  # Since v1.1.3

@@ -105,12 +105,17 @@ class StreamProcessor:
         self.detection_history = []  # Liste von (timestamp, detected) Tuples
         self.first_detection_time = None
         
+        # Frame-Skipping für Performance (analysiere nur jeden N-ten Frame)
+        self.frame_skip = 2  # Analysiere nur jeden 2. Frame
+        self.frame_counter = 0
+        
         # AI-Model
         self.model: Optional[Any] = None
         self.model_loaded = False
         
         # Statistics
         self.frames_processed = 0
+        self.frames_skipped = 0
         self.birds_detected = 0
         self.last_detection_time = 0
         self.avg_inference_time = 0
@@ -190,13 +195,19 @@ class StreamProcessor:
             logger.info(f"Verbinde mit Stream: {self.stream_url}...")
             logger.info(f"   Timeout: {self.timeout}s")
             
-            # GStreamer-Pipeline für TCP-Stream
+            # GStreamer-Pipeline für TCP-Stream mit MAXIMAL aggressivem Frame-Dropping
+            # Trixie/Debian 13 hat massive Buffer-Probleme - alle Buffer auf Minimum
             gst_pipeline = (
-                f"tcpclientsrc host={self.host} port={self.port} timeout={self.timeout * 1000000} ! "
+                f"tcpclientsrc host={self.host} port={self.port} timeout={self.timeout * 1000000} "
+                "do-timestamp=true ! "  # Timestamps für sync
+                "queue max-size-buffers=1 max-size-time=0 max-size-bytes=0 leaky=2 ! "  # Leak oldest frames
                 "h264parse ! "
-                "avdec_h264 ! "
+                "queue max-size-buffers=1 max-size-time=0 max-size-bytes=0 leaky=2 ! "
+                "avdec_h264 max-threads=1 output-corrupt=false ! "  # Single thread, drop corrupt
+                "queue max-size-buffers=1 max-size-time=0 max-size-bytes=0 leaky=2 ! "
                 "videoconvert ! "
-                "appsink drop=1 sync=0"
+                "queue max-size-buffers=1 max-size-time=0 max-size-bytes=0 leaky=2 ! "
+                "appsink drop=1 sync=0 max-buffers=1 emit-signals=0"  # Minimal buffering
             )
             
             # Versuche verschiedene Backends
@@ -320,16 +331,16 @@ class StreamProcessor:
                     logger.warning(f"⚠️  Stream unterbrochen - versuche Reconnect (Versuch {self._reconnect_attempts}/3)...")
                     self.disconnect()
                     
-                    # Bei erneutem Reconnect-Versuch: Killle alte Kamera-Prozesse
-                    if self._reconnect_attempts >= 2:
-                        logger.info("🔧 Versuche blockierende Kamera-Prozesse zu beenden...")
-                        self._kill_camera_processes()
-                        # Warte länger nach Kill - Watchdog braucht Zeit für Neustart
-                        import time
-                        time.sleep(10)
-                    else:
-                        import time
-                        time.sleep(5)  # Normale Wartezeit
+                    # IMMER Kamera-Prozesse killen (nicht erst beim 2. Versuch)
+                    # Das ist nötig weil nach Aufnahmen manchmal rpicam-vid hängen bleibt
+                    logger.info("🔧 Beende blockierende Kamera-Prozesse...")
+                    self._kill_camera_processes()
+                    
+                    import time
+                    # Warte länger - Watchdog braucht Zeit für Neustart
+                    wait_time = 8 if self._reconnect_attempts == 1 else 12
+                    logger.debug(f"Warte {wait_time}s auf Watchdog-Neustart...")
+                    time.sleep(wait_time)
                     
                     if self.connect():
                         logger.info("✅ Reconnect erfolgreich")
@@ -441,6 +452,7 @@ class StreamProcessor:
         """
         Verarbeitet einen Frame: Lesen + Objekterkennung.
         Trigger nur wenn Vogel für mindestens trigger_duration Sekunden erkannt wurde.
+        Frame-Skipping: Analysiere nur jeden N-ten Frame für Performance.
         
         Returns:
             True wenn Vogel konsistent erkannt (Trigger-Bedingung erfüllt), sonst False
@@ -452,10 +464,19 @@ class StreamProcessor:
             if not ret or frame is None:
                 return False
             
+            self.frame_counter += 1
+            
+            # Frame-Skipping: Überspringe Frames für bessere Performance
+            if self.frame_counter % self.frame_skip != 0:
+                self.frames_skipped += 1
+                # Verwende letzte Erkennung weiter (keine neue Analyse)
+                # Das verhindert Stream-Überlastung bei langsamer Inferenz
+                return False
+            
             self.frames_processed += 1
             current_time = time.time()
             
-            # Objekterkennung
+            # Objekterkennung (nur bei jedem N-ten Frame)
             bird_detected, info = self.detect_objects(frame)
             
             # Aktualisiere Detection-History
@@ -530,6 +551,8 @@ class StreamProcessor:
             "connected": self.connected,
             "model_loaded": self.model_loaded,
             "frames_processed": self.frames_processed,
+            "frames_skipped": self.frames_skipped,
+            "frame_skip_ratio": self.frame_skip,
             "birds_detected": self.birds_detected,
             "avg_inference_time": self.avg_inference_time,
             "last_detection": self.last_detection_time,

@@ -5,6 +5,158 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.0] - 2025-11-11 🚀 MAJOR RELEASE
+
+### ⚠️ BREAKING CHANGES
+- **Unified Camera Monitor System:**
+  - Alte Remote-Control-Skripte (`ai-had-*.py`) sind jetzt DEPRECATED
+  - Neue Hauptmethode: `unified-camera-monitor.py` läuft direkt auf Raspberry Pi
+  - SSH-Overhead eliminiert durch Single-Process-Architektur
+  - Legacy-Skripte nach `legacy/` verschoben mit vollständigem Migration Guide
+- **Neue Standard-Aufnahmedauer:**
+  - Recordings jetzt standardmäßig 60 Sekunden (war variabel)
+  - Konfigurierbar via `--recording-duration` Parameter
+- **Neues CLI-Interface:**
+  - CLI-Parameter ersetzen `.env`-Dateien für On-Pi Betrieb
+  - 13 konfigurierbare Parameter (camera, threshold, cooldown, recording-*, etc.)
+
+### ✨ Hinzugefügt
+- **🎯 Unified Camera Monitor System (v2.0):**
+  - Single-Process Kamera-System ohne SSH-Latenz
+  - Läuft direkt auf Raspberry Pi für maximale Performance
+  - Kombiniert Preview, AI-Detection und Recording in einem Prozess
+  - Wrapper-Script `start-unified-monitoring.sh` für Client-PC Komfort
+  
+- **🚦 Traffic Light Health Monitoring:**
+  - Real-time System-Überwachung mit Ampel-Visualisierung
+  - **CPU-Temperatur:** 🟢 <55°C | 🟡 55-65°C | 🔴 >65°C | ⛔ STOP >75°C
+  - **CPU-Load:** 🟢 <1.0 | 🟡 1.0-2.0 | 🔴 >2.0
+  - **RAM-Nutzung:** 🟢 <75% | 🟡 75-90% | 🔴 >90%
+  - **Disk-Space:** 🟢 <90% | 🟡 90-95% | 🔴 >95%
+  - Live-Status alle 5 Minuten im Log
+  
+- **🔒 Auto-Shutdown System:**
+  - Emergency-Stop bei kritischer CPU-Temperatur >75°C
+  - Warnung bei kritischer CPU-Load oder Disk-Space
+  - Hardware-Schutz für Raspberry Pi 5
+  
+- **⏱️ Konfigurierbare Aufnahmedauer:**
+  - 60 Sekunden Standard, anpassbar via `--recording-duration`
+  - Optimiert für Vogelbeobachtung (vollständige Szenen)
+  - Kombiniert mit Cooldown für intelligente Trigger-Steuerung
+  
+- **📊 Live-Monitoring-Output:**
+  - Heartbeat alle 30 Sekunden: `[✓] Monitor aktiv - XXX Frames verarbeitet`
+  - Status-Report alle 5 Minuten mit allen Systemwerten
+  - Echtzeit-Feedback mit `print()` + `logger` parallel
+  
+- **🌐 Multilingual Documentation:**
+  - Vollständige README in 3 Sprachen: English, Deutsch, Japanisch
+  - Neue Struktur: `docs/i18n/` mit README.md, README.de.md, README.ja.md
+  - Language Selector in allen Dokumenten
+  - Internationaler Zugang für globale Community
+  
+- **🔧 Automated Setup Script:**
+  - `raspberry-pi-scripts/setup-unified-monitor.sh` für 1-Click-Installation
+  - Automatische apt-Paket-Installation (PEP 668 konform)
+  - YOLOv8 Installation via pip --break-system-packages
+  - Verzeichnis-Setup und Permission-Management
+  - OS-Erkennung und Trixie-Validierung
+
+### 🔧 Geändert
+- **Projekt-Reorganisation:**
+  - Legacy-Scripts in `legacy/` mit umfassendem Migration Guide
+  - `legacy/README.md` dokumentiert alle Änderungen und Migrationsschritte
+  - Alte `.env`-basierte Konfiguration weiterhin in legacy/ verfügbar
+  
+- **README-Struktur aktualisiert:**
+  - Language Selector prominent am Anfang
+  - "Unified Camera Monitor System" als Hauptfeature
+  - Legacy-Section mit Hinweis auf Deprecation
+  - Vollständige Parameter-Tabelle (13 CLI-Parameter)
+  - Traffic Light Thresholds dokumentiert
+  - Installation-Section mit Setup-Script-Anleitung
+  
+- **Version-Management:**
+  - scripts/version.py auf v2.0.0 mit neuen Feature-Flags
+  - `unified_camera_monitor`, `traffic_light_monitoring`, `auto_shutdown`, `multilingual_docs`
+  - Release-Name: "Unified Camera Monitor & Multilingual Documentation"
+  - Release-Type: "major" wegen Breaking Changes
+
+### 📦 Legacy-Archivierung
+Folgende Skripte wurden nach `legacy/` verschoben:
+- `ai-had-audio-remote-param-vogel-libcamera-single.py` → Audio-Only-Aufnahmen
+- `ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py` → Video+AI Remote
+- `ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py` → Slowmo Remote
+- `config.py` → Config-System für Legacy-Scripts
+- `.env.example` → Template für Legacy-Config
+
+**Migration Path:**
+1. Für neue Projekte: Verwenden Sie `unified-camera-monitor.py`
+2. Für bestehende Setups: Legacy-Scripts funktionieren weiterhin aus `legacy/`
+3. Migration Guide: `legacy/README.md` enthält vollständige Anleitung
+
+### 🐛 Behoben
+- **Emoji-Kompatibilität:**
+  - Wechsel von 👁️ (Eye) zu [✓] (ASCII Checkmark) für Heartbeat
+  - Funktioniert in allen Terminal-Emulationen
+  
+- **Deployment-Path-Bug:**
+  - Korrektur: Deploy nach `~/vogel-kamera-linux/raspberry-pi-scripts/` statt `~/`
+  - Verhindert "Script nicht gefunden"-Fehler beim Wrapper-Aufruf
+  
+- **Config-Pfad-Bug:**
+  - Fix: `self.config.video_path` → `self.video_base_path` in unified-camera-monitor.py
+  - AttributeError behoben
+
+### 📚 Dokumentation
+- **Neue Dokumentation erstellt:**
+  - `docs/i18n/README.md` (English) - 350+ Zeilen
+  - `docs/i18n/README.de.md` (German) - 794 Zeilen (vollständig)
+  - `docs/i18n/README.ja.md` (Japanese) - 350+ Zeilen
+  - `legacy/README.md` - Umfassender Migration Guide
+  - `raspberry-pi-scripts/requirements-pi.txt` - Pi-spezifische Dependencies
+  
+- **README.md Hauptdatei:**
+  - +176 Zeilen neue Dokumentation
+  - Language Selector hinzugefügt
+  - Unified Camera Monitor Section (vollständig)
+  - Legacy Scripts Section mit Deprecation-Hinweis
+  - Traffic Light Thresholds Tabelle
+  - Installation mit Setup-Script dokumentiert
+
+### 🎯 Migration für Benutzer
+**Für neue Installationen:**
+```bash
+# Setup-Script ausführen
+bash raspberry-pi-scripts/setup-unified-monitor.sh
+
+# System starten
+python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
+```
+
+**Für bestehende Installationen:**
+```bash
+# Option 1: Auf neues System migrieren (empfohlen)
+python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
+
+# Option 2: Alte Scripts weiter nutzen
+python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
+    --duration 5 --width 1920 --height 1080 --ai-modul on
+```
+
+Siehe `legacy/README.md` für vollständigen Migration Guide.
+
+### 🔖 Release-Informationen
+- **Version:** 2.0.0 (Major Release - Breaking Changes)
+- **Datum:** 11. November 2025
+- **Branch:** feature/unified-camera-process → main
+- **Commits:** 10+ Commits mit umfassenden Änderungen
+- **Breaking Changes:** Ja - Legacy-Scripts deprecated
+- **Migration Required:** Optional - Legacy weiter nutzbar
+
+---
+
 ## [1.3.1] - 2025-11-05
 
 ### ✨ Hinzugefügt

@@ -1,13 +1,12 @@
 # 🐦 Vogel-Kamera-Linux
 
-> 🌐 **Multi-Language Documentation:** This README is available in multiple languages!  
-> **Sprachen / Languages / 言語:** [🇬🇧 English](docs/i18n/README.md) | [🇩🇪 Deutsch](docs/i18n/README.de.md) | [🇯🇵 日本語](docs/i18n/README.ja.md)
+**Sprachen / Languages / 言語:** [🇬🇧 English](README.md) | [🇩🇪 Deutsch](README.de.md) | [🇯🇵 日本語](README.ja.md)
 
 [![Version](https://img.shields.io/badge/Version-v2.0.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.0.0)
-[![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](docs/TRIXIE-MIGRATION.md)
+[![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](../TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
-[![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](LICENSE)
+[![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](../../LICENSE)
 
 > ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
 > 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)  
@@ -25,7 +24,7 @@
 python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
 
 # Oder via Wrapper vom Client-PC
-./start-unified-monitoring.sh slowmo
+./kamera-auto-trigger/start-unified-monitoring.sh slowmo
 
 # LEGACY: Alte Remote-Control Skripte (siehe legacy/README.md)
 python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
@@ -55,26 +54,26 @@ python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**🐦 Wunderschönes Rotkehlchen beim Fressen \| 4K Voge...**](https://www.youtube.com/watch?v=rWkWFUeVK0o) | 31.10.2025 | 1:58 | 30 | 5 | 0 |
-| [**🐦 Blaumeise beim Fressen \| KI-Kamera 120fps Zeitlu...**](https://www.youtube.com/watch?v=ew3l12TSn5k) | 28.10.2025 | 2:25 | 61 | 6 | 0 |
+| [**🐦 Wunderschönes Rotkehlchen beim Fressen \| 4K Voge...**](https://www.youtube.com/watch?v=rWkWFUeVK0o) | 31.10.2025 | 1:58 | 24 | 5 | 0 |
+| [**🐦 Blaumeise beim Fressen \| KI-Kamera 120fps Zeitlu...**](https://www.youtube.com/watch?v=ew3l12TSn5k) | 28.10.2025 | 2:25 | 56 | 6 | 0 |
 | [**🐦 Sumpfmeise in Zeitlupe \| Futtersuche im Vogelhau...**](https://www.youtube.com/watch?v=dORu9qs8KSA) | 20.10.2025 | 2:46 | 44 | 6 | 1 |
 | [**5 Vogelarten mit Aufnahme (120fps) \| Automatische ...**](https://www.youtube.com/watch?v=k3tS0oJX7YE) | 06.10.2025 | 3:24 | 53 | 6 | 5 |
-| [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 76 | 6 | 1 |
-| [**Vogelhaus mit Kleiber  (Futtersuche in Zeitlupe)**](https://www.youtube.com/watch?v=QALijFTA_s8) | 29.09.2025 | 5:07 | 74 | 7 | 2 |
+| [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 71 | 6 | 1 |
+| [**Vogelhaus mit Kleiber  (Futtersuche in Zeitlupe)**](https://www.youtube.com/watch?v=QALijFTA_s8) | 29.09.2025 | 5:07 | 72 | 7 | 2 |
 | [**Vogelhaus mit junge Haussperlinge**](https://www.youtube.com/watch?v=3na90KiJ-J8) | 06.06.2025 | 3:11 | 55 | 6 | 0 |
 | [**Vogelhaus mit Kohlmeise  (Am Futterspender in Zeit...**](https://www.youtube.com/watch?v=kFXR03Lv0X0) | 30.05.2025 | 7:23 | 31 | 6 | 0 |
 | [**Vogelhaus mit Kohlmeisen  (Fütterung Jungtiere mit...**](https://www.youtube.com/watch?v=sqvd99Pbubc) | 18.05.2025 | 3:22 | 41 | 6 | 0 |
 | [**Vogelhaus mit Kohlmeise  (Fütterung Jungtier mit 2...**](https://www.youtube.com/watch?v=vXWDleJ-18Q) | 17.05.2025 | 2:44 | 21 | 6 | 0 |
-| [**Vogelhaus mit Kernbeißer (2 Kameras)**](https://www.youtube.com/watch?v=dvCXPdMdNCg) | 27.04.2025 | 2:12 | 76 | 8 | 2 |
+| [**Vogelhaus mit Kernbeißer (2 Kameras)**](https://www.youtube.com/watch?v=dvCXPdMdNCg) | 27.04.2025 | 2:12 | 75 | 8 | 2 |
 | [**Vogelhaus mit Kernbeißer und Blaumeise (Vogel-Paar...**](https://www.youtube.com/watch?v=61Szkcp9hcM) | 23.04.2025 | 2:59 | 53 | 6 | 2 |
 | [**Vogelhaus mit Blaumeise, Kernbeißer und Kohlmeise ...**](https://www.youtube.com/watch?v=kElfd64dWrY) | 21.04.2025 | 4:16 | 99 | 7 | 0 |
-| [**Vogelhaus mit Blaumeise, Haussperling und Kohlmeis...**](https://www.youtube.com/watch?v=hjrYji0A9Hs) | 18.04.2025 | 3:04 | 67 | 6 | 0 |
+| [**Vogelhaus mit Blaumeise, Haussperling und Kohlmeis...**](https://www.youtube.com/watch?v=hjrYji0A9Hs) | 18.04.2025 | 3:04 | 65 | 6 | 0 |
 | [**Vogelhaus mit Blaumeise und Kohlmeise (Zeitlupe)**](https://www.youtube.com/watch?v=lshb68RrF_A) | 13.04.2025 | 5:11 | 78 | 7 | 0 |
 | [**Vogelhaus mit Blaumeisen, Rotkehlchen, Kernbeißer ...**](https://www.youtube.com/watch?v=6-OFxA__GL8) | 10.04.2025 | 5:05 | 110 | 7 | 0 |
 | [**Vogelhaus mit Kernbeißer, Blaumeise, Rotkehlchen, ...**](https://www.youtube.com/watch?v=MKb3yUKS_ww) | 09.04.2025 | 4:28 | 84 | 7 | 0 |
 | [**Vogelhaus mit Blaumeise, Rotkehlchen, Haussperling...**](https://www.youtube.com/watch?v=K0FhU73F6jo) | 08.04.2025 | 5:17 | 103 | 7 | 0 |
 
-*Automatisch aktualisiert: 11.11.2025 07:14 Uhr (Winterzeit (MEZ))*
+*Automatisch aktualisiert: 07.11.2025 07:14 Uhr (Winterzeit (MEZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## ✨ Features
@@ -135,42 +134,9 @@ Das System unterstützt das Training eigener AI-Modelle für spezifische Vogelar
 
 🎯 **Häufige deutsche Gartenvögel**: Amsel, Blaumeise, Kohlmeise, Rotkehlchen, Buchfink...
 
-#### 🚀 **Empfohlen: vogel-model-trainer Package**
+📋 **Vollständige Anleitung**: [`docs/ANLEITUNG-EIGENES-AI-MODELL.md`](docs/ANLEITUNG-EIGENES-AI-MODELL.md)
 
-[![PyPI](https://img.shields.io/pypi/v/vogel-model-trainer)](https://pypi.org/project/vogel-model-trainer/)
-
-**Professionelles Training-Tool für Vogelarten-KI-Modelle** - einfach installierbar via pip!
-
-```bash
-# Installation
-pip install vogel-model-trainer
-
-# Quick Start - Automatisiertes Training
-vogel-trainer train --species blaumeise --video-dir ./videos --epochs 50
-
-# Kompletter Workflow
-vogel-trainer extract --video-dir ./videos --output-dir ./frames
-vogel-trainer organize --frames-dir ./frames --output-dir ./dataset
-vogel-trainer train --dataset-dir ./dataset --epochs 100
-vogel-trainer test --model best.pt --test-dir ./test-images
-```
-
-**Vorteile:**
-- ✅ Einfache Installation via pip
-- 🚀 Automatisierte Workflows (Extract → Organize → Train → Test)
-- 📊 Integrierte Evaluierung und Metriken
-- 🎯 >90% Genauigkeit für lokale Vogelarten
-- 🔄 Iteratives Training für kontinuierliche Verbesserung
-
-📦 **Repository**: [vogel-model-trainer](https://github.com/kamera-linux/vogel-model-trainer)
-
-#### 📋 **Alternative: Lokale Training-Tools (Legacy)**
-
-📋 **Manuelle Anleitung**: [`docs/ANLEITUNG-EIGENES-AI-MODELL.md`](docs/ANLEITUNG-EIGENES-AI-MODELL.md)
-
-🛠️ **Basis-Tools**: [`ai-training-tools/`](ai-training-tools/) - Legacy Training-Scripts für fortgeschrittene Nutzer
-
-#### 🎯 **Eigenes Modell verwenden**
+🛠️ **Training-Tools**: [`ai-training-tools/`](ai-training-tools/) - Komplettes Toolkit für eigene Modelle
 
 ```bash
 # Eigenes Modell verwenden
@@ -251,29 +217,12 @@ vogel-kamera-linux/
 │   ├── release_workflow.py                                     # Release-Automatisierung
 │   └── update_version.py                                       # Versions-Update-Skript
 ├── docs/                                                         # 📚 Dokumentation
-│   ├── CHANGELOG.md                                             # Versionshistorie (v2.0.0)
+│   ├── CHANGELOG.md                                             # Versionshistorie (v1.2.0)
 │   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur mit Mermaid-Diagrammen *(v1.2.0)*
 │   ├── PROJEKT-REORGANISATION.md                                # Projekt-Reorganisations-Dokumentation
-│   ├── TRIXIE-MIGRATION.md                                      # Trixie Migration Guide
 │   ├── SECURITY.md                                              # Sicherheitsrichtlinien
-│   ├── DOKUMENTATION-UEBERSICHT.md                              # Dokumentations-Index
 │   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
-│   ├── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
-│   ├── i18n/                                                    # 🌐 Multilingual Documentation *(v2.0)*
-│   │   ├── README.md                                            # 🇬🇧 English Documentation
-│   │   ├── README.de.md                                         # 🇩🇪 Deutsche Dokumentation
-│   │   └── README.ja.md                                         # 🇯🇵 日本語ドキュメント
-│   └── legacy/                                                  # 📦 Archivierte Dokumente *(v2.0)*
-│       ├── README.md                                            # Legacy-Docs Migration Guide
-│       ├── AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md             # Obsolet (in README integriert)
-│       ├── AUTO-TRIGGER-STREAM-RESTART.md                       # Obsolet (Unified System)
-│       ├── FIX-API-KEY-ZUGRIFF.md                               # Obsolet
-│       ├── FIX-PREVIEW-STREAM-RESTART.md                        # Obsolet
-│       ├── PARAMETER-NO-STREAM-RESTART.md                       # Obsolet
-│       ├── README-IMPROVEMENTS.md                               # Obsolet (implementiert)
-│       ├── SYSTEM-READY.md                                      # Obsolet
-│       ├── UNIFIED-MONITORING-SYSTEM.md                         # In README integriert
-│       └── INSTALLATION-TRIXIE.md                               # In TRIXIE-MIGRATION.md
+│   └── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
 ├── python-toolbox/                                             # 🐍 Python Packages & Tools *(v1.3.2)*
 │   ├── vogel-video-analyzer/                                   # Video-Analyse-Tool (Git Submodule)
 │   ├── requirements.txt                                         # Python-Dependencies
@@ -283,13 +232,27 @@ vogel-kamera-linux/
 │   ├── automation_test.txt                                      # Automatisierungs-Tests
 │   ├── test_ai_features.py                                      # AI-Feature Tests
 │   └── README.md                                                # Tools-Dokumentation
-├── start-unified-monitoring.sh                                  # 🚀 Remote-Wrapper für Unified Monitor *(v2.0)*
-├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v2.0)*
-│   ├── unified-camera-monitor.py                                # ⭐ HAUPT-SYSTEM: Vereinheitlichter Kamera-Monitor
-│   ├── start-unified-monitor.sh                                 # Lokaler Start-Wrapper
-│   ├── setup-unified-monitor.sh                                 # Installation & Setup
-│   ├── UNIFIED-MONITOR-README.md                                # Unified Monitor Dokumentation
-│   └── requirements-pi.txt                                      # Python-Dependencies für Raspberry Pi
+├── network-tools/                                               # 🌐 Netzwerk-Diagnose-Tools *(v1.2.0)*
+│   ├── test-network-quality.py                                  # Netzwerk-Qualitäts-Test
+│   └── README.md                                                # Netzwerk-Tools Dokumentation
+├── kamera-auto-trigger/                                         # 🎯 Auto-Trigger System *(v1.2.0)*
+│   ├── start-vogel-beobachtung.sh                               # Interaktiver Wrapper
+│   ├── docs/                                                    # Auto-Trigger Dokumentation
+│   │   ├── QUICKSTART-AUTO-TRIGGER.md                           # Schnellstart-Anleitung
+│   │   ├── PREVIEW-STREAM-SETUP.md                              # Stream-Setup Guide
+│   │   ├── FIREWALL-SETUP-SUMMARY.md                            # Firewall-Konfiguration
+│   │   └── AUTO-TRIGGER-OVERVIEW.md                             # System-Überblick
+│   ├── tests/                                                   # Test-Skripte
+│   │   ├── guided-test.sh                                       # Interaktiver Test
+│   │   └── test-auto-trigger.sh                                 # Automatisierter Test
+│   └── README.md                                                # Auto-Trigger Dokumentation
+├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v1.2.0)*
+│   ├── unified-camera-monitor.py                                # ⭐ HAUPT-SYSTEM: Vereinheitlichter Kamera-Monitor *(v2.0)*
+│   ├── start-unified-monitor.sh                                 # Unified Monitor Start-Skript
+│   ├── start-rtsp-stream.sh                                     # RTSP-Stream Management
+│   ├── start-preview-stream.sh                                  # Preview-Stream (Legacy)
+│   ├── start-preview-stream-v2.sh                               # Preview-Stream v2
+│   └── start-preview-stream-watchdog.sh                         # Stream-Watchdog
 ├── releases/                                                     # 📋 Release-Dokumentation
 │   ├── README.md                                                # Release-Übersicht
 │   ├── RELEASE_NOTES_v1.2.0.md                                  # Aktuelle Release Notes *(v1.2.0)*
@@ -310,24 +273,8 @@ vogel-kamera-linux/
 ├── wiki-sync/                                                   # 📚 Wiki-Synchronisation
 │   ├── wiki_sync.py                                            # Automatische Wiki-GitHub-Sync
 │   └── README.md                                                # Wiki-Sync Dokumentation
-├── legacy/                                                      # 📦 Archivierte Skripte & Docs *(v2.0)*
-│   ├── README.md                                                # Legacy Migration Guide
-│   ├── kamera-auto-trigger/                                     # 🎯 Altes Auto-Trigger System (v1.2.0)
-│   │   ├── start-vogel-beobachtung.sh                          # Interaktiver Wrapper (obsolet)
-│   │   ├── scripts/ai-had-kamera-auto-trigger.py               # Auto-Trigger mit Legacy-Skripten (obsolet)
-│   │   ├── docs/                                                # Auto-Trigger Dokumentation
-│   │   └── README.md                                            # Auto-Trigger Dokumentation
-│   ├── network-tools/                                           # 🌐 Netzwerk-Diagnose (v1.2.0, obsolet)
-│   │   ├── test-network-quality.py                             # TCP-Stream-Diagnostik (obsolet)
-│   │   └── README.md                                            # Network-Tools Dokumentation
-│   ├── raspberry-pi-scripts/                                    # 🍓 Alte Stream-Skripte (v1.2.0, obsolet)
-│   │   ├── start-preview-stream.sh                             # Preview-Stream (obsolet)
-│   │   ├── start-preview-stream-v2.sh                          # Preview-Stream v2 (obsolet)
-│   │   ├── start-preview-stream-watchdog.sh                    # Stream-Watchdog (obsolet)
-│   │   ├── start-rtsp-stream.sh                                # RTSP-Stream (obsolet)
-│   │   ├── start-tcp-preview-stream.sh                         # TCP-Stream (obsolet)
-│   │   ├── start-tcp-preview-watchdog.sh                       # TCP-Watchdog (obsolet)
-│   │   └── audio-monitor.sh                                     # Audio-Monitor (obsolet)
+├── legacy/                                                      # 📦 Archivierte Skripte *(v2.0)*
+│   ├── README.md                                                # Legacy-Dokumentation & Migration Guide
 │   ├── ai-had-audio-remote-param-vogel-libcamera-single.py     # Audio-Aufnahme (veraltet)
 │   ├── ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py  # Video+AI (veraltet)
 │   ├── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py  # Zeitlupe (veraltet)
@@ -410,10 +357,39 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 
 ### 5. Version prüfen
 ```bash
-### 5. Version prüfen
+python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
+# Ausgabe: Vogel-Kamera-Linux v1.3.1 (Trixie)
+```
+
+### 🆕 Auto-Trigger System (v1.2.0)
 ```bash
-python raspberry-pi-scripts/unified-camera-monitor.py --version
-# Ausgabe: Vogel-Kamera-Linux v2.0.0
+# Automatische Vogelerkennung mit KI-basiertem Trigger
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+
+# Oder direkt mit Python:
+python python-skripte/ai-had-kamera-auto-trigger.py --trigger-duration 2
+
+# System-Status (alle Skripte zeigen automatisch vor der Aufnahme):
+# 🌡️ CPU-Temperatur mit Warnstufen
+# 💾 Festplattenspeicher mit Auslastung
+# 🧠 Arbeitsspeicher-Anzeige
+# ⚡ CPU-Load mit Performance-Warnungen
+
+# Beispiel-Ausgabe:
+# 📊 System-Status für pi@vogelkamera:
+# ==================================================
+# 🌡️ CPU-Temperatur: 58.4°C 🟢 OK
+# 💾 Festplatte: 45G verwendet von 59G (79%) 🟢 OK
+# 🧠 Arbeitsspeicher: 2.1G verwendet von 7.8G (5.6G verfügbar)
+# ⚡ CPU-Load (1min): 0.8 🟢 NIEDRIG
+# ==================================================
+
+# Neue System-Monitoring-Tools:
+python python-skripte/remote_system_monitor.py    # Umfassendes Monitoring
+python python-skripte/quick_system_check.py       # Schnelle Checks
+
+# Nur System-Status anzeigen (ohne Aufnahme):
+python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --system-status
 ```
 
 ## 🎯 Unified Camera Monitor System (v2.0)
@@ -518,19 +494,6 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py \
 ```
 /home/roimme/Videos/Vogelhaus/
 └── 2025-11-11_19-30-45_bird_0.45.h264
-```
-
-### 🚀 Remote-Start vom Client-PC
-
-```bash
-# Standard-Modus
-./start-unified-monitoring.sh
-
-# Zeitlupen-Modus
-./start-unified-monitoring.sh slowmo
-
-# Custom Parameter
-ssh user@raspberry-pi "cd vogel-kamera-linux && python3 raspberry-pi-scripts/unified-camera-monitor.py --threshold 0.3 --cooldown 10"
 ```
 
 ---
