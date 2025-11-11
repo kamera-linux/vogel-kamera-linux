@@ -73,14 +73,14 @@ class UnifiedCameraMonitor:
     def __init__(
         self,
         camera_num: int = 0,
-        threshold: float = 0.4,
+        threshold: float = 0.45,
         cooldown: int = 15,
-        trigger_duration: float = 1.0,
+        trigger_duration: float = 0.8,
         video_base_path: str = "/home/roimme/Videos/Vogelhaus",
         model_path: Optional[str] = None,
         preview_width: int = 640,
         preview_height: int = 480,
-        preview_fps: int = 6,
+        preview_fps: int = 10,
         recording_width: int = 1920,
         recording_height: int = 1080,
         recording_fps: int = 30,
@@ -270,8 +270,19 @@ class UnifiedCameraMonitor:
             return False, 0.0
         
         try:
-            # YOLO Inference
-            results = self.model(frame, verbose=False)
+            # YOLO Inference mit Performance-Optimierungen
+            # imgsz=384: Kleinere Input-Größe für schnellere Inferenz (statt 640)
+            # half=True: FP16 Precision für 2x Speedup (wenn GPU/NPU verfügbar)
+            # conf=0.3: Niedrigere Confidence für mehr Detections (filtern später)
+            results = self.model(
+                frame, 
+                verbose=False,
+                imgsz=384,
+                conf=0.3,
+                iou=0.5,
+                max_det=10,
+                device='cpu'  # Pi 5 hat keine GPU, aber NPU könnte future sein
+            )
             
             # Prüfe auf Vogel (COCO class 14)
             for result in results:
