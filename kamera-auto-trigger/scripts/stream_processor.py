@@ -105,12 +105,17 @@ class StreamProcessor:
         self.detection_history = []  # Liste von (timestamp, detected) Tuples
         self.first_detection_time = None
         
+        # Frame-Skipping für Performance (analysiere nur jeden N-ten Frame)
+        self.frame_skip = 2  # Analysiere nur jeden 2. Frame
+        self.frame_counter = 0
+        
         # AI-Model
         self.model: Optional[Any] = None
         self.model_loaded = False
         
         # Statistics
         self.frames_processed = 0
+        self.frames_skipped = 0
         self.birds_detected = 0
         self.last_detection_time = 0
         self.avg_inference_time = 0
@@ -441,6 +446,7 @@ class StreamProcessor:
         """
         Verarbeitet einen Frame: Lesen + Objekterkennung.
         Trigger nur wenn Vogel für mindestens trigger_duration Sekunden erkannt wurde.
+        Frame-Skipping: Analysiere nur jeden N-ten Frame für Performance.
         
         Returns:
             True wenn Vogel konsistent erkannt (Trigger-Bedingung erfüllt), sonst False
@@ -452,10 +458,19 @@ class StreamProcessor:
             if not ret or frame is None:
                 return False
             
+            self.frame_counter += 1
+            
+            # Frame-Skipping: Überspringe Frames für bessere Performance
+            if self.frame_counter % self.frame_skip != 0:
+                self.frames_skipped += 1
+                # Verwende letzte Erkennung weiter (keine neue Analyse)
+                # Das verhindert Stream-Überlastung bei langsamer Inferenz
+                return False
+            
             self.frames_processed += 1
             current_time = time.time()
             
-            # Objekterkennung
+            # Objekterkennung (nur bei jedem N-ten Frame)
             bird_detected, info = self.detect_objects(frame)
             
             # Aktualisiere Detection-History
@@ -530,6 +545,8 @@ class StreamProcessor:
             "connected": self.connected,
             "model_loaded": self.model_loaded,
             "frames_processed": self.frames_processed,
+            "frames_skipped": self.frames_skipped,
+            "frame_skip_ratio": self.frame_skip,
             "birds_detected": self.birds_detected,
             "avg_inference_time": self.avg_inference_time,
             "last_detection": self.last_detection_time,

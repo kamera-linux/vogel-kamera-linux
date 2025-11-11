@@ -249,11 +249,11 @@ if [ "$SLOWMO" = true ]; then
     # ZEITLUPE (120fps, 1536x864) - gleiche Trigger-Parameter wie Standard
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
-        --trigger-threshold 0.40 \
+        --trigger-threshold 0.50 \
         --cooldown 15 \
         --status-interval 5 \
         --recording-slowmo \
-        --preview-fps 6 \
+        --preview-fps 5 \
         --preview-width 640 \
         --preview-height 480 &
     AUTO_TRIGGER_PID=$!
@@ -262,12 +262,12 @@ elif [ "$WITH_AI" = true ]; then
     # MIT KI-Aufnahme mit CPU-optimierten Parametern
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
-        --trigger-threshold 0.40 \
+        --trigger-threshold 0.50 \
         --cooldown 15 \
         --status-interval 5 \
         --recording-ai \
         --recording-ai-model bird-species \
-        --preview-fps 6 \
+        --preview-fps 5 \
         --preview-width 640 \
         --preview-height 480 &
     AUTO_TRIGGER_PID=$!
@@ -276,10 +276,10 @@ else
     # OHNE KI-Aufnahme (Standard) mit CPU-optimierten Parametern
     "$AUTO_TRIGGER" \
         --trigger-duration 1 \
-        --trigger-threshold 0.40 \
+        --trigger-threshold 0.50 \
         --cooldown 15 \
         --status-interval 5 \
-        --preview-fps 6 \
+        --preview-fps 5 \
         --preview-width 640 \
         --preview-height 480 &
     AUTO_TRIGGER_PID=$!
