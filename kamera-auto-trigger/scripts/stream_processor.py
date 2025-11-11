@@ -320,16 +320,16 @@ class StreamProcessor:
                     logger.warning(f"⚠️  Stream unterbrochen - versuche Reconnect (Versuch {self._reconnect_attempts}/3)...")
                     self.disconnect()
                     
-                    # Bei erneutem Reconnect-Versuch: Killle alte Kamera-Prozesse
-                    if self._reconnect_attempts >= 2:
-                        logger.info("🔧 Versuche blockierende Kamera-Prozesse zu beenden...")
-                        self._kill_camera_processes()
-                        # Warte länger nach Kill - Watchdog braucht Zeit für Neustart
-                        import time
-                        time.sleep(10)
-                    else:
-                        import time
-                        time.sleep(5)  # Normale Wartezeit
+                    # IMMER Kamera-Prozesse killen (nicht erst beim 2. Versuch)
+                    # Das ist nötig weil nach Aufnahmen manchmal rpicam-vid hängen bleibt
+                    logger.info("🔧 Beende blockierende Kamera-Prozesse...")
+                    self._kill_camera_processes()
+                    
+                    import time
+                    # Warte länger - Watchdog braucht Zeit für Neustart
+                    wait_time = 8 if self._reconnect_attempts == 1 else 12
+                    logger.debug(f"Warte {wait_time}s auf Watchdog-Neustart...")
+                    time.sleep(wait_time)
                     
                     if self.connect():
                         logger.info("✅ Reconnect erfolgreich")

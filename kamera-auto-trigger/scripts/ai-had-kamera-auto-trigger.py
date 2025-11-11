@@ -434,11 +434,18 @@ def trigger_recording():
                 username=remote_host['username'],
                 key_filename=remote_host['key_filename']
             )
-            stdin, stdout, stderr = ssh_stop.exec_command('cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --stop')
+            # Stoppe Watchdog und killle SOFORT alle Kamera-Prozesse
+            stdin, stdout, stderr = ssh_stop.exec_command(
+                'cd ~/vogel-kamera-linux/raspberry-pi-scripts && '
+                './start-tcp-preview-watchdog.sh --stop && '
+                'pkill -9 rpicam-vid 2>/dev/null; '
+                'pkill -9 ffmpeg 2>/dev/null; '
+                'exit 0'
+            )
             stdout.channel.recv_exit_status()
             ssh_stop.close()
-            time.sleep(2)  # Warte bis Kamera freigegeben ist
-            print("   ✅ Watchdog gestoppt, Kamera freigegeben")
+            time.sleep(3)  # Warte bis Kamera WIRKLICH freigegeben ist
+            print("   ✅ Watchdog gestoppt, Kamera-Prozesse beendet, Kamera freigegeben")
         except Exception as e:
             print(f"   ⚠️  Konnte Watchdog nicht stoppen: {e}")
         
