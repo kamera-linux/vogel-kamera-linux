@@ -1,13 +1,12 @@
 # 🐦 Vogel-Kamera-Linux
 
-> 🌐 **Multi-Language Documentation:** This README is available in multiple languages!  
-> **Sprachen / Languages / 言語:** [🇬🇧 English](docs/i18n/README.md) | [🇩🇪 Deutsch](docs/i18n/README.de.md) | [🇯🇵 日本語](docs/i18n/README.ja.md)
+**Sprachen / Languages / 言語:** [🇬🇧 English](README.md) | [🇩🇪 Deutsch](README.de.md) | [🇯🇵 日本語](README.ja.md)
 
 [![Version](https://img.shields.io/badge/Version-v2.0.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.0.0)
-[![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](docs/TRIXIE-MIGRATION.md)
+[![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](../TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
-[![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](LICENSE)
+[![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](../../LICENSE)
 
 > ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
 > 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)  
@@ -25,7 +24,7 @@
 python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
 
 # Oder via Wrapper vom Client-PC
-./start-unified-monitoring.sh slowmo
+./kamera-auto-trigger/start-unified-monitoring.sh slowmo
 
 # LEGACY: Alte Remote-Control Skripte (siehe legacy/README.md)
 python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
@@ -218,29 +217,12 @@ vogel-kamera-linux/
 │   ├── release_workflow.py                                     # Release-Automatisierung
 │   └── update_version.py                                       # Versions-Update-Skript
 ├── docs/                                                         # 📚 Dokumentation
-│   ├── CHANGELOG.md                                             # Versionshistorie (v2.0.0)
+│   ├── CHANGELOG.md                                             # Versionshistorie (v1.2.0)
 │   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur mit Mermaid-Diagrammen *(v1.2.0)*
 │   ├── PROJEKT-REORGANISATION.md                                # Projekt-Reorganisations-Dokumentation
-│   ├── TRIXIE-MIGRATION.md                                      # Trixie Migration Guide
 │   ├── SECURITY.md                                              # Sicherheitsrichtlinien
-│   ├── DOKUMENTATION-UEBERSICHT.md                              # Dokumentations-Index
 │   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
-│   ├── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
-│   ├── i18n/                                                    # 🌐 Multilingual Documentation *(v2.0)*
-│   │   ├── README.md                                            # 🇬🇧 English Documentation
-│   │   ├── README.de.md                                         # 🇩🇪 Deutsche Dokumentation
-│   │   └── README.ja.md                                         # 🇯🇵 日本語ドキュメント
-│   └── legacy/                                                  # 📦 Archivierte Dokumente *(v2.0)*
-│       ├── README.md                                            # Legacy-Docs Migration Guide
-│       ├── AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md             # Obsolet (in README integriert)
-│       ├── AUTO-TRIGGER-STREAM-RESTART.md                       # Obsolet (Unified System)
-│       ├── FIX-API-KEY-ZUGRIFF.md                               # Obsolet
-│       ├── FIX-PREVIEW-STREAM-RESTART.md                        # Obsolet
-│       ├── PARAMETER-NO-STREAM-RESTART.md                       # Obsolet
-│       ├── README-IMPROVEMENTS.md                               # Obsolet (implementiert)
-│       ├── SYSTEM-READY.md                                      # Obsolet
-│       ├── UNIFIED-MONITORING-SYSTEM.md                         # In README integriert
-│       └── INSTALLATION-TRIXIE.md                               # In TRIXIE-MIGRATION.md
+│   └── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
 ├── python-toolbox/                                             # 🐍 Python Packages & Tools *(v1.3.2)*
 │   ├── vogel-video-analyzer/                                   # Video-Analyse-Tool (Git Submodule)
 │   ├── requirements.txt                                         # Python-Dependencies
@@ -250,13 +232,27 @@ vogel-kamera-linux/
 │   ├── automation_test.txt                                      # Automatisierungs-Tests
 │   ├── test_ai_features.py                                      # AI-Feature Tests
 │   └── README.md                                                # Tools-Dokumentation
-├── start-unified-monitoring.sh                                  # 🚀 Remote-Wrapper für Unified Monitor *(v2.0)*
-├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v2.0)*
-│   ├── unified-camera-monitor.py                                # ⭐ HAUPT-SYSTEM: Vereinheitlichter Kamera-Monitor
-│   ├── start-unified-monitor.sh                                 # Lokaler Start-Wrapper
-│   ├── setup-unified-monitor.sh                                 # Installation & Setup
-│   ├── UNIFIED-MONITOR-README.md                                # Unified Monitor Dokumentation
-│   └── requirements-pi.txt                                      # Python-Dependencies für Raspberry Pi
+├── network-tools/                                               # 🌐 Netzwerk-Diagnose-Tools *(v1.2.0)*
+│   ├── test-network-quality.py                                  # Netzwerk-Qualitäts-Test
+│   └── README.md                                                # Netzwerk-Tools Dokumentation
+├── kamera-auto-trigger/                                         # 🎯 Auto-Trigger System *(v1.2.0)*
+│   ├── start-vogel-beobachtung.sh                               # Interaktiver Wrapper
+│   ├── docs/                                                    # Auto-Trigger Dokumentation
+│   │   ├── QUICKSTART-AUTO-TRIGGER.md                           # Schnellstart-Anleitung
+│   │   ├── PREVIEW-STREAM-SETUP.md                              # Stream-Setup Guide
+│   │   ├── FIREWALL-SETUP-SUMMARY.md                            # Firewall-Konfiguration
+│   │   └── AUTO-TRIGGER-OVERVIEW.md                             # System-Überblick
+│   ├── tests/                                                   # Test-Skripte
+│   │   ├── guided-test.sh                                       # Interaktiver Test
+│   │   └── test-auto-trigger.sh                                 # Automatisierter Test
+│   └── README.md                                                # Auto-Trigger Dokumentation
+├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v1.2.0)*
+│   ├── unified-camera-monitor.py                                # ⭐ HAUPT-SYSTEM: Vereinheitlichter Kamera-Monitor *(v2.0)*
+│   ├── start-unified-monitor.sh                                 # Unified Monitor Start-Skript
+│   ├── start-rtsp-stream.sh                                     # RTSP-Stream Management
+│   ├── start-preview-stream.sh                                  # Preview-Stream (Legacy)
+│   ├── start-preview-stream-v2.sh                               # Preview-Stream v2
+│   └── start-preview-stream-watchdog.sh                         # Stream-Watchdog
 ├── releases/                                                     # 📋 Release-Dokumentation
 │   ├── README.md                                                # Release-Übersicht
 │   ├── RELEASE_NOTES_v1.2.0.md                                  # Aktuelle Release Notes *(v1.2.0)*
@@ -277,24 +273,8 @@ vogel-kamera-linux/
 ├── wiki-sync/                                                   # 📚 Wiki-Synchronisation
 │   ├── wiki_sync.py                                            # Automatische Wiki-GitHub-Sync
 │   └── README.md                                                # Wiki-Sync Dokumentation
-├── legacy/                                                      # 📦 Archivierte Skripte & Docs *(v2.0)*
-│   ├── README.md                                                # Legacy Migration Guide
-│   ├── kamera-auto-trigger/                                     # 🎯 Altes Auto-Trigger System (v1.2.0)
-│   │   ├── start-vogel-beobachtung.sh                          # Interaktiver Wrapper (obsolet)
-│   │   ├── scripts/ai-had-kamera-auto-trigger.py               # Auto-Trigger mit Legacy-Skripten (obsolet)
-│   │   ├── docs/                                                # Auto-Trigger Dokumentation
-│   │   └── README.md                                            # Auto-Trigger Dokumentation
-│   ├── network-tools/                                           # 🌐 Netzwerk-Diagnose (v1.2.0, obsolet)
-│   │   ├── test-network-quality.py                             # TCP-Stream-Diagnostik (obsolet)
-│   │   └── README.md                                            # Network-Tools Dokumentation
-│   ├── raspberry-pi-scripts/                                    # 🍓 Alte Stream-Skripte (v1.2.0, obsolet)
-│   │   ├── start-preview-stream.sh                             # Preview-Stream (obsolet)
-│   │   ├── start-preview-stream-v2.sh                          # Preview-Stream v2 (obsolet)
-│   │   ├── start-preview-stream-watchdog.sh                    # Stream-Watchdog (obsolet)
-│   │   ├── start-rtsp-stream.sh                                # RTSP-Stream (obsolet)
-│   │   ├── start-tcp-preview-stream.sh                         # TCP-Stream (obsolet)
-│   │   ├── start-tcp-preview-watchdog.sh                       # TCP-Watchdog (obsolet)
-│   │   └── audio-monitor.sh                                     # Audio-Monitor (obsolet)
+├── legacy/                                                      # 📦 Archivierte Skripte *(v2.0)*
+│   ├── README.md                                                # Legacy-Dokumentation & Migration Guide
 │   ├── ai-had-audio-remote-param-vogel-libcamera-single.py     # Audio-Aufnahme (veraltet)
 │   ├── ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py  # Video+AI (veraltet)
 │   ├── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py  # Zeitlupe (veraltet)
@@ -377,10 +357,39 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 
 ### 5. Version prüfen
 ```bash
-### 5. Version prüfen
+python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --version
+# Ausgabe: Vogel-Kamera-Linux v1.3.1 (Trixie)
+```
+
+### 🆕 Auto-Trigger System (v1.2.0)
 ```bash
-python raspberry-pi-scripts/unified-camera-monitor.py --version
-# Ausgabe: Vogel-Kamera-Linux v2.0.0
+# Automatische Vogelerkennung mit KI-basiertem Trigger
+./kamera-auto-trigger/start-vogel-beobachtung.sh
+
+# Oder direkt mit Python:
+python python-skripte/ai-had-kamera-auto-trigger.py --trigger-duration 2
+
+# System-Status (alle Skripte zeigen automatisch vor der Aufnahme):
+# 🌡️ CPU-Temperatur mit Warnstufen
+# 💾 Festplattenspeicher mit Auslastung
+# 🧠 Arbeitsspeicher-Anzeige
+# ⚡ CPU-Load mit Performance-Warnungen
+
+# Beispiel-Ausgabe:
+# 📊 System-Status für pi@vogelkamera:
+# ==================================================
+# 🌡️ CPU-Temperatur: 58.4°C 🟢 OK
+# 💾 Festplatte: 45G verwendet von 59G (79%) 🟢 OK
+# 🧠 Arbeitsspeicher: 2.1G verwendet von 7.8G (5.6G verfügbar)
+# ⚡ CPU-Load (1min): 0.8 🟢 NIEDRIG
+# ==================================================
+
+# Neue System-Monitoring-Tools:
+python python-skripte/remote_system_monitor.py    # Umfassendes Monitoring
+python python-skripte/quick_system_check.py       # Schnelle Checks
+
+# Nur System-Status anzeigen (ohne Aufnahme):
+python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --system-status
 ```
 
 ## 🎯 Unified Camera Monitor System (v2.0)
@@ -485,19 +494,6 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py \
 ```
 /home/roimme/Videos/Vogelhaus/
 └── 2025-11-11_19-30-45_bird_0.45.h264
-```
-
-### 🚀 Remote-Start vom Client-PC
-
-```bash
-# Standard-Modus
-./start-unified-monitoring.sh
-
-# Zeitlupen-Modus
-./start-unified-monitoring.sh slowmo
-
-# Custom Parameter
-ssh user@raspberry-pi "cd vogel-kamera-linux && python3 raspberry-pi-scripts/unified-camera-monitor.py --threshold 0.3 --cooldown 10"
 ```
 
 ---
