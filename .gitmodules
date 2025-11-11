@@ -1,3 +1,6 @@
 [submodule "python-toolbox/vogel-video-analyzer"]
 	path = python-toolbox/vogel-video-analyzer
 	url = https://github.com/kamera-linux/vogel-video-analyzer.git
+[submodule "ai-training-tools/vogel-model-trainer"]
+	path = ai-training-tools/vogel-model-trainer
+	url = https://github.com/kamera-linux/vogel-model-trainer.git
