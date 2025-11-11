@@ -73,17 +73,18 @@ class UnifiedCameraMonitor:
     def __init__(
         self,
         camera_num: int = 0,
-        threshold: float = 0.45,
+        threshold: float = 0.4,
         cooldown: int = 15,
-        trigger_duration: float = 0.8,
+        trigger_duration: float = 1.0,
         video_base_path: str = "/home/roimme/Videos/Vogelhaus",
         model_path: Optional[str] = None,
         preview_width: int = 640,
         preview_height: int = 480,
-        preview_fps: int = 10,
+        preview_fps: int = 6,
         recording_width: int = 1920,
         recording_height: int = 1080,
         recording_fps: int = 30,
+        recording_duration: int = 60,
         debug: bool = False
     ):
         """
@@ -102,12 +103,14 @@ class UnifiedCameraMonitor:
             recording_width: Breite der Aufnahme
             recording_height: Höhe der Aufnahme
             recording_fps: FPS der Aufnahme
+            recording_duration: Dauer der Aufnahme in Sekunden
             debug: Debug-Modus aktivieren
         """
         self.camera_num = camera_num
         self.threshold = threshold
         self.cooldown = cooldown
         self.trigger_duration = trigger_duration
+        self.recording_duration = recording_duration
         self.video_base_path = Path(video_base_path)
         self.preview_width = preview_width
         self.preview_height = preview_height
@@ -270,19 +273,8 @@ class UnifiedCameraMonitor:
             return False, 0.0
         
         try:
-            # YOLO Inference mit Performance-Optimierungen
-            # imgsz=384: Kleinere Input-Größe für schnellere Inferenz (statt 640)
-            # half=True: FP16 Precision für 2x Speedup (wenn GPU/NPU verfügbar)
-            # conf=0.3: Niedrigere Confidence für mehr Detections (filtern später)
-            results = self.model(
-                frame, 
-                verbose=False,
-                imgsz=384,
-                conf=0.3,
-                iou=0.5,
-                max_det=10,
-                device='cpu'  # Pi 5 hat keine GPU, aber NPU könnte future sein
-            )
+            # YOLO Inference
+            results = self.model(frame, verbose=False)
             
             # Prüfe auf Vogel (COCO class 14)
             for result in results:
@@ -331,6 +323,7 @@ class UnifiedCameraMonitor:
                     consistency = sum(recent_detections) / len(recent_detections)
                     
                     if consistency >= 0.6:
+                        print(f"🐦 Vogel erkannt! (Dauer: {duration:.1f}s, Konsistenz: {consistency*100:.0f}%)")
                         logger.info(f"✅ Trigger-Bedingungen erfüllt! (Dauer: {duration:.1f}s, Konsistenz: {consistency*100:.0f}%)")
                         # Reset für nächsten Trigger
                         self.first_detection_time = None
@@ -373,6 +366,7 @@ class UnifiedCameraMonitor:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 video_file = self.video_base_path / f"vogel_{timestamp}.h264"
                 
+                print(f"🎥 Starte Aufnahme: {video_file.name}")
                 logger.info(f"🎥 Starte Aufnahme: {video_file}")
                 
                 # Starte Encoder für Haupt-Stream
@@ -384,12 +378,25 @@ class UnifiedCameraMonitor:
                 self.is_recording = True
                 self.recordings_triggered += 1
                 
-                # Aufnahme-Thread starten (30 Sekunden)
-                def stop_recording_after_delay():
-                    time.sleep(30)
+                # Aufnahme-Thread mit Statusbalken
+                def recording_with_progress():
+                    start_time = time.time()
+                    duration = self.recording_duration
+                    
+                    while time.time() - start_time < duration:
+                        elapsed = time.time() - start_time
+                        percent = int((elapsed / duration) * 100)
+                        bar_length = 20
+                        filled = int((elapsed / duration) * bar_length)
+                        bar = '█' * filled + '░' * (bar_length - filled)
+                        
+                        print(f"\r🎥 Aufnahme läuft... {bar} {percent}% ({int(elapsed)}/{duration}s)", end='', flush=True)
+                        time.sleep(1)
+                    
+                    print()  # Neue Zeile nach Fortschrittsbalken
                     self._stop_recording()
                 
-                threading.Thread(target=stop_recording_after_delay, daemon=True).start()
+                threading.Thread(target=recording_with_progress, daemon=True).start()
                 
                 return str(video_file)
                 
@@ -408,6 +415,7 @@ class UnifiedCameraMonitor:
                 self.picam2.stop_recording()
                 self.is_recording = False
                 self.last_recording_time = time.time()
+                print(f"✅ Aufnahme beendet - Cooldown: {self.cooldown}s")
                 logger.info("✅ Aufnahme beendet")
                 logger.info(f"⏳ Cooldown: {self.cooldown} Sekunden")
                 
@@ -420,7 +428,9 @@ class UnifiedCameraMonitor:
         
         frame_count = 0
         last_status_time = time.time()
+        last_heartbeat_time = time.time()
         status_interval = 300  # 5 Minuten
+        heartbeat_interval = 30  # 30 Sekunden
         
         try:
             while not self.stop_event.is_set():
@@ -447,8 +457,14 @@ class UnifiedCameraMonitor:
                     self.frames_processed += 1
                     frame_count += 1
                     
-                    # Status-Report alle 5 Minuten
                     current_time = time.time()
+                    
+                    # Herzschlag alle 30 Sekunden
+                    if current_time - last_heartbeat_time >= heartbeat_interval:
+                        logger.info(f"💓 Monitor aktiv - {self.frames_processed} Frames verarbeitet, aktuell aufgenommen: {self.is_recording}")
+                        last_heartbeat_time = current_time
+                    
+                    # Status-Report alle 5 Minuten
                     if current_time - last_status_time >= status_interval:
                         self._print_status()
                         last_status_time = current_time
@@ -466,19 +482,135 @@ class UnifiedCameraMonitor:
             self.stop()
     
     def _print_status(self):
-        """Gibt Status-Informationen aus."""
+        """Gibt Status-Informationen aus mit Ampelsystem und Notfall-Stopp."""
         runtime = time.time() - self.start_time
         hours = int(runtime // 3600)
         minutes = int((runtime % 3600) // 60)
         
-        logger.info("=" * 70)
-        logger.info(f"📊 STATUS-REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        logger.info("=" * 70)
-        logger.info(f"⏱️  Laufzeit: {hours}h {minutes}min")
-        logger.info(f"🎬 Aufnahmen getriggert: {self.recordings_triggered}")
-        logger.info(f"🖼️  Frames verarbeitet: {self.frames_processed}")
-        logger.info(f"📊 FPS: {self.frames_processed / runtime:.1f}")
-        logger.info("=" * 70 + "\n")
+        # System-Informationen sammeln
+        try:
+            import subprocess
+            import psutil
+            
+            # CPU-Temperatur (Raspberry Pi)
+            try:
+                temp_output = subprocess.check_output(['vcgencmd', 'measure_temp'], text=True)
+                cpu_temp = float(temp_output.strip().split('=')[1].split("'")[0])
+            except:
+                cpu_temp = 0.0
+            
+            # CPU-Auslastung
+            cpu_percent = psutil.cpu_percent(interval=1)
+            
+            # RAM-Nutzung
+            mem = psutil.virtual_memory()
+            mem_percent = mem.percent
+            mem_used_gb = mem.used / (1024**3)
+            mem_total_gb = mem.total / (1024**3)
+            
+            # Festplatte
+            import shutil
+            disk_usage = shutil.disk_usage(str(self.video_base_path))
+            disk_free_gb = disk_usage.free / (1024**3)
+            disk_total_gb = disk_usage.total / (1024**3)
+            disk_percent = (disk_usage.used / disk_usage.total) * 100
+            
+            # Ampel-Logik (ZEITLUPEN-KRITERIEN wie alte Stream-Methode)
+            # Temperatur: Grün <55°C, Gelb 55-65°C, Rot >65°C (KRITISCH >75°C für Notfall-Stopp)
+            if cpu_temp < 55:
+                temp_icon = "🟢"
+                temp_status = "OK"
+            elif cpu_temp < 65:
+                temp_icon = "🟡"
+                temp_status = "HOCH"
+            elif cpu_temp < 75:
+                temp_icon = "🔴"
+                temp_status = "KRITISCH"
+            else:
+                temp_icon = "🔴"
+                temp_status = "NOTFALL"
+            
+            # CPU-Load (Load Average lesen wie alte Methode)
+            try:
+                with open('/proc/loadavg', 'r') as f:
+                    load_1min = float(f.read().split()[0])
+            except:
+                load_1min = cpu_percent / 100.0  # Fallback
+            
+            # Load: Grün <1.0, Gelb 1.0-2.0, Rot >2.0
+            if load_1min < 1.0:
+                cpu_icon = "🟢"
+            elif load_1min < 2.0:
+                cpu_icon = "🟡"
+            else:
+                cpu_icon = "🔴"
+            
+            # RAM: Grün <75%, Gelb 75-90%, Rot >90%
+            if mem_percent < 75:
+                mem_icon = "🟢"
+            elif mem_percent < 90:
+                mem_icon = "🟡"
+            else:
+                mem_icon = "🔴"
+            
+            # Festplatte: Grün <90%, Gelb 90-95%, Rot >95%
+            if disk_percent < 90:
+                disk_icon = "🟢"
+            elif disk_percent < 95:
+                disk_icon = "🟡"
+            else:
+                disk_icon = "🔴"
+            
+            # Status-Report im klassischen Format
+            print("\n" + "=" * 70)
+            print(f"📊 STATUS-REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print("=" * 70)
+            print(f"⏱️  Laufzeit:     {hours}h {minutes}min")
+            print(f"🎬 Aufnahmen:    {self.recordings_triggered}")
+            print(f"🖼️  Frames:       {self.frames_processed}")
+            print(f"📊 FPS:          {self.frames_processed / runtime:.1f}")
+            print("-" * 70)
+            print(f"{temp_icon} CPU-Temp:    {cpu_temp:.1f}°C ({temp_status})")
+            print(f"{cpu_icon} CPU-Load:    {load_1min:.2f}")
+            print(f"{mem_icon} RAM-Nutzung: {mem_used_gb:.1f}/{mem_total_gb:.1f} GB ({mem_percent:.1f}%)")
+            print(f"{disk_icon} Festplatte:  {disk_free_gb:.1f} GB frei ({disk_percent:.1f}% belegt)")
+            print("=" * 70 + "\n")
+            
+            # Logging
+            logger.info(f"Status: {hours}h {minutes}min | Aufnahmen: {self.recordings_triggered} | Frames: {self.frames_processed} | Temp: {temp_icon}{cpu_temp:.1f}°C | Load: {cpu_icon}{load_1min:.2f} | RAM: {mem_icon}{mem_percent:.1f}% | Disk: {disk_icon}{disk_free_gb:.1f}GB")
+            
+            # NOTFALL-STOPP bei kritischer Temperatur (>75°C wie alte Methode)
+            if cpu_temp >= 75:
+                print("\n" + "!" * 70)
+                print("🔥 NOTFALL-STOPP: CPU-TEMPERATUR KRITISCH!")
+                print(f"🌡️  Aktuelle Temperatur: {cpu_temp:.1f}°C (Limit: 75°C)")
+                print("🛑 Monitor wird gestoppt um Hardware zu schützen!")
+                print("!" * 70 + "\n")
+                logger.critical(f"NOTFALL-STOPP: CPU-Temperatur {cpu_temp:.1f}°C überschreitet Limit von 75°C")
+                self.stop()
+                import sys
+                sys.exit(1)
+            
+            # WARNUNG bei hoher Load (>2.0 kritisch für Zeitlupe)
+            if load_1min >= 2.0:
+                logger.warning(f"🔴 CPU-Last kritisch: {load_1min:.2f} (Limit: 2.0)")
+                print(f"⚠️  CPU-Last kritisch: {load_1min:.2f} - System könnte instabil werden!")
+            
+            # WARNUNG bei hoher Festplattenauslastung
+            if disk_percent >= 95:
+                logger.warning(f"🔴 Festplatte kritisch: {disk_percent:.1f}% belegt")
+                print(f"⚠️  Festplatte kritisch: Nur noch {disk_free_gb:.1f} GB frei!")
+            
+        except Exception as e:
+            logger.error(f"Fehler beim Status-Report: {e}")
+            # Fallback auf einfachen Report
+            print("\n" + "=" * 70)
+            print(f"📊 STATUS-REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print("=" * 70)
+            print(f"⏱️  Laufzeit: {hours}h {minutes}min")
+            print(f"🎬 Aufnahmen: {self.recordings_triggered}")
+            print(f"🖼️  Frames: {self.frames_processed}")
+            print("=" * 70 + "\n")
 
 
 def main():
@@ -495,27 +627,29 @@ def main():
     parser.add_argument('--video-path', type=str, default='/home/roimme/Videos/Vogelhaus', help='Basis-Pfad für Videos')
     parser.add_argument('--model', type=str, help='Pfad zum YOLO-Model (optional)')
     parser.add_argument('--preview-fps', type=int, default=6, help='Preview FPS (default: 6)')
-    parser.add_argument('--recording-width', type=int, default=1920, help='Aufnahme-Breite (default: 1920)')
-    parser.add_argument('--recording-height', type=int, default=1080, help='Aufnahme-Höhe (default: 1080)')
+    parser.add_argument('--recording-width', type=int, default=4096, help='Aufnahme-Breite (default: 4096 - Cinema 4K)')
+    parser.add_argument('--recording-height', type=int, default=2160, help='Aufnahme-Höhe (default: 2160 - Cinema 4K)')
     parser.add_argument('--recording-fps', type=int, default=30, help='Aufnahme-FPS (default: 30)')
+    parser.add_argument('--recording-duration', type=int, default=60, help='Aufnahme-Dauer in Sekunden (default: 60)')
     parser.add_argument('--slowmo', action='store_true', help='Zeitlupen-Modus (1536x864 @ 120fps, überschreibt Auflösung/FPS)')
     parser.add_argument('--debug', action='store_true', help='Debug-Modus aktivieren')
     
     args = parser.parse_args()
     
-    # Banner
-    print("\n" + "="*70)
-    print("🐦 Unified Camera Monitor - Vogel-Kamera-Linux")
-    print("="*70 + "\n")
+    # Banner im klassischen Format
+    print("\n" + "=" * 70)
+    print("🐦 UNIFIED CAMERA MONITOR - Vogel-Kamera-Linux")
+    print("=" * 70 + "\n")
     
     # Zeitlupen-Modus: Überschreibe Auflösung und FPS
     if args.slowmo:
-        print("🎬 Zeitlupen-Modus aktiviert!")
+        print("=" * 70)
+        print("🎬 ZEITLUPEN-MODUS AKTIVIERT")
+        print(f"📹 Auflösung: {1536}x{864} @ {120}fps")
+        print("=" * 70 + "\n")
         args.recording_width = 1536
         args.recording_height = 864
         args.recording_fps = 120
-        print(f"   Auflösung: {args.recording_width}x{args.recording_height} @ {args.recording_fps}fps")
-        print()
     
     # Erstelle Monitor
     monitor = UnifiedCameraMonitor(
@@ -529,6 +663,7 @@ def main():
         recording_width=args.recording_width,
         recording_height=args.recording_height,
         recording_fps=args.recording_fps,
+        recording_duration=args.recording_duration,
         debug=args.debug
     )
     

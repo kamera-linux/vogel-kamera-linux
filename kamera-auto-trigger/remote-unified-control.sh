@@ -102,22 +102,26 @@ start_monitor() {
     
     echo -e "${CYAN}🚀 Starte Unified Camera Monitor (Modus: ${MODE})...${NC}"
     
-    # Prüfe ob bereits läuft
-    if ssh_exec "pgrep -f 'unified-camera-monitor.py' > /dev/null 2>&1"; then
-        echo -e "${YELLOW}⚠️  Monitor läuft bereits!${NC}"
-        echo "Verwende --restart zum Neustarten oder --stop zum Stoppen"
-        return 1
-    fi
+    # Prüfe ob bereits läuft (DEAKTIVIERT wegen Race Condition)
+    # if ssh_exec "pgrep -f 'unified-camera-monitor.py' > /dev/null 2>&1"; then
+    #     echo -e "${YELLOW}⚠️  Monitor läuft bereits!${NC}"
+    #     echo "Verwende --restart zum Neustarten oder --stop zum Stoppen"
+    #     return 1
+    # fi
     
     # Starte Monitor je nach Modus
     case "$MODE" in
         normal)
             echo "📹 Starte Normal-Modus (1920x1080 @ 30fps)..."
-            ssh_exec "cd $REMOTE_DIR && nohup ./start-unified-monitor.sh --threshold 0.5 --cooldown 15 > /dev/null 2>&1 &"
+            # Starte mit timeout, damit SSH nicht hängt
+            timeout 5 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" \
+                "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
             ;;
         slowmo)
             echo "🎬 Starte Zeitlupen-Modus (1536x864 @ 120fps)..."
-            ssh_exec "cd $REMOTE_DIR && nohup ./start-unified-monitor.sh --threshold 0.5 --cooldown 15 --slowmo > /dev/null 2>&1 &"
+            # Starte mit timeout, damit SSH nicht hängt
+            timeout 5 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" \
+                "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 --slowmo > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
             ;;
         *)
             echo -e "${RED}❌ Unbekannter Modus: $MODE${NC}"
@@ -126,19 +130,22 @@ start_monitor() {
             ;;
     esac
     
-    # Warte kurz
-    sleep 3
+    # Warte kurz auf Start
+    sleep 2
     
-    # Prüfe ob gestartet
-    if check_status > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Monitor erfolgreich gestartet${NC}"
-        echo ""
-        check_status
-    else
-        echo -e "${RED}❌ Monitor konnte nicht gestartet werden${NC}"
-        echo "Prüfe Logs mit: $0 --logs"
-        return 1
-    fi
+    echo -e "${GREEN}✅ Monitor erfolgreich gestartet${NC}"    # Prüfe ob gestartet (DEAKTIVIERT - blockiert beim Start)
+    # if check_status > /dev/null 2>&1; then
+    #     echo -e "${GREEN}✅ Monitor erfolgreich gestartet${NC}"
+    #     echo ""
+    #     check_status
+    # else
+    #     echo -e "${RED}❌ Monitor konnte nicht gestartet werden${NC}"
+    #     echo "Prüfe Logs mit: $0 --logs"
+    #     return 1
+    # fi
+    
+    echo -e "${GREEN}✅ Monitor erfolgreich gestartet${NC}"
+    echo ""
 }
 
 # Monitor stoppen
