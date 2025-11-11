@@ -1,0 +1,29 @@
+# Vogel-Kamera-Linux Requirements - Raspberry Pi
+# Python dependencies for RASPBERRY PI with Trixie (Debian 13)
+
+# WICHTIG: Diese Pakete MÜSSEN via apt installiert werden (PEP 668)!
+# sudo apt-get install -y python3-picamera2 python3-opencv python3-numpy python3-libcamera
+
+# ============================================================================
+# INSTALLATION AUF RASPBERRY PI:
+# ============================================================================
+# 
+# 1. System-Pakete (via apt):
+#    sudo apt-get update
+#    sudo apt-get install -y \
+#        python3-picamera2 \
+#        python3-opencv \
+#        python3-numpy \
+#        python3-libcamera
+#
+# 2. YOLOv8 (via pip mit --break-system-packages):
+#    pip install ultralytics --break-system-packages
+#
+# ============================================================================
+
+# YOLOv8 AI Model (wird via pip installiert)
+ultralytics>=8.0.0
+
+# Optional: Entwicklung & Testing
+# pytest>=7.0.0
+# black>=22.0.0
