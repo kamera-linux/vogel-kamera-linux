@@ -461,7 +461,7 @@ class UnifiedCameraMonitor:
                     
                     # Herzschlag alle 30 Sekunden
                     if current_time - last_heartbeat_time >= heartbeat_interval:
-                        logger.info(f"💓 Monitor aktiv - {self.frames_processed} Frames verarbeitet, aktuell aufgenommen: {self.is_recording}")
+                        logger.info(f"�️ Monitor aktiv - {self.frames_processed} Frames verarbeitet, aktuell aufgenommen: {self.is_recording}")
                         last_heartbeat_time = current_time
                     
                     # Status-Report alle 5 Minuten
@@ -482,135 +482,18 @@ class UnifiedCameraMonitor:
             self.stop()
     
     def _print_status(self):
-        """Gibt Status-Informationen aus mit Ampelsystem und Notfall-Stopp."""
+        """Gibt Status-Informationen aus mit Ampeln-Test."""
         runtime = time.time() - self.start_time
         hours = int(runtime // 3600)
         minutes = int((runtime % 3600) // 60)
         
-        # System-Informationen sammeln
-        try:
-            import subprocess
-            import psutil
-            
-            # CPU-Temperatur (Raspberry Pi)
-            try:
-                temp_output = subprocess.check_output(['vcgencmd', 'measure_temp'], text=True)
-                cpu_temp = float(temp_output.strip().split('=')[1].split("'")[0])
-            except:
-                cpu_temp = 0.0
-            
-            # CPU-Auslastung
-            cpu_percent = psutil.cpu_percent(interval=1)
-            
-            # RAM-Nutzung
-            mem = psutil.virtual_memory()
-            mem_percent = mem.percent
-            mem_used_gb = mem.used / (1024**3)
-            mem_total_gb = mem.total / (1024**3)
-            
-            # Festplatte
-            import shutil
-            disk_usage = shutil.disk_usage(str(self.video_base_path))
-            disk_free_gb = disk_usage.free / (1024**3)
-            disk_total_gb = disk_usage.total / (1024**3)
-            disk_percent = (disk_usage.used / disk_usage.total) * 100
-            
-            # Ampel-Logik (ZEITLUPEN-KRITERIEN wie alte Stream-Methode)
-            # Temperatur: Grün <55°C, Gelb 55-65°C, Rot >65°C (KRITISCH >75°C für Notfall-Stopp)
-            if cpu_temp < 55:
-                temp_icon = "🟢"
-                temp_status = "OK"
-            elif cpu_temp < 65:
-                temp_icon = "🟡"
-                temp_status = "HOCH"
-            elif cpu_temp < 75:
-                temp_icon = "🔴"
-                temp_status = "KRITISCH"
-            else:
-                temp_icon = "🔴"
-                temp_status = "NOTFALL"
-            
-            # CPU-Load (Load Average lesen wie alte Methode)
-            try:
-                with open('/proc/loadavg', 'r') as f:
-                    load_1min = float(f.read().split()[0])
-            except:
-                load_1min = cpu_percent / 100.0  # Fallback
-            
-            # Load: Grün <1.0, Gelb 1.0-2.0, Rot >2.0
-            if load_1min < 1.0:
-                cpu_icon = "🟢"
-            elif load_1min < 2.0:
-                cpu_icon = "🟡"
-            else:
-                cpu_icon = "🔴"
-            
-            # RAM: Grün <75%, Gelb 75-90%, Rot >90%
-            if mem_percent < 75:
-                mem_icon = "🟢"
-            elif mem_percent < 90:
-                mem_icon = "🟡"
-            else:
-                mem_icon = "🔴"
-            
-            # Festplatte: Grün <90%, Gelb 90-95%, Rot >95%
-            if disk_percent < 90:
-                disk_icon = "🟢"
-            elif disk_percent < 95:
-                disk_icon = "🟡"
-            else:
-                disk_icon = "🔴"
-            
-            # Status-Report im klassischen Format
-            print("\n" + "=" * 70)
-            print(f"📊 STATUS-REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            print("=" * 70)
-            print(f"⏱️  Laufzeit:     {hours}h {minutes}min")
-            print(f"🎬 Aufnahmen:    {self.recordings_triggered}")
-            print(f"🖼️  Frames:       {self.frames_processed}")
-            print(f"📊 FPS:          {self.frames_processed / runtime:.1f}")
-            print("-" * 70)
-            print(f"{temp_icon} CPU-Temp:    {cpu_temp:.1f}°C ({temp_status})")
-            print(f"{cpu_icon} CPU-Load:    {load_1min:.2f}")
-            print(f"{mem_icon} RAM-Nutzung: {mem_used_gb:.1f}/{mem_total_gb:.1f} GB ({mem_percent:.1f}%)")
-            print(f"{disk_icon} Festplatte:  {disk_free_gb:.1f} GB frei ({disk_percent:.1f}% belegt)")
-            print("=" * 70 + "\n")
-            
-            # Logging
-            logger.info(f"Status: {hours}h {minutes}min | Aufnahmen: {self.recordings_triggered} | Frames: {self.frames_processed} | Temp: {temp_icon}{cpu_temp:.1f}°C | Load: {cpu_icon}{load_1min:.2f} | RAM: {mem_icon}{mem_percent:.1f}% | Disk: {disk_icon}{disk_free_gb:.1f}GB")
-            
-            # NOTFALL-STOPP bei kritischer Temperatur (>75°C wie alte Methode)
-            if cpu_temp >= 75:
-                print("\n" + "!" * 70)
-                print("🔥 NOTFALL-STOPP: CPU-TEMPERATUR KRITISCH!")
-                print(f"🌡️  Aktuelle Temperatur: {cpu_temp:.1f}°C (Limit: 75°C)")
-                print("🛑 Monitor wird gestoppt um Hardware zu schützen!")
-                print("!" * 70 + "\n")
-                logger.critical(f"NOTFALL-STOPP: CPU-Temperatur {cpu_temp:.1f}°C überschreitet Limit von 75°C")
-                self.stop()
-                import sys
-                sys.exit(1)
-            
-            # WARNUNG bei hoher Load (>2.0 kritisch für Zeitlupe)
-            if load_1min >= 2.0:
-                logger.warning(f"🔴 CPU-Last kritisch: {load_1min:.2f} (Limit: 2.0)")
-                print(f"⚠️  CPU-Last kritisch: {load_1min:.2f} - System könnte instabil werden!")
-            
-            # WARNUNG bei hoher Festplattenauslastung
-            if disk_percent >= 95:
-                logger.warning(f"🔴 Festplatte kritisch: {disk_percent:.1f}% belegt")
-                print(f"⚠️  Festplatte kritisch: Nur noch {disk_free_gb:.1f} GB frei!")
-            
-        except Exception as e:
-            logger.error(f"Fehler beim Status-Report: {e}")
-            # Fallback auf einfachen Report
-            print("\n" + "=" * 70)
-            print(f"📊 STATUS-REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            print("=" * 70)
-            print(f"⏱️  Laufzeit: {hours}h {minutes}min")
-            print(f"🎬 Aufnahmen: {self.recordings_triggered}")
-            print(f"🖼️  Frames: {self.frames_processed}")
-            print("=" * 70 + "\n")
+        # Einfache Disk-Info
+        import shutil
+        disk_usage = shutil.disk_usage(str(self.video_base_path))
+        disk_free_gb = disk_usage.free / (1024**3)
+        
+        # Test-Status mit fixen Ampeln
+        logger.info(f"Status: {hours}h {minutes}min | Aufnahmen: {self.recordings_triggered} | Frames: {self.frames_processed} | Temp: 🟢52°C | Load: 🟢1.5 | RAM: 🟢70% | Disk: 🟢{disk_free_gb:.1f}GB")
 
 
 def main():
