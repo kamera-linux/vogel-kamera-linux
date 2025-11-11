@@ -195,13 +195,19 @@ class StreamProcessor:
             logger.info(f"Verbinde mit Stream: {self.stream_url}...")
             logger.info(f"   Timeout: {self.timeout}s")
             
-            # GStreamer-Pipeline für TCP-Stream
+            # GStreamer-Pipeline für TCP-Stream mit MAXIMAL aggressivem Frame-Dropping
+            # Trixie/Debian 13 hat massive Buffer-Probleme - alle Buffer auf Minimum
             gst_pipeline = (
-                f"tcpclientsrc host={self.host} port={self.port} timeout={self.timeout * 1000000} ! "
+                f"tcpclientsrc host={self.host} port={self.port} timeout={self.timeout * 1000000} "
+                "do-timestamp=true ! "  # Timestamps für sync
+                "queue max-size-buffers=1 max-size-time=0 max-size-bytes=0 leaky=2 ! "  # Leak oldest frames
                 "h264parse ! "
-                "avdec_h264 ! "
+                "queue max-size-buffers=1 max-size-time=0 max-size-bytes=0 leaky=2 ! "
+                "avdec_h264 max-threads=1 output-corrupt=false ! "  # Single thread, drop corrupt
+                "queue max-size-buffers=1 max-size-time=0 max-size-bytes=0 leaky=2 ! "
                 "videoconvert ! "
-                "appsink drop=1 sync=0"
+                "queue max-size-buffers=1 max-size-time=0 max-size-bytes=0 leaky=2 ! "
+                "appsink drop=1 sync=0 max-buffers=1 emit-signals=0"  # Minimal buffering
             )
             
             # Versuche verschiedene Backends
