@@ -266,14 +266,21 @@ follow_event_log() {
         if [ "$current_lines" -gt "$lines_read" ]; then
             local new_lines=$((current_lines - lines_read))
             
-            # Filtere wichtige Events (inkl. Status-Reports mit Ampeln)
-            ssh_exec "tail -${new_lines} $log_file" | grep -E "Vogel erkannt|Starte Aufnahme|Aufnahme beendet|Trigger-Bedingungen|Status:.*Temp:|💓 Monitor aktiv" | while IFS= read -r line; do
-                # Extrahiere Zeit und Nachricht
-                local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
-                local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
-                
-                # Zeige formatiert an
-                echo -e "${GREEN}[$timestamp]${NC} $message"
+            # Zeige wichtige Events
+            ssh_exec "tail -${new_lines} $log_file" | while IFS= read -r line; do
+                # Filtere wichtige Events
+                if echo "$line" | grep -qE "Vogel erkannt|Starte Aufnahme|Aufnahme beendet|Trigger-Bedingungen"; then
+                    local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
+                    local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
+                    echo -e "${GREEN}[$timestamp]${NC} $message"
+                # Zeige Status mit Ampeln (kompakt)
+                elif echo "$line" | grep -qE "Status:.*Temp:.*🟢|Status:.*Temp:.*🟡|Status:.*Temp:.*🔴"; then
+                    local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
+                    local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
+                    echo ""
+                    echo -e "${CYAN}[$timestamp]${NC} $message"
+                    echo ""
+                fi
             done
             
             lines_read=$current_lines
