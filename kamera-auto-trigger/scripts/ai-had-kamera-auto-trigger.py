@@ -152,8 +152,8 @@ parser.add_argument('--recording-ai-model', type=str, default='bird-species', ch
 parser.add_argument('--recording-slowmo', action='store_true',
                     help='Zeitlupen-Aufnahme (120fps, 1536x864). Überschreibt --recording-ai und Auflösungsparameter')
 parser.add_argument('--cooldown', type=int, default=30, help='Wartezeit zwischen Aufnahmen in Sekunden (default: 30)')
-parser.add_argument('--trigger-threshold', type=float, default=0.25, help='AI-Schwelle für Trigger (default: 0.25, optimiert für Vogelerkennung)')
-parser.add_argument('--preview-fps', type=int, default=6, help='FPS für Monitoring-Modus (default: 6, Balance zwischen Performance und Erkennung)')
+parser.add_argument('--trigger-threshold', type=float, default=0.5, help='AI-Schwelle für Trigger (default: 0.5, optimiert für Vogelerkennung)')
+parser.add_argument('--preview-fps', type=int, default=5, help='FPS für Monitoring-Modus (default: 5, Balance zwischen Performance und Erkennung)')
 parser.add_argument('--preview-width', type=int, default=640, help='Breite für Monitoring-Vorschau (default: 640, CPU-optimierter Kompromiss)')
 parser.add_argument('--preview-height', type=int, default=480, help='Höhe für Monitoring-Vorschau (default: 480, CPU-optimierter Kompromiss)')
 parser.add_argument('--max-cpu-temp', type=float, default=70.0, help='Maximale CPU-Temperatur in °C (default: 70)')
@@ -434,11 +434,18 @@ def trigger_recording():
                 username=remote_host['username'],
                 key_filename=remote_host['key_filename']
             )
-            stdin, stdout, stderr = ssh_stop.exec_command('cd ~/vogel-kamera-linux/raspberry-pi-scripts && ./start-tcp-preview-watchdog.sh --stop')
+            # Stoppe Watchdog und killle SOFORT alle Kamera-Prozesse
+            stdin, stdout, stderr = ssh_stop.exec_command(
+                'cd ~/vogel-kamera-linux/raspberry-pi-scripts && '
+                './start-tcp-preview-watchdog.sh --stop && '
+                'pkill -9 rpicam-vid 2>/dev/null; '
+                'pkill -9 ffmpeg 2>/dev/null; '
+                'exit 0'
+            )
             stdout.channel.recv_exit_status()
             ssh_stop.close()
-            time.sleep(2)  # Warte bis Kamera freigegeben ist
-            print("   ✅ Watchdog gestoppt, Kamera freigegeben")
+            time.sleep(3)  # Warte bis Kamera WIRKLICH freigegeben ist
+            print("   ✅ Watchdog gestoppt, Kamera-Prozesse beendet, Kamera freigegeben")
         except Exception as e:
             print(f"   ⚠️  Konnte Watchdog nicht stoppen: {e}")
         
