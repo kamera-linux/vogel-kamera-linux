@@ -482,18 +482,95 @@ class UnifiedCameraMonitor:
             self.stop()
     
     def _print_status(self):
-        """Gibt Status-Informationen aus mit Ampeln-Test."""
+        """Gibt Status-Informationen mit echten System-Werten und Ampeln aus."""
         runtime = time.time() - self.start_time
         hours = int(runtime // 3600)
         minutes = int((runtime % 3600) // 60)
         
-        # Einfache Disk-Info
+        import subprocess
         import shutil
+        
+        # CPU-Temperatur (vcgencmd auf Raspberry Pi)
+        try:
+            temp_output = subprocess.check_output(['vcgencmd', 'measure_temp'], text=True, timeout=2)
+            cpu_temp = float(temp_output.strip().split('=')[1].split("'")[0])
+        except:
+            cpu_temp = 0.0
+        
+        # CPU-Load Average (Load Average 1min)
+        try:
+            with open('/proc/loadavg', 'r') as f:
+                load_1min = float(f.read().split()[0])
+        except:
+            load_1min = 0.0
+        
+        # RAM-Nutzung (aus /proc/meminfo)
+        try:
+            with open('/proc/meminfo', 'r') as f:
+                lines = f.readlines()
+                mem_total = int([l for l in lines if 'MemTotal' in l][0].split()[1]) / 1024  # MB
+                mem_available = int([l for l in lines if 'MemAvailable' in l][0].split()[1]) / 1024  # MB
+                mem_used = mem_total - mem_available
+                mem_percent = (mem_used / mem_total) * 100
+        except:
+            mem_percent = 0.0
+        
+        # Festplatten-Info
         disk_usage = shutil.disk_usage(str(self.video_base_path))
         disk_free_gb = disk_usage.free / (1024**3)
+        disk_percent = (disk_usage.used / disk_usage.total) * 100
         
-        # Test-Status mit fixen Ampeln
-        logger.info(f"Status: {hours}h {minutes}min | Aufnahmen: {self.recordings_triggered} | Frames: {self.frames_processed} | Temp: 🟢52°C | Load: 🟢1.5 | RAM: 🟢70% | Disk: 🟢{disk_free_gb:.1f}GB")
+        # Ampel-Logik (ZEITLUPEN-KRITERIEN)
+        # Temperatur: Grün <55°C, Gelb 55-65°C, Rot >65°C
+        if cpu_temp < 55:
+            temp_icon = "🟢"
+        elif cpu_temp < 65:
+            temp_icon = "🟡"
+        else:
+            temp_icon = "🔴"
+        
+        # Load: Grün <1.0, Gelb 1.0-2.0, Rot >2.0
+        if load_1min < 1.0:
+            load_icon = "🟢"
+        elif load_1min < 2.0:
+            load_icon = "🟡"
+        else:
+            load_icon = "🔴"
+        
+        # RAM: Grün <75%, Gelb 75-90%, Rot >90%
+        if mem_percent < 75:
+            mem_icon = "🟢"
+        elif mem_percent < 90:
+            mem_icon = "🟡"
+        else:
+            mem_icon = "🔴"
+        
+        # Festplatte: Grün <90%, Gelb 90-95%, Rot >95%
+        if disk_percent < 90:
+            disk_icon = "🟢"
+        elif disk_percent < 95:
+            disk_icon = "🟡"
+        else:
+            disk_icon = "🔴"
+        
+        # Status mit echten Werten und Ampeln
+        logger.info(f"Status: {hours}h {minutes}min | Aufnahmen: {self.recordings_triggered} | Frames: {self.frames_processed} | Temp: {temp_icon}{cpu_temp:.1f}°C | Load: {load_icon}{load_1min:.2f} | RAM: {mem_icon}{mem_percent:.0f}% | Disk: {disk_icon}{disk_free_gb:.1f}GB")
+        
+        # NOTFALL-STOPP bei kritischer Temperatur (>75°C)
+        if cpu_temp >= 75:
+            logger.critical(f"🔥 NOTFALL-STOPP: CPU-Temperatur {cpu_temp:.1f}°C überschreitet Limit von 75°C")
+            print(f"\n� NOTFALL-STOPP: CPU-Temperatur kritisch ({cpu_temp:.1f}°C)!")
+            self.stop()
+            import sys
+            sys.exit(1)
+        
+        # WARNUNG bei hoher Load (>2.0 kritisch für Zeitlupe)
+        if load_1min >= 2.0:
+            logger.warning(f"⚠️  CPU-Last kritisch: {load_1min:.2f} (Limit: 2.0)")
+        
+        # WARNUNG bei kritischer Festplatte
+        if disk_percent >= 95:
+            logger.warning(f"⚠️  Festplatte kritisch: Nur noch {disk_free_gb:.1f} GB frei!")
 
 
 def main():
