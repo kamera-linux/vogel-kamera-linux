@@ -28,14 +28,15 @@ VENV_DIR="$HOME/.venv/vogel-camera"
 
 # Standard-Parameter
 CAMERA=0
-THRESHOLD=0.45
+THRESHOLD=0.4
 COOLDOWN=15
-TRIGGER_DURATION=0.8
+TRIGGER_DURATION=1.0
 VIDEO_PATH="/home/roimme/Videos/Vogelhaus"
-PREVIEW_FPS=10
-RECORDING_WIDTH=1920
-RECORDING_HEIGHT=1080
+PREVIEW_FPS=6
+RECORDING_WIDTH=4096
+RECORDING_HEIGHT=2160
 RECORDING_FPS=30
+RECORDING_DURATION=60
 MODEL_PATH=""
 SLOWMO=false
 
@@ -76,6 +77,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --recording-fps)
             RECORDING_FPS="$2"
+            shift 2
+            ;;
+        --recording-duration)
+            RECORDING_DURATION="$2"
             shift 2
             ;;
         --model)

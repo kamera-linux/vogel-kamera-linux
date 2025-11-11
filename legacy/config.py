@@ -29,7 +29,7 @@ class Config:
             'ssh_key_path': '~/.ssh/id_rsa_rpi',
             'base_video_path': '~/Videos/Vogelhaus',
             'remote_video_path': '/home/your-username/Videos/Vogelhaus',
-            'remote_audio_path': '/home/your-username/Audio/Kamerawagen'
+            'remote_audio_path': '/home/your-username/Audio/Vogel-Kamera'
         }
         
         # Lade Konfiguration aus Umgebungsvariablen oder verwende Defaults

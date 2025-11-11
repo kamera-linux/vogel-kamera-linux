@@ -496,7 +496,7 @@ RPI_USERNAME=pi
 SSH_KEY_PATH=~/.ssh/id_rsa_rpi
 BASE_VIDEO_PATH=~/Videos/Vogelhaus
 REMOTE_VIDEO_PATH=/home/pi/Videos/Vogelhaus
-REMOTE_AUDIO_PATH=/home/pi/Audio/Kamerawagen
+REMOTE_AUDIO_PATH=/home/pi/Audio/Vogel-Kamera
 ```
 
 > 📺 **Beispielaufnahmen:** [Vogel-Kamera Setup](https://www.youtube.com/@vogel-kamera-linux) - Siehe die Kamera in Aktion
