@@ -461,7 +461,7 @@ class UnifiedCameraMonitor:
                     
                     # Herzschlag alle 30 Sekunden
                     if current_time - last_heartbeat_time >= heartbeat_interval:
-                        logger.info(f"�️ Monitor aktiv - {self.frames_processed} Frames verarbeitet, aktuell aufgenommen: {self.is_recording}")
+                        logger.info(f"[✓] Monitor aktiv - {self.frames_processed} Frames verarbeitet, aktuell aufgenommen: {self.is_recording}")
                         last_heartbeat_time = current_time
                     
                     # Status-Report alle 5 Minuten
