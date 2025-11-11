@@ -266,8 +266,8 @@ follow_event_log() {
         if [ "$current_lines" -gt "$lines_read" ]; then
             local new_lines=$((current_lines - lines_read))
             
-            # Filtere wichtige Events
-            ssh_exec "tail -${new_lines} $log_file" | grep -E "Vogel erkannt|Starte Aufnahme|Aufnahme beendet|Trigger-Bedingungen" | while IFS= read -r line; do
+            # Filtere wichtige Events (inkl. Status-Reports mit Ampeln)
+            ssh_exec "tail -${new_lines} $log_file" | grep -E "Vogel erkannt|Starte Aufnahme|Aufnahme beendet|Trigger-Bedingungen|Status:.*Temp:|💓 Monitor aktiv" | while IFS= read -r line; do
                 # Extrahiere Zeit und Nachricht
                 local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
                 local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
@@ -303,34 +303,12 @@ watch_for_videos() {
     done
 }
 
-# Status-Reporter (alle 5 Minuten)
+# Status-Reporter (deaktiviert - Monitor gibt eigenen Status aus)
 status_reporter() {
+    # Monitor gibt alle 5 Minuten eigenen Status-Report mit Ampeln aus
+    # Dieser Wrapper-Status ist nicht mehr nötig
     while true; do
-        sleep $STATUS_INTERVAL
-        
-        echo ""
-        echo "======================================================================"
-        echo "📊 STATUS-REPORT - $(date '+%Y-%m-%d %H:%M:%S')"
-        echo "======================================================================"
-        
-        # Remote Status
-        get_remote_status
-        
-        # Lokaler Status
-        echo ""
-        echo "💻 Localhost:"
-        local local_temp=$(sensors 2>/dev/null | grep -oP 'Package id 0.*?\+\K[0-9.]+' | head -1 || echo "N/A")
-        local local_load=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | tr -d ',')
-        local local_disk=$(df -h $HOME | tail -1 | awk '{print $5}')
-        local local_mem=$(free -h | grep Mem | awk '{print $3 "/" $2}')
-        
-        echo "   🌡️  CPU-Temp: ${local_temp}°C"
-        echo "   ⚡ CPU-Load: ${local_load}"
-        echo "   💾 Festplatte: ${local_disk}"
-        echo "   💭 RAM: ${local_mem}"
-        
-        echo "======================================================================"
-        echo ""
+        sleep 3600  # Stündlich aufwachen aber nichts tun
     done
 }
 
