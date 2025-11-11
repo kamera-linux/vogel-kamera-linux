@@ -487,6 +487,7 @@ def main():
     parser.add_argument('--recording-width', type=int, default=1920, help='Aufnahme-Breite (default: 1920)')
     parser.add_argument('--recording-height', type=int, default=1080, help='Aufnahme-Höhe (default: 1080)')
     parser.add_argument('--recording-fps', type=int, default=30, help='Aufnahme-FPS (default: 30)')
+    parser.add_argument('--slowmo', action='store_true', help='Zeitlupen-Modus (1536x864 @ 120fps, überschreibt Auflösung/FPS)')
     parser.add_argument('--debug', action='store_true', help='Debug-Modus aktivieren')
     
     args = parser.parse_args()
@@ -495,6 +496,15 @@ def main():
     print("\n" + "="*70)
     print("🐦 Unified Camera Monitor - Vogel-Kamera-Linux")
     print("="*70 + "\n")
+    
+    # Zeitlupen-Modus: Überschreibe Auflösung und FPS
+    if args.slowmo:
+        print("🎬 Zeitlupen-Modus aktiviert!")
+        args.recording_width = 1536
+        args.recording_height = 864
+        args.recording_fps = 120
+        print(f"   Auflösung: {args.recording_width}x{args.recording_height} @ {args.recording_fps}fps")
+        print()
     
     # Erstelle Monitor
     monitor = UnifiedCameraMonitor(

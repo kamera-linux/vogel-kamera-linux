@@ -37,6 +37,7 @@ RECORDING_WIDTH=1920
 RECORDING_HEIGHT=1080
 RECORDING_FPS=30
 MODEL_PATH=""
+SLOWMO=false
 
 # Parse Argumente
 while [[ $# -gt 0 ]]; do
@@ -81,6 +82,10 @@ while [[ $# -gt 0 ]]; do
             MODEL_PATH="$2"
             shift 2
             ;;
+        --slowmo)
+            SLOWMO=true
+            shift
+            ;;
         --help)
             echo "Verwendung: $0 [OPTIONEN]"
             echo ""
@@ -95,6 +100,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --recording-height NUM    Aufnahme-Höhe (default: 1080)"
             echo "  --recording-fps NUM       Aufnahme-FPS (default: 30)"
             echo "  --model PATH              Pfad zum YOLO-Model (optional)"
+            echo "  --slowmo                  Zeitlupen-Modus (1536x864 @ 120fps)"
             echo "  --help                    Diese Hilfe anzeigen"
             exit 0
             ;;
@@ -188,6 +194,10 @@ CMD="$CMD --recording-fps $RECORDING_FPS"
 
 if [ -n "$MODEL_PATH" ]; then
     CMD="$CMD --model $MODEL_PATH"
+fi
+
+if [ "$SLOWMO" = true ]; then
+    CMD="$CMD --slowmo"
 fi
 
 print_success "Starte Unified Camera Monitor..."
