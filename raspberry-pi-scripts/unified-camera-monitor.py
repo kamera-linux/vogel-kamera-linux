@@ -529,10 +529,10 @@ class UnifiedCameraMonitor:
         else:
             temp_icon = "🔴"
         
-        # Load: Grün <1.0, Gelb 1.0-2.0, Rot >2.0
-        if load_1min < 1.0:
+        # Load: Grün <1.5, Gelb 1.5-3.0, Rot >3.0
+        if load_1min < 1.5:
             load_icon = "🟢"
-        elif load_1min < 2.0:
+        elif load_1min < 3.0:
             load_icon = "🟡"
         else:
             load_icon = "🔴"
@@ -564,9 +564,9 @@ class UnifiedCameraMonitor:
             import sys
             sys.exit(1)
         
-        # WARNUNG bei hoher Load (>2.0 kritisch für Zeitlupe)
-        if load_1min >= 2.0:
-            logger.warning(f"⚠️  CPU-Last kritisch: {load_1min:.2f} (Limit: 2.0)")
+        # WARNUNG bei hoher Load (>3.0 kritisch für Zeitlupe)
+        if load_1min >= 3.0:
+            logger.warning(f"⚠️  CPU-Last kritisch: {load_1min:.2f} (Limit: 3.0)")
         
         # WARNUNG bei kritischer Festplatte
         if disk_percent >= 95:
