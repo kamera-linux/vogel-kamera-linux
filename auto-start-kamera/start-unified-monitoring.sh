@@ -203,6 +203,32 @@ get_remote_status() {
 }
 
 # Video-Übertragung (OHNE Konvertierung - Pi macht das)
+sync_video() {
+    local remote_video_dir="$1"
+    local dir_name=$(basename "$remote_video_dir")
+    
+    # Erstelle lokale Ordnerstruktur
+    local year=$(echo "$remote_video_dir" | grep -oP '202\d' | head -1)
+    local week=$(echo "$remote_video_dir" | grep -oP '/\d+/' | tr -d '/' | head -1)
+    local mode_dir="Zeitlupe"
+    [ "$MODE" = "normal" ] && mode_dir="AI-HAD"
+    
+    local local_dir="${CLIENT_VIDEO_BASE}/${mode_dir}/${year}/${week}/${dir_name}"
+    mkdir -p "$local_dir"
+    
+    # Kopiere alle MP4-Dateien vom Pi (bereits konvertiert)
+    if rsync -avz -e "ssh -i $SSH_KEY" \
+        "${SSH_USER}@${SSH_HOST}:${remote_video_dir}/*.mp4" \
+        "${local_dir}/" 2>/dev/null; then
+        
+        local mp4_count=$(ls -1 "${local_dir}"/*.mp4 2>/dev/null | wc -l)
+        echo -e "${GREEN}✅ ${mp4_count} Video(s) übertragen: $local_dir${NC}"
+    else
+        echo -e "${RED}❌ Video-Synchronisation fehlgeschlagen${NC}"
+    fi
+}
+
+# Video-Übertragung (Legacy - wird nicht mehr verwendet)
 process_video() {
     local remote_video_dir="$1"  # Verzeichnis auf dem Pi
     local dir_name=$(basename "$remote_video_dir")
@@ -241,6 +267,7 @@ follow_event_log() {
     local recording_active=false
     local recording_start=0
     local recording_duration=60
+    local last_recording_path=""
     
     while true; do
         sleep 2
@@ -253,8 +280,13 @@ follow_event_log() {
             
             # Verwende Process Substitution um Subshell zu vermeiden
             while IFS= read -r line; do
+                # Speichere Aufnahme-Pfad für spätere Synchronisation
+                if echo "$line" | grep -qE "Starte Aufnahme.*\.h264"; then
+                    last_recording_path=$(echo "$line" | grep -oP '/home/roimme/Videos/[^"]+\.h264')
+                fi
+                
                 # Filtere wichtige Events
-                if echo "$line" | grep -qE "Vogel erkannt|Starte Aufnahme|Aufnahme beendet|Trigger-Bedingungen"; then
+                if echo "$line" | grep -qE "Starte Aufnahme|Aufnahme beendet"; then
                     local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
                     local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
                     
@@ -267,7 +299,12 @@ follow_event_log() {
                         recording_active=false
                         echo ""
                         echo -e "${GREEN}[$timestamp]${NC} $message"
-                    else
+                    fi
+                # Zeige Vogel-Erkennung nur wenn NICHT aufgenommen wird
+                elif echo "$line" | grep -qE "Vogel erkannt|Trigger-Bedingungen"; then
+                    if [ "$recording_active" = false ]; then
+                        local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
+                        local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
                         echo -e "${GREEN}[$timestamp]${NC} $message"
                     fi
                 # Zeige Konvertierungs-Progress
@@ -278,6 +315,13 @@ follow_event_log() {
                     if echo "$line" | grep -qE "Konvertierung abgeschlossen"; then
                         echo -e "${GREEN}[$timestamp]${NC} $message"
                         echo ""
+                        
+                        # Trigger Video-Synchronisation (extrahiere Verzeichnis aus letzter Aufnahme-Zeile)
+                        if [ -n "$last_recording_path" ]; then
+                            local video_dir=$(dirname "$last_recording_path")
+                            echo -e "${CYAN}📥 Synchronisiere Video...${NC}"
+                            sync_video "$video_dir" &
+                        fi
                     else
                         echo -e "${CYAN}[$timestamp]${NC} $message"
                     fi
@@ -331,7 +375,7 @@ watch_for_videos() {
         sleep 15
         
         # Hole Liste neuer Video-VERZEICHNISSE (nach Konvertierung)
-        local video_dirs=$(ssh_exec "find ${REMOTE_VIDEO_BASE} -type d -name 'Freitag__*' -o -name 'Samstag__*' -o -name 'Sonntag__*' -o -name 'Montag__*' -o -name 'Dienstag__*' -o -name 'Mittwoch__*' -o -name 'Donnerstag__*' 2>/dev/null | sort -u || true")
+        local video_dirs=$(ssh_exec "find ${REMOTE_VIDEO_BASE} -type d \\( -name 'Freitag__*' -o -name 'Samstag__*' -o -name 'Sonntag__*' -o -name 'Montag__*' -o -name 'Dienstag__*' -o -name 'Mittwoch__*' -o -name 'Donnerstag__*' \\) 2>/dev/null | sort -u || true")
         
         if [ -n "$video_dirs" ]; then
             while IFS= read -r dir; do
