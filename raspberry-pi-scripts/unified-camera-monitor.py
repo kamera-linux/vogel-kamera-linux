@@ -196,14 +196,15 @@ class UnifiedCameraMonitor:
             
             self.picam2.configure(config)
             
-            # Setze Kamera-Parameter
+            # Setze Kamera-Parameter + 180° Rotation
             self.picam2.set_controls({
                 "FrameRate": self.recording_fps,  # Haupt-Stream FPS
                 "ExposureTime": 10000,  # Auto
-                "AnalogueGain": 1.0
+                "AnalogueGain": 1.0,
+                "Rotation": 180  # Kamera um 180° drehen
             })
             
-            logger.info("✅ Picamera2 konfiguriert (Dual-Stream mit Encoding)")
+            logger.info("✅ Picamera2 konfiguriert (Dual-Stream mit Encoding, 180° Rotation)")
             return True
             
         except Exception as e:
@@ -362,11 +363,42 @@ class UnifiedCameraMonitor:
                 return None
             
             try:
-                # Erstelle Dateinamen
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                video_file = self.video_base_path / f"vogel_{timestamp}.h264"
+                # Erstelle Dateinamen im Format: Dienstag__2025-11-14__09-40-46
+                now = datetime.now()
+                weekday = now.strftime("%A")  # Wochentag auf Englisch
+                date_str = now.strftime("%Y-%m-%d")
+                time_str = now.strftime("%H-%M-%S")
+                year = now.strftime("%Y")
+                week_number = now.strftime("%W")  # Wochennummer (00-53)
                 
-                print(f"🎥 Starte Aufnahme: {video_file.name}")
+                # Wochentags-Übersetzung
+                weekday_map = {
+                    "Monday": "Montag",
+                    "Tuesday": "Dienstag", 
+                    "Wednesday": "Mittwoch",
+                    "Thursday": "Donnerstag",
+                    "Friday": "Freitag",
+                    "Saturday": "Samstag",
+                    "Sunday": "Sonntag"
+                }
+                weekday_de = weekday_map.get(weekday, weekday)
+                
+                filename = f"{weekday_de}__{date_str}__{time_str}"
+                
+                # Erstelle Verzeichnisstruktur wie im Legacy-System
+                # Zeitlupe: ~/Videos/Vogelhaus/Zeitlupe/2025/46/Dienstag__2025-11-14__09-40-46/
+                # Normal: ~/Videos/Vogelhaus/AI-HAD/2025/46/Dienstag__2025-11-14__09-40-46/
+                if self.recording_fps >= 100:
+                    subdir = "Zeitlupe"
+                else:
+                    subdir = "AI-HAD"
+                
+                video_dir = self.video_base_path / subdir / year / week_number / filename
+                video_dir.mkdir(parents=True, exist_ok=True)
+                
+                video_file = video_dir / f"{filename}.h264"
+                
+                print(f"🎥 Starte Aufnahme: {filename}.h264")
                 logger.info(f"🎥 Starte Aufnahme: {video_file}")
                 
                 # Starte Encoder für Haupt-Stream
@@ -398,6 +430,13 @@ class UnifiedCameraMonitor:
                 
                 threading.Thread(target=recording_with_progress, daemon=True).start()
                 
+                # Starte Konvertierung nach Aufnahme
+                def convert_after_recording():
+                    time.sleep(self.recording_duration + 2)  # Warte bis Aufnahme fertig
+                    self._convert_h264_to_mp4(video_file)
+                
+                threading.Thread(target=convert_after_recording, daemon=True).start()
+                
                 return str(video_file)
                 
             except Exception as e:
@@ -421,6 +460,53 @@ class UnifiedCameraMonitor:
                 
             except Exception as e:
                 logger.error(f"Fehler beim Stoppen der Aufnahme: {e}")
+    
+    def _convert_h264_to_mp4(self, h264_file: Path):
+        """Konvertiert H264 zu MP4 mit verschiedenen Playback-Frameraten (für Zeitlupe)."""
+        try:
+            import subprocess
+            
+            # Bei Slowmo-Modus: Erstelle mehrere Versionen mit verschiedenen FPS
+            # 120fps aufgenommen → verschiedene Playback-FPS für Zeitlupen-Effekte
+            if self.recording_fps >= 100:  # Slowmo-Modus erkannt
+                playback_fps_list = [5, 10, 20, 30, 120]  # Verschiedene Zeitlupen-Stufen
+                logger.info(f"🔄 Konvertiere Zeitlupen-Video mit {len(playback_fps_list)} Frameraten...")
+            else:
+                playback_fps_list = [self.recording_fps]  # Nur Original-FPS
+                logger.info(f"🔄 Konvertiere Video zu MP4...")
+            
+            success_count = 0
+            for playback_fps in playback_fps_list:
+                # Erstelle Dateinamen IMMER mit Auflösung und FPS-Info
+                # Format: Dienstag__2025-11-14__09-40-46__1920x1080__30fps.mp4
+                base_name = h264_file.stem  # Ohne .h264
+                mp4_file = h264_file.parent / f"{base_name}__{self.recording_width}x{self.recording_height}__{playback_fps}fps.mp4"
+                
+                # ffmpeg-Befehl mit Framerate-Anpassung
+                # -r setzt Playback-Framerate (für Zeitlupen-Effekt bei Slowmo)
+                result = subprocess.run(
+                    ['ffmpeg', '-fflags', '+genpts', '-r', str(playback_fps), 
+                     '-i', str(h264_file), '-c:v', 'copy', '-y', str(mp4_file)],
+                    capture_output=True,
+                    text=True
+                )
+                
+                if result.returncode == 0:
+                    logger.info(f"✅ {mp4_file.name} erstellt ({playback_fps}fps)")
+                    success_count += 1
+                else:
+                    logger.error(f"❌ Fehler bei {playback_fps}fps: {result.stderr[:200]}")
+            
+            # Lösche H264 nur wenn mindestens eine MP4 erfolgreich erstellt wurde
+            if success_count > 0:
+                h264_file.unlink()
+                logger.info(f"🗑️  H264-Datei gelöscht: {h264_file.name}")
+                logger.info(f"✅ Konvertierung abgeschlossen: {success_count} MP4-Dateien erstellt")
+            else:
+                logger.error(f"❌ Keine erfolgreichen Konvertierungen - H264 behalten")
+                
+        except Exception as e:
+            logger.error(f"❌ Fehler bei Konvertierung: {e}")
     
     def run(self):
         """Hauptloop für Camera Monitoring."""
