@@ -207,9 +207,11 @@ sync_video() {
     local remote_video_dir="$1"
     local dir_name=$(basename "$remote_video_dir")
     
-    # Erstelle lokale Ordnerstruktur
-    local year=$(echo "$remote_video_dir" | grep -oP '202\d' | head -1)
-    local week=$(echo "$remote_video_dir" | grep -oP '/\d+/' | tr -d '/' | head -1)
+    # Extrahiere Jahr und Woche aus Pfad-Struktur
+    # Format: /home/roimme/Videos/Vogelhaus/Zeitlupe/2025/46/Filename
+    local year=$(echo "$remote_video_dir" | awk -F'/' '{for(i=1;i<=NF;i++) if($i ~ /^202[0-9]$/) print $i; exit}')
+    local week=$(echo "$remote_video_dir" | awk -F'/' '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]{1,2}$/ && $i >= 1 && $i <= 53) print $i; exit}')
+    
     local mode_dir="Zeitlupe"
     [ "$MODE" = "normal" ] && mode_dir="AI-HAD"
     
