@@ -24,7 +24,8 @@
 python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
 
 # またはクライアント PC からラッパー経由で実行
-./kamera-auto-trigger/start-unified-monitoring.sh slowmo
+cd auto-start-kamera
+./start-unified-monitoring.sh slowmo
 
 # レガシー: 古いリモートコントロールスクリプト（legacy/README.md を参照）
 python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
@@ -162,7 +163,8 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py
 python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
 
 # クライアント PC からラッパー経由で実行
-./kamera-auto-trigger/start-unified-monitoring.sh slowmo
+cd auto-start-kamera
+./start-unified-monitoring.sh slowmo
 ```
 
 ## 🎯 統合カメラモニターシステム (v2.0)

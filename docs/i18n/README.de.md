@@ -24,7 +24,8 @@
 python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
 
 # Oder via Wrapper vom Client-PC
-./kamera-auto-trigger/start-unified-monitoring.sh slowmo
+cd auto-start-kamera
+./start-unified-monitoring.sh slowmo
 
 # LEGACY: Alte Remote-Control Skripte (siehe legacy/README.md)
 python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
@@ -361,10 +362,10 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 # Ausgabe: Vogel-Kamera-Linux v1.3.1 (Trixie)
 ```
 
-### 🆕 Auto-Trigger System (v1.2.0)
+### 🆕 Auto-Trigger System (v1.2.0) - LEGACY
 ```bash
-# Automatische Vogelerkennung mit KI-basiertem Trigger
-./kamera-auto-trigger/start-vogel-beobachtung.sh
+# Automatische Vogelerkennung mit KI-basiertem Trigger (VERALTET - siehe v2.0)
+./legacy/kamera-auto-trigger/start-vogel-beobachtung.sh
 
 # Oder direkt mit Python:
 python python-skripte/ai-had-kamera-auto-trigger.py --trigger-duration 2
@@ -445,8 +446,9 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py \
     --recording-fps 60
 
 # Mit Wrapper vom Client-PC starten
-./kamera-auto-trigger/start-unified-monitoring.sh         # Standard
-./kamera-auto-trigger/start-unified-monitoring.sh slowmo  # Zeitlupe
+cd auto-start-kamera
+./start-unified-monitoring.sh         # Standard
+./start-unified-monitoring.sh slowmo  # Zeitlupe
 ```
 
 ### ⚙️ Verfügbare Parameter

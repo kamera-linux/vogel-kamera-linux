@@ -25,6 +25,7 @@
 python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
 
 # Oder via Wrapper vom Client-PC
+cd auto-start-kamera
 ./start-unified-monitoring.sh slowmo
 
 # LEGACY: Alte Remote-Control Skripte (siehe legacy/README.md)
@@ -283,7 +284,10 @@ vogel-kamera-linux/
 │   ├── automation_test.txt                                      # Automatisierungs-Tests
 │   ├── test_ai_features.py                                      # AI-Feature Tests
 │   └── README.md                                                # Tools-Dokumentation
-├── start-unified-monitoring.sh                                  # 🚀 Remote-Wrapper für Unified Monitor *(v2.0)*
+├── auto-start-kamera/                                           # 🚀 Auto-Start Skripte *(v2.0)*
+│   ├── start-unified-monitoring.sh                              # Remote-Wrapper für Unified Monitor
+│   ├── remote-unified-control.sh                                # Remote Control Tool
+│   └── README.md                                                # Auto-Start Dokumentation
 ├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v2.0)*
 │   ├── unified-camera-monitor.py                                # ⭐ HAUPT-SYSTEM: Vereinheitlichter Kamera-Monitor
 │   ├── start-unified-monitor.sh                                 # Lokaler Start-Wrapper
@@ -469,8 +473,9 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py \
     --recording-fps 60
 
 # Mit Wrapper vom Client-PC starten
-./kamera-auto-trigger/start-unified-monitoring.sh         # Standard
-./kamera-auto-trigger/start-unified-monitoring.sh slowmo  # Zeitlupe
+cd auto-start-kamera
+./start-unified-monitoring.sh         # Standard
+./start-unified-monitoring.sh slowmo  # Zeitlupe
 ```
 
 ### ⚙️ Verfügbare Parameter
@@ -524,6 +529,7 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py \
 
 ```bash
 # Standard-Modus
+cd auto-start-kamera
 ./start-unified-monitoring.sh
 
 # Zeitlupen-Modus

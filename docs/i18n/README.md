@@ -24,7 +24,8 @@
 python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
 
 # Or via wrapper from Client PC
-./kamera-auto-trigger/start-unified-monitoring.sh slowmo
+cd auto-start-kamera
+./start-unified-monitoring.sh slowmo
 
 # LEGACY: Old remote control scripts (see legacy/README.md)
 python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
@@ -162,7 +163,8 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py
 python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
 
 # Via wrapper from Client PC
-./kamera-auto-trigger/start-unified-monitoring.sh slowmo
+cd auto-start-kamera
+./start-unified-monitoring.sh slowmo
 ```
 
 ## 🎯 Unified Camera Monitor System (v2.0)
