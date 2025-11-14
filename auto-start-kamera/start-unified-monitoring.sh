@@ -189,63 +189,32 @@ get_remote_status() {
     echo "   💭 RAM: ${mem}"
 }
 
-# Video-Übertragung und Konvertierung
+# Video-Übertragung (OHNE Konvertierung - Pi macht das)
 process_video() {
-    local remote_video="$1"
-    local filename=$(basename "$remote_video")
-    local timestamp=$(echo "$filename" | sed 's/\.h264//')
+    local remote_video_dir="$1"  # Verzeichnis auf dem Pi
+    local dir_name=$(basename "$remote_video_dir")
     
-    # Erstelle Ordnerstruktur
-    local year=$(date +%Y)
-    local week=$(date +%V)
+    # Erstelle lokale Ordnerstruktur
+    local year=$(echo "$remote_video_dir" | grep -oP '202\d')
+    local week=$(echo "$remote_video_dir" | grep -oP '/\d+/' | tr -d '/')
     local mode_dir="Zeitlupe"
-    [ "$MODE" = "normal" ] && mode_dir="Normal"
+    [ "$MODE" = "normal" ] && mode_dir="AI-HAD"
     
-    local local_dir="${CLIENT_VIDEO_BASE}/${mode_dir}/${year}/${week}/${timestamp}"
+    local local_dir="${CLIENT_VIDEO_BASE}/${mode_dir}/${year}/${week}/${dir_name}"
     mkdir -p "$local_dir"
     
-    echo -e "${CYAN}📥 Übertrage: $filename${NC}"
+    echo -e "${CYAN}📥 Synchronisiere: $dir_name${NC}"
     
-    # Kopiere Video
-    if scp -i "$SSH_KEY" "${SSH_USER}@${SSH_HOST}:${remote_video}" "${local_dir}/${filename}"; then
-        echo -e "${GREEN}✅ Video übertragen${NC}"
+    # Kopiere alle MP4-Dateien vom Pi (bereits konvertiert)
+    if rsync -avz --progress -e "ssh -i $SSH_KEY" \
+        "${SSH_USER}@${SSH_HOST}:${remote_video_dir}/*.mp4" \
+        "${local_dir}/" 2>/dev/null; then
         
-        # FFmpeg-Konvertierung
-        if [ "$MODE" = "slowmo" ]; then
-            # Zeitlupen-Konvertierungen: 5, 10, 20, 30, 120 FPS
-            for fps in 5 10 20 30 120; do
-                local output="${local_dir}/${timestamp}_${fps}fps.mp4"
-                echo -e "${CYAN}🎬 Konvertiere zu ${fps} FPS...${NC}"
-                
-                if ffmpeg -hide_banner -loglevel error -i "${local_dir}/${filename}" \
-                    -c:v libx264 -preset medium -crf 23 -r $fps \
-                    -movflags +faststart "$output" 2>&1; then
-                    echo -e "${GREEN}   ✅ ${fps} FPS fertig${NC}"
-                else
-                    echo -e "${RED}   ❌ ${fps} FPS fehlgeschlagen${NC}"
-                fi
-            done
-        else
-            # Normal-Modus: Nur 30 FPS
-            local output="${local_dir}/${timestamp}_30fps.mp4"
-            echo -e "${CYAN}🎬 Konvertiere zu 30 FPS...${NC}"
-            
-            if ffmpeg -hide_banner -loglevel error -i "${local_dir}/${filename}" \
-                -c:v libx264 -preset medium -crf 23 -r 30 \
-                -movflags +faststart "$output" 2>&1; then
-                echo -e "${GREEN}   ✅ Konvertierung fertig${NC}"
-            else
-                echo -e "${RED}   ❌ Konvertierung fehlgeschlagen${NC}"
-            fi
-        fi
-        
-        # Optional: Lösche Original auf Pi
-        # ssh_exec "rm -f $remote_video"
-        
-        echo -e "${GREEN}✅ Video verarbeitet: $local_dir${NC}"
+        local mp4_count=$(ls -1 "${local_dir}"/*.mp4 2>/dev/null | wc -l)
+        echo -e "${GREEN}✅ ${mp4_count} Video(s) übertragen: $local_dir${NC}"
         echo ""
     else
-        echo -e "${RED}❌ Übertragung fehlgeschlagen${NC}"
+        echo -e "${YELLOW}⏳ Konvertierung auf Pi läuft noch... (erneuter Versuch in 10s)${NC}"
     fi
 }
 
@@ -266,11 +235,11 @@ follow_event_log() {
         # Hole neue Log-Zeilen
         local current_lines=$(ssh_exec "wc -l < $log_file 2>/dev/null || echo 0")
         
-        if [ "$current_lines" -gt "$lines_read" ]; then
+        if [ -n "$current_lines" ] && [ "$current_lines" -gt "$lines_read" ]; then
             local new_lines=$((current_lines - lines_read))
             
-            # Zeige wichtige Events
-            ssh_exec "tail -${new_lines} $log_file" | while IFS= read -r line; do
+            # Verwende Process Substitution um Subshell zu vermeiden
+            while IFS= read -r line; do
                 # Filtere wichtige Events
                 if echo "$line" | grep -qE "Vogel erkannt|Starte Aufnahme|Aufnahme beendet|Trigger-Bedingungen"; then
                     local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
@@ -302,7 +271,7 @@ follow_event_log() {
                     echo -e "${CYAN}[$timestamp]${NC} $message"
                     echo ""
                 fi
-            done
+            done < <(ssh_exec "tail -${new_lines} $log_file")
             
             lines_read=$current_lines
         fi
