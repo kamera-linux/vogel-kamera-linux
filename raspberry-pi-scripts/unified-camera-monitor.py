@@ -39,6 +39,7 @@ try:
     from picamera2 import Picamera2
     from picamera2.encoders import H264Encoder, Quality
     from picamera2.outputs import FileOutput
+    from libcamera import Transform
     HAS_PICAMERA2 = True
 except ImportError:
     HAS_PICAMERA2 = False
@@ -191,17 +192,17 @@ class UnifiedCameraMonitor:
                     "size": (self.preview_width, self.preview_height),
                     "format": "RGB888"  # Für AI-Analyse
                 },
-                encode="main"  # Aktiviere Encode-Stream für main
+                encode="main",  # Aktiviere Encode-Stream für main
+                transform=Transform(hflip=1, vflip=1)  # 180° Rotation (horizontal + vertikal flip)
             )
             
             self.picam2.configure(config)
             
-            # Setze Kamera-Parameter + 180° Rotation
+            # Setze Kamera-Parameter
             self.picam2.set_controls({
                 "FrameRate": self.recording_fps,  # Haupt-Stream FPS
                 "ExposureTime": 10000,  # Auto
-                "AnalogueGain": 1.0,
-                "Rotation": 180  # Kamera um 180° drehen
+                "AnalogueGain": 1.0
             })
             
             logger.info("✅ Picamera2 konfiguriert (Dual-Stream mit Encoding, 180° Rotation)")
