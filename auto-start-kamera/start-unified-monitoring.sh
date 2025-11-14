@@ -207,9 +207,9 @@ process_video() {
     local remote_video_dir="$1"  # Verzeichnis auf dem Pi
     local dir_name=$(basename "$remote_video_dir")
     
-    # Erstelle lokale Ordnerstruktur
-    local year=$(echo "$remote_video_dir" | grep -oP '202\d')
-    local week=$(echo "$remote_video_dir" | grep -oP '/\d+/' | tr -d '/')
+    # Erstelle lokale Ordnerstruktur (extrahiere Jahr und Woche aus Pfad)
+    local year=$(echo "$remote_video_dir" | grep -oP '202\d' | head -1)
+    local week=$(echo "$remote_video_dir" | grep -oP '/\d+/' | tr -d '/' | head -1)
     local mode_dir="Zeitlupe"
     [ "$MODE" = "normal" ] && mode_dir="AI-HAD"
     
@@ -265,9 +265,21 @@ follow_event_log() {
                         echo -e "${GREEN}[$timestamp]${NC} $message"
                     elif echo "$line" | grep -qE "Aufnahme beendet"; then
                         recording_active=false
+                        echo ""
                         echo -e "${GREEN}[$timestamp]${NC} $message"
                     else
                         echo -e "${GREEN}[$timestamp]${NC} $message"
+                    fi
+                # Zeige Konvertierungs-Progress
+                elif echo "$line" | grep -qE "Konvertiere Zeitlupen-Video|erstellt \(|Konvertierung abgeschlossen|H264-Datei gelöscht"; then
+                    local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
+                    local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
+                    
+                    if echo "$line" | grep -qE "Konvertierung abgeschlossen"; then
+                        echo -e "${GREEN}[$timestamp]${NC} $message"
+                        echo ""
+                    else
+                        echo -e "${CYAN}[$timestamp]${NC} $message"
                     fi
                 # Zeige Heartbeat nur wenn NICHT aufgenommen wird
                 elif echo "$line" | grep -qE "Monitor aktiv.*Frames|✓.*Monitor aktiv"; then
