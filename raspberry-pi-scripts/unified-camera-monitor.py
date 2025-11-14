@@ -370,7 +370,7 @@ class UnifiedCameraMonitor:
                 date_str = now.strftime("%Y-%m-%d")
                 time_str = now.strftime("%H-%M-%S")
                 year = now.strftime("%Y")
-                week_number = now.strftime("%W")  # Wochennummer (00-53)
+                week_number = now.strftime("%V")  # ISO Kalenderwoche (01-53)
                 
                 # Wochentags-Übersetzung
                 weekday_map = {
