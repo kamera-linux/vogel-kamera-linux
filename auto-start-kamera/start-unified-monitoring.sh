@@ -256,6 +256,9 @@ follow_event_log() {
     # Markiere aktuelle Log-Position
     local log_file="/tmp/unified-camera-monitor.log"
     local lines_read=$(ssh_exec "wc -l < $log_file 2>/dev/null || echo 0")
+    local recording_active=false
+    local recording_start=0
+    local recording_duration=60
     
     while true; do
         sleep 2
@@ -272,7 +275,25 @@ follow_event_log() {
                 if echo "$line" | grep -qE "Vogel erkannt|Starte Aufnahme|Aufnahme beendet|Trigger-Bedingungen"; then
                     local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
                     local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
-                    echo -e "${GREEN}[$timestamp]${NC} $message"
+                    
+                    # Setze Recording-Status
+                    if echo "$line" | grep -qE "Starte Aufnahme"; then
+                        recording_active=true
+                        recording_start=$(date +%s)
+                        echo -e "${GREEN}[$timestamp]${NC} $message"
+                    elif echo "$line" | grep -qE "Aufnahme beendet"; then
+                        recording_active=false
+                        echo -e "${GREEN}[$timestamp]${NC} $message"
+                    else
+                        echo -e "${GREEN}[$timestamp]${NC} $message"
+                    fi
+                # Zeige Heartbeat nur wenn NICHT aufgenommen wird
+                elif echo "$line" | grep -qE "Monitor aktiv.*aktuell aufgenommen"; then
+                    if [ "$recording_active" = false ]; then
+                        local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
+                        local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
+                        echo -e "${BLUE}[$timestamp]${NC} $message"
+                    fi
                 # Zeige Status mit Ampeln (kompakt)
                 elif echo "$line" | grep -qE "Status:.*Temp:.*🟢|Status:.*Temp:.*🟡|Status:.*Temp:.*🔴"; then
                     local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
@@ -284,6 +305,26 @@ follow_event_log() {
             done
             
             lines_read=$current_lines
+        fi
+        
+        # Zeige Live-Fortschrittsbalken während der Aufnahme
+        if [ "$recording_active" = true ]; then
+            local now=$(date +%s)
+            local elapsed=$((now - recording_start))
+            
+            if [ $elapsed -le $recording_duration ]; then
+                local percent=$((elapsed * 100 / recording_duration))
+                local bar_length=20
+                local filled=$((elapsed * bar_length / recording_duration))
+                local empty=$((bar_length - filled))
+                
+                local bar=$(printf '█%.0s' $(seq 1 $filled))$(printf '░%.0s' $(seq 1 $empty))
+                
+                printf "\r${CYAN}🎥 Aufnahme läuft... ${bar} ${percent}%% (${elapsed}/${recording_duration}s)${NC}" >&2
+            else
+                recording_active=false
+                echo "" >&2
+            fi
         fi
     done
 }
