@@ -71,10 +71,23 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-# SSH-Kommando
+# SSH-Kommando mit Error-Handling
 ssh_exec() {
-    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
-        "${SSH_USER}@${SSH_HOST}" "$@"
+    local retries=3
+    local delay=2
+    
+    for ((i=1; i<=retries; i++)); do
+        if ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+            "${SSH_USER}@${SSH_HOST}" "$@" 2>/dev/null; then
+            return 0
+        fi
+        
+        if [ $i -lt $retries ]; then
+            sleep $delay
+        fi
+    done
+    
+    return 1
 }
 
 # System-Status mit Ampelsystem
@@ -257,7 +270,7 @@ follow_event_log() {
                         echo -e "${GREEN}[$timestamp]${NC} $message"
                     fi
                 # Zeige Heartbeat nur wenn NICHT aufgenommen wird
-                elif echo "$line" | grep -qE "Monitor aktiv.*aktuell aufgenommen"; then
+                elif echo "$line" | grep -qE "Monitor aktiv.*Frames|✓.*Monitor aktiv"; then
                     if [ "$recording_active" = false ]; then
                         local timestamp=$(echo "$line" | awk '{print $1, $2}' | cut -d',' -f1)
                         local message=$(echo "$line" | sed 's/^[^-]*- [A-Z]* - //')
@@ -303,19 +316,28 @@ watch_for_videos() {
     local last_check=0
     
     while true; do
-        sleep 10
+        sleep 15
         
-        # Hole Liste neuer Videos
-        local videos=$(ssh_exec "find ${REMOTE_VIDEO_BASE} -name '*.h264' -newer /tmp/last_video_check 2>/dev/null || true")
+        # Hole Liste neuer Video-VERZEICHNISSE (nach Konvertierung)
+        local video_dirs=$(ssh_exec "find ${REMOTE_VIDEO_BASE} -type d -name 'Freitag__*' -o -name 'Samstag__*' -o -name 'Sonntag__*' -o -name 'Montag__*' -o -name 'Dienstag__*' -o -name 'Mittwoch__*' -o -name 'Donnerstag__*' 2>/dev/null | sort -u || true")
         
-        if [ -n "$videos" ]; then
-            while IFS= read -r video; do
-                [ -z "$video" ] && continue
-                process_video "$video"
-            done <<< "$videos"
-            
-            # Update Timestamp
-            ssh_exec "touch /tmp/last_video_check"
+        if [ -n "$video_dirs" ]; then
+            while IFS= read -r dir; do
+                [ -z "$dir" ] && continue
+                
+                # Prüfe ob Verzeichnis MP4-Dateien hat (Konvertierung fertig)
+                local mp4_count=$(ssh_exec "ls -1 ${dir}/*.mp4 2>/dev/null | wc -l || echo 0")
+                if [ "$mp4_count" -gt 0 ]; then
+                    # Prüfe ob bereits synchronisiert
+                    local dir_name=$(basename "$dir")
+                    local already_synced=$(grep -c "$dir_name" /tmp/synced_videos 2>/dev/null || echo 0)
+                    
+                    if [ "$already_synced" -eq 0 ]; then
+                        process_video "$dir"
+                        echo "$dir_name" >> /tmp/synced_videos
+                    fi
+                fi
+            done <<< "$video_dirs"
         fi
     done
 }
@@ -392,8 +414,11 @@ echo ""
 echo -e "${GREEN}✅ System-Check erfolgreich${NC}"
 echo ""
 
-# Initialisiere Video-Timestamp
-ssh_exec "touch /tmp/last_video_check"
+# Initialisiere lokale Sync-Liste
+> /tmp/synced_videos
+
+# Initialisiere Video-Timestamp (nicht mehr nötig, aber für Legacy)
+ssh_exec "touch /tmp/last_video_check" || true
 
 # Starte Remote Monitor
 echo -e "${CYAN}🚀 Starte Remote Monitor...${NC}"
@@ -452,14 +477,11 @@ ssh_exec "tail -20 /tmp/unified-camera-monitor.log 2>/dev/null | grep -E '(Laufz
 echo "======================================================================"
 echo ""
 
-echo "======================================================================"
-echo "🔍 Live-Logs vom Remote Monitor"
-echo "======================================================================"
+# Live-Monitoring läuft über follow_event_log() im Hintergrund
+# Kein direkter tail -f mehr nötig (würde doppelte Ausgaben erzeugen)
+
+echo -e "${CYAN}🔄 Monitoring aktiv - Drücke Ctrl+C zum Beenden${NC}"
 echo ""
 
-# Folge Remote-Logs (Hauptprozess)
-ssh_exec "tail -f /tmp/unified-camera-monitor.log 2>/dev/null" &
-LOG_FOLLOWER_PID=$!
-
-# Warte auf Beendigung
-wait $LOG_FOLLOWER_PID
+# Warte auf Hintergrund-Prozesse (Event-Log-Follower & Video-Watcher)
+wait
