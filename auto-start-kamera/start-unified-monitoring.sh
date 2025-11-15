@@ -270,12 +270,27 @@ follow_event_log() {
     local recording_start=0
     local recording_duration=60
     local last_recording_path=""
+    local ssh_failures=0
     
     while true; do
         sleep 2
         
-        # Hole neue Log-Zeilen
-        local current_lines=$(ssh_exec "wc -l < $log_file 2>/dev/null || echo 0")
+        # Hole neue Log-Zeilen (mit schnellem Timeout für Monitoring)
+        local current_lines=$(timeout 3 ssh -i "$SSH_KEY" -o ConnectTimeout=2 \
+            "${SSH_USER}@${SSH_HOST}" "wc -l < $log_file 2>/dev/null || echo 0" 2>/dev/null)
+        
+        # Prüfe SSH-Erfolg
+        if [ $? -ne 0 ] || [ -z "$current_lines" ]; then
+            ssh_failures=$((ssh_failures + 1))
+            if [ $ssh_failures -gt 5 ]; then
+                echo -e "${RED}❌ SSH-Verbindung verloren! Monitor läuft weiter auf Pi.${NC}"
+                echo -e "${YELLOW}Drücke Ctrl+C und starte neu um Logs wieder zu sehen.${NC}"
+                sleep 30  # Warte länger bevor nächster Versuch
+            fi
+            continue
+        fi
+        
+        ssh_failures=0  # Reset bei Erfolg
         
         if [ -n "$current_lines" ] && [ "$current_lines" -gt "$lines_read" ]; then
             local new_lines=$((current_lines - lines_read))
@@ -342,7 +357,8 @@ follow_event_log() {
                     echo -e "${CYAN}[$timestamp]${NC} $message"
                     echo ""
                 fi
-            done < <(ssh_exec "tail -${new_lines} $log_file")
+            done < <(timeout 3 ssh -i "$SSH_KEY" -o ConnectTimeout=2 \
+                "${SSH_USER}@${SSH_HOST}" "tail -${new_lines} $log_file" 2>/dev/null || echo "")
             
             lines_read=$current_lines
         fi
