@@ -282,11 +282,29 @@ follow_event_log() {
         # Prüfe SSH-Erfolg
         if [ $? -ne 0 ] || [ -z "$current_lines" ]; then
             ssh_failures=$((ssh_failures + 1))
-            if [ $ssh_failures -gt 5 ]; then
-                echo -e "${RED}❌ SSH-Verbindung verloren! Monitor läuft weiter auf Pi.${NC}"
-                echo -e "${YELLOW}Drücke Ctrl+C und starte neu um Logs wieder zu sehen.${NC}"
-                sleep 30  # Warte länger bevor nächster Versuch
+            if [ $ssh_failures -eq 1 ]; then
+                echo -e "${YELLOW}⚠️  SSH-Verbindung unterbrochen, versuche Wiederverbindung...${NC}"
+            elif [ $ssh_failures -gt 3 ]; then
+                echo -e "${YELLOW}⚠️  Wiederverbindung dauert länger ($ssh_failures Fehlversuche)...${NC}"
             fi
+            
+            if [ $ssh_failures -gt 10 ]; then
+                echo -e "${RED}❌ SSH-Verbindung dauerhaft verloren! Monitor läuft weiter auf Pi.${NC}"
+                echo -e "${YELLOW}💡 Prüfe: ping raspberrypi-5-ai-had${NC}"
+                echo -e "${YELLOW}   Oder: ssh roimme@raspberrypi-5-ai-had${NC}"
+                echo ""
+                echo -e "${CYAN}🔄 Automatischer Neustart in 30 Sekunden...${NC}"
+                sleep 30
+                
+                # Versuche Event-Log-Follower neu zu starten
+                echo -e "${CYAN}🔄 Starte Log-Monitoring neu...${NC}"
+                lines_read=$(ssh_exec "wc -l < $log_file 2>/dev/null || echo 0")
+                ssh_failures=0
+                recording_active=false
+                continue
+            fi
+            
+            sleep 3  # Kurze Pause vor erneutem Versuch
             continue
         fi
         
