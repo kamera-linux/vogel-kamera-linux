@@ -375,8 +375,13 @@ follow_event_log() {
                     echo -e "${CYAN}[$timestamp]${NC} $message"
                     echo ""
                 fi
-            done < <(timeout 3 ssh -i "$SSH_KEY" -o ConnectTimeout=2 \
-                "${SSH_USER}@${SSH_HOST}" "tail -${new_lines} $log_file" 2>/dev/null || echo "")
+            done < <(
+                # Temporär pipefail deaktivieren für SSH-Befehl
+                set +o pipefail
+                timeout 3 ssh -i "$SSH_KEY" -o ConnectTimeout=2 \
+                    "${SSH_USER}@${SSH_HOST}" "tail -${new_lines} $log_file" 2>/dev/null || true
+                set -o pipefail
+            )
             
             lines_read=$current_lines
         fi
