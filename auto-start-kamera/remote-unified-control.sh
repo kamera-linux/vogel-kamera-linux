@@ -30,9 +30,9 @@ show_help() {
 Verwendung: $0 [OPTION]
 
 Optionen:
-  --start [MODE]     Starte Monitor (MODE: normal|slowmo, default: normal)
+  --start [MODE]     Starte Monitor (MODE: normal|slowmo|4k|ai-had, default: normal)
   --stop             Stoppe Monitor
-  --restart          Starte Monitor neu
+  --restart [MODE]   Starte Monitor neu (optional mit neuem MODE)
   --status           Zeige Status
   --logs [N]         Zeige letzte N Zeilen Logs (default: 50)
   --follow-logs      Live-Logs anzeigen (Strg+C zum Beenden)
@@ -42,12 +42,17 @@ Optionen:
 Modi:
   normal             Standard-Aufnahme (1920x1080 @ 30fps)
   slowmo             Zeitlupen-Aufnahme (1536x864 @ 120fps)
-                     ⚠️  Zeitlupe benötigt Monitor-Neustart!
+  4k                 4K Ultra HD (3840x2160 @ 30fps)
+  ai-had             AI-HAD mit Audio (1920x1080 @ 30fps + Audio-Erkennung)
+                     ⚠️  Modus-Wechsel erfordert Monitor-Neustart!
 
 Beispiele:
   $0 --start normal          # Starte Normal-Modus
   $0 --start slowmo          # Starte Zeitlupen-Modus
+  $0 --start 4k              # Starte 4K-Modus
+  $0 --start ai-had          # Starte AI-HAD mit Audio
   $0 --stop                  # Stoppe Monitor
+  $0 --restart slowmo        # Neustart mit Zeitlupen-Modus
   $0 --status                # Zeige Status
   $0 --logs 100              # Zeige letzte 100 Log-Zeilen
   $0 --follow-logs           # Live-Logs
@@ -113,19 +118,27 @@ start_monitor() {
     case "$MODE" in
         normal)
             echo "📹 Starte Normal-Modus (1920x1080 @ 30fps)..."
-            # Starte mit timeout, damit SSH nicht hängt
             timeout 5 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" \
                 "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
             ;;
         slowmo)
             echo "🎬 Starte Zeitlupen-Modus (1536x864 @ 120fps)..."
-            # Starte mit timeout, damit SSH nicht hängt
             timeout 5 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" \
                 "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 --slowmo > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
             ;;
+        4k)
+            echo "📹 Starte 4K-Modus (3840x2160 @ 30fps)..."
+            timeout 5 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" \
+                "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 --resolution 3840x2160 > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
+            ;;
+        ai-had)
+            echo "🎤 Starte AI-HAD Modus (1920x1080 @ 30fps + Audio)..."
+            timeout 5 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" \
+                "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 --enable-audio --audio-threshold 0.3 > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
+            ;;
         *)
             echo -e "${RED}❌ Unbekannter Modus: $MODE${NC}"
-            echo "Verfügbare Modi: normal, slowmo"
+            echo "Verfügbare Modi: normal, slowmo, 4k, ai-had"
             return 1
             ;;
     esac

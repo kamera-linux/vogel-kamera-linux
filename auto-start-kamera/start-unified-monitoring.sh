@@ -24,16 +24,94 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CLIENT_VIDEO_BASE="$HOME/Videos/Vogelhaus"
 REMOTE_VIDEO_BASE="/home/roimme/Videos/Vogelhaus"
 
-# Parameter
-MODE="${1:-normal}"  # normal oder slowmo
+# Zeige Help
+show_help() {
+    cat << EOF
+🎥 UNIFIED MONITORING SYSTEM - Vogel-Beobachtung
+
+USAGE:
+    $0 [MODE] [OPTIONS]
+
+MODI:
+    normal      Standard-Modus (1920x1080 @ 30fps)
+    slowmo      Zeitlupen-Modus (1536x864 @ 120fps, 5 FPS-Varianten)
+    4k          4K-Modus (3840x2160 @ 30fps)
+    ai-had      AI-HAD Modus mit Audio-Erkennung (1920x1080 @ 30fps)
+
+OPTIONS:
+    --threshold VALUE     Erkennungs-Schwellenwert (Standard: 0.5)
+    --cooldown SECONDS    Cooldown zwischen Aufnahmen (Standard: 15)
+    --trigger SECONDS     Trigger-Dauer für Erkennung (Standard: 1.0)
+    --audio-threshold VAL Audio-Schwellenwert für AI-HAD (Standard: 0.3)
+    -h, --help           Diese Hilfe anzeigen
+
+UMGEBUNGSVARIABLEN:
+    SSH_KEY              SSH-Schlüssel Pfad (Standard: ~/.ssh/id_rsa_ai-had)
+    SSH_USER             SSH-Benutzername (Standard: roimme)
+    SSH_HOST             Raspberry Pi Hostname (Standard: raspberrypi-5-ai-had)
+
+BEISPIELE:
+    # Zeitlupen-Modus (120fps Slowmotion)
+    $0 slowmo
+
+    # 4K-Aufnahmen mit höherem Threshold
+    $0 4k --threshold 0.7
+
+    # AI-HAD mit Audio-Erkennung
+    $0 ai-had --audio-threshold 0.2
+
+    # Kürzerer Cooldown zwischen Aufnahmen
+    $0 slowmo --cooldown 5
+
+EOF
+    exit 0
+}
+
+# Standard-Werte
+MODE="normal"
 THRESHOLD="0.5"
 COOLDOWN="15"
 TRIGGER_DURATION="1.0"
 STATUS_INTERVAL="300"  # 5 Minuten
-
-# Audio-Erkennung (AI-HAD)
-ENABLE_AUDIO="${ENABLE_AUDIO:-false}"
+ENABLE_AUDIO="false"
 AUDIO_THRESHOLD="0.3"
+
+# Parameter-Parsing
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            ;;
+        normal|slowmo|4k|ai-had)
+            MODE="$1"
+            if [ "$MODE" = "ai-had" ]; then
+                ENABLE_AUDIO="true"
+            fi
+            shift
+            ;;
+        --threshold)
+            THRESHOLD="$2"
+            shift 2
+            ;;
+        --cooldown)
+            COOLDOWN="$2"
+            shift 2
+            ;;
+        --trigger)
+            TRIGGER_DURATION="$2"
+            shift 2
+            ;;
+        --audio-threshold)
+            AUDIO_THRESHOLD="$2"
+            shift 2
+            ;;
+        *)
+            echo "❌ Unbekannter Parameter: $1"
+            echo "   Nutze --help für Hilfe"
+            exit 1
+            ;;
+    esac
+done
 
 # PIDs für Cleanup
 MONITOR_PID=""
@@ -476,10 +554,30 @@ echo "======================================================================"
 echo ""
 
 # Modus-Info
-if [ "$MODE" = "slowmo" ]; then
-    echo -e "${CYAN}🎬 Modus: Zeitlupe (1536x864 @ 120fps)${NC}"
-else
-    echo -e "${CYAN}📹 Modus: Normal (1920x1080 @ 30fps)${NC}"
+case "$MODE" in
+    slowmo)
+        echo -e "${CYAN}🎬 Modus: Zeitlupe (1536x864 @ 120fps)${NC}"
+        ;;
+    4k)
+        echo -e "${CYAN}📹 Modus: 4K Ultra HD (3840x2160 @ 30fps)${NC}"
+        ;;
+    ai-had)
+        echo -e "${MAGENTA}🎤 Modus: AI-HAD mit Audio (1920x1080 @ 30fps + Audio-Erkennung)${NC}"
+        ;;
+    normal)
+        echo -e "${CYAN}📹 Modus: Normal (1920x1080 @ 30fps)${NC}"
+        ;;
+    *)
+        echo -e "${RED}❌ Unbekannter Modus: $MODE${NC}"
+        echo -e "${YELLOW}Verfügbare Modi: normal, slowmo, 4k, ai-had${NC}"
+        exit 1
+        ;;
+esac
+
+# Zeige Parameter
+echo -e "${BLUE}⚙️  Threshold: $THRESHOLD | Cooldown: ${COOLDOWN}s | Trigger: ${TRIGGER_DURATION}s${NC}"
+if [ "$ENABLE_AUDIO" = "true" ]; then
+    echo -e "${MAGENTA}🎤 Audio-Threshold: $AUDIO_THRESHOLD${NC}"
 fi
 echo ""
 
