@@ -5,6 +5,90 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.1] - 2025-11-16 🐛 Stability & CLI Enhancements
+
+### ✨ Hinzugefügt
+- **🎬 Cinema 4K Mode:**
+  - Cinema 4K Unterstützung: 4096x2160 @ 25fps (DCI 4K statt UHD)
+  - Professionelle Framerate für filmische Aufnahmen
+  - Start: `./start-unified-monitoring.sh 4k`
+  
+- **🎤 AI-HAD Mode:**
+  - Audio-Erkennung Integration (Kombination Video + Audio Detection)
+  - Konfigurierbar über `--audio-threshold` Parameter
+  - Start: `./start-unified-monitoring.sh ai-had`
+  
+- **⚙️ Complete CLI Parameter Support:**
+  - Help-Funktion: `--help` oder `-h` für alle verfügbaren Parameter
+  - `--threshold VALUE` - Erkennungs-Schwellenwert (Standard: 0.5)
+  - `--cooldown SECONDS` - Cooldown zwischen Aufnahmen (Standard: 15)
+  - `--trigger SECONDS` - Trigger-Dauer für Erkennung (Standard: 1.0)
+  - `--audio-threshold VALUE` - Audio-Schwellenwert (Standard: 0.3)
+  - Beispiel: `./start-unified-monitoring.sh slowmo --threshold 0.7 --cooldown 5`
+  
+- **📹 Auto Video Sync:**
+  - Videos werden sofort nach Konvertierung übertragen (Event-driven)
+  - Trigger bei "Konvertierung abgeschlossen" Log-Message
+  - Keine Polling-Verzögerung mehr (vorher: 15s Intervall)
+
+### 🐛 Behoben
+- **SSH Connection Stability (CRITICAL):**
+  - Client-Skript terminierte nach Video-Transfer durch `pipefail` in Process Substitution
+  - `set -o pipefail` temporär deaktiviert für SSH tail-Befehle
+  - Automatische Wiederverbindung nach SSH-Fehlern (10 Versuche à 3s)
+  - Timeout reduziert: 21s → 2s für Monitoring-Calls
+  - Graceful Degradation mit User-Warnings
+  
+- **Calendar Week Calculation:**
+  - Falsche Kalenderwochen (KW 45 statt KW 46)
+  - Fix: `strftime("%W")` → `strftime("%V")` (ISO 8601)
+  - Videos landen nun in korrekter Wochenstruktur
+  
+- **Video Path Extraction:**
+  - Videos in falscher Verzeichnisstruktur (2025/2025/ statt 2025/46/)
+  - Fix: `grep -oP` → `awk`-basierte Pfad-Extraktion
+  - Vermeidet mehrfache Matches in Dateinamen
+  
+- **Video Sync Timing:**
+  - Videos nicht automatisch übertragen, watch_for_videos unreliable
+  - Fix: Event-driven sync statt Polling
+  - Sofortige Übertragung nach Conversion
+
+### 🔧 Verbessert
+- **Enhanced Error Handling:**
+  - SSH-Fehler-Tracking mit Failure-Counter
+  - Warning nach 5 konsekutiven Fehlversuchen
+  - 30s Cooldown bei persistenten Verbindungsproblemen
+  - Keine unerwarteten Skript-Terminierungen mehr
+  
+- **Mode Support:**
+  - `remote-unified-control.sh` unterstützt alle 4 Modi: `normal`, `slowmo`, `4k`, `ai-had`
+  - `--restart [MODE]` akzeptiert optionalen Modus-Parameter
+  - Hilfe-Text mit vollständiger Modus-Dokumentation
+
+### 📧 Geändert
+- **Contact Email Update:**
+  - Alte Adressen ersetzt: `kamerawagen.linux@gmail.com`, `vogel-kamera.linux@gmail.com`
+  - Neue Adresse: `kamera-linux@mailbox.org`
+  - Betrifft: SECURITY.md, CONTRIBUTING.md
+
+### 🔗 Commits
+```
+f793e96 - feat: Change 4K mode to Cinema 4K (4096x2160 @ 25fps)
+5d3f5bb - feat: Add proper CLI parameters and support for 4k and ai-had modes
+a6210c1 - fix: Disable pipefail for SSH tail command to prevent script termination
+30fb966 - fix: Auto-reconnect SSH after connection loss during monitoring
+b012eb4 - fix: Prevent follow_event_log from hanging on SSH failures
+86e89ac - fix: Correct year/week extraction in sync_video()
+ce107b9 - fix: Use ISO week number (%V) instead of %W
+2a64e60 - feat: Auto-sync videos immediately after conversion
+17655ed - feat: Show conversion progress in live monitor
+321cf35 - fix: Remove duplicate logs, fix video sync timing, improve SSH stability
+403b624 - fix: Remove duplicate video conversion and fix progress bar
+```
+
+---
+
 ## [2.0.0] - 2025-11-11 🚀 MAJOR RELEASE
 
 ### ⚠️ BREAKING CHANGES

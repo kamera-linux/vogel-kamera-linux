@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.0.0"
-__version_info__ = (2, 0, 0)
+__version__ = "2.0.1"
+__version_info__ = (2, 0, 1)
 
 # Release Information
-RELEASE_NAME = "Unified Camera Monitor & Multilingual Documentation"
-RELEASE_DATE = "2025-11-11"
-RELEASE_TYPE = "major"  # major, minor, patch
+RELEASE_NAME = "Stability & CLI Enhancements"
+RELEASE_DATE = "2025-11-16"
+RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20251111-1"
-GIT_TAG = "v2.0.0"
+BUILD_NUMBER = "20251116-1"
+GIT_TAG = "v2.0.1"
 
 # Feature Flags
 FEATURES = {
@@ -37,6 +37,11 @@ FEATURES = {
     "github_discussions": True,  # Since v1.1.3
     "github_templates": True,  # Since v1.1.2
     "wiki_documentation": True,  # Since v1.1.1
+    "cli_parameters": True,  # New in v2.0.1 - Full CLI parameter support
+    "cinema_4k": True,  # New in v2.0.1 - Cinema 4K (4096x2160 @ 25fps)
+    "ai_had_mode": True,  # New in v2.0.1 - AI-HAD with audio detection
+    "auto_video_sync": True,  # New in v2.0.1 - Immediate video sync after conversion
+    "ssh_resilience": True,  # New in v2.0.1 - Enhanced SSH error handling
     "web_interface": False,  # Planned for future
     "mobile_app": False,  # Planned for future
 }
