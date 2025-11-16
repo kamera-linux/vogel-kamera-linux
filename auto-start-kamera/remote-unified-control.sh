@@ -42,7 +42,7 @@ Optionen:
 Modi:
   normal             Standard-Aufnahme (1920x1080 @ 30fps)
   slowmo             Zeitlupen-Aufnahme (1536x864 @ 120fps)
-  4k                 4K Ultra HD (3840x2160 @ 30fps)
+  4k                 Cinema 4K (4096x2160 @ 25fps)
   ai-had             AI-HAD mit Audio (1920x1080 @ 30fps + Audio-Erkennung)
                      ⚠️  Modus-Wechsel erfordert Monitor-Neustart!
 
@@ -127,9 +127,9 @@ start_monitor() {
                 "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 --slowmo > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
             ;;
         4k)
-            echo "📹 Starte 4K-Modus (3840x2160 @ 30fps)..."
+            echo "📹 Starte Cinema 4K-Modus (4096x2160 @ 25fps)..."
             timeout 5 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" \
-                "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 --resolution 3840x2160 > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
+                "cd $REMOTE_DIR && source ~/.venv/vogel-camera/bin/activate && nohup python3 unified-camera-monitor.py --camera 0 --threshold 0.2 --cooldown 5 --trigger-duration 0.5 --recording-duration 60 --resolution 4096x2160 --fps 25 > /dev/null 2>&1 & echo 'Monitor gestartet'" || true
             ;;
         ai-had)
             echo "🎤 Starte AI-HAD Modus (1920x1080 @ 30fps + Audio)..."

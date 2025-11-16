@@ -35,7 +35,7 @@ USAGE:
 MODI:
     normal      Standard-Modus (1920x1080 @ 30fps)
     slowmo      Zeitlupen-Modus (1536x864 @ 120fps, 5 FPS-Varianten)
-    4k          4K-Modus (3840x2160 @ 30fps)
+    4k          Cinema 4K-Modus (4096x2160 @ 25fps)
     ai-had      AI-HAD Modus mit Audio-Erkennung (1920x1080 @ 30fps)
 
 OPTIONS:
@@ -54,7 +54,7 @@ BEISPIELE:
     # Zeitlupen-Modus (120fps Slowmotion)
     $0 slowmo
 
-    # 4K-Aufnahmen mit höherem Threshold
+    # Cinema 4K-Aufnahmen mit höherem Threshold
     $0 4k --threshold 0.7
 
     # AI-HAD mit Audio-Erkennung
@@ -559,7 +559,7 @@ case "$MODE" in
         echo -e "${CYAN}🎬 Modus: Zeitlupe (1536x864 @ 120fps)${NC}"
         ;;
     4k)
-        echo -e "${CYAN}📹 Modus: 4K Ultra HD (3840x2160 @ 30fps)${NC}"
+        echo -e "${CYAN}📹 Modus: Cinema 4K (4096x2160 @ 25fps)${NC}"
         ;;
     ai-had)
         echo -e "${MAGENTA}🎤 Modus: AI-HAD mit Audio (1920x1080 @ 30fps + Audio-Erkennung)${NC}"
