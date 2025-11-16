@@ -2,6 +2,14 @@
 
 **言語 / Languages / Sprachen:** [🇬🇧 English](README.md) | [🇩🇪 Deutsch](README.de.md) | [🇯🇵 日本語](README.ja.md)
 
+## リリース v2.0.1 — 概要
+
+- バージョン: v2.0.1
+- 主要な更新: Cinema 4K (4096x2160 @ 25fps)、AI-HAD オーディオモード、CLI パラメータとモードの追加（normal, slowmo, 4k, ai-had）、SSH ログ追跡の堅牢化、変換完了後の自動ビデオ同期。
+- バグ修正: ISO 週番号 (%V) の修正、パス抽出の不具合修正、自動 SSH 再接続、`pipefail` によるスクリプト終了の回避。
+
+詳細は次の完全なリリースノートを参照してください: [`releases/RELEASE_NOTES_v2.0.1.md`](../../releases/RELEASE_NOTES_v2.0.1.md)
+
 [![Version](https://img.shields.io/badge/Version-v2.0.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.0.0)
 [![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](../TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
