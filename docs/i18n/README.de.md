@@ -2,6 +2,8 @@
 
 **Sprachen / Languages / 言語:** [🇬🇧 English](README.md) | [🇩🇪 Deutsch](README.de.md) | [🇯🇵 日本語](README.ja.md)
 
+![Vogel-Kamera-Linux Banner](../pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
+
 ## Release v2.0.1 — Kurzüberblick
 
 - Version: v2.0.1

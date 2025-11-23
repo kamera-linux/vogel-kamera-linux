@@ -2,6 +2,8 @@
 
 **言語 / Languages / Sprachen:** [🇬🇧 English](README.md) | [🇩🇪 Deutsch](README.de.md) | [🇯🇵 日本語](README.ja.md)
 
+![バードカメラ Linux バナー](../pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
+
 ## リリース v2.0.1 — 概要
 
 - バージョン: v2.0.1
