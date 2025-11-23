@@ -2,6 +2,8 @@
 
 > 🌐 **Multi-Language Documentation:** This README is available in multiple languages!  
 
+![Vogel-Kamera-Linux Banner](docs/pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
+
 ## Release v2.0.1 — Kurzüberblick
 
 - Version: v2.0.1
