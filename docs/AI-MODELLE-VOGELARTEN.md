@@ -124,7 +124,11 @@ hailo optimize --onnx model.onnx --hw-arch hailo8 --output-dir ./optimized/
 
 ### Option 3: Vortrainierte Vogelarten-Modelle
 
-**Beliebte Vogelarten-Erkennungsmodelle**:
+**Empfohlene Hugging Face Modelle**:
+- 🔗 **[kamera-linux/german-bird-classifier-v2](https://huggingface.co/kamera-linux/german-bird-classifier-v2)** ⭐ **Empfohlen** - Neuestes Modell mit verbesserter Genauigkeit für deutsche Vogelarten
+- 🔗 **[kamera-linux/german-bird-classifier](https://huggingface.co/kamera-linux/german-bird-classifier)** - Erste Version (Legacy)
+
+**Weitere Vogelarten-Erkennungsmodelle**:
 - **BirdNET**: Speziell für Vogelarten entwickelt
 - **Merlin Bird ID**: Cornell Lab's AI-Modell  
 - **iNaturalist Vision**: Unterstützt viele Vogelarten

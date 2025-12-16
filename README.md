@@ -176,6 +176,30 @@ vogel-trainer test --model best.pt --test-dir ./test-images
 
 📦 **Repository**: [vogel-model-trainer](https://github.com/kamera-linux/vogel-model-trainer)
 
+#### 🤖 **Vortrainierte Vogelarten-Modelle**
+
+**Empfohlene Hugging Face Modelle für deutsche Vogelarten:**
+
+🔗 **[kamera-linux/german-bird-classifier-v2](https://huggingface.co/kamera-linux/german-bird-classifier-v2)** ⭐ **Empfohlen**
+- Neueste Version mit verbesserter Genauigkeit
+- Trainiert auf 8 häufigen deutschen Vogelarten
+- Optimiert für Vogelfütterungen
+
+🔗 **[kamera-linux/german-bird-classifier](https://huggingface.co/kamera-linux/german-bird-classifier)** (v1, Legacy)
+- Erste Version des Modells
+- Weiterhin funktional, aber v2 wird empfohlen
+
+```bash
+# Verwendung mit vogel-model-trainer
+vogel-trainer classify --species-model kamera-linux/german-bird-classifier-v2 ~/images/
+
+# Verwendung mit vogel-video-analyzer
+pip install vogel-video-analyzer
+vogel-analyze --identify-species --species-model kamera-linux/german-bird-classifier-v2 video.mp4
+```
+
+Mehr Informationen: [`docs/AI-MODELLE-VOGELARTEN.md`](docs/AI-MODELLE-VOGELARTEN.md)
+
 #### 📋 **Alternative: Lokale Training-Tools (Legacy)**
 
 📋 **Manuelle Anleitung**: [`docs/ANLEITUNG-EIGENES-AI-MODELL.md`](docs/ANLEITUNG-EIGENES-AI-MODELL.md)
