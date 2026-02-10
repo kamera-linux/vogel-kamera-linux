@@ -1,0 +1,85 @@
+---
+name: Feature Request
+description: Suggest an idea for vogel-kamera-linux
+title: "[FEATURE] "
+labels: ["enhancement", "feature-request"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide details below to help us improve the bird camera system.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: Clear description of the feature you'd like to see
+      placeholder: >
+        Example: Add the ability to detect and track multiple bird species simultaneously
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use Case
+      description: Explain why this feature would be useful
+      placeholder: >
+        Example: This would allow bird watchers to monitor biodiversity at a specific location
+        and generate statistics about visiting species...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution (Optional)
+      description: If you have an idea on how to implement this, share it
+      placeholder: "Example: Enhance the YOLO model with multi-class detection or add a species database..."
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What aspect of vogel-kamera-linux does this relate to?
+      options:
+        - Camera / Recording
+        - AI Detection / Recognition
+        - Video Processing
+        - Data Export / Analysis
+        - Remote Control
+        - User Interface / CLI
+        - Configuration
+        - Documentation
+        - Performance
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: considerations
+    attributes:
+      label: Have you considered...
+      options:
+        - label: Are there alternative solutions or similar projects?
+          required: false
+        - label: Is this related to an existing issue?
+          required: false
+        - label: Would this require additional hardware?
+          required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other information, examples, or references
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Notes
+        - Features should align with vogel-kamera-linux's purpose: bird observation and monitoring
+        - We consider community feedback seriously
+        - Performance and stability are important for remote monitoring
+        - Raspberry Pi hardware limitations should be considered

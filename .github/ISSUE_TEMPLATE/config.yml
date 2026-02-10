@@ -1,0 +1,15 @@
+---
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/kamera-linux/vogel-kamera-linux#readme
+    about: Check our comprehensive documentation and README first
+  - name: Architecture & Design
+    url: https://github.com/kamera-linux/vogel-kamera-linux/blob/main/docs/ARCHITEKTUR.md
+    about: Understand the system architecture and components
+  - name: GitHub Discussions
+    url: https://github.com/kamera-linux/vogel-kamera-linux/discussions
+    about: Ask questions and share ideas with the community
+  - name: Security Issues
+    url: https://github.com/kamera-linux/vogel-kamera-linux/security
+    about: Report security vulnerabilities responsibly

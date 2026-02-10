@@ -1,0 +1,73 @@
+---
+name: Question / Support
+description: Ask a question or seek help with vogel-kamera-linux
+title: "[QUESTION] "
+labels: ["question", "documentation"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about vogel-kamera-linux? We're happy to help! Please
+        check the documentation and existing issues first.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: "Example: How do I set up the camera on a Raspberry Pi for the first time?"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      description: What is your question about?
+      options:
+        - Installation / Setup
+        - Getting Started
+        - Camera Configuration
+        - AI / Bird Detection
+        - Remote Control / SSH
+        - Video Processing
+        - Data Management / Export
+        - Troubleshooting
+        - Performance
+        - Compatibility
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What Have You Tried?
+      description: What solutions or documentation have you already checked?
+      placeholder: |
+        - Checked README.md and DOKUMENTATION-UEBERSICHT.md
+        - Reviewed ARCHITEKTUR.md
+        - Checked existing issues and discussions
+        - Tried running with --help flag
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any relevant system information, error messages, or logs
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Resources
+        - 📖 [Main Documentation](https://github.com/kamera-linux/vogel-kamera-linux#readme)
+        - 📚 [Documentation Overview](https://github.com/kamera-linux/vogel-kamera-linux/blob/main/docs/DOKUMENTATION-UEBERSICHT.md)
+        - 🏗️ [Architecture Guide](https://github.com/kamera-linux/vogel-kamera-linux/blob/main/docs/ARCHITEKTUR.md)
+        - 🤖 [AI Model Guide](https://github.com/kamera-linux/vogel-kamera-linux/blob/main/docs/ANLEITUNG-EIGENES-AI-MODELL.md)
+        - 🔒 [Security Information](https://github.com/kamera-linux/vogel-kamera-linux/blob/main/docs/SECURITY.md)
+        - 💬 [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+        - 🐛 [Known Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
+        - 📺 [YouTube Channel](https://www.youtube.com/@vogel-kamera-linux)
