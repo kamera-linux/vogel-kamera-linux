@@ -65,8 +65,8 @@ python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**🐦 Vogel-Beobachtung mit KI: Meisen, Rotkehlchen un...**](https://www.youtube.com/watch?v=1Mrq4oIzckI) | 30.11.2025 | 2:38 | 136 | 1 | 2 |
-| [**3 Vogelarten live am Futterhaus - KI erkennt Kohlm...**](https://www.youtube.com/watch?v=uZm4Ao9JHoo) | 24.11.2025 | 3:10 | 157 | 5 | 1 |
+| [**🐦 Vogel-Beobachtung mit KI: Meisen, Rotkehlchen un...**](https://www.youtube.com/watch?v=1Mrq4oIzckI) | 30.11.2025 | 2:38 | 137 | 1 | 2 |
+| [**3 Vogelarten live am Futterhaus - KI erkennt Kohlm...**](https://www.youtube.com/watch?v=uZm4Ao9JHoo) | 24.11.2025 | 3:10 | 158 | 5 | 1 |
 | [**🐦 Wunderschönes Rotkehlchen beim Fressen \| 4K Voge...**](https://www.youtube.com/watch?v=rWkWFUeVK0o) | 31.10.2025 | 1:58 | 56 | 5 | 0 |
 | [**🐦 Blaumeise beim Fressen \| KI-Kamera 120fps Zeitlu...**](https://www.youtube.com/watch?v=ew3l12TSn5k) | 28.10.2025 | 2:25 | 87 | 8 | 0 |
 | [**🐦 Sumpfmeise in Zeitlupe \| Futtersuche im Vogelhau...**](https://www.youtube.com/watch?v=dORu9qs8KSA) | 20.10.2025 | 2:46 | 47 | 6 | 1 |
@@ -86,7 +86,7 @@ python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 | [**Vogelhaus mit Kernbeißer, Blaumeise, Rotkehlchen, ...**](https://www.youtube.com/watch?v=MKb3yUKS_ww) | 09.04.2025 | 4:28 | 86 | 7 | 0 |
 | [**Vogelhaus mit Blaumeise, Rotkehlchen, Haussperling...**](https://www.youtube.com/watch?v=K0FhU73F6jo) | 08.04.2025 | 5:17 | 106 | 7 | 0 |
 
-*Automatisch aktualisiert: 11.02.2026 07:18 Uhr (Winterzeit (MEZ))*
+*Automatisch aktualisiert: 12.02.2026 07:17 Uhr (Winterzeit (MEZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## ✨ Features
