@@ -4,15 +4,15 @@
 
 ![Vogel-Kamera-Linux Banner](docs/pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
 
-## Release v2.0.1 — Kurzüberblick
+## Release v2.0.2 — Kurzüberblick
 
-- Version: v2.0.1
-- Highlights: Cinema 4K (4096x2160 @ 25fps), AI-HAD Audio-Modus, neue CLI-Modi (`normal`, `slowmo`, `4k`, `ai-had`), verbesserte SSH-Resilienz und automatische Video-Synchronisation nach Konvertierung.
-- Wichtige Fixes: ISO-Wochenkorrektur, Pfad-Extraktion, automatische SSH-Wiederverbindung, Fix für `pipefail`-bedingte Skript-Beendigungen.
+- Version: v2.0.2
+- Highlights: YOLO26 Migration (`yolo26n.pt` statt `yolov8n.pt`), verbesserte Erkennungsgenauigkeit, `ultralytics>=26.0.0`.
+- Wichtige Fixes: CPU/RAM-Anzeige (falsche PID, Locale-Komma), Kamera-Start-Konflikt durch rpicam-vid-Watchdog, SSH-Timeout-Verbesserungen.
 
-Vollständige Release-Notes: [`releases/RELEASE_NOTES_v2.0.1.md`](releases/RELEASE_NOTES_v2.0.1.md)
+Vollständige Release-Notes: [`releases/v2.0.2/RELEASE_NOTES_v2.0.2.md`](releases/v2.0.2/RELEASE_NOTES_v2.0.2.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.0.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.0.0)
+[![Version](https://img.shields.io/badge/Version-v2.0.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.0.2)
 [![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](docs/TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
@@ -287,7 +287,7 @@ vogel-kamera-linux/
 │   ├── release_workflow.py                                     # Release-Automatisierung
 │   └── update_version.py                                       # Versions-Update-Skript
 ├── docs/                                                         # 📚 Dokumentation
-│   ├── CHANGELOG.md                                             # Versionshistorie (v2.0.0)
+│   ├── CHANGELOG.md                                             # Versionshistorie (v2.0.2)
 │   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur mit Mermaid-Diagrammen *(v1.2.0)*
 │   ├── PROJEKT-REORGANISATION.md                                # Projekt-Reorganisations-Dokumentation
 │   ├── TRIXIE-MIGRATION.md                                      # Trixie Migration Guide
@@ -331,9 +331,8 @@ vogel-kamera-linux/
 │   └── requirements-pi.txt                                      # Python-Dependencies für Raspberry Pi
 ├── releases/                                                     # 📋 Release-Dokumentation
 │   ├── README.md                                                # Release-Übersicht
-│   ├── RELEASE_NOTES_v1.2.0.md                                  # Aktuelle Release Notes *(v1.2.0)*
 │   └── vX.X.X/                                                  # Versionierte Release-Archive
-│       └── RELEASE_NOTES_vX.X.X.md                              # Archivierte Release-Notes
+│       └── RELEASE_NOTES_vX.X.X.md                              # Archivierte Release-Notes (v2.0.2, v2.0.1, v2.0.0, ...)
 ├── assets/                                                       # 📸 QR-Codes & Medien
 │   ├── qr-youtube-channel.png                                   # YouTube-Kanal QR-Code
 │   ├── qr-playlists.png                                         # Playlists QR-Code  
@@ -452,7 +451,7 @@ python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul
 ### 5. Version prüfen
 ```bash
 python raspberry-pi-scripts/unified-camera-monitor.py --version
-# Ausgabe: Vogel-Kamera-Linux v2.0.0
+# Ausgabe: Vogel-Kamera-Linux v2.0.2
 ```
 
 ## 🎯 Unified Camera Monitor System (v2.0)
@@ -867,7 +866,7 @@ Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentie
 
 ## 🔖 Versionen
 
-- **Aktuelle Version:** v1.3.1
+- **Aktuelle Version:** v2.0.2
 - **Branch:** `main` (Trixie)
 - **Legacy Branch:** `bookworm-legacy` (v1.2.x für Debian 12)
 - **Alle Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)

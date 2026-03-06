@@ -4,23 +4,27 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.0.0** - "Unified Camera Monitor & Multilingual Documentation"
+**Version 2.0.2** - "YOLO26 & Monitoring Improvements"
 - **Branch:** main
-- **Release Notes:** [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md)
-- **Release Date:** 2025-11-11
-- **Architecture:** Unified Single-Process Design (direkt auf Raspberry Pi)
-- **Breaking Changes:** 
-  - Legacy Remote-Control Scripts archiviert → `legacy/`
-  - Auto-Trigger System archiviert → `legacy/kamera-auto-trigger/`
-  - Network-Tools archiviert → `legacy/network-tools/`
-  - CLI-Parameter statt .env-Dateien
-- **Features:** 
-  - 🎯 Unified Camera Monitor (kein SSH/TCP-Overhead)
-  - 🚦 Traffic Light System Monitoring (🟢🟡🔴)
-  - 🔥 Auto-Shutdown >75°C
-  - 🌐 Multilingual Docs (English, Deutsch, 日本語)
+- **Release Notes:** [v2.0.2/RELEASE_NOTES_v2.0.2.md](v2.0.2/RELEASE_NOTES_v2.0.2.md)
+- **Release Date:** 2026-03-06
+- **Features:**
+  - 🤖 YOLO26 Migration (`yolo26n.pt`, `ultralytics>=26.0.0`)
+  - 🐛 CPU/RAM-Anzeige-Fix (korrekte PID-Erkennung, LC_ALL=C)
+  - 🐛 Kamera-Start-Konflikt behoben (rpicam-vid-Watchdog)
+  - 🔧 SSH-Timeout erhöht, Status-Reporter alle 5 Minuten aktiv
 - **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
-- **Migration:** Siehe [legacy/README.md](../legacy/README.md)
+
+## 📦 Vorherige Versionen
+
+### Version 2.0.1 - "Stability & CLI Enhancements"
+- **Release Notes:** [v2.0.1/RELEASE_NOTES_v2.0.1.md](v2.0.1/RELEASE_NOTES_v2.0.1.md)
+- **Release Date:** 2025-11-16
+- **Features:** Cinema 4K, AI-HAD Modus, CLI-Parameter, automatische Video-Synchronisation
+- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
+
+### Version 2.0.0 - "Unified Camera Monitor & Multilingual Documentation"
+- **Release Notes:** [v2.0.0/RELEASE_NOTES_v2.0.0.md](v2.0.0/RELEASE_NOTES_v2.0.0.md)
 
 ## 📚 Archivierte Versionen (Legacy Remote-Control)
 
@@ -102,7 +106,7 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 - **Zurück zum Projekt:** [../README.md](../README.md)
 - **Changelog:** [../docs/CHANGELOG.md](../docs/CHANGELOG.md) 
-- **Aktueller Release:** [../RELEASE_NOTES_v1.1.8.md](../RELEASE_NOTES_v1.1.8.md)
+- **Aktueller Release:** [v2.0.2/RELEASE_NOTES_v2.0.2.md](v2.0.2/RELEASE_NOTES_v2.0.2.md)
 
 ---
 
