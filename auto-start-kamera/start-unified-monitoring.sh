@@ -353,16 +353,16 @@ follow_event_log() {
     while true; do
         sleep 2
         
-        # Hole neue Log-Zeilen (mit schnellem Timeout für Monitoring)
-        local current_lines=$(timeout 3 ssh -i "$SSH_KEY" -o ConnectTimeout=2 \
+        # Hole neue Log-Zeilen
+        local current_lines=$(timeout 8 ssh -i "$SSH_KEY" -o ConnectTimeout=5 \
             "${SSH_USER}@${SSH_HOST}" "wc -l < $log_file 2>/dev/null || echo 0" 2>/dev/null)
         
         # Prüfe SSH-Erfolg
         if [ $? -ne 0 ] || [ -z "$current_lines" ]; then
             ssh_failures=$((ssh_failures + 1))
-            if [ $ssh_failures -eq 1 ]; then
+            if [ $ssh_failures -eq 3 ]; then
                 echo -e "${YELLOW}⚠️  SSH-Verbindung unterbrochen, versuche Wiederverbindung...${NC}"
-            elif [ $ssh_failures -gt 3 ]; then
+            elif [ $ssh_failures -gt 5 ]; then
                 echo -e "${YELLOW}⚠️  Wiederverbindung dauert länger ($ssh_failures Fehlversuche)...${NC}"
             fi
             
@@ -519,10 +519,26 @@ watch_for_videos() {
 
 # Status-Reporter (deaktiviert - Monitor gibt eigenen Status aus)
 status_reporter() {
-    # Monitor gibt alle 5 Minuten eigenen Status-Report mit Ampeln aus
-    # Dieser Wrapper-Status ist nicht mehr nötig
+    # Alle 5 Minuten Kurzstatus ausgeben
     while true; do
-        sleep 3600  # Stündlich aufwachen aber nichts tun
+        sleep $STATUS_INTERVAL
+        echo ""
+        echo "====================================================================="
+        echo "🕐 STATUS-UPDATE ($(date '+%H:%M:%S'))"
+        echo "====================================================================="
+        if ssh_exec "ps aux | grep 'python3.*unified-camera-monitor' | grep -v 'bash\|grep' > /dev/null 2>&1"; then
+            PID=$(ssh_exec "ps aux | grep 'python3.*unified-camera-monitor' | grep -v 'bash\|grep' | awk '{print \$2}' | head -1" 2>/dev/null | tr -d '[:space:]' || echo "?")
+            CPU=$(ssh_exec "LC_ALL=C ps -p ${PID} -o %cpu= 2>/dev/null | tr -d '[:space:]'" || echo "?")
+            MEM=$(ssh_exec "LC_ALL=C ps -p ${PID} -o %mem= 2>/dev/null | tr -d '[:space:]'" || echo "?")
+            TEMP=$(ssh_exec "vcgencmd measure_temp 2>/dev/null | grep -oP '[0-9]+\.[0-9]+' || echo '?'")
+            echo -e "${GREEN}✅ Monitor läuft | CPU: ${CPU}% | RAM: ${MEM}% | Temp: ${TEMP}°C${NC}"
+            echo "📋 Letzte Log-Zeile:"
+            ssh_exec "tail -1 /tmp/unified-camera-monitor.log 2>/dev/null" || true
+        else
+            echo -e "${RED}❌ Monitor-Prozess nicht mehr aktiv!${NC}"
+        fi
+        echo "====================================================================="
+        echo ""
     done
 }
 
@@ -615,6 +631,11 @@ echo ""
 # Initialisiere Video-Timestamp (nicht mehr nötig, aber für Legacy)
 ssh_exec "touch /tmp/last_video_check" || true
 
+# Alte Kamera-Prozesse auf dem Pi bereinigen
+echo -n "🧹 Alte Kamera-Prozesse bereinigen... "
+ssh_exec "pkill -f 'start-tcp-preview-watchdog' 2>/dev/null; sleep 1; pkill -9 -f 'rpicam' 2>/dev/null; pkill -9 -f 'unified-camera-monitor.py' 2>/dev/null; pkill -9 -f 'libcamera' 2>/dev/null; sleep 2" || true
+echo -e "${GREEN}✅${NC}"
+
 # Starte Remote Monitor
 echo -e "${CYAN}🚀 Starte Remote Monitor...${NC}"
 if "$SCRIPT_DIR/remote-unified-control.sh" --start "$MODE"; then
@@ -661,14 +682,27 @@ echo "✅ SYSTEM BEREIT - Alle Komponenten gestartet"
 echo "======================================================================"
 echo ""
 
-# Warte kurz damit Monitor initialisiert ist
-sleep 3
+# Warte bis Monitor initialisiert ist
+echo -e "${CYAN}⏳ Warte auf Monitor-Start...${NC}"
+sleep 5
 
 # Zeige initialen Status vom Monitor
 echo "======================================================================"
 echo "📊 INITIALER STATUS-REPORT"
 echo "======================================================================"
-ssh_exec "tail -20 /tmp/unified-camera-monitor.log 2>/dev/null | grep -E '(Laufzeit|Aufnahmen|Frames|FPS|Festplatte|Überwache)' | tail -5" || echo "Monitor startet noch..."
+# Prozess-Status prüfen
+if ssh_exec "ps aux | grep 'python3.*unified-camera-monitor' | grep -v 'bash\|grep' > /dev/null 2>&1"; then
+    PID=$(ssh_exec "ps aux | grep 'python3.*unified-camera-monitor' | grep -v 'bash\|grep' | awk '{print \$2}' | head -1" 2>/dev/null | tr -d '[:space:]' || echo "?")
+    CPU=$(ssh_exec "LC_ALL=C ps -p ${PID} -o %cpu= 2>/dev/null | tr -d '[:space:]'" || echo "?")
+    MEM=$(ssh_exec "LC_ALL=C ps -p ${PID} -o %mem= 2>/dev/null | tr -d '[:space:]'" || echo "?")
+    echo -e "${GREEN}✅ Monitor läuft (PID: ${PID} | CPU: ${CPU}% | RAM: ${MEM}%)${NC}"
+else
+    echo -e "${RED}❌ Monitor-Prozess nicht gefunden! (Kamera-Fehler? → Logs prüfen)${NC}"
+fi
+# Letzte Log-Zeilen
+echo ""
+echo "📋 Letzte Log-Zeilen:"
+ssh_exec "tail -10 /tmp/unified-camera-monitor.log 2>/dev/null" || echo "(Noch keine Logs)"
 echo "======================================================================"
 echo ""
 

@@ -165,8 +165,8 @@ class UnifiedCameraMonitor:
                 logger.info(f"Lade Model: {self.model_path}")
                 self.model = YOLO(self.model_path)
             else:
-                logger.info("Lade YOLOv8n (Standard)")
-                self.model = YOLO("yolov8n.pt")
+                logger.info("Lade YOLO26n (Standard)")
+                self.model = YOLO("yolo26n.pt")
             
             logger.info("✅ YOLO-Model geladen")
             return True

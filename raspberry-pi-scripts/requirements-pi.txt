@@ -22,7 +22,7 @@
 # ============================================================================
 
 # YOLOv8 AI Model (wird via pip installiert)
-ultralytics>=8.0.0
+ultralytics>=26.0.0
 
 # Optional: Entwicklung & Testing
 # pytest>=7.0.0
