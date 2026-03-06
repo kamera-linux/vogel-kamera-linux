@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.0.1"
-__version_info__ = (2, 0, 1)
+__version__ = "2.0.2"
+__version_info__ = (2, 0, 2)
 
 # Release Information
-RELEASE_NAME = "Stability & CLI Enhancements"
-RELEASE_DATE = "2025-11-16"
+RELEASE_NAME = "YOLO26 & Monitoring Improvements"
+RELEASE_DATE = "2026-03-06"
 RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20251116-1"
-GIT_TAG = "v2.0.1"
+BUILD_NUMBER = "20260306-1"
+GIT_TAG = "v2.0.2"
 
 # Feature Flags
 FEATURES = {
@@ -42,6 +42,8 @@ FEATURES = {
     "ai_had_mode": True,  # New in v2.0.1 - AI-HAD with audio detection
     "auto_video_sync": True,  # New in v2.0.1 - Immediate video sync after conversion
     "ssh_resilience": True,  # New in v2.0.1 - Enhanced SSH error handling
+    "yolo26_detection": True,  # New in v2.0.2 - YOLO26 model (yolo26n.pt)
+    "monitoring_improvements": True,  # New in v2.0.2 - CPU/RAM display, SSH stability
     "web_interface": False,  # Planned for future
     "mobile_app": False,  # Planned for future
 }
@@ -52,7 +54,7 @@ SUPPORTED_PI_MODELS = ["4B", "5"]
 REQUIRED_PACKAGES = [
     "paramiko>=3.0.0",
     "opencv-python>=4.8.0",
-    "ultralytics>=8.0.0",
+    "ultralytics>=26.0.0",
     "qrcode[pil]>=7.4.0",
     "python-dotenv>=1.0.0"
 ]

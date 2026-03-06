@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.append('git-automation/')
 from git_automation import SecureGitAutomation
 
-def complete_release_workflow(version="1.1.4"):
+def complete_release_workflow(version="2.0.2"):
     """Vollständiger Release-Workflow"""
     print(f"🚀 Vollständiger Release-Workflow für v{version}")
     print("=" * 60)

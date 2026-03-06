@@ -5,6 +5,43 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.2] - 2026-03-06 🤖 YOLO26 & Monitoring Improvements
+
+### ✨ Hinzugefügt
+- **🤖 YOLO26 Migration:**
+  - Wechsel von YOLOv8n auf YOLO26n für verbesserte Erkennungsgenauigkeit
+  - Neues Modell: `yolo26n.pt` (5.3 MB, ~gleiche Größe wie YOLOv8n)
+  - `ultralytics>=26.0.0` als Mindestanforderung
+  - API vollständig kompatibel mit YOLOv8 (kein Code-Änderungsaufwand)
+
+### 🐛 Behoben
+- **CPU/RAM-Anzeige im Monitoring:**
+  - `pgrep -f` lieferte Bash-Wrapper-PID statt Python-Prozess-PID
+  - Fix: `ps aux | grep 'python3.*unified-camera-monitor' | grep -v 'bash|grep'`
+  - Korrekte Werte: z.B. 151% CPU, 5.6% RAM statt 0.0%
+  - Locale-Fix: `LC_ALL=C` für `ps`-Ausgaben (deutsches Komma-Format verhindert korrektes Parsen)
+- **Kamera-Start-Konflikt:**
+  - `rpicam-vid` blockierte Kamera-Init (`__init__ sequence did not complete`)
+  - Ursache: `start-tcp-preview-watchdog.sh` respawnte `rpicam-vid` beim Start
+  - Fix: Watchdog + rpicam-vid + libcamera werden vor Monitor-Start beendet
+
+### 🔧 Verbessert
+- **SSH-Stabilität im Monitoring-Skript:**
+  - Timeout erhöht: 2s/3s → 5s/8s für zuverlässigere Pi-Kommunikation
+  - Warnung erst nach 3 aufeinanderfolgenden Fehlversuchen (war: 1)
+- **Status-Reporter aktiviert:**
+  - Alle 5 Minuten CPU/RAM/Temperatur-Ausgabe im Terminal
+  - War vorher nicht aktiv (Sleep 3600s ohne Ausgabe)
+- **Submodule aktualisiert:**
+  - `ai-training-tools/vogel-model-trainer` auf v0.1.28
+
+### 🔗 Commits
+```
+912b0ae - feat: YOLO26 Migration und Monitoring-Verbesserungen
+```
+
+---
+
 ## [2.0.1] - 2025-11-16 🐛 Stability & CLI Enhancements
 
 ### ✨ Hinzugefügt
