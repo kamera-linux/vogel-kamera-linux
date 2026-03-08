@@ -69,43 +69,39 @@ SSH_HOST=raspberrypi-5-ai-had
 ### Grundlegende Befehle
 
 ```bash
+# Test-Modus: 5 Sekunden (zum Testen der Verbindung)
+python3 unified_monitor_client.py test
+
 # Standard-Modus (1920x1080 @ 30fps + Audio)
-./unified_monitor_client.py normal
+python3 unified_monitor_client.py normal
 
-# Zeitlupe-Modus (1536x864 @ 120fps)
-./unified_monitor_client.py slowmo
+# Zeitlupe-Modus (60fps @ 1536x864)
+python3 unified_monitor_client.py slowmo
 
-# Cinema 4K (4096x2160 @ 25fps + Audio)
-./unified_monitor_client.py 4k
-
-# AI-HAD mit Audio-Erkennung (1920x1080 @ 30fps)
-./unified_monitor_client.py ai-had
+# Cinema 4K (4096x2160 @ 30fps + Audio, rpicam-vid)
+python3 unified_monitor_client.py 4k
 ```
 
 ### Mit Parametern
 
 ```bash
 # Kürzerer Cooldown zwischen Aufnahmen
-./unified_monitor_client.py slowmo --cooldown 5
+python3 unified_monitor_client.py slowmo --cooldown 5
+
+# Benutzerdefinierte Aufnahmedauer
+python3 unified_monitor_client.py 4k 60  # 60 Sekunden statt default
 
 # Höherer Erkennungs-Schwellenwert
-./unified_monitor_client.py 4k --threshold 0.7
+python3 unified_monitor_client.py normal --threshold 0.7
 
-# Audio-Erkennung mit niedrigerem Schwellenwert
-./unified_monitor_client.py ai-had --audio-threshold 0.2
-
-# Alle Parameter kombiniert
-./unified_monitor_client.py ai-had \
-  --threshold 0.6 \
-  --cooldown 10 \
-  --trigger 1.5 \
-  --audio-threshold 0.25
+# Verbose-Logging für Debugging
+python3 unified_monitor_client.py 4k --verbose
 ```
 
 ### Hilfe anzeigen
 
 ```bash
-./unified_monitor_client.py --help
+python3 unified_monitor_client.py --help
 ```
 
 ## Architektur
@@ -143,34 +139,41 @@ Robuste SSH-Verwaltung mit:
 - Semantische Versionsvergleiche
 
 #### `monitors.py`
-Drei parallele Monitoring-Threads:
+Drei parallele Monitoring-Threads mit v2.1.0 Features:
 
 1. **LogMonitor** – Live-Log-Tailing
-   - Zeigt wichtige Events in Echtzeit
-   - Filtert nach Recording-Status
-   - Verfolgt Video-Konvertierungen
+   - Zeigt wichtige Events in Echtzeit (Audio/Video Sync Status)
+   - Filtert nach Recording-Status mit ffmpeg-Integration
+   - Verfolgt Audio/Video Merge-Operationen
+   - rpicam-vid Parameter-Verarbeitung (4K, Rotation, Codec)
 
 2. **VideoWatcher** – Video-Synchronisation
-   - Scannt Remote-Verzeichnisse
-   - Synchronisiert neue Videos via rsync
+   - Scannt Remote-Verzeichnisse auf neue MP4-Dateien
+   - Synchronisiert komplette Aufnahmen via rsync
    - Robust gegen fehlende/unvollständige Aufnahmen
+   - Wartet auf ffmpeg-Finalisierung vor Transfer
 
-3. **StatusReporter** – Periodische Berichte
-   - Monitor-Prozess Status
-   - CPU/RAM/Disk-Nutzung
-   - Letzte Log-Zeilen
+3. **StatusReporter** – Periodische Berichte (5 Minuten)
+   - Unified-Monitor-Prozess Status und Thread-Info
+   - CPU/RAM/Disk-Nutzung auf Raspberry Pi
+   - Letzte 5 Log-Zeilen mit Timestamps
 
-## Unterschiede zu Bash-Version
+## Python Client vs. Bash (Legacy)
 
-| Feature | Bash | Python |
+**Die Python-Version ersetzt die alte Bash-basierte `start-unified-monitoring.sh`:**
+
+| Feature | Bash (Legacy) | Python (v2.1.0) |
 |---------|------|--------|
-| **grep-Parsing** | ❌ Fehleranfällig (Whitespace/Newlines) | ✅ Robustes String-Parsing |
-| **SSH-Fehlerbehandlung** | ⚠️ Einfache Retries | ✅ Strukturierte Retry-Logik |
-| **Versionsvergleich** | 🔄 Shell-basiert | ✅ Semantisch korrekt |
-| **Threading** | 🔄 BGP + race conditions | ✅ Thread-sicher mit `threading` |
-| **Performance** | ⚠️ Viele Subshells | ✅ Direkte Ausführung |
-| **Fehler-Debugging** | 😰 Shell-Traces schwer zu lesen | ✅ Strukturiertes Logging |
-| **Typ-Sicherheit** | ❌ Keine | ✅ Python Type-Hints |
+| **Log-Parsing** | ❌ Fehleranfällig (Whitespace-Verlust) | ✅ Robustes String-Parsing mit Regex |
+| **SSH-Fehlerbehandlung** | ⚠️ Einfache Retries | ✅ Strukturierte Retry-Logik mit Exponential Backoff |
+| **Audio/Video Sync Detection** | ❌ Nicht sichtbar | ✅ Zeigt ffmpeg -fflags +genpts Integration |
+| **Threading/Parallelisierung** | ⚠️ BGP + Race Conditions | ✅ Sichere Threading mit Locks |
+| **Performance** | ⚠️ Viele Subshells | ✅ Direkte Prozess-Verwaltung |
+| **Fehler-Debugging** | 😰 Shell-Stack-Traces unlesbar | ✅ Klare Python Exceptions + Logging |
+| **Typ-Sicherheit** | ❌ Dynamisch, keine Validierung | ✅ Type-Hints für IDE-Support |
+| **rpicam-vid Parameter** | ⚠️ Limited (nur basic Optionen) | ✅ Alle Parameter (4K, Rotation 180°, Codec, etc.) |
+| **Video-Transfer** | 🔄 rsync mit einfacher Logik | ✅ rsync mit Completion-Checks |
+| **remote-unified-control.sh** | 🔄 Legacy Shell-Wrapper | ✅ Vollständige Python-Integration |
 
 ## Debugging
 
@@ -224,30 +227,38 @@ ssh -i ~/.ssh/id_rsa_pi pi_user@raspberry-pi-monitor \
   "cd ~/vogel-kamera-linux/unified-monitor-client && pip install -r requirements.txt"
 ```
 
-### 3. Führe direkt vom Client aus
+### 3. Starte den Client von deinem Rechner aus
 
 ```bash
-# Der Python-Client läuft auf DEINEM Rechner, nicht auf dem Pi!
-# Es orchestriert nur den Remote-Monitor
-python3 unified-monitor-client/unified_monitor_client.py 4k
+# Der Python-Client läuft auf DEINEM PC/Laptop, nicht auf dem Pi!
+# Er orchestriert nur die Remote-Aufnahme auf dem Pi
+cd unified-monitor-client
+python3 unified_monitor_client.py 4k
+
+# oder
+python3 unified_monitor_client.py slowmo --cooldown 10
 ```
 
-## Migration von Bash zu Python
+## Migration: Bash → Python (v2.1.0)
 
-### Alte Struktur (deprecated)
+**Alte Bash-basierte Methode (gelöscht):**
 ```bash
-./auto-start-kamera/start-unified-monitoring.sh 4k
+./auto-start-kamera/start-unified-monitoring.sh 4k  # ⛔ NICHT MEHR VORHANDEN
 ```
 
-### Neue Struktur (aktiv)
+**Neue Python-basierte Methode (aktiv):**
 ```bash
-./unified-monitor-client/unified_monitor_client.py 4k
+cd unified-monitor-client
+python3 unified_monitor_client.py 4k  # ✅ EMPFOHLEN
 ```
 
-**Nach Validierung:**
-- `auto-start-kamera/start-unified-monitoring.sh` – Löschen
-- `auto-start-kamera/remote-unified-control.sh` – Löschen
-- Bash-Helper-Scripts – Löschen
+**Status (v2.1.0):**
+- ✅ `unified-monitor-client/` – Aktiv & vollständig
+- ✅ `unified-monitor-client/unified_monitor_client.py` – Haupt-Client
+- ✅ `unified-monitor-client/setup_environment.py` – Automatisiertes Setup
+- ✅ `unified-monitor-client/diagnose_remote_system.py` – System-Diagnose
+- ❌ `auto-start-kamera/start-unified-monitoring.sh` – Gelöscht
+- ❌ `auto-start-kamera/remote-unified-control.sh` – Gelöscht (Funktionalität in Python integriert)
 
 ## Häufige Fehler
 
@@ -291,7 +302,33 @@ Same as parent project (Vogel-Kamera-Linux)
 
 ## Technischer Support
 
-1. Prüfe Logs: `tail -100 /tmp/unified-camera-monitor.log`
-2. Aktiviere Debug-Mode: `logging.basicConfig(level=logging.DEBUG)`
-3. Teste SSH manuell: `ssh pi_user@raspberry-pi-monitor 'echo OK'`
-4. Prüfe Kamera: `ssh pi_user@raspberry-pi-monitor 'libcamera-hello'`
+### Diagnose-Tools
+
+```bash
+# 1. System-Diagnose (Remote-Check)
+python3 diagnose_remote_system.py
+# → Zeigt Kamera-Status, Audio-Devices, Abhängigkeiten, etc.
+
+# 2. Remote Logs prüfen
+ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 'tail -50 /tmp/unified-camera-monitor.log'
+
+# 3. SSH-Verbindung testen
+ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 'echo OK && uname -a'
+
+# 4. Kamera & rpicam-vid testen
+ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 'rpicam-hello -t 2 --verbose'
+
+# 5. Audio-Devices prüfen
+ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 'arecord -l'
+```
+
+### Debug-Mode
+
+```bash
+# Verbose Output aktivieren
+python3 unified_monitor_client.py 4k --verbose
+
+# oder in der Python Shell
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```

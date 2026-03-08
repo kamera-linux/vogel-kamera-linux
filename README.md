@@ -4,18 +4,30 @@
 
 ![Vogel-Kamera-Linux Banner](docs/pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
 
-## Release v2.0.2 — Kurzüberblick
+## Release v2.1.0 — Audio/Video-Synchronisation & Professionelle Aufnahmen
 
-- Version: v2.0.2
-- Highlights: YOLO26 Migration (`yolo26n.pt` statt `yolov8n.pt`), verbesserte Erkennungsgenauigkeit, `ultralytics>=26.0.0`.
-- Wichtige Fixes: CPU/RAM-Anzeige (falsche PID, Locale-Komma), Kamera-Start-Konflikt durch rpicam-vid-Watchdog, SSH-Timeout-Verbesserungen.
+- **Version:** v2.1.0 (März 2026)
+- **🎙️ Highlights:** 
+  - **Audio/Video-Synchronisation** mit Thread-basierter Parallel-Aufnahme
+  - **USB-Audio-Stick** Integration (arecord, hw:0,0 Auto-Detection)
+  - **rpicam-vid statt libcamera** für bessere Codec-Kontrolle
+  - **Perfekte MP4-Merge** mit ffmpeg `-fflags +genpts`
+  - **Rotation 180°** Default (Vogelbild oben)
+  - **Cinema 4K** (4096x2160 @ 30fps)
+  - **Manual Recording** ohne AI für direkte Aufnahmen
+- **Wichtige Features:**
+  - ✅ Beide Streams (Video + Audio) exakt synchron
+  - ✅ Automatische USB-Audio-Erkennung
+  - ✅ Alle rpicam-vid Parameter konfigurierbar
+  - ✅ Slow-Motion Support (60fps)
+  - ✅ rsync Auto-Transfer zum Client
 
-Vollständige Release-Notes: [`releases/v2.0.2/RELEASE_NOTES_v2.0.2.md`](releases/v2.0.2/RELEASE_NOTES_v2.0.2.md)
+**Vollständige Release-Notes:** [`releases/v2.1.0/RELEASE_NOTES_v2.1.0.md`](releases/v2.1.0/RELEASE_NOTES_v2.1.0.md)  
+**Audio-Integration Changelog:** [`AUDIO-FIX-CHANGELOG.md`](AUDIO-FIX-CHANGELOG.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.0.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.0.2)
-[![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](docs/TRIXIE-MIGRATION.md)
-[![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
-[![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)
+[![Version](https://img.shields.io/badge/Version-v2.1.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.1.0)
+[![Audio Integration](https://img.shields.io/badge/Feature-Audio%20%2B%20Video%20Sync-informational)]()
+[![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-informational)](docs/TRIXIE-MIGRATION.md)
 [![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](LICENSE)
 
 > ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
@@ -26,39 +38,30 @@ Vollständige Release-Notes: [`releases/v2.0.2/RELEASE_NOTES_v2.0.2.md`](release
 
 **🐦 Professionelles Vogel-Beobachtungssystem mit KI-gestützter Objekterkennung**
 
-`vogel-kamera-linux` ist ein **Open-Source-Projekt** zur ferngesteuerten Überwachung von Vogelhäusern mittels Raspberry Pi 5 Kamera. Das System kombiniert hochauflösende Video-/Audio-Aufnahmen mit **YOLOv8 KI-Erkennung** für automatische Vogelerkennung und -aufzeichnung.
+`vogel-kamera-linux` ist ein **Open-Source-Projekt** zur ferngesteuerten Überwachung von Vogelhäusern mittels Raspberry Pi 5 Kamera. Das System kombiniert hochauflösende Video-/Audio-Aufnahmen mit **YOLO26n KI-Erkennung** für automatische Vogelerkennung und -aufzeichnung.
 
 ### 🚀 Quickstart
 ```bash
-# EMPFOHLEN: Unified Camera Monitor (direkt auf Raspberry Pi)
-python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
-
-# Oder via Wrapper vom Client-PC
-cd auto-start-kamera
-./start-unified-monitoring.sh slowmo
-
-# LEGACY: Alte Remote-Control Skripte (siehe legacy/README.md)
-python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-    --duration 5 --width 1920 --height 1080 --ai-modul on
+# 🎯 EMPFOHLEN: Unified Monitor Client (vom lokalen PC)
+cd unified-monitor-client
+python3 unified_monitor_client.py 4k      # Cinema 4K mit Audio
+python3 unified_monitor_client.py normal  # Standard HD
+python3 unified_monitor_client.py slowmo  # Zeitlupe 120fps
 ```
 
 > 📺 **Live-Demo:** [YouTube-Kanal](https://www.youtube.com/@vogel-kamera-linux) - Echte Aufnahmen vom vogel-kamera-linux System!
 
 ## 📖 Überblick
 
-**vogel-kamera-linux** ist ein vollständiges Remote-Kamera-System für Naturbeobachtung, entwickelt für **Raspberry Pi 5** mit Python 3.11+. Das Projekt kombiniert moderne Kamera-Hardware (IMX708) mit fortgeschrittener KI-Objekterkennung (YOLOv8) für automatische Vogelerkennung.
+**vogel-kamera-linux** ist ein vollständiges Remote-Kamera-System für Naturbeobachtung, entwickelt für **Raspberry Pi 5** mit Python 3.13+. Das Projekt kombiniert moderne Kamera-Hardware (IMX708) mit spezialisierter KI-Objekterkennung (YOLO26n) für automatische Vogelerkennung.
 
 **🎯 Hauptanwendung:** Ferngesteuerte Vogelhaus-Überwachung mit automatischer Aufnahme bei Vogel-Erkennung, inklusive HD-Video (bis 4K), Zeitlupe (120fps) und synchroner Audio-Aufzeichnung über USB-Mikrofon.
 
-### 🎬 YouTube-Kanal & Beispielaufnahmen
+### 📺 Live-Beispiele & YouTube-Kanal
 
 [![YouTube Channel](https://img.shields.io/badge/📺_YouTube_Kanal-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@vogel-kamera-linux)
 
-**Echte Aufnahmen vom vogel-kamera-linux System!** Sehen Sie die Kamera in Aktion mit Live-Vogelerkennung, Zeitlupen-Aufnahmen und 4K-Videos aus unserem Vogelhaus.
-
-**📱 QR-Code für mobilen Zugriff:**
-
-![YouTube QR Code](assets/qr-youtube-channel.png)
+**Echte Aufnahmen vom vogel-kamera-linux System** - Live-Vogelerkennung, Zeitlupen-Aufnahmen, 4K-Videos!
 
 <!-- YOUTUBE_VIDEOS_START -->
 **📺 Aktuelle Videos:**
@@ -93,7 +96,7 @@ python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 
 - 🎥 **Hochauflösende Videoaufnahme** (bis zu 4K)
 - 🎵 **Synchrone Audioaufnahme** über USB-Mikrofon
-- 🤖 **KI-Objekterkennung** mit YOLOv8 und eigenen Vogelarten-Modellen
+- 🤖 **KI-Objekterkennung** mit YOLO26n spezialisiert auf deutsche Vogelarten
 - 🎯 **Auto-Trigger System** mit automatischer Vogelerkennung *(Neu in v1.2.0)*
 - 📺 **Preview-Stream** (RTSP) für Live-Überwachung *(Neu in v1.2.0)*
 - 🌐 **Netzwerk-Diagnostics** für Performance-Analyse *(Neu in v1.2.0)*
@@ -121,60 +124,33 @@ python legacy/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 
 > 💡 **3D-Konstruktions-Dateien verfügbar!** Alle CAD-Dateien für den Nachbau finden Sie im [`3d-konstruktion/`](3d-konstruktion/) Verzeichnis
 
-## 🤖 KI-Objekterkennung & Vogelarten-AI
+## 🤖 KI-Objekterkennung mit YOLO26
 
-### Sofort verfügbar: Standard-Objekterkennung
+### Standard: YOLO26n Vogelarten-Erkennung
 ```bash
-# YOLOv8 mit allgemeiner Vogelerkennung
-python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-  --duration 5 --ai-modul on --ai-model yolov8
+# Automatische Integration in unified-monitor-client:
+cd unified-monitor-client
+python3 unified_monitor_client.py 4k
 ```
 
-### 🔄 Automatisches bird-species Modell
-```bash
-# Bird-species Modell - wird automatisch erstellt falls nicht vorhanden
-python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-  --duration 5 --ai-modul on --ai-model bird-species
-```
-**Optimierungen:**
-- ✅ Automatische Modellerstellung auf Remote-Host
-- 🎯 Fokus nur auf Vogel-Klasse (COCO 14)
-- ⚡ Niedrigere Schwelle (0.3) für bessere Sensitivität
-- 🔄 Temporaler Filter für stabile Erkennungen
+**YOLO26n Features:**
+- ✅ Spezialisiert auf deutsche Vogelarten
+- ✅ Hohe Genauigkeit (>90% für häufige Arten)
+- ✅ Optimiert für Raspberry Pi 5
+- ✅ Automatische Modellerstellung
+- ✅ Fokus nur auf Vogel-Klasse (COCO 14)
+- ⚡ Temporaler Filter für stabile Erkennungen
 
 ### Erweitert: Eigene Vogelarten-Modelle trainieren
 Das System unterstützt das Training eigener AI-Modelle für spezifische Vogelarten:
 
 🎯 **Häufige deutsche Gartenvögel**: Amsel, Blaumeise, Kohlmeise, Rotkehlchen, Buchfink...
 
-#### 🚀 **Empfohlen: vogel-model-trainer Package**
+#### 🚀 Erweiterte KI-Training (Optional)
 
-[![PyPI](https://img.shields.io/pypi/v/vogel-model-trainer)](https://pypi.org/project/vogel-model-trainer/)
-
-**Professionelles Training-Tool für Vogelarten-KI-Modelle** - einfach installierbar via pip!
-
-```bash
-# Installation
-pip install vogel-model-trainer
-
-# Quick Start - Automatisiertes Training
-vogel-trainer train --species blaumeise --video-dir ./videos --epochs 50
-
-# Kompletter Workflow
-vogel-trainer extract --video-dir ./videos --output-dir ./frames
-vogel-trainer organize --frames-dir ./frames --output-dir ./dataset
-vogel-trainer train --dataset-dir ./dataset --epochs 100
-vogel-trainer test --model best.pt --test-dir ./test-images
-```
-
-**Vorteile:**
-- ✅ Einfache Installation via pip
-- 🚀 Automatisierte Workflows (Extract → Organize → Train → Test)
-- 📊 Integrierte Evaluierung und Metriken
-- 🎯 >90% Genauigkeit für lokale Vogelarten
-- 🔄 Iteratives Training für kontinuierliche Verbesserung
-
-📦 **Repository**: [vogel-model-trainer](https://github.com/kamera-linux/vogel-model-trainer)
+Für spezialisierte Vogelarten-Modelle:
+- 📦 **vogel-model-trainer:** [PyPI](https://pypi.org/project/vogel-model-trainer/) - Professionelles Training-Tool
+- 📋 **Anleitung:** [`docs/ANLEITUNG-EIGENES-AI-MODELL.md`](docs/ANLEITUNG-EIGENES-AI-MODELL.md)
 
 #### 🤖 **Vortrainierte Vogelarten-Modelle**
 
@@ -218,59 +194,28 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 ## 🛠️ Voraussetzungen
 
 ### Hardware
-- Raspberry Pi 5 mit Kamera-Modul (empfohlen: IMX708 Wide)
+- Raspberry Pi 5 mit Kamera-Modul (IMX708 Wide empfohlen)
 - USB-Mikrofon für Audioaufnahme
 - Stabile Netzwerkverbindung (Gigabit LAN empfohlen)
 
-### Software (Raspberry Pi)
-- **Raspberry Pi OS Trixie (Debian 13)** - für diese Version ERFORDERLICH
-- Python 3.13+
-- rpicam-apps v1.9.1+
-- FFmpeg 7.1.2+
-- SSH-Zugang konfiguriert
+### Software
+- **Raspberry Pi OS Trixie (Debian 13)** - ERFORDERLICH
+- **Python 3.13+** auf beiden Systemen
+- **rpicam-apps v1.9.1+**, **FFmpeg 7.1.2+**, **ALSA** (Raspberry Pi)
+- **SSH-Zugang** konfiguriert
 
-> ⚠️ **Trixie-spezifisch:** Diese Version nutzt TCP Watchdog für Preview-Stream (FFmpeg 7.1.2 kompatibel)  
-> 📘 **Bookworm-Nutzer:** Verwenden Sie [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)
-
-### Software (Client-PC)
-- Python 3.8+
-- SSH-Client
-- Virtuelle Umgebung (empfohlen)
-
-### Python-Abhängigkeiten
-
-**Empfohlen: Virtuelle Umgebung verwenden**
+### Client-PC Setup
 ```bash
-
-# Virtuelle Umgebung erstellen
+# 1. Virtuelle Umgebung
 python3 -m venv venv
+source venv/bin/activate  # Linux/macOS oder venv\Scripts\activate (Windows)
 
-# Virtuelle Umgebung aktivieren
-source venv/bin/activate  # Linux/macOS
-# oder: venv\Scripts\activate  # Windows
-
-# Abhängigkeiten installieren
+# 2. Dependencies
 pip install -r config/requirements.txt
-```
 
-**Oder manuell:**
-```bash
-pip install paramiko scp tqdm python-dotenv qrcode[pil]
-```
-
-> 💡 **Hinweis:** Die Verwendung einer virtuellen Umgebung (`venv`) wird empfohlen, um Konflikte mit anderen Python-Projekten zu vermeiden.
-
-### Konfiguration laden
-Die Skripte laden automatisch Konfigurationsdaten aus der `.env`-Datei:
-```bash
-# 1. Kopieren Sie die Beispiel-Konfiguration
-cp python-skripte/.env.example python-skripte/.env
-
-# 2. Bearbeiten Sie die .env-Datei mit Ihren Daten  
-nano python-skripte/.env
-
-# 3. Testen Sie die Konfiguration
-python python-skripte/config.py
+# 3. Konfiguration (Hostname, User, SSH-Key)
+cd unified-monitor-client
+python3 setup_environment.py
 ```
 
 ## 📂 Projektstruktur
@@ -325,8 +270,6 @@ vogel-kamera-linux/
 │   └── README.md                                                # Auto-Start Dokumentation
 ├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v2.0)*
 │   ├── unified-camera-monitor.py                                # ⭐ HAUPT-SYSTEM: Vereinheitlichter Kamera-Monitor
-│   ├── start-unified-monitor.sh                                 # Lokaler Start-Wrapper
-│   ├── setup-unified-monitor.sh                                 # Installation & Setup
 │   ├── UNIFIED-MONITOR-README.md                                # Unified Monitor Dokumentation
 │   └── requirements-pi.txt                                      # Python-Dependencies für Raspberry Pi
 ├── releases/                                                     # 📋 Release-Dokumentation
@@ -396,477 +339,87 @@ vogel-kamera-linux/
     └── .env                                                     # Lokale Konfiguration (nicht im Git)
 ```
 
-## 🚀 Schnellstart
+## 🚀 Schnellstart: 3 Schritte
 
-### 1. Installation
+### 1️⃣ Repository klonen & Setup
 ```bash
-# Repository klonen
 git clone https://github.com/kamera-linux/vogel-kamera-linux.git
 cd vogel-kamera-linux
-
-# Virtuelle Umgebung erstellen (empfohlen)
-python3 -m venv venv
-source venv/bin/activate
-
-# Abhängigkeiten installieren
+python3 -m venv venv && source venv/bin/activate
 pip install -r config/requirements.txt
 ```
 
-### 2. Raspberry Pi Setup (Trixie)
+### 2️⃣ Unified Monitor Client konfigurieren
 ```bash
-# Auf Raspberry Pi - Python-Pakete installieren (apt, nicht pip!)
-sudo apt-get update
-sudo apt-get install -y python3-scp python3-paramiko python3-opencv python3-numpy
-
-# Kamera-Tools prüfen
-rpicam-hello --version  # Sollte v1.9.1+ sein
-ffmpeg -version         # Sollte 7.1.2+ sein
-
-# SSH-Zugang konfigurieren
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_rpi
-# Öffentlichen Schlüssel auf Raspberry Pi kopieren
+cd unified-monitor-client
+python3 setup_environment.py
+# → Raspberry Pi Hostname, Benutzer, SSH-Key eingeben
 ```
 
-### 3. Client-PC Konfiguration
+### 3️⃣ Erste Aufnahme starten
 ```bash
-# Konfiguration kopieren und anpassen
-cp python-skripte/.env.example python-skripte/.env
-nano python-skripte/.env
+# Test: 5 Sekunden
+python3 unified_monitor_client.py test
 
-# Konfiguration testen
-python python-skripte/config.py
+# Standard: 4K Cinema mit Audio
+python3 unified_monitor_client.py 4k
+
+# Zeitlupe: 120fps
+python3 unified_monitor_client.py slowmo
 ```
 
-### 4. Erste Aufnahme
-```bash
-# Audio-Test (1 Minute)
-python python-skripte/ai-had-audio-remote-param-vogel-libcamera-single.py --duration 1
-
-# Video mit KI (1 Minute, HD)
-python python-skripte/ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py --duration 1 --width 1920 --height 1080 --ai-modul on --no-stream-restart
-```
-
-### 5. Version prüfen
-```bash
-### 5. Version prüfen
-```bash
-python raspberry-pi-scripts/unified-camera-monitor.py --version
-# Ausgabe: Vogel-Kamera-Linux v2.0.2
-```
-
-## 🎯 Unified Camera Monitor System (v2.0)
-
-**NEU!** Vereinheitlichter Kamera-Prozess ohne SSH-Overhead - läuft direkt auf dem Raspberry Pi.
-
-### ✨ Vorteile
-- ✅ **Keine Kamera-Konflikte** - Ein einziger Prozess für alles
-- ✅ **Schnellere Reaktion** - Kein SSH/Netzwerk-Latenz
-- ✅ **Einfachere Bedienung** - CLI-Parameter statt .env-Dateien
-- ✅ **Live-Monitoring** - Heartbeat alle 30s, Status alle 5min mit Traffic Lights
-- ✅ **Auto-Shutdown** - Bei kritischer Temperatur (>75°C)
-
-### 📦 Installation auf Raspberry Pi
-
-```bash
-# 1. Python-Pakete installieren (WICHTIG: Mit apt, nicht pip!)
-sudo apt-get update
-sudo apt-get install -y \
-    python3-picamera2 \
-    python3-opencv \
-    python3-numpy \
-    python3-libcamera
-
-# 2. YOLOv8 installieren (via pip ist hier ok)
-pip install ultralytics --break-system-packages
-
-# 3. Repository klonen
-cd ~
-git clone https://github.com/kamera-linux/vogel-kamera-linux.git
-cd vogel-kamera-linux
-
-# 4. Skript ausführbar machen
-chmod +x raspberry-pi-scripts/unified-camera-monitor.py
-```
-
-### 🚀 Verwendung
-
-```bash
-# Standard-Modus (4K @ 30fps, 60s Aufnahmen)
-python3 raspberry-pi-scripts/unified-camera-monitor.py
-
-# Zeitlupen-Modus (1536x864 @ 120fps)
-python3 raspberry-pi-scripts/unified-camera-monitor.py --slowmo
-
-# Custom Konfiguration
-python3 raspberry-pi-scripts/unified-camera-monitor.py \
-    --threshold 0.3 \
-    --cooldown 10 \
-    --recording-duration 120 \
-    --recording-width 1920 \
-    --recording-height 1080 \
-    --recording-fps 60
-
-# Mit Wrapper vom Client-PC starten
-cd auto-start-kamera
-./start-unified-monitoring.sh         # Standard
-./start-unified-monitoring.sh slowmo  # Zeitlupe
-```
-
-### ⚙️ Verfügbare Parameter
-
-| Parameter | Beschreibung | Standard | Beispiel |
-|-----------|--------------|----------|----------|
-| `--camera` | Kamera-Nummer | 0 | `--camera 1` |
-| `--threshold` | AI-Erkennungs-Schwelle | 0.4 | `--threshold 0.3` |
-| `--cooldown` | Cooldown zwischen Aufnahmen (s) | 15 | `--cooldown 10` |
-| `--trigger-duration` | Mindest-Dauer für Trigger (s) | 1.0 | `--trigger-duration 0.5` |
-| `--video-path` | Basis-Pfad für Videos | `/home/roimme/Videos/Vogelhaus` | `--video-path /mnt/nas/birds` |
-| `--model` | Pfad zum YOLO-Model | yolov8n.pt | `--model custom.pt` |
-| `--preview-fps` | Preview FPS | 6 | `--preview-fps 10` |
-| `--recording-width` | Aufnahme-Breite (px) | 4096 | `--recording-width 1920` |
-| `--recording-height` | Aufnahme-Höhe (px) | 2160 | `--recording-height 1080` |
-| `--recording-fps` | Aufnahme-FPS | 30 | `--recording-fps 60` |
-| `--recording-duration` | Aufnahme-Dauer (s) | 60 | `--recording-duration 120` |
-| `--slowmo` | Zeitlupen-Modus aktivieren | - | `--slowmo` |
-| `--debug` | Debug-Modus aktivieren | - | `--debug` |
-
-### 📊 Live-Monitoring Ausgabe
-
-```
-======================================================================
-🐦 UNIFIED CAMERA MONITOR - Vogel-Kamera-Linux
-======================================================================
-
-======================================================================
-📊 INITIALER STATUS-REPORT
-======================================================================
-
-2025-11-11 19:27:14 - INFO - [✓] Monitor aktiv - 354 Frames verarbeitet
-2025-11-11 19:29:12 - INFO - Status: 0h 5min | Aufnahmen: 0 | Frames: 584 | Temp: 🟢51.0°C | Load: 🟡1.72 | RAM: 🟢7% | Disk: 🟢215.3GB
-2025-11-11 19:34:12 - INFO - Status: 0h 10min | Aufnahmen: 1 | Frames: 1184 | Temp: 🟢52.0°C | Load: 🟢0.98 | RAM: 🟢8% | Disk: 🟢215.2GB
-```
-
-**Traffic Light Thresholds:**
-- **Temperatur:** 🟢 <55°C | 🟡 55-65°C | 🔴 >65°C | ⛔ STOP >75°C
-- **CPU Load:** 🟢 <1.0 | 🟡 1.0-2.0 | 🔴 >2.0
-- **RAM:** 🟢 <75% | 🟡 75-90% | 🔴 >90%
-- **Disk:** 🟢 <90% | 🟡 90-95% | 🔴 >95%
-
-### 📁 Ausgabe-Struktur
-
-```
-/home/roimme/Videos/Vogelhaus/
-└── 2025-11-11_19-30-45_bird_0.45.h264
-```
-
-### 🚀 Remote-Start vom Client-PC
-
-```bash
-# Standard-Modus
-cd auto-start-kamera
-./start-unified-monitoring.sh
-
-# Zeitlupen-Modus
-./start-unified-monitoring.sh slowmo
-
-# Custom Parameter
-ssh user@raspberry-pi "cd vogel-kamera-linux && python3 raspberry-pi-scripts/unified-camera-monitor.py --threshold 0.3 --cooldown 10"
-```
 
 ---
 
-## 📝 Legacy: Remote-Control Scripts
+## 📚 Weitere Dokumentation
 
-> ⚠️ **Diese Skripte sind veraltet!** Verwenden Sie stattdessen das **Unified Camera Monitor System** (siehe oben).
-> 
-> Die alten Skripte wurden nach `legacy/` verschoben. Details: [`legacy/README.md`](legacy/README.md)
-
-### Basis-Aufnahme (ohne KI) - LEGACY
-```bash
-python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-    --duration 5 \
-    --width 1920 \
-    --height 1080 \
-    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
-```
-
-### Mit KI-Objekterkennung
-```bash
-python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-    --duration 5 \
-    --width 1920 \
-    --height 1080 \
-    --ai-modul on \
-    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
-```
-
-### Erweiterte Konfiguration
-```bash
-python ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-    --duration 10 \
-    --width 4096 \
-    --height 2160 \
-    --codec h264 \
-    --autofocus_mode continuous \
-    --rotation 180 \
-    --fps 30 \
-    --cam 0 \
-    --ai-modul on \
-    --no-stream-restart  # Empfohlen für On-Demand Aufnahmen
-```
-
-### Parameter-Übersicht
-
-| Parameter | Beschreibung | Standard | Optionen |
-|-----------|--------------|----------|----------|
-| `--duration` | Aufnahmedauer in Minuten | **erforderlich** | 1-∞ |
-| `--width` | Video-Breite | 4096 | 640-4096 |
-| `--height` | Video-Höhe | 2160 | 480-2160 |
-| `--codec` | Video-Codec | h264 | h264, h265 |
-| `--autofocus_mode` | Autofokus-Modus | continuous | continuous, manual |
-| `--autofocus_range` | Autofokus-Bereich | macro | macro, full |
-| `--hdr` | HDR-Modus | off | auto, off |
-| `--rotation` | Bildrotation | 180 | 0, 90, 180, 270 |
-| `--fps` | Bildrate | 15 | 1-60 |
-| `--cam` | Kamera-ID | 0 | 0, 1 |
-| `--ai-modul` | KI-Objekterkennung | off | on, off |
-| `--ai-model` | AI-Modell auswählen *(v1.1.8)* | yolov8 | yolov8, bird-species, custom |
-| `--ai-model-path` | Pfad zu eigenem AI-Modell *(v1.1.8)* | - | Dateipfad zu .json |
-| `--roi` | Region of Interest | - | x,y,w,h |
-| `--system-status` | Nur System-Status anzeigen *(v1.1.9)* | - | Flag ohne Wert |
-| `--no-stream-restart` | Preview-Stream nicht neu starten *(v1.2.0)* | - | Flag ohne Wert |
-
-## 🔐 Git-Automatisierung
-
-Das Projekt bietet jetzt eine **sichere Git-Automatisierung** für entwickelnde Beitragende:
-
-### ✨ Features
-- **🔑 Verschlüsselte SSH-Credentials:** AES-256-CBC mit Master-Password
-- **🚀 Automatischer SSH-Agent:** Keine manuelle Passphrase-Eingabe
-- **🛡️ Sichere Speicherung:** PBKDF2 Key-Derivation mit 100.000 Iterationen
-- **🧪 Umfassende Tests:** Automatisierte Validierung aller Komponenten
-
-### 🚀 Schnellstart Git-Automation
-```bash
-cd git-automation/
-
-# Abhängigkeiten installieren
-pip install -r git_automation_requirements.txt
-
-# SSH-Credentials einrichten (einmalig)
-python3 setup_ssh_credentials.py
-
-# System testen
-python3 test_full_automation.py
-```
-
-### 💻 Verwendung
-```python
-import sys
-sys.path.append('git-automation/')
-from git_automation import SecureGitAutomation
-
-# Automatisierte Git-Operationen
-automation = SecureGitAutomation()
-automation.run_command("git add .")
-automation.run_command('git commit -m "Automatischer Commit"')
-automation.run_command("git push")
-```
-
-> 📚 **Vollständige Dokumentation:** [`git-automation/README.md`](git-automation/README.md)
-
-## ⚙️ SSH-Konfiguration
-
-### 1. Umgebungsvariablen konfigurieren
-```bash
-# Kopieren Sie die Beispiel-Konfiguration
-cp python-skripte/.env.example python-skripte/.env
-
-# Bearbeiten Sie die .env-Datei mit Ihren Daten
-nano python-skripte/.env
-```
-
-Beispiel `.env`-Datei:
-```bash
-RPI_HOSTNAME=your-raspberry-pi-hostname
-RPI_USERNAME=pi
-SSH_KEY_PATH=~/.ssh/id_rsa_rpi
-BASE_VIDEO_PATH=~/Videos/Vogelhaus
-REMOTE_VIDEO_PATH=/home/pi/Videos/Vogelhaus
-REMOTE_AUDIO_PATH=/home/pi/Audio/Vogel-Kamera
-```
-
-> 📺 **Beispielaufnahmen:** [Vogel-Kamera Setup](https://www.youtube.com/@vogel-kamera-linux) - Siehe die Kamera in Aktion
-
-### 2. **SSH-Schlüssel generieren** (falls noch nicht vorhanden):
-```bash
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_rpi
-```
-
-### 3. **Öffentlichen Schlüssel auf Raspberry Pi kopieren**:
-```bash
-ssh-copy-id -i ~/.ssh/id_rsa_rpi.pub pi@your-raspberry-pi-hostname
-```
-
-### 4. **Hostname in /etc/hosts eintragen** (optional):
-```bash
-echo "192.168.1.XXX your-raspberry-pi-hostname" | sudo tee -a /etc/hosts
-```
+- **[unified-monitor-client/README.md](unified-monitor-client/README.md)** - Haupttool Dokumentation
+- **[unified-monitor-client/SETUP_GUIDE.md](unified-monitor-client/SETUP_GUIDE.md)** - Detailliertes Setup
+- **[CHANGELOG.md](CHANGELOG.md)** - Vollständige Versionshistorie
+- **[QUICK_REFERENCE_v2.1.0.md](QUICK_REFERENCE_v2.1.0.md)** - Schnelle Befehlsreferenz
+- **[raspberry-pi-scripts/UNIFIED-MONITOR-README.md](raspberry-pi-scripts/UNIFIED-MONITOR-README.md)** - Remote-System
+- **[docs/TRIXIE-MIGRATION.md](docs/TRIXIE-MIGRATION.md)** - Trixie Setup-Guide
+- **[docs/SECURITY.md](docs/SECURITY.md)** - Sicherheitsrichtlinien
 
 ## 📁 Dateiorganisation
 
-Die aufgenommenen Videos werden automatisch organisiert:
+Videos werden automatisch organisiert:
 ```
 ~/Videos/Vogelhaus/
-├── AI-HAD/        # Hauptskript mit KI-Erkennung
-├── Audio/         # Reine Audio-Aufnahmen  
+├── AI-HAD/        # Hauptaufnahmen mit AI
 └── Zeitlupe/      # Slow-Motion Videos
-    └── 2025/
-        └── 38/  # Kalenderwoche
-            └── Montag__2025-09-23__14-30-15/
-                └── Montag__2025-09-23__14-30-15__4096x2160.mp4
 ```
 
-## 🤖 KI-Objekterkennung
+## 🔧 Troubleshooting
 
-Das Hauptskript nutzt YOLOv8 für die Echtzeit-Objekterkennung:
-- **Automatische Vogelerkennung** während der Aufnahme
-- **Optimierte Inferenz** auf Raspberry Pi 5
-- **Konfigurierbare Erkennungsparameter**
-
-## 🔧 Problembehandlung
-
-### Konfigurationsprobleme
 ```bash
-# Konfiguration überprüfen
-python python-skripte/config.py
+# Diagnose
+cd unified-monitor-client && python3 diagnose_remote_system.py
 
-# Fehlermeldung: "Hostname nicht konfiguriert"
-# → Bearbeiten Sie python-skripte/.env mit Ihren Werten
-```
+# SSH Test
+ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5-ai-had
 
-### Audio-Gerät nicht gefunden
-```bash
-# Auf dem Raspberry Pi prüfen:
+# Audio-Devices
 arecord -l
-```
-
-### SSH-Verbindungsprobleme
-```bash
-# Verbindung testen:
-ssh -i ~/.ssh/id_rsa_rpi pi@your-raspberry-pi-hostname
-
-# Konfiguration validieren:
-python python-skripte/config.py
-
-# .env-Datei überprüfen:
-cat python-skripte/.env
-```
-
-### Dependency-Probleme
-```bash
-# Alle Abhängigkeiten neu installieren
-pip install -r config/requirements.txt
-
-# Einzelne Pakete installieren  
-pip install paramiko scp tqdm python-dotenv qrcode[pil]
-```
-
-### Kamera-Probleme
-```bash
-# Kamera-Status prüfen:
-rpicam-hello --list-cameras
 ```
 
 ## 📄 Lizenz
 
-Siehe [LICENSE](LICENSE) Datei für Details.
+MIT License - siehe [LICENSE](LICENSE)
 
 ## 🤝 Beitragen
 
-1. Fork des Repositories
-2. Feature-Branch erstellen
-3. Änderungen commiten
-4. Pull Request erstellen
-
-## 👥 Community & Diskussionen
-
-[![GitHub Discussions](https://img.shields.io/github/discussions/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
-
-Tauschen Sie sich mit anderen Nutzern aus:
-- 🙋 **Fragen stellen** zu Installation und Konfiguration  
-- 💡 **Ideen teilen** für neue Features
-- 📸 **Aufnahmen zeigen** aus Ihrem Vogelhaus
-- 🔧 **Hardware-Tipps** diskutieren
+1. Fork Repository
+2. Feature-Branch erstellen  
+3. Pull Request erstellen
 
 ## 📞 Support
 
-Bei Fragen oder Problemen:
-- 💬 **Diskussionen starten** in [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
-- 🐛 **Bugs melden** über [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
+- 💬 [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+- 🐛 [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
+- 📺 [YouTube Channel](https://www.youtube.com/@vogel-kamera-linux)
 
-## 📚 Dokumentation
+---
 
-### Hauptdokumentation
-- **[docs/CHANGELOG.md](docs/CHANGELOG.md)** - Vollständige Versionshistorie mit allen Änderungen
-- **[docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)** - 🏗️ **NEU in v1.2.0!** Detaillierte Systemarchitektur mit Mermaid-Diagrammen
-  - Kommunikationsflüsse (PC ↔ Raspberry Pi)
-  - CPU-Optimierungs-Visualisierung (107% → 40%)
-  - Video- und Audio-Pipeline-Diagramme
-  - Erkennungs-Workflow und Fehlerbehandlung
-- **[docs/PROJEKT-REORGANISATION.md](docs/PROJEKT-REORGANISATION.md)** - Projekt-Reorganisations-Historie
-
-### Auto-Trigger System *(v1.2.0)*
-- **[kamera-auto-trigger/README.md](kamera-auto-trigger/README.md)** - Hauptdokumentation Auto-Trigger
-- **[kamera-auto-trigger/docs/QUICKSTART-AUTO-TRIGGER.md](kamera-auto-trigger/docs/QUICKSTART-AUTO-TRIGGER.md)** - 3-Minuten Quick-Start
-- **[kamera-auto-trigger/docs/AUTO-TRIGGER-DOKUMENTATION.md](kamera-auto-trigger/docs/AUTO-TRIGGER-DOKUMENTATION.md)** - Vollständige Feature-Dokumentation
-- **[kamera-auto-trigger/docs/AUTO-TRIGGER-OVERVIEW.md](kamera-auto-trigger/docs/AUTO-TRIGGER-OVERVIEW.md)** - System-Überblick
-
-### AI & Training
-- **[docs/AI-MODELLE-VOGELARTEN.md](docs/AI-MODELLE-VOGELARTEN.md)** - AI-Modell-Dokumentation
-- **[docs/ANLEITUNG-EIGENES-AI-MODELL.md](docs/ANLEITUNG-EIGENES-AI-MODELL.md)** - Training eigener Modelle
-
-### Sicherheit & Entwicklung
-- **[docs/SECURITY.md](docs/SECURITY.md)** - Sicherheitsrichtlinien
-- **[git-automation/README.md](git-automation/README.md)** - Git-Automation Dokumentation (v1.2.0)
-
-## 📋 Changelog
-
-Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentiert.
-
-### 🆕 Neu in v1.3.1 (05. November 2025)
-- 🎬 **Live-Progressbar:** Custom single-line Progressbar während Aufnahmen
-- 🔧 **TCP Watchdog Hardening:** Robuste Fehlerbehandlung, Auto-Restart mit 5s Delay
-- ⚡ **Optimierte Parameter:** 1.5s Trigger-Duration, 60% Konsistenz, 8 FPS
-- 🐛 **Cleanup-Verbesserungen:** SIGTERM → SIGKILL Cascade, sauberes Beenden
-- 📊 **Frame-Count-Debugging:** Detaillierte Trigger-Informationen mit Frame-Statistik
-- 🐍 **Python Unbuffered Mode:** Echtzeit-Debug-Output mit `-u` Flag
-
-### 📡 Trixie Support in v1.3.0 (01. November 2025)
-- 📡 **TCP Watchdog System:** Robuste Preview-Stream-Verwaltung (FFmpeg 7.1.2 kompatibel)
-- 🎯 **On-Demand Stream-Modus:** Dual-Kamera-Betrieb ohne Konflikte
-- 🐍 **PEP 668 Compliance:** Python-Pakete via apt statt pip
-
-### 📊 System-Monitoring in v1.1.9 (30. September 2025)
-- System-Überwachung: CPU-Load, Temperatur und Speicher-Checks
-- Performance-Optimierung für alle Aufnahmemodi
-- Bereitschaftschecks vor Aufnahmestart
-
-### 🎯 Hochpräzise Modelle in v1.1.8
-- 🤖 **Automatische bird-species Modelle:** Dynamische Erstellung optimierter AI-Modelle
-- 🔧 **3D-Konstruktions-System:** Vollständige CAD-Dateien für Hardware-Nachbau  
-- 📚 **Wiki-Integration:** Umfassende Dokumentation mit Sidebar-Navigation
-- 📊 **Version-Tracking:** Programmatische Versionsinformationen (version.py)
-- 📋 **Release-Dokumentation:** Vollständige Release Notes und CHANGELOG-Updates
-
-### 🎬 Neu in v1.1.0
-- YouTube-Integration mit QR-Codes
-- Zentrales Konfigurationssystem  
-- Sicherheitsverbesserungen (keine hardcodierten Daten)
-
-## 🔖 Versionen
-
-- **Aktuelle Version:** v2.0.2
-- **Branch:** `main` (Trixie)
-- **Legacy Branch:** `bookworm-legacy` (v1.2.x für Debian 12)
-- **Alle Releases:** [GitHub Releases](../../releases) | [Tags](../../tags)
+**Version:** v2.1.0 (März 2026) | **Status:** Produktionsreif ✅  
+**Raspberry Pi 5 + Debian Trixie (13) | Audio/Video-Synchronisation | YOLO26n KI-Erkennung**

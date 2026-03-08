@@ -28,23 +28,15 @@ import numpy as np
 import time
 import os
 import sys
+import subprocess
 from datetime import datetime
 from pathlib import Path
 import threading
 import logging
 from typing import Optional, Tuple, Dict, Any
 
-# Picamera2 Import
-try:
-    from picamera2 import Picamera2
-    from picamera2.encoders import H264Encoder, Quality
-    from picamera2.outputs import FileOutput
-    from libcamera import Transform
-    HAS_PICAMERA2 = True
-except ImportError:
-    HAS_PICAMERA2 = False
-    print("⚠️  picamera2 nicht installiert. Installiere mit: pip install picamera2")
-    sys.exit(1)
+# rpicam-vid wird über subprocess aufgerufen (keine direkten Importe nötig)
+# rpicam-vid ist Teil von libcamera-apps, bereits auf dem RPi installiert
 
 # YOLO Import
 try:
@@ -64,6 +56,41 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+
+def cleanup_old_processes():
+    """Killt alte Monitor-Prozesse, die die Kamera blockieren."""
+    logger.info("🧹 Cleanup: Suche nach älteren Monitor-Prozessen...")
+    
+    try:
+        # Finde alle Python-Prozesse, die unified-camera-monitor.py ausführen
+        result = subprocess.run(
+            ["pgrep", "-f", "unified-camera-monitor.py"],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.stdout:
+            pids = result.stdout.strip().split('\n')
+            current_pid = os.getpid()
+            
+            for pid in pids:
+                if pid and int(pid) != current_pid:
+                    try:
+                        logger.warning(f"🛑 Killen alter Prozess: PID {pid}")
+                        os.kill(int(pid), 9)  # SIGKILL für sofortiges Beenden
+                        time.sleep(0.5)
+                    except ProcessLookupError:
+                        pass  # Prozess existiert nicht mehr
+                    except Exception as e:
+                        logger.warning(f"⚠️  Fehler beim Killen von PID {pid}: {e}")
+            
+            logger.info("✅ Alte Prozesse beendet")
+        else:
+            logger.info("ℹ️  Keine älteren Monitor-Prozesse gefunden")
+    
+    except Exception as e:
+        logger.warning(f"⚠️  Cleanup-Fehler: {e}")
 
 
 class UnifiedCameraMonitor:
@@ -86,6 +113,15 @@ class UnifiedCameraMonitor:
         recording_height: int = 1080,
         recording_fps: int = 30,
         recording_duration: int = 60,
+        rotation: int = 180,
+        codec: str = "h264",
+        hdr: str = "off",
+        autofocus_mode: str = "continuous",
+        autofocus_range: str = "macro",
+        roi: Optional[str] = None,
+        enable_audio: bool = False,
+        manual_record: bool = False,
+        skip_detection: bool = False,
         debug: bool = False
     ):
         """
@@ -105,6 +141,15 @@ class UnifiedCameraMonitor:
             recording_height: Höhe der Aufnahme
             recording_fps: FPS der Aufnahme
             recording_duration: Dauer der Aufnahme in Sekunden
+            rotation: Rotation (0, 90, 180, 270) - default 180 für Vogelbild oben
+            codec: Video-Codec (default: h264)
+            hdr: HDR-Modus (default: off)
+            autofocus_mode: Autofokus-Modus (default: continuous)
+            autofocus_range: Autofokus-Bereich (default: macro)
+            roi: Region of Interest im Format x,y,w,h (optional)
+            enable_audio: Audio-Aufnahme aktivieren
+            manual_record: Manuelle Aufnahme
+            skip_detection: Erkennung überspringen
             debug: Debug-Modus aktivieren
         """
         self.camera_num = camera_num
@@ -119,10 +164,19 @@ class UnifiedCameraMonitor:
         self.recording_width = recording_width
         self.recording_height = recording_height
         self.recording_fps = recording_fps
+        self.rotation = rotation
+        self.codec = codec
+        self.hdr = hdr
+        self.autofocus_mode = autofocus_mode
+        self.autofocus_range = autofocus_range
+        self.roi = roi
+        self.enable_audio = enable_audio
+        self.manual_record = manual_record
+        self.skip_detection = skip_detection
         self.debug = debug
         
-        # Picamera2 Setup
-        self.picam2: Optional[Picamera2] = None
+        # rpicam-vid nutzt subprocess - kein Picamera2 Objekt mehr
+        self.camera_process: Optional[subprocess.Popen] = None
         
         # AI Model
         self.model: Optional[Any] = None
@@ -152,6 +206,11 @@ class UnifiedCameraMonitor:
         logger.info(f"  Recording: {recording_width}x{recording_height} @ {recording_fps}fps")
         logger.info(f"  Threshold: {threshold}")
         logger.info(f"  Cooldown: {cooldown}s")
+        logger.info(f"  Audio: {'aktiviert' if enable_audio else 'deaktiviert'}")
+        
+        # Audio-Device
+        self.audio_device = None
+        self.audio_process = None
     
     def _load_model(self) -> bool:
         """Lädt YOLO-Model für Vogel-Erkennung."""
@@ -175,64 +234,58 @@ class UnifiedCameraMonitor:
             logger.error(f"Fehler beim Laden des Models: {e}")
             return False
     
-    def _setup_camera(self) -> bool:
-        """Initialisiert Picamera2 mit Dual-Stream Config."""
+    def _check_rpicam_vid(self) -> bool:
+        """
+        Prüft ob rpicam-vid verfügbar ist.
+        
+        rpicam-vid ist Teil von libcamera-apps und sollte auf allen modernen
+        Raspberry Pi OS Installationen vorhanden sein.
+        
+        Returns:
+            True wenn rpicam-vid gefunden, sonst False
+        """
         try:
-            self.picam2 = Picamera2(self.camera_num)
-            
-            # Dual-Stream Konfiguration für Preview + Encoding
-            # main: Haupt-Stream für Encoding (H264)
-            # lores: Low-Res Stream für Preview/AI-Analyse
-            config = self.picam2.create_video_configuration(
-                main={
-                    "size": (self.recording_width, self.recording_height),
-                    "format": "YUV420"  # Für H264-Encoding
-                },
-                lores={
-                    "size": (self.preview_width, self.preview_height),
-                    "format": "RGB888"  # Für AI-Analyse
-                },
-                encode="main",  # Aktiviere Encode-Stream für main
-                transform=Transform(hflip=1, vflip=1)  # 180° Rotation (horizontal + vertikal flip)
+            result = subprocess.run(
+                ['which', 'rpicam-vid'],
+                capture_output=True,
+                timeout=5
             )
             
-            self.picam2.configure(config)
-            
-            # Setze Kamera-Parameter
-            self.picam2.set_controls({
-                "FrameRate": self.recording_fps,  # Haupt-Stream FPS
-                "ExposureTime": 10000,  # Auto
-                "AnalogueGain": 1.0
-            })
-            
-            logger.info("✅ Picamera2 konfiguriert (Dual-Stream mit Encoding, 180° Rotation)")
-            return True
-            
+            if result.returncode == 0:
+                logger.info("✅ rpicam-vid gefunden")
+                return True
+            else:
+                logger.error("❌ rpicam-vid nicht gefunden. Installiere: sudo apt install -y libcamera-apps")
+                return False
+                
         except Exception as e:
-            logger.error(f"Fehler beim Setup der Kamera: {e}")
+            logger.error(f"❌ Fehler beim Prüfen von rpicam-vid: {e}")
             return False
     
     def start(self) -> bool:
         """Startet Camera Monitor."""
-        logger.info("🎬 Starte Unified Camera Monitor...")
-        
-        # Lade Model
-        if not self._load_model():
-            logger.warning("⚠️  Fahre ohne AI-Model fort (Fallback-Modus)")
-        
-        # Setup Kamera
-        if not self._setup_camera():
-            logger.error("❌ Kamera-Setup fehlgeschlagen")
-            return False
-        
-        # Starte Kamera
         try:
-            self.picam2.start()
-            logger.info("✅ Kamera gestartet")
-            time.sleep(2)  # Stabilisierungszeit
+            logger.info("🎬 Starte Unified Camera Monitor (rpicam-vid Version)...")
+            
+            # Cleanup alte Prozesse die die Kamera blockieren könnten
+            cleanup_old_processes()
+            time.sleep(1)  # Warte nach Cleanup
+            
+            # Prüfe rpicam-vid Verfügbarkeit
+            if not self._check_rpicam_vid():
+                logger.error("❌ rpicam-vid nicht verfügbar")
+                return False
+            
+            # Lade Model
+            if not self._load_model():
+                logger.warning("⚠️  Fahre ohne AI-Model fort (Fallback-Modus)")
+            
+            logger.info("✅ Camera Monitor bereit")
+            time.sleep(1)  # Stabilisierungszeit
             return True
+            
         except Exception as e:
-            logger.error(f"❌ Fehler beim Starten der Kamera: {e}")
+            logger.error(f"❌ Fehler beim Starten des Monitors: {e}")
             return False
     
     def stop(self):
@@ -240,26 +293,193 @@ class UnifiedCameraMonitor:
         logger.info("🛑 Stoppe Camera Monitor...")
         self.stop_event.set()
         
-        if self.picam2:
+        # Stoppe laufenden rpicam-vid Prozess
+        if self.camera_process:
             try:
-                # Stoppe laufende Aufnahme falls aktiv
-                if self.is_recording:
-                    try:
-                        self.picam2.stop_recording()
-                        logger.info("Aufnahme gestoppt")
-                    except:
-                        pass
-                
-                # Stoppe Kamera
-                if self.picam2.started:
-                    self.picam2.stop()
-                    logger.info("Kamera gestoppt")
-                
-                # Schließe Kamera
-                self.picam2.close()
-                logger.info("✅ Kamera geschlossen")
+                self.camera_process.terminate()
+                logger.info("rpicam-vid Prozess beendet")
+                # Warte kurz auf graceful shutdown
+                try:
+                    self.camera_process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    self.camera_process.kill()
+                    logger.warning("rpicam-vid Prozess getötet (SIGKILL)")
             except Exception as e:
-                logger.error(f"Fehler beim Stoppen: {e}")
+                logger.error(f"Fehler beim Stoppen von rpicam-vid: {e}")
+        
+        if self.is_recording:
+            self.is_recording = False
+            logger.info("Aufnahme-Flag zurückgesetzt")
+        
+        logger.info("✅ Camera Monitor gestoppt")
+    
+    def _find_usb_audio_device(self) -> Optional[str]:
+        """
+        Findet USB-Audio-Gerät für Aufnahme mit mehreren Strategien.
+        
+        Strategien (in Reihenfolge):
+        1. arecord -l: Suche nach USB in der Liste (Englisch oder Deutsch)
+        2. lsusb: Finde USB-Audio Device im System
+        3. Fallback: Versuche Standard-Geräte (hw:0,0 / hw:1,0 / hw:2,0 / hw:3,0)
+        
+        Returns:
+            Gerätepfad (z.B. 'hw:0,0') oder None wenn nicht gefunden
+        """
+        import re
+        
+        logger.info("🔍 Suche nach USB-Audio-Gerät...")
+        
+        # Strategie 1: arecord -l
+        try:
+            result = subprocess.run(
+                ['arecord', '-l'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0:
+                logger.debug(f"arecord -l Output:\n{result.stdout}")
+                for line in result.stdout.splitlines():
+                    # Suche nach USB-Geräten (funktioniert mit Deutsch und Englisch)
+                    if 'USB' in line.upper():
+                        # Parse: "Karte 0: ..." oder "card 0: ..."
+                        # Regex: Match "Karte" or "card", dann Ziffer
+                        match = re.search(r'(?:[Kk]arte|card)\s+(\d+)', line)
+                        if match:
+                            card_num = match.group(1)
+                            device = f"hw:{card_num},0"
+                            logger.info(f"✅ USB-Audio-Gerät gefunden (arecord): {device}")
+                            return device
+        except Exception as e:
+            logger.debug(f"arecord -l Fehler: {e}")
+        
+        # Strategie 2: lsusb für USB-Audio Device Identifier
+        try:
+            result = subprocess.run(
+                ['lsusb'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0:
+                logger.debug(f"lsusb Output (gefiltert):")
+                for line in result.stdout.splitlines():
+                    if 'Audio' in line or 'audio' in line or 'Microphone' in line or 'microphone' in line:
+                        logger.debug(f"  {line}")
+                        # Jedes Audio-Device könnte unser Gerät sein
+                        # Versuche als Standard-Kartenindex zu nutzen
+        except Exception as e:
+            logger.debug(f"lsusb Fehler: {e}")
+        
+        # Strategie 3: Fallback auf häufige USB-Audio Kartennummern
+        # Typischerweise: hw:0,0 (erste ALSA-Karte), hw:1,0 oder hw:2,0 für erste USB-Geräte
+        logger.debug("Fallback: Teste Geräte hw:0,0 bis hw:3,0...")
+        for card_num in [0, 1, 2, 3]:
+            device_path = f"hw:{card_num},0"
+            
+            # Prüfe ob Gerät existiert via arecord -D test
+            try:
+                # Kurzer Test: record 0.05 seconds
+                result = subprocess.run(
+                    ['arecord', '-D', device_path, '-c', '1', '-r', '8000', '-f', 'mu-law', '-t', 'raw', '/dev/null', '-d', '0.05'],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                
+                if result.returncode == 0:
+                    logger.info(f"✅ USB-Audio-Gerät gefunden (Fallback): {device_path}")
+                    return device_path
+                else:
+                    logger.debug(f"  {device_path}: Rückgabecode {result.returncode}")
+            except subprocess.TimeoutExpired:
+                # Timeout ist ok - Gerät existiert und hat reagiert
+                logger.info(f"✅ USB-Audio-Gerät gefunden (Fallback/Timeout): {device_path}")
+                return device_path
+            except Exception as e:
+                logger.debug(f"  {device_path}: Fehler - {type(e).__name__}")
+        
+        logger.warning("⚠️  Kein USB-Audio-Gerät gefunden!")
+        logger.warning("    Verfügbar: arecord -l")
+        logger.warning("    Alternativ: alsamixer, pavucontrol")
+        return None
+    
+    def _start_audio_recording(self, audio_file: Path, duration_seconds: int) -> bool:
+        """
+        Startet Audio-Aufnahme mit arecord (parallel zu Video).
+        
+        Args:
+            audio_file: Pfad zur WAV-Datei
+            duration_seconds: Aufnahmedauer in Sekunden
+            
+        Returns:
+            True wenn erfolgreich gestartet, sonst False
+        """
+        if not self.enable_audio or not self.audio_device:
+            return False
+        
+        try:
+            # arecord: 44100Hz, Mono, 16-bit, WAV-Format
+            cmd = [
+                'arecord',
+                '-D', self.audio_device,
+                '-f', 'S16_LE',  # 16-bit signed LE
+                '-r', '44100',   # Sample rate
+                '-c', '1',       # Mono
+                '-t', 'wav',     # WAV format
+                '-d', str(duration_seconds),  # Duration
+                str(audio_file)
+            ]
+            
+            logger.info(f"🎤 Starte Audio-Aufnahme: {audio_file.name}")
+            self.audio_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Fehler beim Starten der Audio-Aufnahme: {e}")
+            return False
+    
+    def _wait_for_audio_completion(self, timeout: int = 300) -> bool:
+        """
+        Wartet bis Audio-Aufnahme fertig ist.
+        
+        Args:
+            timeout: Timeout in Sekunden
+            
+        Returns:
+            True wenn erfolgreich, sonst False
+        """
+        if not self.audio_process:
+            return False
+        
+        try:
+            stdout, stderr = self.audio_process.communicate(timeout=timeout)
+            returncode = self.audio_process.returncode
+            
+            if returncode == 0:
+                logger.info(f"✅ Audio-Aufnahme abgeschlossen")
+                return True
+            else:
+                logger.error(f"❌ Audio-Aufnahme Fehler (Code {returncode}): {stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            logger.error(f"❌ Audio-Aufnahme Timeout")
+            self.audio_process.kill()
+            return False
+        except Exception as e:
+            logger.error(f"❌ Fehler beim Warten auf Audio: {e}")
+            return False
+        finally:
+            self.audio_process = None
     
     def _detect_bird(self, frame: np.ndarray) -> Tuple[bool, float]:
         """
@@ -343,124 +563,328 @@ class UnifiedCameraMonitor:
         self.detection_history = [(t, d) for t, d in self.detection_history if t >= current_time - self.trigger_duration]
         
         return False
-    
     def _start_recording(self) -> Optional[str]:
         """
-        Startet Video-Aufnahme.
+        NICHT UNTERSTÜTZT mit rpicam-vid!
         
-        Returns:
-            Pfad zur Video-Datei oder None bei Fehler
+        rpicam-vid kann kein Live-Preview parallel zu H264-Encoding liefern.
+        Nur manueller Aufnahmemodus (--manual-record) ist unterstützt.
         """
-        with self.recording_lock:
-            if self.is_recording:
-                logger.warning("⚠️  Aufnahme läuft bereits")
-                return None
-            
-            # Prüfe Cooldown
-            current_time = time.time()
-            if current_time - self.last_recording_time < self.cooldown:
-                remaining = self.cooldown - (current_time - self.last_recording_time)
-                logger.info(f"⏳ Cooldown aktiv - noch {remaining:.0f}s")
-                return None
-            
-            try:
-                # Erstelle Dateinamen im Format: Dienstag__2025-11-14__09-40-46
-                now = datetime.now()
-                weekday = now.strftime("%A")  # Wochentag auf Englisch
-                date_str = now.strftime("%Y-%m-%d")
-                time_str = now.strftime("%H-%M-%S")
-                year = now.strftime("%Y")
-                week_number = now.strftime("%V")  # ISO Kalenderwoche (01-53)
-                
-                # Wochentags-Übersetzung
-                weekday_map = {
-                    "Monday": "Montag",
-                    "Tuesday": "Dienstag", 
-                    "Wednesday": "Mittwoch",
-                    "Thursday": "Donnerstag",
-                    "Friday": "Freitag",
-                    "Saturday": "Samstag",
-                    "Sunday": "Sonntag"
-                }
-                weekday_de = weekday_map.get(weekday, weekday)
-                
-                filename = f"{weekday_de}__{date_str}__{time_str}"
-                
-                # Erstelle Verzeichnisstruktur wie im Legacy-System
-                # Zeitlupe: ~/Videos/Vogelhaus/Zeitlupe/2025/46/Dienstag__2025-11-14__09-40-46/
-                # Normal: ~/Videos/Vogelhaus/AI-HAD/2025/46/Dienstag__2025-11-14__09-40-46/
-                if self.recording_fps >= 100:
-                    subdir = "Zeitlupe"
-                else:
-                    subdir = "AI-HAD"
-                
-                video_dir = self.video_base_path / subdir / year / week_number / filename
-                video_dir.mkdir(parents=True, exist_ok=True)
-                
-                video_file = video_dir / f"{filename}.h264"
-                
-                print(f"🎥 Starte Aufnahme: {filename}.h264")
-                logger.info(f"🎥 Starte Aufnahme: {video_file}")
-                
-                # Starte Encoder für Haupt-Stream
-                encoder = H264Encoder()
-                output = FileOutput(str(video_file))
-                
-                self.picam2.start_recording(encoder, output)
-                
-                self.is_recording = True
-                self.recordings_triggered += 1
-                
-                # Aufnahme-Thread mit Statusbalken
-                def recording_with_progress():
-                    start_time = time.time()
-                    duration = self.recording_duration
-                    
-                    while time.time() - start_time < duration:
-                        elapsed = time.time() - start_time
-                        percent = int((elapsed / duration) * 100)
-                        bar_length = 20
-                        filled = int((elapsed / duration) * bar_length)
-                        bar = '█' * filled + '░' * (bar_length - filled)
-                        
-                        print(f"\r🎥 Aufnahme läuft... {bar} {percent}% ({int(elapsed)}/{duration}s)", end='', flush=True)
-                        time.sleep(1)
-                    
-                    print()  # Neue Zeile nach Fortschrittsbalken
-                    self._stop_recording()
-                
-                threading.Thread(target=recording_with_progress, daemon=True).start()
-                
-                # Starte Konvertierung nach Aufnahme
-                def convert_after_recording():
-                    time.sleep(self.recording_duration + 2)  # Warte bis Aufnahme fertig
-                    self._convert_h264_to_mp4(video_file)
-                
-                threading.Thread(target=convert_after_recording, daemon=True).start()
-                
-                return str(video_file)
-                
-            except Exception as e:
-                logger.error(f"❌ Fehler beim Starten der Aufnahme: {e}")
-                self.is_recording = False
-                return None
+        logger.error("❌ Vogelerkennung + Auto-Aufnahme wird mit rpicam-vid nicht unterstützt!")
+        logger.error("   Nutze stattdessen: --manual-record Modus")
+        return None
     
     def _stop_recording(self):
-        """Stoppt laufende Aufnahme."""
-        with self.recording_lock:
-            if not self.is_recording:
-                return
+        """NICHT UNTERSTÜTZT mit rpicam-vid"""
+        pass
+    
+    def _start_recording_manual(self) -> tuple:
+        """
+        Startet PARALLELE Video+Audio Aufnahme wie die alte Lösung mit Threading.
+        KRITISCH: Video und Audio müssen mit EXAKT gleicher Dauer gleichzeitig starten!
+        
+        Returns:
+            (video_file_path, audio_file_path, stop_event)
+            stop_event wird nach recording_duration automatisch gesetzt
+        """
+        try:
+            # Info: Zeige verwendete Parameter
+            logger.info(f"📹 Parameter:")
+            logger.info(f"   - Kamera: {self.camera_num}")
+            logger.info(f"   - Auflösung: {self.recording_width}x{self.recording_height}")
+            logger.info(f"   - Framerate: {self.recording_fps} fps")
+            logger.info(f"   - Rotation: {self.rotation}°")
+            logger.info(f"   - Codec: {self.codec}")
+            logger.info(f"   - Autofokus: {self.autofocus_mode} ({self.autofocus_range})")
+            logger.info(f"   - HDR: {self.hdr}")
+            logger.info(f"   - Dauer: {self.recording_duration}s (EXAKT für Video+Audio)")
+            logger.info(f"   - Encoder: rpicam-vid + arecord (paralleles Dual-Recording)")
             
-            try:
-                self.picam2.stop_recording()
-                self.is_recording = False
-                self.last_recording_time = time.time()
-                print(f"✅ Aufnahme beendet - Cooldown: {self.cooldown}s")
-                logger.info("✅ Aufnahme beendet")
-                logger.info(f"⏳ Cooldown: {self.cooldown} Sekunden")
+            # Erstelle Dateinamen
+            now = datetime.now()
+            weekday = now.strftime("%A")
+            date_str = now.strftime("%Y-%m-%d")
+            time_str = now.strftime("%H-%M-%S")
+            year = now.strftime("%Y")
+            week_number = now.strftime("%V")
+            
+            weekday_map = {
+                "Monday": "Montag", "Tuesday": "Dienstag", "Wednesday": "Mittwoch",
+                "Thursday": "Donnerstag", "Friday": "Freitag", "Saturday": "Samstag",
+                "Sunday": "Sonntag"
+            }
+            weekday_de = weekday_map.get(weekday, weekday)
+            filename = f"{weekday_de}__{date_str}__{time_str}"
+            
+            # Erstelle Verzeichnis
+            if self.recording_fps >= 100:
+                subdir = "Zeitlupe"
+            else:
+                subdir = "AI-HAD"
+            
+            video_dir = self.video_base_path / subdir / year / week_number / filename
+            video_dir.mkdir(parents=True, exist_ok=True)
+            
+            video_file = video_dir / f"{filename}.h264"
+            audio_file = video_dir / f"{filename}.wav" if self.enable_audio else None
+            
+            # WICHTIG: Duration MUSS exakt gleich sein für beide!
+            duration_ms = int(self.recording_duration * 1000)  # rpicam-vid erwartet Millisekunden
+            duration_s = self.recording_duration  # arecord erwartet Sekunden
+            
+            logger.info(f"🎬 Starte PARALLELE Aufnahme: {filename}")
+            logger.info(f"   - Video: {video_file.name}")
+            if audio_file:
+                logger.info(f"   - Audio: {audio_file.name}")
+            
+            # Stop-Event für Timing
+            stop_event = threading.Event()
+            
+            # ===== THREAD 1: Video mit rpicam-vid =====
+            # Exakt wie alte Lösung: alle rpicam-vid Parameter übernehmen
+            rpicam_cmd = [
+                'rpicam-vid',
+                '--camera', str(self.camera_num),
+                '--codec', self.codec,
+                '--width', str(self.recording_width),
+                '--height', str(self.recording_height),
+                '--framerate', str(self.recording_fps),
+                '--rotation', str(self.rotation),  # WICHTIG: 180 für Vogelbild oben
+                '--autofocus-mode', self.autofocus_mode,
+                '--autofocus-range', self.autofocus_range,
+                '--hdr', self.hdr,
+                '--timeout', str(duration_ms),  # EXAKT: Duration in Millisekunden
+                '--output', str(video_file)
+            ]
+            
+            # Optional: ROI hinzufügen wenn gesetzt
+            if self.roi:
+                rpicam_cmd.extend(['--roi', self.roi])
+            
+            def run_video():
+                logger.info(f"🎬 Video-Thread startet: rpicam-vid")
+                try:
+                    self.camera_process = subprocess.Popen(
+                        rpicam_cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True
+                    )
+                    stdout, stderr = self.camera_process.communicate()
+                    
+                    if self.camera_process.returncode == 0:
+                        logger.info(f"✅ Video-Thread erfolgreich")
+                    else:
+                        logger.error(f"❌ Video-Thread Fehler: {stderr}")
+                except Exception as e:
+                    logger.error(f"❌ Video-Thread Exception: {e}")
+            
+            # ===== THREAD 2: Audio mit arecord =====
+            def run_audio():
+                if not self.enable_audio or not self.audio_device:
+                    logger.info("ℹ️  Audio deaktiviert oder kein Device")
+                    return
                 
-            except Exception as e:
-                logger.error(f"Fehler beim Stoppen der Aufnahme: {e}")
+                logger.info(f"🎤 Audio-Thread startet: arecord -D {self.audio_device}")
+                try:
+                    arecord_cmd = [
+                        'arecord',
+                        '-D', self.audio_device,
+                        '-f', 'S16_LE',
+                        '-r', '44100',
+                        '-c', '1',
+                        '-t', 'wav',
+                        '-d', str(duration_s),  # EXAKT: Duration in Sekunden (gleich wie Video!)
+                        str(audio_file)
+                    ]
+                    
+                    audio_proc = subprocess.Popen(
+                        arecord_cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True
+                    )
+                    stdout, stderr = audio_proc.communicate()
+                    
+                    if audio_proc.returncode == 0:
+                        logger.info(f"✅ Audio-Thread erfolgreich")
+                    else:
+                        logger.error(f"❌ Audio-Thread Fehler: {stderr}")
+                except Exception as e:
+                    logger.error(f"❌ Audio-Thread Exception: {e}")
+            
+            # ===== THREAD 3: Fortschrittsanzeige =====
+            def show_progress():
+                start_time = time.time()
+                while not stop_event.is_set():
+                    elapsed = time.time() - start_time
+                    if elapsed > self.recording_duration:
+                        break
+                    
+                    percent = min(int((elapsed / self.recording_duration) * 100), 100)
+                    bar_length = 24
+                    filled = int((elapsed / self.recording_duration) * bar_length)
+                    bar = '█' * filled + '░' * (bar_length - filled)
+                    
+                    print(f"\r⏱️  {bar} {percent}% ({int(elapsed)}/{self.recording_duration}s)", end='', flush=True)
+                    time.sleep(0.1)
+                
+                print()  # Neue Zeile
+            
+            # ===== STARTE ALLE THREADS GLEICHZEITIG =====
+            logger.info("▶️  Starte parallele Aufnahme...")
+            print(f"🎬 Aufnahme: {filename} ({self.recording_duration}s)")
+            
+            # Starte Video-Thread
+            video_thread = threading.Thread(target=run_video, daemon=False)
+            video_thread.start()
+            
+            # Starte Audio-Thread (gleichzeitig mit Video!)
+            audio_thread = threading.Thread(target=run_audio, daemon=False)
+            audio_thread.start()
+            
+            # Starte Progress-Thread
+            progress_thread = threading.Thread(target=show_progress, daemon=True)
+            progress_thread.start()
+            
+            # ===== WARTE AUF DURATION =====
+            # Das ist der Schlüssel: Beide Threads laufen PARALLEL für exakt recording_duration
+            time.sleep(self.recording_duration + 1)  # +1 zum Sicherstellen dass beide fertig sind
+            
+            # Setze Stop-Event
+            stop_event.set()
+            
+            # Warte auf Thread-Abschluss
+            logger.info("⏳ Warte auf Aufnahme-Threads...")
+            video_thread.join(timeout=10)
+            audio_thread.join(timeout=10)
+            
+            logger.info("✅ Alle Aufnahme-Threads abgeschlossen")
+            
+            # Prüfe ob Dateien erstellt wurden
+            if video_file.exists() and video_file.stat().st_size > 0:
+                size_mb = video_file.stat().st_size / (1024*1024)
+                logger.info(f"✅ Video: {video_file.name} ({size_mb:.1f}MB)")
+                print(f"✅ Aufnahme abgeschlossen")
+                
+                if audio_file and audio_file.exists():
+                    size_kb = audio_file.stat().st_size / 1024
+                    logger.info(f"✅ Audio: {audio_file.name} ({size_kb:.1f}KB)")
+                
+                return (str(video_file), str(audio_file) if audio_file and audio_file.exists() else None, stop_event)
+            else:
+                logger.error(f"❌ Video-Datei nicht erstellt: {video_file}")
+                return (None, None, stop_event)
+            
+        except Exception as e:
+            logger.error(f"❌ Fehler bei paralleler Aufnahme: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return (None, None, stop_event)
+    
+    def _convert_h264_to_mp4_sync(self, h264_file: Path, audio_file: Optional[Path] = None):
+        """
+        Konvertiert H264 zu MP4 synchron (wartet bis fertig).
+        Optional mit Audio-Merged (falls Audio vorhanden).
+        
+        Args:
+            h264_file: Pfad zur H264-Datei
+            audio_file: Pfad zur WAV-Audio-Datei (optional)
+        """
+        try:
+            import subprocess
+            
+            # Bei Slowmo: mehrere FPS, sonst nur Recording-FPS
+            if self.recording_fps >= 100:
+                playback_fps_list = [5, 10, 20, 30, 120]
+                logger.info(f"🔄 Konvertiere Zeitlupen-Video ({len(playback_fps_list)} Versionen)...")
+            else:
+                playback_fps_list = [self.recording_fps]
+                logger.info(f"🔄 Konvertiere Video zu MP4...")
+            
+            # Prüfe ob Audio existiert und valid ist
+            audio_valid = False
+            if audio_file and audio_file.exists():
+                audio_valid = True
+                logger.info(f"✅ Audio gefunden: {audio_file.name}")
+            elif audio_file:
+                logger.warning(f"⚠️  Audio-Datei nicht gefunden: {audio_file}")
+            
+            success_count = 0
+            for playback_fps in playback_fps_list:
+                base_name = h264_file.stem
+                mp4_file = h264_file.parent / f"{base_name}__{self.recording_width}x{self.recording_height}__{playback_fps}fps.mp4"
+                
+                print(f"🎬 Konvertiere: {mp4_file.name}{'🎤 (mit Audio)' if audio_valid else ''}")
+                
+                if audio_valid:
+                    # Mit Audio: Video + Audio mergen
+                    # WICHTIG: Exakt wie alte Lösung:
+                    # -fflags +genpts: Korrekte Zeitstempel-Generierung
+                    # -r {fps}: Framerate für Playback
+                    # KEIN -shortest: Beide Streams bleiben vorhanden!
+                    ffmpeg_cmd = [
+                        'ffmpeg',
+                        '-fflags', '+genpts',          # Richtige Zeitstempel generieren
+                        '-r', str(playback_fps),       # Playback Framerate
+                        '-i', str(h264_file),          # Video Input
+                        '-i', str(audio_file),         # Audio Input
+                        '-c:v', 'copy',                # Video codec: copy (no re-encode)
+                        '-c:a', 'aac',                 # Audio codec: AAC
+                        '-y', str(mp4_file)
+                    ]
+                    logger.debug(f"🎬 FFmpeg mit Audio: {' '.join(ffmpeg_cmd)}")
+                else:
+                    # Nur Video mit FFmpeg Zeitstempel-Fix
+                    ffmpeg_cmd = [
+                        'ffmpeg',
+                        '-fflags', '+genpts',          # Richtige Zeitstempel generieren
+                        '-r', str(playback_fps),       # Playback Framerate
+                        '-i', str(h264_file),
+                        '-c:v', 'copy',
+                        '-y', str(mp4_file)
+                    ]
+                    logger.debug(f"🎬 FFmpeg ohne Audio: {' '.join(ffmpeg_cmd)}")
+                
+                result = subprocess.run(
+                    ffmpeg_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 Min Timeout pro Konvertierung
+                )
+                
+                if result.returncode == 0:
+                    size_mb = mp4_file.stat().st_size / (1024*1024)
+                    logger.info(f"✅ {mp4_file.name} ({size_mb:.1f}MB)")
+                    print(f"✅ {mp4_file.name} ({size_mb:.1f}MB)")
+                    success_count += 1
+                else:
+                    logger.error(f"❌ Fehler: {result.stderr[:200]}")
+                    print(f"❌ Konvertierung fehlgeschlagen")
+            
+            # Lösche H264 nur bei Erfolg
+            if success_count > 0:
+                h264_file.unlink()
+                logger.info(f"✅ {success_count} MP4-Dateien erstellt, H264 gelöscht")
+                print(f"✅ {success_count} MP4-Dateien erstellt")
+                
+                # Lösche Audio auch wenn erfolgreich
+                if audio_valid:
+                    try:
+                        audio_file.unlink()
+                        logger.info(f"✅ Audio-Datei gelöscht")
+                    except:
+                        pass
+            else:
+                logger.error("❌ Keine erfolgreichen Konvertierungen")
+                print("❌ Konvertierung fehlgeschlagen")
+                
+        except subprocess.TimeoutExpired:
+            logger.error("❌ Konvertierung hat zu lange gedauert (Timeout)")
+            print("❌ Konvertierung: Timeout")
+        except Exception as e:
+            logger.error(f"❌ Fehler bei Konvertierung: {e}")
+            print(f"❌ Konvertierungsfehler: {e}")
     
     def _convert_h264_to_mp4(self, h264_file: Path):
         """Konvertiert H264 zu MP4 mit verschiedenen Playback-Frameraten (für Zeitlupe)."""
@@ -483,11 +907,11 @@ class UnifiedCameraMonitor:
                 base_name = h264_file.stem  # Ohne .h264
                 mp4_file = h264_file.parent / f"{base_name}__{self.recording_width}x{self.recording_height}__{playback_fps}fps.mp4"
                 
-                # ffmpeg-Befehl mit Framerate-Anpassung
-                # -r setzt Playback-Framerate (für Zeitlupen-Effekt bei Slowmo)
+                # ffmpeg-Befehl mit einfachen Copy-Codec (keine Framerate-Tricks!)
+                # rpicam-vid erzeugt richtige H264 mit Metadaten
                 result = subprocess.run(
-                    ['ffmpeg', '-fflags', '+genpts', '-r', str(playback_fps), 
-                     '-i', str(h264_file), '-c:v', 'copy', '-y', str(mp4_file)],
+                    ['ffmpeg', '-i', str(h264_file),
+                     '-c:v', 'copy', '-y', str(mp4_file)],
                     capture_output=True,
                     text=True
                 )
@@ -510,63 +934,64 @@ class UnifiedCameraMonitor:
             logger.error(f"❌ Fehler bei Konvertierung: {e}")
     
     def run(self):
-        """Hauptloop für Camera Monitoring."""
-        logger.info("🔍 Überwache Vogelhaus... (Strg+C zum Beenden)\n")
+        """Hauptloop für Camera Monitoring oder manuelle Aufnahme."""
         
-        frame_count = 0
-        last_status_time = time.time()
-        last_heartbeat_time = time.time()
-        status_interval = 300  # 5 Minuten
-        heartbeat_interval = 30  # 30 Sekunden
+        # AUTOMATISCH AUDIO IM MANUELLEN MODUS AKTIVIEREN
+        if self.manual_record:
+            self.enable_audio = True
+            logger.info("🎤 Audio automatisch aktiviert (Manueller Aufnahmemodus)")
         
-        try:
-            while not self.stop_event.is_set():
-                try:
-                    # Hole Low-Res Frame für AI-Analyse
-                    frame = self.picam2.capture_array("lores")
-                    
-                    if frame is None:
-                        logger.warning("⚠️  Kein Frame empfangen")
-                        time.sleep(0.1)
-                        continue
-                    
-                    # Vogel-Erkennung
-                    bird_detected, confidence = self._detect_bird(frame)
-                    
-                    # Prüfe Trigger
-                    if self._check_trigger(bird_detected):
-                        # Cooldown prüfen und Aufnahme starten
-                        video_file = self._start_recording()
-                        if video_file:
-                            logger.info(f"📹 Aufnahme gestartet: {video_file}")
-                    
-                    # Statistiken
-                    self.frames_processed += 1
-                    frame_count += 1
-                    
-                    current_time = time.time()
-                    
-                    # Herzschlag alle 30 Sekunden
-                    if current_time - last_heartbeat_time >= heartbeat_interval:
-                        logger.info(f"[✓] Monitor aktiv - {self.frames_processed} Frames verarbeitet, aktuell aufgenommen: {self.is_recording}")
-                        last_heartbeat_time = current_time
-                    
-                    # Status-Report alle 5 Minuten
-                    if current_time - last_status_time >= status_interval:
-                        self._print_status()
-                        last_status_time = current_time
-                    
-                    # Warte für nächsten Frame (FPS-Kontrolle)
-                    time.sleep(1.0 / self.preview_fps)
-                    
-                except KeyboardInterrupt:
-                    break
-                except Exception as e:
-                    logger.error(f"Fehler im Monitoring-Loop: {e}")
-                    time.sleep(1)
+        # Finde USB-Audio-Device wenn Audio aktiviert
+        if self.enable_audio:
+            self.audio_device = self._find_usb_audio_device()
+            if not self.audio_device:
+                logger.warning("⚠️  Audio aktiviert aber kein USB-Gerät gefunden - nur Video wird aufgenommen")
+            else:
+                logger.info("🎤 USB-Audio bereit für Aufnahme")
         
-        finally:
-            self.stop()
+        # MANUELLER AUFNAHMEMODUS: Synchrone Aufnahme mit Konvertierung
+        if self.manual_record or self.skip_detection:
+            logger.info(f"🔴 MANUELLER AUFNAHMEMODUS: Starte PARALLELE Video+Audio Aufnahme ({self.recording_duration}s)...")
+            print(f"\n======================================================================")
+            print(f"🔴 MANUELLE AUFNAHME AKTIVIERT - VOGELERKENNUNG DEAKTIVIERT")
+            print(f"======================================================================\n")
+            
+            # Starte PARALLELE Aufnahme (Video + Audio gleichzeitig mit exakter Dauer Synchronisation)
+            video_file, audio_file, stop_event = self._start_recording_manual()
+            
+            if video_file:
+                logger.info(f"✅ Aufnahme erfolgreich abgeschlossen")
+                print(f"✅ Aufnahme erfolgreich abgeschlossen")
+                print(f"🔄 Konvertiere zu MP4...{'🎤 (mit Audio)' if audio_file else ''}")
+                
+                # Konvertiere H264 zu MP4 (synchron - warte bis fertig)
+                self._convert_h264_to_mp4_sync(Path(video_file), Path(audio_file) if audio_file else None)
+                
+                logger.info("✅ Manueller Aufnahmemodus erfolgreich abgeschlossen")
+                print("✅ Fertig - Script wird beendet")
+                time.sleep(1)
+                sys.exit(0)  # Beende Script
+            else:
+                logger.error("❌ Konnte Aufnahme nicht starten")
+                print("❌ Konnte Aufnahme nicht starten")
+                sys.exit(1)
+        
+        # STANDARD ÜBERWACHUNGSMODUS: Nicht mehr unterstützt mit rpicam-vid
+        logger.error("❌ FEHLER: Überwachungsmodus (automatische Vogelerkennung) wird mit rpicam-vid nicht unterstützt!")
+        logger.error("")
+        logger.error("   rpicam-vid kann kein Live-Preview parallel zu H264-Encoding liefern.")
+        logger.error("   Daher ist automatische Vogelerkennung bei Echtzeit-Aufnahme nicht möglich.")
+        logger.error("")
+        logger.error("   ✅ LÖSUNG: Nutze stattdessen den MANUELLEN AUFNAHMEMODUS:")
+        logger.error("      python3 unified-camera-monitor.py --manual-record")
+        logger.error("")
+        logger.error("   Diese Version mit rpicam-vid behebt das Videodauer-Problem!")
+        logger.error("   (Korrekte 60s H264 statt 35-36s mit picamera2)")
+        logger.error("")
+        
+        print("❌ FEHLER: Überwachungsmodus nicht unterstützt!")
+        print("   Nutze stattdessen: python3 unified-camera-monitor.py --manual-record")
+        sys.exit(1)
     
     def _print_status(self):
         """Gibt Status-Informationen mit echten System-Werten und Ampeln aus."""
@@ -662,6 +1087,10 @@ class UnifiedCameraMonitor:
 
 def main():
     """Hauptfunktion."""
+    # SOFORTIGE CLEANUP vor allem anderen
+    cleanup_old_processes()
+    time.sleep(1)
+    
     parser = argparse.ArgumentParser(
         description='Unified Camera Monitor für Vogel-Kamera-Linux',
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -678,7 +1107,22 @@ def main():
     parser.add_argument('--recording-height', type=int, default=2160, help='Aufnahme-Höhe (default: 2160 - Cinema 4K)')
     parser.add_argument('--recording-fps', type=int, default=30, help='Aufnahme-FPS (default: 30)')
     parser.add_argument('--recording-duration', type=int, default=60, help='Aufnahme-Dauer in Sekunden (default: 60)')
+    parser.add_argument('--duration-seconds', type=int, default=None, help='Überschreibe Aufnahme-Dauer in Sekunden')
+    
+    # rpicam-vid spezifische Parameter (wie alte Lösung)
+    parser.add_argument('--rotation', type=int, choices=[0, 90, 180, 270], default=180, help='Rotation des Videos (default: 180 - Vogelbild oben)')
+    parser.add_argument('--codec', type=str, default='h264', help='Video-Codec (default: h264)')
+    parser.add_argument('--hdr', type=str, choices=['auto', 'off'], default='off', help='HDR-Modus (default: off)')
+    parser.add_argument('--autofocus-mode', type=str, default='continuous', help='Autofokus-Modus (default: continuous)')
+    parser.add_argument('--autofocus-range', type=str, default='macro', help='Autofokus-Bereich (default: macro)')
+    parser.add_argument('--roi', type=str, help='Region of Interest im Format x,y,w,h (optional)')
+    
     parser.add_argument('--slowmo', action='store_true', help='Zeitlupen-Modus (1536x864 @ 120fps, überschreibt Auflösung/FPS)')
+    parser.add_argument('--enable-audio', action='store_true', help='Audio-Aufnahme aktivieren')
+    parser.add_argument('--audio-only', action='store_true', help='Nur Audio aufnehmen (kein Video)')
+    parser.add_argument('--manual-record', action='store_true', help='Manuelle Aufnahme ohne Trigger/Erkennung')
+    parser.add_argument('--skip-detection', action='store_true', help='Vogelerkennung überspringen')
+    parser.add_argument('--bitrate', type=str, default=None, help='Video-Bitrate (z.B. 5000k, 8000k)')
     parser.add_argument('--debug', action='store_true', help='Debug-Modus aktivieren')
     
     args = parser.parse_args()
@@ -698,6 +1142,19 @@ def main():
         args.recording_height = 864
         args.recording_fps = 120
     
+    # Überschreibe recording_duration mit duration-seconds, falls angegeben
+    if args.duration_seconds is not None:
+        args.recording_duration = args.duration_seconds
+    
+    # Manuelle Aufnahme: Hinweis
+    if args.manual_record or args.skip_detection:
+        print("=" * 70)
+        print("🔴 MANUELLE AUFNAHME AKTIVIERT - VOGELERKENNUNG DEAKTIVIERT")
+        print("=" * 70 + "\n")
+        # Setze sehr hohen Threshold, damit Erkennung quasi nie triggert
+        args.threshold = 0.99
+        args.cooldown = 0
+    
     # Erstelle Monitor
     monitor = UnifiedCameraMonitor(
         camera_num=args.camera,
@@ -711,6 +1168,15 @@ def main():
         recording_height=args.recording_height,
         recording_fps=args.recording_fps,
         recording_duration=args.recording_duration,
+        rotation=args.rotation,
+        codec=args.codec,
+        hdr=args.hdr,
+        autofocus_mode=args.autofocus_mode,
+        autofocus_range=args.autofocus_range,
+        roi=args.roi,
+        enable_audio=args.enable_audio,
+        manual_record=args.manual_record,
+        skip_detection=args.skip_detection,
         debug=args.debug
     )
     
