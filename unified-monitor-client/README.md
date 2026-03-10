@@ -102,9 +102,9 @@ chmod 600 .env  # Schütze .env vor lesenden Zugriffen
 
 **Beispiel:**
 ```bash
-SSH_KEY=~/.ssh/id_rsa_ai-had
-SSH_USER=roimme
-SSH_HOST=raspberrypi-5-ai-had
+SSH_KEY=~/.ssh/your-ssh-key
+SSH_USER=<your-username>
+SSH_HOST=your-raspberry-pi
 ```
 
 **Sicherheit:**
@@ -497,16 +497,16 @@ python3 diagnose_remote_system.py
 # → Zeigt Kamera-Status, Audio-Devices, Abhängigkeiten, etc.
 
 # 2. Remote Logs prüfen
-ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 'tail -50 /tmp/unified-camera-monitor.log'
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi 'tail -50 /tmp/unified-camera-monitor.log'
 
 # 3. SSH-Verbindung testen
-ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 'echo OK && uname -a'
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi 'echo OK && uname -a'
 
 # 4. Kamera & rpicam-vid testen
-ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 'rpicam-hello -t 2 --verbose'
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi 'rpicam-hello -t 2 --verbose'
 
 # 5. Audio-Devices prüfen
-ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 'arecord -l'
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi 'arecord -l'
 ```
 
 ### Debug-Mode

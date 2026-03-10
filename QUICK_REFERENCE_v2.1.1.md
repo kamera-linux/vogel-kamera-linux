@@ -8,7 +8,7 @@
 
 ```bash
 # SSH zum Raspberry Pi
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi
 
 # Empfohlen: Zwei-Phasen Detection → Recording (mit Repeat)
 cd ~/vogel-kamera-linux/unified-monitor-client
@@ -208,10 +208,10 @@ lsof | grep /dev/video
 **Check:**
 ```bash
 # SSH-Verbindung testen
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had -c "ps aux | grep python"
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi -c "ps aux | grep python"
 
 # Remote Script checken
-ssh ... -c "ls -la /home/roimme/vogel-kamera-linux/raspberry-pi-scripts/"
+ssh ... -c "ls -la /home/<your-username>/vogel-kamera-linux/raspberry-pi-scripts/"
 ```
 
 ---

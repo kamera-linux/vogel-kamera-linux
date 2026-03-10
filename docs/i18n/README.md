@@ -196,7 +196,7 @@ cd auto-start-kamera
 | `--threshold` | AI detection threshold | 0.4 | `--threshold 0.3` |
 | `--cooldown` | Cooldown between recordings (s) | 15 | `--cooldown 10` |
 | `--trigger-duration` | Minimum duration for trigger (s) | 1.0 | `--trigger-duration 0.5` |
-| `--video-path` | Base path for videos | `/home/roimme/Videos/Vogelhaus` | `--video-path /mnt/nas/birds` |
+| `--video-path` | Base path for videos | `/home/<your-username>/Videos/Vogelhaus` | `--video-path /mnt/nas/birds` |
 | `--model` | Path to YOLO model | yolov8n.pt | `--model custom.pt` |
 | `--preview-fps` | Preview FPS | 6 | `--preview-fps 10` |
 | `--recording-width` | Recording width (px) | 4096 | `--recording-width 1920` |

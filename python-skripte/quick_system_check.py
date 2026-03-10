@@ -13,8 +13,8 @@ def quick_system_check():
     """Schnelle System-Status Abfrage per SSH"""
     
     # SSH-Verbindungsdetails (aus Ihrem System)
-    ssh_key = "~/.ssh/id_rsa_ai-had"
-    remote_host = "roimme@raspberrypi-5-ai-had"
+    ssh_key = "~/.ssh/your-ssh-key"
+    remote_host = "<your-username>@your-raspberry-pi"
     
     print("🔍 Raspberry Pi 5 System-Check...")
     print("=" * 40)

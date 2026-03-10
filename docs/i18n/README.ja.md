@@ -196,7 +196,7 @@ cd auto-start-kamera
 | `--threshold` | AI 検出閾値 | 0.4 | `--threshold 0.3` |
 | `--cooldown` | 録画間のクールダウン（秒） | 15 | `--cooldown 10` |
 | `--trigger-duration` | トリガーの最小期間（秒） | 1.0 | `--trigger-duration 0.5` |
-| `--video-path` | ビデオのベースパス | `/home/roimme/Videos/Vogelhaus` | `--video-path /mnt/nas/birds` |
+| `--video-path` | ビデオのベースパス | `/home/<your-username>/Videos/Vogelhaus` | `--video-path /mnt/nas/birds` |
 | `--model` | YOLO モデルへのパス | yolov8n.pt | `--model custom.pt` |
 | `--preview-fps` | プレビュー FPS | 6 | `--preview-fps 10` |
 | `--recording-width` | 録画幅（px） | 4096 | `--recording-width 1920` |

@@ -9,7 +9,7 @@
 
 ```bash
 # SSH zum Raspberry Pi
-ssh roimme@raspberrypi-5-ai-had
+ssh <your-username>@your-raspberry-pi
 
 # Direkt starten: 60s Aufnahme mit Audio
 python3 ~/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor.py \
@@ -19,7 +19,7 @@ python3 ~/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor.py \
   --enable-audio
 ```
 
-**Ergebnis:** MP4 im Ordner `/home/roimme/Videos/Vogelhaus/`
+**Ergebnis:** MP4 im Ordner `/home/<your-username>/Videos/Vogelhaus/`
 
 ---
 
@@ -223,10 +223,10 @@ python3 unified-monitor-client/setup_environment.py
 ### Manueller Download
 ```bash
 # Einzelnes Video
-scp roimme@raspberrypi-5-ai-had:~/Videos/Vogelhaus/*/vogel_*.mp4 ~/Videos/
+scp <your-username>@your-raspberry-pi:~/Videos/Vogelhaus/*/vogel_*.mp4 ~/Videos/
 
 # Alle Videos
-rsync -avz roimme@raspberrypi-5-ai-had:~/Videos/Vogelhaus/ ~/Videos/Vogelhaus/
+rsync -avz <your-username>@your-raspberry-pi:~/Videos/Vogelhaus/ ~/Videos/Vogelhaus/
 ```
 
 ---

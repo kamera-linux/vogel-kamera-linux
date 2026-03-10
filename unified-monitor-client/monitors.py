@@ -390,7 +390,7 @@ class StatusReporter:
             self._log('yellow', f"   ⚠️  Temperatur: N/A (vcgencmd nicht verfügbar)")
         
         # Disk-Speicher prüfen
-        disk_cmd = "df -BG /home/roimme 2>/dev/null | tail -1 | awk '{print $2, $3, $4, int($3/$2*100)}'"
+        disk_cmd = "df -BG /home/$SSH_USER 2>/dev/null | tail -1 | awk '{print $2, $3, $4, int($3/$2*100)}'"
         disk_output = self.ssh.exec_command_safe(disk_cmd)
         if disk_output:
             parts = disk_output.split()
@@ -408,7 +408,7 @@ class StatusReporter:
                     else:
                         disk_color = 'green'
                         disk_emoji = "🟢"
-                    self._log(disk_color, f"   {disk_emoji} Disk /home/roimme: {used}/{total} ({percent}% genutzt)")
+                    self._log(disk_color, f"   {disk_emoji} Disk /home/$SSH_USER: {used}/{total} ({percent}% genutzt)")
                 except ValueError:
                     self._log('cyan', f"   💾 Disk: {used}/{total} ({percent}% genutzt)")
         

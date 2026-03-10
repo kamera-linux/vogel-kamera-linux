@@ -1082,7 +1082,7 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
                     '-avz',
                     '--remove-source-files',
                     '-e', f'ssh {ssh_opts}',  # SSH-Befehl mit Optionen
-                    f'roimme@{SSH_HOST}:{remote_video_base}/',
+                    f'{SSH_USER}@{SSH_HOST}:{remote_video_base}/',
                     str(local_video_base / year / kw / "")
                 ]
             

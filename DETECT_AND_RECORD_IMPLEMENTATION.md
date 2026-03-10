@@ -279,7 +279,7 @@ ai-had   1920x1080 @ 30fps + Audio   (Audio-optimiert)
 
 ### Live Log auf Raspberry Pi:
 ```bash
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi
 tail -f /tmp/unified-camera-monitor.log
 
 # Suche nach Erkennungen:

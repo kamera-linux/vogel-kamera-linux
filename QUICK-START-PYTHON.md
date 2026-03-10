@@ -20,9 +20,9 @@ nano .env
 
 Beispiel `.env`:
 ```bash
-SSH_KEY=~/.ssh/id_rsa_ai-had
-SSH_USER=roimme
-SSH_HOST=raspberrypi-5-ai-had
+SSH_KEY=~/.ssh/your-ssh-key
+SSH_USER=<your-username>
+SSH_HOST=your-raspberry-pi
 ```
 
 **Wichtig:** `.env` wird **NICHT** in Git versioniert und bleibt lokal bei dir!
@@ -136,10 +136,10 @@ Das System beendet alle Prozesse sauber:
 **SSH-Fehler: "Connection refused"**
 ```bash
 # Teste SSH-Verbindung manuell:
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had echo OK
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi echo OK
 
 # Überprüfe SSH-Key:
-ls -la ~/.ssh/id_rsa_ai-had
+ls -la ~/.ssh/your-ssh-key
 ```
 
 **"No module named paramiko"**
@@ -150,14 +150,14 @@ pip install -r unified-monitor-client/requirements.txt
 
 **Remote-Monitor Logs ansehen**
 ```bash
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had \
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi \
   tail -n 50 /tmp/unified-camera-monitor.log
 ```
 
 **AUTO-RECORD startet nicht**
 ```bash
 # Überprüfe ob picamera2 auf Pi installiert ist:
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had \
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi \
   python3 -c "import picamera2; print('OK')"
 ```
 

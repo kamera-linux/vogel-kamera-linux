@@ -547,7 +547,7 @@ Diese Tabelle zeigt, welche Parameter mit welchen Flags kombinierbar sind:
 ### SSH auf Raspberry Pi
 
 ```bash
-ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi
 ```
 
 ### Live Log ansehen

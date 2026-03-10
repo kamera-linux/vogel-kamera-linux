@@ -7,9 +7,9 @@
 # =============================================================================
 
 # SSH-Konfiguration
-export SSH_USER="roimme"
-export SSH_HOST="raspberrypi-5-ai-had"
-export SSH_KEY="$HOME/.ssh/id_rsa_ai-had"
+export SSH_USER="<your-username>"
+export SSH_HOST="your-raspberry-pi"
+export SSH_KEY="$HOME/.ssh/your-ssh-key"
 export SSH_OPTS="-i $SSH_KEY"
 
 # SSH-Funktion

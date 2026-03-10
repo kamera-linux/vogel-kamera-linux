@@ -34,9 +34,9 @@ class TestRunner:
         self.results: List[Tuple[str, bool]] = []
         
         # Konfiguration
-        self.ssh_key = os.path.expanduser("~/.ssh/id_rsa_ai-had")
-        self.ssh_user = "roimme"
-        self.ssh_host = "raspberrypi-5-ai-had"
+        self.ssh_key = os.path.expanduser("~/.ssh/your-ssh-key")
+        self.ssh_user = "<your-username>"
+        self.ssh_host = "your-raspberry-pi"
         self.script_dir = Path(__file__).parent
         
     def add_test(self, name: str, mode: str, timeout: int = 45):

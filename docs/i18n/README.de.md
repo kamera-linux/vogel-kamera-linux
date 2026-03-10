@@ -469,7 +469,7 @@ cd auto-start-kamera
 | `--threshold` | AI-Erkennungs-Schwelle | 0.4 | `--threshold 0.3` |
 | `--cooldown` | Cooldown zwischen Aufnahmen (s) | 15 | `--cooldown 10` |
 | `--trigger-duration` | Mindest-Dauer für Trigger (s) | 1.0 | `--trigger-duration 0.5` |
-| `--video-path` | Basis-Pfad für Videos | `/home/roimme/Videos/Vogelhaus` | `--video-path /mnt/nas/birds` |
+| `--video-path` | Basis-Pfad für Videos | `/home/<your-username>/Videos/Vogelhaus` | `--video-path /mnt/nas/birds` |
 | `--model` | Pfad zum YOLO-Model | yolov8n.pt | `--model custom.pt` |
 | `--preview-fps` | Preview FPS | 6 | `--preview-fps 10` |
 | `--recording-width` | Aufnahme-Breite (px) | 4096 | `--recording-width 1920` |
@@ -504,7 +504,7 @@ cd auto-start-kamera
 ### 📁 Ausgabe-Struktur
 
 ```
-/home/roimme/Videos/Vogelhaus/
+/home/<your-username>/Videos/Vogelhaus/
 └── 2025-11-11_19-30-45_bird_0.45.h264
 ```
 

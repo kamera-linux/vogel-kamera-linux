@@ -87,12 +87,12 @@ pip install ultralytics opencv-python numpy
 
 1. **Code kopieren zum Raspberry Pi:**
    ```bash
-   scp raspberry-pi-scripts/unified-camera-monitor.py roimme@raspberrypi-5-ai-had:~/vogel-kamera-linux/raspberry-pi-scripts/
+   scp raspberry-pi-scripts/unified-camera-monitor.py <your-username>@your-raspberry-pi:~/vogel-kamera-linux/raspberry-pi-scripts/
    ```
 
 2. **Testen ob Audio-Stick erkannt wird:**
    ```bash
-   ssh roimme@raspberrypi-5-ai-had "
+   ssh <your-username>@your-raspberry-pi "
    lsusb
    arecord -l
    "
@@ -100,7 +100,7 @@ pip install ultralytics opencv-python numpy
 
 3. **Erste Test-Aufnahme (5 Sekunden):**
    ```bash
-   ssh roimme@raspberrypi-5-ai-had "python3 ~/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor.py --manual-record --recording-duration 5 --rotation 180"
+   ssh <your-username>@your-raspberry-pi "python3 ~/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor.py --manual-record --recording-duration 5 --rotation 180"
    ```
 
 ## Verwendung
@@ -117,7 +117,7 @@ python3 unified-camera-monitor.py \
   --autofocus-mode continuous
 
 # Von Client-PC aus:
-ssh roimme@raspberrypi-5-ai-had "python3 ~/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor.py --manual-record --recording-duration 60"
+ssh <your-username>@your-raspberry-pi "python3 ~/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor.py --manual-record --recording-duration 60"
 ```
 
 ### AI-Monitoring mit Vogel-Erkennung
@@ -169,9 +169,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=roimme
-WorkingDirectory=/home/roimme/vogel-kamera-linux/raspberry-pi-scripts
-ExecStart=/usr/bin/python3 /home/roimme/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor.py --enable-audio --threshold 0.4
+User=<your-username>
+WorkingDirectory=/home/<your-username>/vogel-kamera-linux/raspberry-pi-scripts
+ExecStart=/usr/bin/python3 /home/<your-username>/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor.py --enable-audio --threshold 0.4
 Restart=always
 RestartSec=10
 

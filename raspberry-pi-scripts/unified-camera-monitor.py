@@ -104,7 +104,7 @@ class UnifiedCameraMonitor:
         threshold: float = 0.4,
         cooldown: int = 15,
         trigger_duration: float = 1.0,
-        video_base_path: str = "/home/roimme/Videos/Vogelhaus",
+        video_base_path: str = "/home/<your-username>/Videos/Vogelhaus",
         model_path: Optional[str] = None,
         preview_width: int = 640,
         preview_height: int = 480,
@@ -1100,7 +1100,7 @@ def main():
     parser.add_argument('--threshold', type=float, default=0.4, help='AI-Erkennungs-Schwelle (default: 0.4)')
     parser.add_argument('--cooldown', type=int, default=15, help='Cooldown zwischen Aufnahmen in Sekunden (default: 15)')
     parser.add_argument('--trigger-duration', type=float, default=1.0, help='Mindest-Dauer für Trigger in Sekunden (default: 1.0)')
-    parser.add_argument('--video-path', type=str, default='/home/roimme/Videos/Vogelhaus', help='Basis-Pfad für Videos')
+    parser.add_argument('--video-path', type=str, default='/home/<your-username>/Videos/Vogelhaus', help='Basis-Pfad für Videos')
     parser.add_argument('--model', type=str, help='Pfad zum YOLO-Model (optional)')
     parser.add_argument('--preview-fps', type=int, default=6, help='Preview FPS (default: 6)')
     parser.add_argument('--recording-width', type=int, default=4096, help='Aufnahme-Breite (default: 4096 - Cinema 4K)')

@@ -497,7 +497,7 @@ Videos werden automatisch organisiert:
 cd unified-monitor-client && python3 diagnose_remote_system.py
 
 # SSH Test
-ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5-ai-had
+ssh -i ~/.ssh/your-ssh-key <your-username>@your-raspberry-pi
 
 # Audio-Devices
 arecord -l
