@@ -11,9 +11,9 @@ if ENV_FILE.exists():
     load_dotenv(ENV_FILE)
 
 # SSH-Konfiguration
-SSH_KEY = os.getenv('SSH_KEY', os.path.expanduser('~/.ssh/id_rsa_pi'))
-SSH_USER = os.getenv('SSH_USER', 'pi_user')
-SSH_HOST = os.getenv('SSH_HOST', 'raspberry-pi-monitor')
+SSH_KEY = os.getenv('SSH_KEY', os.path.expanduser('~/.ssh/id_rsa_ai-had'))
+SSH_USER = os.getenv('SSH_USER', 'roimme')
+SSH_HOST = os.getenv('SSH_HOST', 'raspberrypi-5-ai-had')
 SSH_TIMEOUT = 5
 SSH_RETRIES = 3
 SSH_RETRY_DELAY = 2

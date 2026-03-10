@@ -1,6 +1,7 @@
-# 🎬 Vogel-Kamera v2.1.0 - Quick Reference
+# 🎬 Vogel-Kamera v2.1.0 - Quick Reference (ARCHIV)
 
-**Version:** 2.1.0 | **Datum:** 8. März 2026 | **Status:** Stabil ✅
+**Version:** 2.1.0 | **Datum:** 8. März 2026 | **Status:** Veraltet ⚠️  
+**→ Nutze stattdessen:** [v2.1.1 Quick Reference](QUICK_REFERENCE_v2.1.1.md)
 
 ---
 

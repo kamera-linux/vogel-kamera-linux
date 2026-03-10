@@ -1,5 +1,58 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.1.1] - 10. März 2026 🧹 **Graceful Shutdown & Process Management**
+
+### 🛑 Major Features
+- **Graceful Ctrl+C Shutdown**
+  - Sauberes Cleanup aller Remote-Prozesse bei Ctrl+C
+  - Sequenzielle Shutdown-Phasen: StatusReporter → Detection → Remote → SSH
+  - Globale Variablen für Signal-Handler-Zugriff auf Ressourcen
+  - Try/Exception-Handling für jede Cleanup-Phase
+
+- **Process Diagnostics & Monitoring**
+  - `diagnose_remote_processes()` zeigt blockierende Prozesse VOR Cleanup
+  - Sichtbarkeit in: laufende Prozesse, offene File-Handles, V4L2-Devices
+  - Hilft bei Debugging von "Device or resource busy" Fehlern
+
+- **Improved Process Cleanup**
+  - 3-stagige Cleanup statt aggressivem Kill-All
+  - Stage 1: Gezielte SIGTERM zu Camera-Prozessen (2s Warte)
+  - Stage 2: Aggressive SIGKILL nur zu Zielprozessen (NICHT alle python3!)
+  - Stage 3: V4L2-Device-Locks freigeben + Log-Files cleanup
+  - Verification: Zählt verbleibende Prozesse nach Cleanup
+
+- **🆕 Detect-and-Record Mode** (Zwei-Phasen-Betrieb)
+  - **Phase 1 - Detection:** Fokussierte Vogelerkennung (KEIN Video-Speichern)
+    - Schnelle YOLO-Inference ohne Overhead
+    - Minimale CPU/RAM (nur Erkennung, kein Encoding)
+  - **Phase 2 - Recording:** Nach Trigger → Volle Aufnahme mit Audio
+    - Sequenzieller Betrieb: erst erkennen, dann aufnehmen
+    - Verhindert Time-Lapse/beschleunigte Vorschau-Probleme
+  - `--detect-and-record --repeat` für Endlosschleife
+
+### ✨ Improvements
+- SSH-Connection bleibt über beide Phasen erhalten
+- StatusReporter läuft während Detection-Phase
+- Bessere Log-Ausgaben bei Cleanup-Fehlern
+- Video wird erst nach Vogel-Erkennung geschrieben (Speicher-effizient)
+- Globale Fehlerbehandlung mit Fallback-Verhalten
+
+### 🔧 Technical Changes
+- Globale Variablen: `_global_ssh`, `_global_status_reporter`, `_cleanup_on_exit`
+- Signal-Handler mit vollständigem Cleanup-Orchester
+- Remote-Prozess-Diagnostik für Fehlersuche
+- Targeted Process-Killing statt Wildcard-Kill
+- Try/Except-Wrapper um alle Critical Operations
+
+### 🗂️ Architecture
+- `unified_monitor_client.py`: Hauptprogramm mit Signal-Handler + Cleanup
+- `config.py`: Konfiguration & Konstanten
+- `ssh_manager.py`: SSH-Verbindungsmanagement
+- `monitors.py`: Log-, Video-, Status-Monitoring
+- `version_manager.py`: Versionsprüfung & Remote-Sync
+
+---
+
 ## [2.1.0] - 8. März 2026 🎙️ **Audio/Video-Synchronisation**
 
 ### 🎙️ Major Features

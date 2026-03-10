@@ -95,10 +95,16 @@ class VersionManager:
         """
         self._log('cyan', "🔄 Prüfe Remote-Skripte auf Aktualität...")
         
-        # Nur unified-camera-monitor.py muss synchronisiert werden
-        # (neue Python-basierte Orchestration benötigt keine Bash-Helpers)
+        # Synchronisiere alle wichtigen Remote-Skripte
+        # - unified-camera-monitor.py: Fallback für manuelle Aufnahme
+        # - unified-camera-monitor-auto.py: Vogelerkennung + Auto-Recording
+        # - unified-camera-monitor-manual.py: Manuelle Aufnahme (rpicam-vid)
+        # - unified-camera-monitor-detect-only.py: YOLO Detection ohne Video (Phase 1 nur)
         scripts_to_sync = [
             ('unified-camera-monitor.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor.py'),
+            ('unified-camera-monitor-auto.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-auto.py'),
+            ('unified-camera-monitor-manual.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-manual.py'),
+            ('unified-camera-monitor-detect-only.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-detect-only.py'),
         ]
         
         scripts_updated = 0

@@ -1,103 +1,126 @@
-# 📚 Dokumentations-Übersicht
+# 📚 Dokumentations-Übersicht (v2.1.0)
 
-## 🎯 Schnelleinstieg
+## 🎯 Schnelleinstieg (NEU!)
 
-### Für Einsteiger
-1. **[README.md](../README.md)** - Haupt-Übersicht und Quickstart
-2. **[QUICKSTART-AUTO-TRIGGER.md](QUICKSTART-AUTO-TRIGGER.md)** - Auto-Trigger in 5 Minuten
-3. **[PREVIEW-STREAM-SETUP.md](PREVIEW-STREAM-SETUP.md)** - Stream einrichten
+### Für Einsteiger (Unified Monitor Client)
+1. **[../README.md](../README.md)** - Haupt-Übersicht, Features, Zwei Modi
+2. **[../QUICK-START-PYTHON.md](../QUICK-START-PYTHON.md)** - Installation und erste Befehle
+3. **[../unified-monitor-client/README.md](../unified-monitor-client/README.md)** - Client Details
 
 ### Für erfahrene Nutzer
-1. **[AUTO-TRIGGER-DOKUMENTATION.md](AUTO-TRIGGER-DOKUMENTATION.md)** - Vollständige Referenz
-2. **[AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md](AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md)** - Performance-Tuning
-3. **[PARAMETER-NO-STREAM-RESTART.md](PARAMETER-NO-STREAM-RESTART.md)** - Stream-Management Details
+1. **[ARCHITEKTUR.md](ARCHITEKTUR.md)** - Technische Architektur (AUTO-RECORD vs MANUAL-RECORD)
+2. **[AI-MODELLE-VOGELARTEN.md](AI-MODELLE-VOGELARTEN.md)** - KI-Modelle für Vogelarten
+3. **[ANLEITUNG-EIGENES-AI-MODELL.md](ANLEITUNG-EIGENES-AI-MODELL.md)** - Custom Training
 
 ---
 
-## 📖 Dokumentations-Kategorien
+## 📖 Dokumentations-Kategorien (v2.1.0)
 
-### 🎬 Auto-Trigger System
-
-#### Hauptdokumentation
-| Dokument | Beschreibung | Zielgruppe |
-|----------|--------------|------------|
-| **[AUTO-TRIGGER-DOKUMENTATION.md](AUTO-TRIGGER-DOKUMENTATION.md)** | Vollständige Referenz für Auto-Trigger | Alle |
-| **[QUICKSTART-AUTO-TRIGGER.md](QUICKSTART-AUTO-TRIGGER.md)** | Schnelleinstieg in 5 Minuten | Einsteiger |
-| **[AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md](AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md)** | Performance-Analyse und Optimierung | Fortgeschritten |
-
-#### Stream-Management
-| Dokument | Beschreibung | Zielgruppe |
-|----------|--------------|------------|
-| **[PARAMETER-NO-STREAM-RESTART.md](PARAMETER-NO-STREAM-RESTART.md)** | `--no-stream-restart` Parameter | Alle |
-| **[AUTO-TRIGGER-STREAM-RESTART.md](AUTO-TRIGGER-STREAM-RESTART.md)** | Stream-Lifecycle im Auto-Trigger | Fortgeschritten |
-| **[PREVIEW-STREAM-SETUP.md](PREVIEW-STREAM-SETUP.md)** | RTSP-Stream einrichten | Einsteiger |
-
-### 🔧 Setup & Konfiguration
+### 🖥️ Unified Monitor Client (Standard ab v2.1.0)
 
 | Dokument | Beschreibung | Zielgruppe |
 |----------|--------------|------------|
-| **[config/README.md](../config/README.md)** | Konfigurationsdateien | Alle |
-| **[FIREWALL-SETUP-SUMMARY.md](FIREWALL-SETUP-SUMMARY.md)** | Firewall-Regeln | Einsteiger |
-| **[SYSTEM-READY.md](SYSTEM-READY.md)** | System-Bereitschaftsprüfung | Alle |
+| **[../QUICK-START-PYTHON.md](../QUICK-START-PYTHON.md)** | Schnellstart mit --auto-record und --manual-record | Alle |
+| **[../unified-monitor-client/README.md](../unified-monitor-client/README.md)** | Vollständige Client-Dokumentation | Alle |
+| **[ARCHITEKTUR.md](ARCHITEKTUR.md)** | Detaillierte Architektur: picamera2 vs rpicam-vid | Entwickler |
 
-### 🧪 Testing & Diagnostics
-
-| Dokument | Beschreibung | Zielgruppe |
-|----------|--------------|------------|
-| **[kamera-auto-trigger/tests/README.md](../kamera-auto-trigger/tests/README.md)** | Test-Suite Übersicht | Entwickler |
-| **[network-tools/README.md](../network-tools/README.md)** | Netzwerk-Diagnose | Troubleshooting |
-
-### 🛠️ Tools & Automation
+### 🤖 KI-Erkennung mit YOLO26n
 
 | Dokument | Beschreibung | Zielgruppe |
 |----------|--------------|------------|
-| **[git-automation/README.md](../git-automation/README.md)** | Git-Automation mit verschlüsselten Secrets | Entwickler |
-| **[wiki-sync/README.md](../wiki-sync/README.md)** | Wiki-Synchronisierung | Entwickler |
-| **[tools/README_YOUTUBE_STATS.md](../tools/README_YOUTUBE_STATS.md)** | YouTube-Statistiken Automation | Entwickler |
+| **[AI-MODELLE-VOGELARTEN.md](AI-MODELLE-VOGELARTEN.md)** | Vortrainierte Vogelarten-Modelle | Alle |
+| **[ANLEITUNG-EIGENES-AI-MODELL.md](ANLEITUNG-EIGENES-AI-MODELL.md)** | Training eigener Modelle | Fortgeschritten |
+
+### 🔐 Sicherheit & Wartung
+
+| Dokument | Beschreibung | Zielgruppe |
+|----------|--------------|------------|
+| **[SECURITY.md](SECURITY.md)** | SSH-Sicherheit & Best Practices | Sysadmin |
+| **[TRIXIE-MIGRATION.md](TRIXIE-MIGRATION.md)** | Debian 13 Trixie Migration | Sysadmin |
+
+### 🎬 Legacy Auto-Trigger Dokumentation (< v2.0)
+
+> ⚠️ **Veraltet:** Diese Dokumentation bezieht sich auf alte Versionen. Für v2.1.0+ nutzen Sie die Unified Monitor Client Dokumentation oben.
+
+#### Auto-Trigger System (v1.x)
+| Dokument | Beschreibung | Status |
+|----------|--------------|--------|
+| **[AUTO-TRIGGER-DOKUMENTATION.md](AUTO-TRIGGER-DOKUMENTATION.md)** | Auto-Trigger Dokumentation | ⚠️ Legacy |
+| **[QUICKSTART-AUTO-TRIGGER.md](QUICKSTART-AUTO-TRIGGER.md)** | Auto-Trigger Quickstart | ⚠️ Legacy |
+
+#### Stream & Performance (v1.x)
+| Dokument | Beschreibung | Status |
+|----------|--------------|--------|
+| **[PREVIEW-STREAM-SETUP.md](PREVIEW-STREAM-SETUP.md)** | RTSP Stream Setup | ⚠️ Legacy |
+| **[AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md](AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md)** | Performance Tuning | ⚠️ Legacy |
 
 ### 📋 Release Notes
 
 | Dokument | Beschreibung | Status |
 |----------|--------------|--------|
-| **[releases/RELEASE_NOTES_v1.2.0.md](../releases/RELEASE_NOTES_v1.2.0.md)** | v1.2.0 Release Notes | 🟢 Aktuell |
-| **[releases/v1.1.9/RELEASE_NOTES_v1.1.9.md](../releases/v1.1.9/RELEASE_NOTES_v1.1.9.md)** | v1.1.9 Release Notes | Stabil |
-| **[releases/README.md](../releases/README.md)** | Alle Releases | Archiv |
+| **[../releases/v2.1.0/RELEASE_NOTES_v2.1.0.md](../releases/v2.1.0/RELEASE_NOTES_v2.1.0.md)** | v2.1.0: Audio/Video Sync | 🟢 Aktuell |
+| **[../AUDIO-FIX-CHANGELOG.md](../AUDIO-FIX-CHANGELOG.md)** | Audio-Integration Changelog | 🟢 Aktuell |
+| **[../CHANGELOG.md](../CHANGELOG.md)** | Kompletter Changelog | 🟢 Aktuell |
 
 ---
 
-## 🎓 Lernpfade
+## 🎓 Lernpfade (v2.1.0)
 
 ### Pfad 1: Erste Schritte (Einsteiger)
 ```
-1. README.md (Überblick)
-   └─> 2. PREVIEW-STREAM-SETUP.md (Stream einrichten)
-       └─> 3. QUICKSTART-AUTO-TRIGGER.md (Auto-Trigger starten)
-           └─> 4. PARAMETER-NO-STREAM-RESTART.md (Optimierung)
+1. README.md (Überblick, Features, Zwei Modi)
+   └─> 2. QUICK-START-PYTHON.md (Installation)
+       └─> 3. unified-monitor-client/README.md (Client Details)
+           └─> 4. Erste --auto-record oder --manual-record Session
 ```
 
-### Pfad 2: Performance-Optimierung (Fortgeschritten)
+### Pfad 2: Auto-Record Monitoring optimal nutzen
 ```
-1. AUTO-TRIGGER-DOKUMENTATION.md (Vollständige Referenz)
-   └─> 2. AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md (Analyse)
-       └─> 3. AUTO-TRIGGER-STREAM-RESTART.md (Stream-Lifecycle)
-           └─> 4. System-Monitoring und Tuning
+1. QUICK-START-PYTHON.md (--auto-record Beispiele)
+   └─> 2. ARCHITEKTUR.md (Verstehen: picamera2 + YOLO26n)
+       └─> 3. AI-MODELLE-VOGELARTEN.md (KI-Modelle)
+           └─> 4. ANLEITUNG-EIGENES-AI-MODELL.md (Custom Models)
 ```
 
-### Pfad 3: Entwicklung & Troubleshooting (Experten)
+### Pfad 3: Manual-Record für geplante Sessions
 ```
-1. git-automation/README.md (Automation)
-   └─> 2. kamera-auto-trigger/tests/README.md (Testing)
-       └─> 3. network-tools/README.md (Diagnostics)
-           └─> 4. Code-Analyse und Debugging
+1. QUICK-START-PYTHON.md (--manual-record Beispiele)
+   └─> 2. ARCHITEKTUR.md (Verstehen: rpicam-vid Backend)
+       └─> 3. Eigene Record-Automatisierung bauen
+```
+
+### Pfad 4: Erweitert & Troubleshooting
+```
+1. ARCHITEKTUR.md (Systemverständnis)
+   └─> 2. SECURITY.md (SSH & Sicherheit)
+       └─> 3. TRIXIE-MIGRATION.md (Betriebssystem)
+           └─> 4. Log-Analyse & Debugging
 ```
 
 ---
 
-## 🔍 Häufige Themen
+## 🔍 Häufige Fragen & Wegweiser
 
-### Auto-Trigger Performance
-**Problem:** Wenige Trigger, hohe CPU-Last
-- **Siehe:** [AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md](AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md)
+### Frage: Welchen Modus soll ich nutzen?
+→ **Siehe:** [../README.md > Zwei Modi - Eine Lösung](../README.md#-zwei-modi---eine-lösung)
+
+### Frage: Wie installiere ich?
+→ **Siehe:** [../QUICK-START-PYTHON.md > Vorbereitungen](../QUICK-START-PYTHON.md)
+
+### Frage: Ich möchte Auto-Record (Vogel-Erkennung) nutzen
+→ **Siehe:** [../QUICK-START-PYTHON.md > AUTO-RECORD](../QUICK-START-PYTHON.md)
+
+### Frage: Ich möchte Manual-Record (geplante Aufnahmen)
+→ **Siehe:** [../QUICK-START-PYTHON.md > MANUAL-RECORD](../QUICK-START-PYTHON.md)
+
+### Frage: Wie trainiere ich ein eigenes KI-Modell?
+→ **Siehe:** [ANLEITUNG-EIGENES-AI-MODELL.md](ANLEITUNG-EIGENES-AI-MODELL.md)
+
+### Frage: Wie funktioniert das System technisch?
+→ **Siehe:** [ARCHITEKTUR.md > Dual-Architecture](ARCHITEKTUR.md)
+
+### Frage: Ich nutze noch Bookworm (Debian 12)
+→ **Siehe:** [TRIXIE-MIGRATION.md](TRIXIE-MIGRATION.md) oder nutze Branch `bookworm-legacy`
 - **Emoji:** 📊
 
 ### Stream-Management

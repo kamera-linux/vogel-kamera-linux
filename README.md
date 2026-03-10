@@ -4,30 +4,38 @@
 
 ![Vogel-Kamera-Linux Banner](docs/pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
 
-## Release v2.1.0 — Audio/Video-Synchronisation & Professionelle Aufnahmen
+## Release v2.1.1 — Graceful Shutdown & Zwei-Phasen-Detection 🆕
 
+- **Version:** v2.1.1 (März 2026)
+- **🆕 Major Features:**
+  - **Detect-and-Record Mode** (Zwei-Phasen-Betrieb - EMPFOHLEN!)
+    - Phase 1: Schnelle Vogelerkennung OHNE Video-Speicherung
+    - Phase 2: Nach Trigger → Volle Aufnahme mit Audio
+    - Verhindert Time-Lapse und beschleunigte Vorschau-Probleme
+  - **Graceful Ctrl+C Shutdown** - Sauberes Cleanup aller Remote-Prozesse
+  - **Process Diagnostics** - `diagnose_remote_processes()` vor Cleanup
+  - **Improved Process Cleanup** - 3-stagige Cleanup (nicht mehr Kill-All)
+  - **Signal Handler Enhanced** mit globalen Variablen für SSH & StatusReporter
+
+- **🔧 Technical Improvements:**
+  - ✅ Keine Zombie-Prozesse mehr nach Ctrl+C
+  - ✅ Sichtbarkeit in blockierende Prozesse (LAUFENDE, FILE HANDLES, V4L2)
+  - ✅ SIGTERM → Warten → SIGKILL (elegant degradation)
+  - ✅ V4L2-Device-Locks sauber freigeben
+  - ✅ Targeted Process-Killing (nicht alle python3!)
+
+**Quick Start:** [`QUICK_REFERENCE_v2.1.1.md`](QUICK_REFERENCE_v2.1.1.md)  
+**Vollständige Release-Notes:** [`releases/v2.1.1/RELEASE_NOTES_v2.1.1.md`](releases/v2.1.1/)  
+**Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
+
+[![Version](https://img.shields.io/badge/Version-v2.1.1-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.1.1)
+[![Detect-and-Record](https://img.shields.io/badge/Feature-Detect%20%26%20Record-informational)]()
+[![Client Python](https://img.shields.io/badge/Architecture-Python%20Client-success)]()
+
+### v2.1.0 (Archiv)
+**Audio/Video-Synchronisation & Professionelle Aufnahmen**
 - **Version:** v2.1.0 (März 2026)
-- **🎙️ Highlights:** 
-  - **Audio/Video-Synchronisation** mit Thread-basierter Parallel-Aufnahme
-  - **USB-Audio-Stick** Integration (arecord, hw:0,0 Auto-Detection)
-  - **rpicam-vid statt libcamera** für bessere Codec-Kontrolle
-  - **Perfekte MP4-Merge** mit ffmpeg `-fflags +genpts`
-  - **Rotation 180°** Default (Vogelbild oben)
-  - **Cinema 4K** (4096x2160 @ 30fps)
-  - **Manual Recording** ohne AI für direkte Aufnahmen
-- **Wichtige Features:**
-  - ✅ Beide Streams (Video + Audio) exakt synchron
-  - ✅ Automatische USB-Audio-Erkennung
-  - ✅ Alle rpicam-vid Parameter konfigurierbar
-  - ✅ Slow-Motion Support (60fps)
-  - ✅ rsync Auto-Transfer zum Client
-
-**Vollständige Release-Notes:** [`releases/v2.1.0/RELEASE_NOTES_v2.1.0.md`](releases/v2.1.0/RELEASE_NOTES_v2.1.0.md)  
-**Audio-Integration Changelog:** [`AUDIO-FIX-CHANGELOG.md`](AUDIO-FIX-CHANGELOG.md)
-
-[![Version](https://img.shields.io/badge/Version-v2.1.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.1.0)
-[![Audio Integration](https://img.shields.io/badge/Feature-Audio%20%2B%20Video%20Sync-informational)]()
-[![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-informational)](docs/TRIXIE-MIGRATION.md)
+- Siehe [Archiv-Release](releases/v2.1.0/) für Details oder [v2.1.0 Quick Reference](QUICK_REFERENCE_v2.1.0.md)
 [![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](LICENSE)
 
 > ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
@@ -111,6 +119,65 @@ python3 unified_monitor_client.py slowmo  # Zeitlupe 120fps
 - 🔧 **Einfache Installation** mit config/requirements.txt
 - ✅ **Automatische Konfigurationsvalidierung**
 - 🎯 **Eigene AI-Modelle** trainierbar für spezifische Vogelarten
+
+## 🎯 Zwei Modi - Eine Lösung
+
+Das System v2.1.0 unterstützt **zwei spezialisierte Aufnahme-Modi** mit unterschiedlichen Backends, die Sie je nach Anforderung wählen:
+
+### 🔍 AUTO-RECORD Mode (KI-basiertes Monitoring)
+
+**Automatische Vogel-Erkennung mit YOLO26n**
+
+```bash
+# Kontinuierliche Überwachung mit automatischer Aufnahme bei Vogelerkennung
+python3 unified-monitor-client/unified_monitor_client.py normal --auto-record
+
+# Mit Parametern (höherer Schwellenwert)
+python3 unified-monitor-client/unified_monitor_client.py normal --auto-record --threshold 0.7
+```
+
+**Charakteristiken:**
+- 📷 **Backend:** picamera2 (Dual-Stream) für gleichzeitige Recording + Preview
+- 🤖 **Erkennung:** YOLO26n Vogel-Detektion in Echtzeit
+- 💾 **Trigger:** Automatische Aufnahme bei Vogel-Erkennung (einstellbar)
+- ⚙️ **Parameter:** `--threshold`, `--cooldown`, `--trigger-duration`
+- 🎯 **Perfekt für:** 24/7 Monitoring während Vogel-Saison
+- 📊 **Performance:** ~50-70% CPU (+ AI-Overhead)
+
+**Anwendungsszenario:** Kontinuierliche Überwachung eines Vogel-Futterplatzes. Die Kamera läuft 24/7 und nimmt automatisch auf, wenn Vögel erkannt werden.
+
+### 📹 MANUAL-RECORD Mode (Reine Aufnahmen)
+
+**Direkte Video-Aufnahmen ohne AI-Overhead**
+
+```bash
+# 5 Minuten kontinuierliche Aufnahme
+python3 unified-monitor-client/unified_monitor_client.py normal --manual-record --duration 300
+
+# 4K Cinema Mode, 30 Sekunden
+python3 unified-monitor-client/unified_monitor_client.py 4k --manual-record --duration 30
+```
+
+**Charakteristiken:**
+- 📷 **Backend:** rpicam-vid (Single-Stream) für stabile H264-Encoding
+- 🎬 **Funktion:** Direkte Video-Aufnahmen ohne KI-Verarbeitung
+- ⏱️ **Trigger:** Manuelles Start/Stop mit fester Dauer
+- ⚙️ **Parameter:** `--duration`, `--fps`, `--resolution`, `--bitrate`
+- 🎯 **Perfekt für:** Geplante Aufnahme-Sessions, Zeitlupen-Videos
+- 📊 **Performance:** ~200% CPU (H264 Encoding)
+
+**Anwendungsszenario:** Sie möchten täglich zwischen 16:00-17:00 Uhr aufnehmen, um Vogel-Aktivität zu erheben. AUTO-RECORD würde während dieser Zeit unzählige Aufnahmen erzeugen, MANUAL-RECORD hingegen nur eine präzise kontrollierte Aufnahme.
+
+### Schnellentscheidung: Welcher Modus?
+
+| Frage | Antwort → Modus |
+|-------|-----------------|
+| Soll die Kamera **kontinuierlich 24/7** laufen? | ➜ **AUTO-RECORD** |
+| Sollen Videos nur bei **Vogel-Erkennung** gestartet werden? | ➜ **AUTO-RECORD** |
+| Möchte ich **zeitgesteuert** Videos aufnehmen? | ➜ **MANUAL-RECORD** |
+| Möchte ich **geplante Sessions** ohne AI? | ➜ **MANUAL-RECORD** |
+| Will ich **Slow-Motion Videos** aufnehmen? | ➜ **MANUAL-RECORD** |
+| Interessieren mich **alle Vögel automatisch**? | ➜ **AUTO-RECORD** |
 
 ## 📸 Hardware-Galerie
 
@@ -339,25 +406,53 @@ vogel-kamera-linux/
     └── .env                                                     # Lokale Konfiguration (nicht im Git)
 ```
 
-## 🚀 Schnellstart: 3 Schritte
+## 🚀 Schnellstart: 4 Schritte
 
-### 1️⃣ Repository klonen & Setup
+### 1️⃣ Repository klonen
 ```bash
 git clone https://github.com/kamera-linux/vogel-kamera-linux.git
 cd vogel-kamera-linux
-python3 -m venv venv && source venv/bin/activate
-pip install -r config/requirements.txt
 ```
 
-### 2️⃣ Unified Monitor Client konfigurieren
+### 2️⃣ SSH-Konfiguration (für Remote Raspberry Pi)
 ```bash
 cd unified-monitor-client
-python3 setup_environment.py
-# → Raspberry Pi Hostname, Benutzer, SSH-Key eingeben
+
+# .env-Datei aus Vorlage erstellen
+cp .env.example .env
+
+# Konfiguration anpassen (SSH Host, User, Key)
+nano .env
 ```
 
-### 3️⃣ Erste Aufnahme starten
+**Wichtige .env-Parameter:**
 ```bash
+SSH_KEY=~/.ssh/id_rsa_pi          # SSH Private Key
+SSH_USER=pi                        # Raspberry Pi Benutzer
+SSH_HOST=raspberry-pi.local        # Hostname/IP des Pi
+```
+
+### 3️⃣ Automatisiertes Setup (Remote + Lokal)
+```bash
+# Setup-Skript ausführen
+chmod +x setup_environment.sh
+./setup_environment.sh
+
+# Oder direkt mit Python
+python3 setup_environment.py
+```
+
+Das Skript automatisiert:
+- ✅ System-Updates auf Remote Pi
+- ✅ Installation aller Abhängigkeiten (rpicam, ffmpeg, YOLO, Python-Module)
+- ✅ Repository-Setup auf Remote Pi
+- ✅ Lokale venv und Dependencies
+
+### 4️⃣ Erste Aufnahme starten
+```bash
+# Aktiviere lokale venv
+source ../venv/bin/activate
+
 # Test: 5 Sekunden
 python3 unified_monitor_client.py test
 
@@ -366,7 +461,12 @@ python3 unified_monitor_client.py 4k
 
 # Zeitlupe: 120fps
 python3 unified_monitor_client.py slowmo
+
+# Neu: Detect-and-Record Mode (empfohlen!)
+python3 unified_monitor_client.py normal --detect-and-record
 ```
+
+📚 **Mehr Details:** [`unified-monitor-client/SETUP_GUIDE.md`](unified-monitor-client/SETUP_GUIDE.md)
 
 
 ---

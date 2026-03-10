@@ -33,96 +33,146 @@ SSH_HOST=raspberrypi-5-ai-had
 pip install -r requirements.txt
 ```
 
+**Alte Bash-Skripte sind gelöscht!** ✅  
+**Status:** Production-Ready (v2.1.0) mit Dual-Architecture  
+**Testing:** ✅ AUTO-RECORD (YOLO26) validiert ✅ MANUAL-RECORD (rpicam-vid) validiert
+
 ## Verwendung
 
-### Normal-Modus (1080p @ 30fps)
+### 🎯 Zwei Architektur-Modi
+
+Das System hat zwei spezialisierte Backend-Modi - wähle je nach Anwendungsfall:
+
+#### 🔍 **AUTO-RECORD**: Automatische Vogel-Erkennung mit YOLO26n
+
+Für unbeaufsichtigtes, ereignisgesteuertes Monitoring:
+
 ```bash
-python3 unified-monitor-client/unified_monitor_client.py normal
+# Standard: Kontinuierlich überwachen, bei Vogel-Erkennung aufnehmen
+python3 unified-monitor-client/unified_monitor_client.py normal --auto-record
+
+# Mit erhöhtem Schwellenwert und längerer Aufnahmedauer
+python3 unified-monitor-client/unified_monitor_client.py normal --auto-record \
+  --threshold 0.7 \
+  --trigger-duration 20
+
+# Slowmo-Modus (60fps) mit automatischer Vogel-Erkennung
+python3 unified-monitor-client/unified_monitor_client.py slowmo --auto-record
 ```
 
-### Zeitlupe (1536x864 @ 120fps)
+**Verfügbare Parameter für AUTO-RECORD:**
+- `--threshold` – Erkennungs-Konfidenz (0.0-1.0, Standard: 0.5)
+- `--cooldown` – Sekunden zwischen Erkennungen (Standard: 2.0)
+- `--trigger-duration` – Aufnahme-Länge pro Erkennung (Standard: 10s)
+
+#### 📹 **MANUAL-RECORD**: Reine Video-Aufnahmen ohne AI-Overhead
+
+Für geplante, gezielte Aufnahme-Sessions:
+
 ```bash
-python3 unified-monitor-client/unified_monitor_client.py slowmo
+# 10 Sekunden Test-Aufnahme
+python3 unified-monitor-client/unified_monitor_client.py normal --manual-record --duration 10
+
+# 5 Minuten kontinuierliche Aufnahme
+python3 unified-monitor-client/unified_monitor_client.py normal --manual-record --duration 300
+
+# 4K Cinema, 30 Sekunden
+python3 unified-monitor-client/unified_monitor_client.py 4k --manual-record --duration 30
+
+# Slowmo (60fps), 2 Minuten
+python3 unified-monitor-client/unified_monitor_client.py slowmo --manual-record --duration 120
 ```
 
-### Cinema 4K (4096x2160 @ 25fps)
+**Verfügbare Parameter für MANUAL-RECORD:**
+- `--duration` – Aufnahme-Dauer in Sekunden (Standard: 30)
+
+### Recording-Modi (Bildformat)
+
 ```bash
-python3 unified-monitor-client/unified_monitor_client.py 4k
+# 1080p @ 30fps (Standard)
+python3 unified-monitor-client/unified_monitor_client.py normal --auto-record
+
+# 1536x864 @ 60fps (Zeitlupe)
+python3 unified-monitor-client/unified_monitor_client.py slowmo --manual-record --duration 60
+
+# 4096x2160 @ 30fps (Cinema 4K)
+python3 unified-monitor-client/unified_monitor_client.py 4k --auto-record
+
+# 1024x576 @ 30fps (Test/Schnell-Check)
+python3 unified-monitor-client/unified_monitor_client.py test
 ```
 
-### AI-HAD mit Audio-Erkennung
-```bash
-python3 unified-monitor-client/unified_monitor_client.py ai-had
+## Was passiert bei der Ausführung?
+
+1. **SSH-Verbindung** zu Raspberry Pi wird etabliert
+2. **System-Check** prüft Versionen und Abhängigkeiten
+3. **Remote-Monitor** startet auf dem Pi (Background-Prozess)
+4. **Log-Tailing** zeigt Live-Events:
+   - AUTO-RECORD: Vogel-Erkennungen (YOLO26n), Trigger-Events, Aufnahme-Start/Stop
+   - MANUAL-RECORD: ffmpeg Encoding-Status, rsync Upload-Progress
+5. **Video-Watching** überwacht Pi-Verzeichnisse auf neue MP4-Dateien
+6. **rsync Transfer** lädt fertige Videos automatisch herunter
+7. **Status-Reports** alle 5 Minuten (CPU, RAM, Disk-Nutzung)
+
+Ausgaben sehen so aus:
 ```
-
-### Mit Parametern
-```bash
-# Kürzerer Cooldown
-python3 unified-monitor-client/unified_monitor_client.py slowmo --cooldown 5
-
-# Höherer Threshold
-python3 unified-monitor-client/unified_monitor_client.py 4k --threshold 0.7
-
-# Alle Parameter
-python3 unified-monitor-client/unified_monitor_client.py ai-had \
-  --threshold 0.6 \
-  --cooldown 10 \
-  --trigger 1.5 \
-  --audio-threshold 0.25
+[INFO] SSH-Connection: OK
+[INFO] Remote Monitor v2.1.0 startet...
+[AUTO EVENT] Vogel erkannt (Conf: 0.82) → Aufnahme startet (20s)
+[VIDEO] new_recording_2025_01_15.mp4 (45.2 MB) heruntergeladen
+[STATUS] CPU: 58% | RAM: 245MB | Disk: 78%
 ```
-
-## Was passiert?
-
-1. **System-Check** (SSH, Versionen, Skripte)
-2. **Remote Monitor startet** auf dem Pi
-3. **Log-Tailing** zeigt Events in Echtzeit
-4. **Video-Watching** synchronisiert Videos automatisch (rsync)
-5. **Status-Reporter** gibt Berichte alle 5 Minuten
 
 ## Ctrl+C zum Stoppen
 
-Das System stoppt sauber alle Threads und Prozesse.
+Das System beendet alle Prozesse sauber:
+- Stoppt Remote-Monitor auf dem Pi
+- Wartet auf ffmpeg zu finalisieren  
+- Synchronisiert letzte Videos herunter
+- Schließt SSH-Verbindung
 
-## Probleme?
+## Troubleshooting
 
-**SSH-Fehler: "SSH-Key nicht gefunden"**
+**SSH-Fehler: "Connection refused"**
 ```bash
-# 1. Stelle sicher, dass die Umgebungsvariablen gesetzt sind:
-echo $SSH_KEY $SSH_USER $SSH_HOST
+# Teste SSH-Verbindung manuell:
+ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had echo OK
 
-# 2. Teste SSH manuell:
-ssh -i $SSH_KEY $SSH_USER@$SSH_HOST 'echo OK'
-
-# 3. Überprüfe ob dein SSH-Key existiert:
-ls -la $SSH_KEY
+# Überprüfe SSH-Key:
+ls -la ~/.ssh/id_rsa_ai-had
 ```
 
-**Remote-Monitor Logs**
+**"No module named paramiko"**
 ```bash
-ssh -i $SSH_KEY $SSH_USER@$SSH_HOST 'tail -50 /tmp/unified-camera-monitor.log'
+# Stelle sicher, dass requirements installiert sind:
+pip install -r unified-monitor-client/requirements.txt
 ```
 
-**Dependencies prüfen**
+**Remote-Monitor Logs ansehen**
 ```bash
-pip list | grep -E "paramiko|click"
+ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had \
+  tail -n 50 /tmp/unified-camera-monitor.log
 ```
 
-## Umgebungsvariablen (WICHTIG!)
+**AUTO-RECORD startet nicht**
+```bash
+# Überprüfe ob picamera2 auf Pi installiert ist:
+ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had \
+  python3 -c "import picamera2; print('OK')"
+```
 
-Du **MUSST** diese mit deinen echten SSH-Einstellungen konfigurieren:
+## Environment-Variablen Setup
 
-Die einfachste Methode ist, die `.env` Datei zu editieren:
+Die `.env` Datei wird **automatisch geladen** beim Start:
 
 ```bash
+# Falls nicht vorhanden, erstellen:
+cp unified-monitor-client/.env.example unified-monitor-client/.env
+
+# Konfigurieren mit deinem SSH-Setup:
 nano unified-monitor-client/.env
 
-# Dann einfach nächstes Mal aufrufen:
-python3 unified-monitor-client/unified_monitor_client.py normal
+# Bei nächstem Start wird .env automatisch verwendet!
 ```
 
-Die `.env` Datei wird **automatisch geladen** und deine SSH-Daten sind sicher (nicht in Git)!
-
----
-
-**Alte Bash-Skripte sind gelöscht!** ✅  
-**Status:** Production-Ready
+`.env` wird **NICHT** in Git versioniert - deine Zugangsdaten bleiben privat! ✅

@@ -1,9 +1,37 @@
 # Unified Monitor Client (Python)
 
-**Python-Replacement** für die alte Bash-basierte `start-unified-monitoring.sh`. Vollständige Orchestrierung der Vogel-Kamera-Überwachung ohne Shell-Parsing-Fehler.
+**Python-Replacement** für die alte Bash-basierte `start-unified-monitoring.sh`. Vollständige Orchestrierung der Vogel-Kamera-Überwachung mit **Triple-Mode Support**.
+
+## 🎯 Drei Modi - Eine Lösung
+
+### 🆕 **DETECT-AND-RECORD MODE** (Zwei-Phasen - EMPFOHLEN!)
+- **Phase 1 - Detection:** Schnelle Vogelerkennung ohne Video-Speicherung
+- **Phase 2 - Recording:** Nach Trigger → Volle Aufnahme mit Audio
+- **Vorteile:** 
+  - Verhindert Time-Lapse/beschleunigte Vorschau-Probleme
+  - CPU-effizient: Detection-Overhead nur bis Vogel erkannt
+  - Saubere Prozess-Trennung zwischen Detection und Recording
+- **Parameter:** `--threshold`, `--cooldown`, `--trigger`, `--duration`, `--bitrate`
+- **Befehl:** `python3 unified_monitor_client.py normal --detect-and-record --repeat`
+- **Beispiel:** `python3 unified_monitor_client.py normal --detect-and-record --threshold 0.4 --duration 30 --repeat`
+
+### 🔍 **AUTO-RECORD MODE** (Vogelerkennung mit picamera2)
+- **Backend:** picamera2 mit Dual-Stream (Recording + Preview)
+- **AI-Erkennung:** YOLOv26n für automatische Vogelerkennung
+- **Funktion:** Kontinuierliche Überwachung mit automatischer Aufnahme bei Vogel-Erkennung
+- **Parameter:** `--threshold`, `--cooldown`, `--trigger-duration`
+- **Befehl:** `python3 unified_monitor_client.py normal --auto-record`
+- **⚠️ Hinweis:** Kann zu beschleunigter Video-Verarbeitung führen. Nutze `--detect-and-record` für bessere Ergebnisse.
+
+### 📹 **MANUAL-RECORD MODE** (Reine Aufnahme mit rpicam-vid)
+- **Backend:** rpicam-vid für stabile H264-Encoding
+- **Funktion:** Direkte Video-Aufnahme ohne AI-Overhead
+- **Parameter:** `--duration`, `--fps`, `--resolution`, `--bitrate`
+- **Befehl:** `python3 unified_monitor_client.py normal --manual-record --duration 60`
 
 ## Features
 
+✅ **Dual-Architecture:** Wähle zwischen KI-Monitoring oder reiner Aufnahme  
 ✅ **SSH-Management** mit Retry-Logik (paramiko)  
 ✅ **Automatische Versionskontrolle** & Remote-Skript-Sync  
 ✅ **Robustes Log-Tailing** (keine grep-Fehler!)  
@@ -12,6 +40,26 @@
 ✅ **CLI-Interface** mit Click (typsicher)  
 ✅ **Threading** für gleichzeitige Operationen  
 ✅ **Strukturiertes Logging** (Farben & Timestamps)  
+
+## 📊 Mode Selection Guide
+
+### Welchen Modus soll ich nutzen?
+
+| Aspekt | AUTO-RECORD | MANUAL-RECORD |
+|--------|-------------|---------------|
+| **Use Case** | Vogel-Monitoring mit automatischer Aufnahme | Reine Video-Aufnahmen, vorhersehbare Zeiten |
+| **Backend** | picamera2 (Dual-Stream) | rpicam-vid (Single-Stream) |
+| **Erkennung** | ✅ YOLO26n Vogelerkennung | ❌ Keine AI-Verarbeitung |
+| **CPU-Last** | ~50-70% (+ YOLO26 AI) | ~200% H264-Encoding |
+| **Speicher** | ~200MB | ~150MB |
+| **Best für** | 📹 Kontinuierliches Monitoring | 🎥 Geplante Aufnahmen |
+| **Trigger** | Vogel erkannt → Auto-Recording | Manuelles Start/Stop |
+| **Beispiel** | Von Frühling bis Herbst 24/7 | Tägliche 10-Minuten-Sessions |
+
+### Schnell-Entscheidung
+
+- **"Ich will, dass die Kamera automatisch aufnimmt, wenn Vögel kommen"** → `--auto-record`
+- **"Ich will gezielt Videos aufnehmen (z.B. täglich 1 Stunde)"** → `--manual-record --duration 3600`
 
 ## Installation
 
@@ -66,7 +114,79 @@ SSH_HOST=raspberrypi-5-ai-had
 
 ## Verwendung
 
-### Grundlegende Befehle
+## Verwendung
+
+### 🔍 AUTO-RECORD Modus (Vogel-Monitoring)
+
+```bash
+# Standard: Kontinuierlich überwachen, bei Vogel-Erkennung aufnehmen
+python3 unified_monitor_client.py normal --auto-record
+
+# Mit Parametern: 0.5 Sekunden Cooldown, 20 Sekunden Aufnahmedauer
+python3 unified_monitor_client.py normal --auto-record --cooldown 0.5 --trigger-duration 20
+
+# Höherer Schwellenwert (nur sichere Erkennungen aufnehmen)
+python3 unified_monitor_client.py normal --auto-record --threshold 0.7
+
+# Slowmo-Modus mit AI-Monitoring (60fps @ 1536x864)
+python3 unified_monitor_client.py slowmo --auto-record
+```
+
+### 📹 MANUAL-RECORD Modus (Reine Aufnahmen)
+
+```bash
+# 5 Sekunden Test-Aufnahme
+python3 unified_monitor_client.py normal --manual-record --duration 5
+
+# 10 Minuten kontinuierliche Aufnahme
+python3 unified_monitor_client.py normal --manual-record --duration 600
+
+# 4K Cinema-Modus, 30 Sekunden
+python3 unified_monitor_client.py 4k --manual-record --duration 30
+
+# Slowmo mit hohen FPS (60fps @ 1536x864), 2 Minuten
+python3 unified_monitor_client.py slowmo --manual-record --duration 120
+```
+
+### Basis-Befehle (Standard-Modi ohne Auto/Manual)
+
+```bash
+# Test-Modus: 5 Sekunden (zum Testen der Verbindung)
+python3 unified_monitor_client.py test
+
+# Standard-Modus (1920x1080 @ 30fps + Audio)
+python3 unified_monitor_client.py normal
+
+# Zeitlupe-Modus (60fps @ 1536x864)
+python3 unified_monitor_client.py slowmo
+
+# Cinema 4K (4096x2160 @ 30fps + Audio, rpicam-vid)
+python3 unified_monitor_client.py 4k
+```
+
+### Mit zusätzlichen Parametern
+
+```bash
+# Kürzerer Cooldown zwischen Aufnahmen
+python3 unified_monitor_client.py slowmo --auto-record --cooldown 5
+
+# Benutzerdefinierte Aufnahmedauer
+python3 unified_monitor_client.py 4k --manual-record --duration 60
+
+# Höherer Erkennungs-Schwellenwert
+python3 unified_monitor_client.py normal --auto-record --threshold 0.7
+
+# Verbose-Logging für Debugging
+python3 unified_monitor_client.py 4k --manual-record --verbose
+```
+
+### Hilfe anzeigen
+
+```bash
+python3 unified_monitor_client.py --help
+```
+
+## Grundlegende Befehle
 
 ```bash
 # Test-Modus: 5 Sekunden (zum Testen der Verbindung)

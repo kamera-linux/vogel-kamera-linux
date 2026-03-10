@@ -6,6 +6,7 @@ import logging
 import time
 import threading
 import subprocess
+import re
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional, Set
@@ -208,8 +209,9 @@ class VideoWatcher:
     
     def _process_video_dir(self, video_dir: str):
         """Verarbeitet ein Video-Verzeichnis"""
-        self._log('blue', f"🔍 Prüfe Video-Verzeichnis")
-        self._log('blue', f"   {video_dir}")
+        # Verbose logging suppressed - these checks run frequently and create log spam
+        # self._log('blue', f"🔍 Prüfe Video-Verzeichnis")
+        # self._log('blue', f"   {video_dir}")
         
         # Prüfe ob Verzeichnis MP4-Dateien hat
         mp4_output = self.ssh.exec_command_safe(
@@ -220,7 +222,8 @@ class VideoWatcher:
         mp4_files = [f for f in mp4_output.split('\n') if f.strip()]
         mp4_count = len(mp4_files)
         
-        self._log('blue', f"   📊 MP4-Dateien: {mp4_count}")
+        # Verbose logging suppressed - only show when videos are actually being synced
+        # self._log('blue', f"   📊 MP4-Dateien: {mp4_count}")
         
         if mp4_count > 0:
             dir_name = Path(video_dir).name
@@ -359,14 +362,62 @@ class StatusReporter:
             mem = parts[3] if len(parts) > 3 else "?"
             
             self._log('green', f"✅ Monitor läuft | PID: {pid} | CPU: {cpu}% | RAM: {mem}%")
-            
-            # Zeige letzte Log-Zeile
-            self._log('', "📋 Letzte Log-Zeile:")
-            last_log = self.ssh.exec_command_safe(f"tail -1 {REMOTE_LOG_FILE}")
-            if last_log:
-                self._log('blue', f"   {last_log}")
         else:
             self._log('red', "❌ Monitor-Prozess nicht aktiv")
+        
+        # Temperatur auslesen
+        self._log('', "")
+        self._log('', "🌡️  PI-RESSOURCEN:")
+        temp_output = self.ssh.exec_command_safe("vcgencmd measure_temp 2>/dev/null || echo 'N/A'")
+        if temp_output and "temp=" in temp_output:
+            # Extrahiere Temperatur (z.B. "temp=45.1'C" → 45.1°C)
+            import re
+            match = re.search(r"temp=([0-9.]+)", temp_output)
+            if match:
+                temp = match.group(1)
+                # Farbcodierung basierend auf Temperatur
+                if float(temp) > 80:
+                    color = 'red'
+                    emoji = "🔥"
+                elif float(temp) > 70:
+                    color = 'yellow'
+                    emoji = "⚠️ "
+                else:
+                    color = 'green'
+                    emoji = "✅"
+                self._log(color, f"   {emoji} CPU-Temperatur: {temp}°C")
+        else:
+            self._log('yellow', f"   ⚠️  Temperatur: N/A (vcgencmd nicht verfügbar)")
+        
+        # Disk-Speicher prüfen
+        disk_cmd = "df -BG /home/roimme 2>/dev/null | tail -1 | awk '{print $2, $3, $4, int($3/$2*100)}'"
+        disk_output = self.ssh.exec_command_safe(disk_cmd)
+        if disk_output:
+            parts = disk_output.split()
+            if len(parts) >= 4:
+                total, used, free, percent = parts[0], parts[1], parts[2], parts[3]
+                # Farbcodierung für Speicher
+                try:
+                    usage_pct = int(percent.rstrip('%'))
+                    if usage_pct > 90:
+                        disk_color = 'red'
+                        disk_emoji = "🔴"
+                    elif usage_pct > 80:
+                        disk_color = 'yellow'
+                        disk_emoji = "🟡"
+                    else:
+                        disk_color = 'green'
+                        disk_emoji = "🟢"
+                    self._log(disk_color, f"   {disk_emoji} Disk /home/roimme: {used}/{total} ({percent}% genutzt)")
+                except ValueError:
+                    self._log('cyan', f"   💾 Disk: {used}/{total} ({percent}% genutzt)")
+        
+        # Letzte Log-Zeile
+        self._log('', "")
+        self._log('', "📋 Letzte Log-Zeile:")
+        last_log = self.ssh.exec_command_safe(f"tail -1 {REMOTE_LOG_FILE}")
+        if last_log:
+            self._log('blue', f"   {last_log}")
         
         self._log('cyan', "===================================================================")
         self._log('', "")

@@ -4,18 +4,44 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.0.2** - "YOLO26 & Monitoring Improvements"
+**Version 2.1.1** - "Graceful Shutdown & Detect-and-Record Mode" 🆕
 - **Branch:** main
+- **Release Notes:** [v2.1.1/RELEASE_NOTES_v2.1.1.md](v2.1.1/RELEASE_NOTES_v2.1.1.md)
+- **Quick Reference:** [../QUICK_REFERENCE_v2.1.1.md](../QUICK_REFERENCE_v2.1.1.md)
+- **Release Date:** 2026-03-10
+- **🆕 Features:**
+  - 🆕 **Detect-and-Record Mode** (Zwei-Phasen: Detection → Recording) - EMPFOHLEN!
+  - 🆕 **Graceful Ctrl+C Shutdown** mit sequenziellem Cleanup
+  - 🔍 **Process Diagnostics** vor Cleanup
+  - 🔧 **Improved 3-Stage Process Cleanup** (SIGTERM → SIGKILL → Verify)
+- **Highlights:**
+  - ✅ Keine Zombie-Prozesse mehr
+  - ✅ "Device or resource busy" Fehler behoben
+  - ✅ Time-Lapse/beschleunigte Vorschau-Probleme gelöst
+  - ✅ Saubere Remote-Prozess-Verwaltung
+- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
+
+## 📦 Vorherige Versionen
+
+### Version 2.1.0 - "Audio/Video-Synchronisation & Professionelle Aufnahmen"
+- **Release Notes:** [v2.1.0/RELEASE_NOTES_v2.1.0.md](v2.1.0/RELEASE_NOTES_v2.1.0.md)
+- **Release Date:** 2026-03-08
+- **Features:**
+  - 🎙️ Thread-basierte Audio/Video-Synchronisation
+  - 🎙️ USB-Audio-Stick Integration mit Auto-Detection
+  - 📹 rpicam-vid statt libcamera für bessere Codec-Kontrolle
+  - 🎬 Manual Recording Mode (ohne AI)
+  - 🎬 Cinema 4K Support (4096x2160 @ 30fps)
+- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
+
+### Version 2.0.2 - "YOLO26 & Monitoring Improvements"
 - **Release Notes:** [v2.0.2/RELEASE_NOTES_v2.0.2.md](v2.0.2/RELEASE_NOTES_v2.0.2.md)
 - **Release Date:** 2026-03-06
 - **Features:**
   - 🤖 YOLO26 Migration (`yolo26n.pt`, `ultralytics>=26.0.0`)
-  - 🐛 CPU/RAM-Anzeige-Fix (korrekte PID-Erkennung, LC_ALL=C)
-  - 🐛 Kamera-Start-Konflikt behoben (rpicam-vid-Watchdog)
-  - 🔧 SSH-Timeout erhöht, Status-Reporter alle 5 Minuten aktiv
+  - 🐛 CPU/RAM-Anzeige-Fix
+  - 🔧 SSH-Timeout & Status-Reporter Improvements
 - **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
-
-## 📦 Vorherige Versionen
 
 ### Version 2.0.1 - "Stability & CLI Enhancements"
 - **Release Notes:** [v2.0.1/RELEASE_NOTES_v2.0.1.md](v2.0.1/RELEASE_NOTES_v2.0.1.md)
@@ -42,15 +68,6 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 - **Status:** ⚠️ LEGACY
 - **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
 
-### Version 1.3.0
-- **Release Notes:** [v1.3.0/RELEASE_NOTES_v1.3.0.md](v1.3.0/RELEASE_NOTES_v1.3.0.md)
-- **Release Date:** 2025-11-01
-- **Features:** Trixie-Migration, On-Demand Streaming, Dual-Kamera-Strategie
-- **Hinweis:** ⚠️ MediaMTX-Referenzen in v1.3.0 Release Notes sind historisch - System nutzt TCP Watchdog (seit v1.3.1)
-- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
-
-### Version 1.2.0 (Bookworm Legacy)
-- **Branch:** [bookworm-legacy](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)
 ### Version 1.3.0
 - **Release Notes:** [v1.3.0/RELEASE_NOTES_v1.3.0.md](v1.3.0/RELEASE_NOTES_v1.3.0.md)
 - **Release Date:** 2025-11-01
@@ -105,8 +122,9 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 ## 📖 Navigation
 
 - **Zurück zum Projekt:** [../README.md](../README.md)
-- **Changelog:** [../docs/CHANGELOG.md](../docs/CHANGELOG.md) 
-- **Aktueller Release:** [v2.0.2/RELEASE_NOTES_v2.0.2.md](v2.0.2/RELEASE_NOTES_v2.0.2.md)
+- **Changelog:** [../CHANGELOG.md](../CHANGELOG.md) 
+- **Quick Reference:** [../QUICK_REFERENCE_v2.1.1.md](../QUICK_REFERENCE_v2.1.1.md)
+- **Aktueller Release:** [v2.1.1/RELEASE_NOTES_v2.1.1.md](v2.1.1/RELEASE_NOTES_v2.1.1.md)
 
 ---
 

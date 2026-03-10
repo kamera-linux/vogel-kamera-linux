@@ -1,82 +1,248 @@
-# 🏗️ Kamera-Auto-Trigger Architektur
+# 🏗️ Vogel-Kamera Architektur (v2.1.0)
 
-## Systemübersicht
+## 📋 Überblick
 
-Das Kamera-Auto-Trigger System ist eine verteilte Anwendung zur automatischen Vogel-Erkennung und -Aufnahme. Es besteht aus zwei Hauptkomponenten:
+Das `vogel-kamera-linux` System (v2.1.0) basiert auf einer **Dual-Architecture mit zwei spezialisierten Backends**, die dynamisch je nach Anwendungsfall gewählt werden.
 
-- **PC (Lokales System)**: KI-gestützte Echtzeit-Analyse des Preview-Streams
-- **Raspberry Pi 5 (Remote)**: Hochauflösende Video- und Audio-Aufnahme
+```
+UNIFIED MONITOR CLIENT (Python, vom PC aus)
+├── SSH Verbindung zu Raspberry Pi
+├── Mode Selection →
+│   ├── --auto-record     → picamera2 + YOLO26n (KI-Monitoring)
+│   └── --manual-record   → rpicam-vid (Reine Aufnahmen)
+└── Monitoring & rsync-Transfer
+```
 
----
+## 🔄 Neue Dual-Architecture (v2.1.0)
 
-## 🔄 Kommunikationsfluss
-
-### Gesamtarchitektur
+### System-Komponenten
 
 ```mermaid
 graph TB
-    subgraph PC["PC (Lokales System)"]
-        A["start-vogel-beobachtung.sh<br/>🚀 Wrapper Script"]
-        B["ai-had-kamera-auto-trigger.py<br/>🧠 Haupt-Controller"]
-        C["stream_processor.py<br/>🤖 YOLOv8 KI-Modul"]
-        D["config.py<br/>⚙️ Konfiguration"]
+    subgraph Client["🖥️ Client (Lokaler PC)"]
+        A["unified_monitor_client.py<br/>Unified Monitor Client"]
+        B["config.py<br/>SSH & SSH Parameter"]
+        C["ssh_manager.py<br/>SSH mit Paramiko"]
+        D["monitors.py<br/>Logging, Video-Sync, Status"]
     end
     
-    subgraph RaspPi["Raspberry Pi 5 (Remote)"]
-        E["libcamera-vid<br/>📹 Preview Stream"]
-        F["Aufnahme-Skript<br/>🎬 HD Recording"]
-        G["USB-Mikrofon<br/>🎤 Audio Input"]
+    subgraph RaspPi["🍓 Raspberry Pi 5"]
+        E["unified-camera-monitor-auto.py<br/>picamera2 + YOLO26n Backend"]
+        F["unified-camera-monitor-manual.py<br/>rpicam-vid Backend"]
+        G["Pi Kamera Module<br/>IMX708"]
+        H["USB-Mikrofon<br/>Audio Input"]
     end
     
-    A -->|Parameter| B
-    B -->|Konfiguration| D
-    B -->|"RTSP Verbindung"| E
-    E -->|"Stream 640x480@5fps"| C
-    C -->|"Vogel erkannt?"| B
-    B -->|"SSH Befehl"| F
-    F -->|Aufnahme| G
-    F -->|"Video Output"| H["📁 Videos/"]
-    F -->|"Audio Output"| H
-
+    subgraph Mode["Mode Selection"]
+        I["--auto-record"]
+        J["--manual-record"]
+    end
+    
+    A -->|SSH Befehl| I
+    A -->|SSH Befehl| J
+    I -->|Start| E
+    J -->|Start| F
+    E -->|picamera2| G
+    F -->|rpicam-vid| G
+    E -->|Audio| H
+    F -->|Audio| H
+    C -->|SSH Tunnel| E
+    C -->|SSH Tunnel| F
+    D -->|rsync| H
+    
     style A fill:#e1f5ff
-    style B fill:#fff4e1
-    style C fill:#ffe1f5
-    style E fill:#e1ffe1
+    style E fill:#fff4e1
     style F fill:#ffe1e1
-    style G fill:#f5e1ff
+    style I fill:#c8e6c9
+    style J fill:#c8e6c9
 ```
 
----
-
-## 📊 Detaillierter Ablauf
-
-### 1️⃣ Systemstart
+### Workflow: Mode Selection
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Wrapper as start-vogel-beobachtung.sh
-    participant Controller as ai-had-kamera-auto-trigger.py
-    participant RaspPi as Raspberry Pi 5
+    participant Client as unified_monitor_client.py
+    participant SSH as ssh_manager.py
+    participant Auto as unified-camera-monitor-auto.py
+    participant Manual as unified-camera-monitor-manual.py
+    participant Pi as Raspberry Pi
 
-    User->>Wrapper: ./start-vogel-beobachtung.sh [--with-ai | --slowmo]
+    User->>Client: --auto-record || --manual-record
+
+    alt AUTO-RECORD Mode
+        Client->>Client: "Mode: AUTO-RECORD"
+        Client->>SSH: Start unified-camera-monitor-auto.py
+        SSH->>Pi: SSH exec
+        Pi->>Auto: Starten mit SSH
+        Auto->>Auto: picamera2 Initialize
+        Auto->>Auto: YOLO26n Model laden
+        Auto->>Auto: Dual-Stream starten
+        Note over Auto: Kontinuierliche Vogel-Erkennung<br/>Automatische Aufnahme bei Trigger
+    else MANUAL-RECORD Mode
+        Client->>Client: "Mode: MANUAL-RECORD"
+        Client->>SSH: Start unified-camera-monitor-manual.py
+        SSH->>Pi: SSH exec
+        Pi->>Manual: Starten mit SSH
+        Manual->>Manual: rpicam-vid Initialize
+        Manual->>Manual: Duration starten
+        Note over Manual: Direkte Video-Aufnahmen<br/>Keine KI-Verarbeitung
+    end
     
-    Note over Wrapper: System-Checks
-    Wrapper->>Wrapper: ✓ Python venv aktivieren
-    Wrapper->>Wrapper: ✓ Abhängigkeiten prüfen
-    Wrapper->>Wrapper: ✓ SSH-Agent starten
-    Wrapper->>Wrapper: ✓ Netzwerk prüfen
-    
-    Wrapper->>Controller: python ai-had-kamera-auto-trigger.py<br/>--preview-fps 3<br/>--preview-width 320<br/>--preview-height 240
-    
-    Note over Controller: Initialisierung
-    Controller->>Controller: CPU-Optimierung setzen<br/>(OMP_NUM_THREADS=2)
-    Controller->>RaspPi: SSH Verbindung aufbauen
-    RaspPi-->>Controller: ✓ Verbunden
-    
-    Controller->>RaspPi: libcamera-vid starten<br/>(Preview: 640x480@5fps)
-    RaspPi-->>Controller: RTSP Stream: rtsp://raspi:8554/preview
+    Auto->>Pi: Video + Audio Output
+    Manual->>Pi: Video + Audio Output
+    Pi->>Client: rsync Transfer
+    Client->>Client: Video lokal speichern
 ```
+
+## 🔍 AUTO-RECORD Backend (picamera2 + YOLO26n)
+
+### Ablauf
+
+1. **Initialisierung** (1-2 Sekunden)
+   - picamera2 mit Dual-Stream-Konfiguration
+   - YOLO26n Modell laden (~150MB)
+   - Preview-Stream für Erkennung (640x480)
+   - Recording-Stream für Aufnahme (1920x1080-4K)
+
+2. **Kontinuierliche Überwachung**
+   - Preview-Frames alle 200ms prüfen
+   - YOLO26n Vogel-Erkennung
+   - Temporale Filter für stabile Erkennungen
+   - Log-Output mit Confidence-Scores
+
+3. **Trigger & Recording**
+   - Vogel erkannt (Confidence > Threshold)
+   - ffmpeg startet Recording
+   - Dauer: `--trigger-duration` (Default: 10s)
+   - Audio synchronisiert via ffmpeg `-fflags +genpts`
+
+4. **Output**
+   ```
+   /home/roimme/recordings/
+   ├── 2025-03-08/
+   │   ├── auto_recording_14-35-22.mp4
+   │   ├── auto_recording_14-45-18.mp4
+   │   └── auto_recording_15-02-45.mp4
+   ```
+
+### Voraussetzungen
+
+- **picamera2**: Muss auf Pi installiert sein
+- **YOLO26n Modell**: Wird automatisch heruntergeladen (~400MB)
+- **ffmpeg**: Für Audio/Video Merge
+- **Python 3.11+**: Mit NumPy, OpenCV
+
+### Parameter
+
+```bash
+python3 unified-camera-monitor-auto.py \
+  --threshold 0.5          # Erkennungs-Konfidenz (0.0-1.0)
+  --cooldown 2.0           # Sekunden bis nächste Erkennung
+  --trigger-duration 10    # Aufnahme-Länge pro Vogel
+  --log-file /tmp/auto.log # Log-Ausgabe
+```
+
+## 📹 MANUAL-RECORD Backend (rpicam-vid)
+
+### Ablauf
+
+1. **Initialisierung** (<1 Sekunde)
+   - rpicam-vid mit Encoding-Parametern
+   - H264 Codec (Hardware-Optimiert)
+   - Kamera-Rotation: 180° (Standard für Vogelhaus)
+   - USB-Audio Input konfigurieren
+
+2. **Recording-Prozess**
+   - Direkte Video-Aufnahme für `--duration` Sekunden
+   - Gleichzeitig Audio via arecord
+   - ffmpeg synchronisiert beide Streams
+
+3. **Output**
+   ```
+   /home/roimme/recordings/
+   ├── 2025-03-08/
+   │   ├── manual_recording_16-00-30.mp4 (mit Audio)
+   │   └── manual_recording_16-05-45.mp4 (mit Audio)
+   ```
+
+### Parameter
+
+```bash
+python3 unified-camera-monitor-manual.py \
+  --duration 30            # Aufnahme-Dauer (Sekunden)
+  --fps 30                 # Frames per second
+  --resolution 1920x1080   # Video-Auflösung
+  --bitrate 10M            # Encoding-Bitrate
+  --rotation 180           # Kamera-Rotation
+```
+
+## 🏠 System-Architektur komplett
+
+### Hardware Setup
+
+```
+Raspberry Pi 5
+├── Kamera (IMX708)
+│   └── picamera2 Library
+├── USB-Mikrofon
+│   ├── Audio Capture (arecord)
+│   └── ffmpeg Audio Input
+├── rsync für Transfer
+└── SSH Server (für Client-Verbindung)
+
+Local PC
+├── unified_monitor_client.py
+├── SSH Client (mit Paramiko)
+├── rsync (Download Videos)
+└── Log-Tailing & Monitoring
+```
+
+### Dateifluss
+
+```
+Recording Process:
+┌─────────────┐
+│ Kamera IMX708
+└──────┬──────┘
+       │
+    ┌──┴──┐
+    │     │
+    v     v
+[Video]  [Audio]
+    │     │
+    └──┬──┘
+       │
+    ffmpeg
+  (merge streams)
+       │
+       v
+    MP4 output
+       │
+    ├── Local /tmp/ (temporary)
+    └── ~/recordings/ (permanent)
+       │
+    rsync
+       │
+       v
+Local PC: ~/downloads/vogel-kamera/
+```
+
+## 📊 Systemvergleich
+
+| Aspekt | AUTO-RECORD | MANUAL-RECORD |
+|--------|-------------|---------------|
+| **Backend** | picamera2 | rpicam-vid |
+| **KI-Erkennung** | ✅ YOLO26n | ❌ Keine |
+| **CPU-Last** | 50-70% | 200% (H264) |
+| **RAM Usage** | ~200MB | ~150MB |
+| **Speicher/Min** | ~50MB (30fps) | ~40MB (30fps) |
+| **Zeitstempel-Präzision** | Ereignis-basiert | Exakte Dauer |
+| **Use-Case** | 24/7 Monitoring | Geplante Sessions |
+| **Startup-Zeit** | 1-2s (YOLO laden) | <0.5s |
+| **Audio-Sync** | ffmpeg genpts | ffmpeg genpts |
+
+## 🔐 SSH-Kommunikation
 
 ---
 

@@ -1,0 +1,369 @@
+[0;36m[0m
+[0;36m======================================================================[0m
+[0;36m🎥 UNIFIED MONITORING SYSTEM - Vogel-Beobachtung (Python)[0m
+[0;36m======================================================================[0m
+[0;36m   Version: v2.1.0[0m
+[0;36m======================================================================[0m
+[0;36m[0m
+[0;36m📹 Modus: Standard-Modus (1920x1080 @ 30fps + Audio)[0m
+[0;36m[0m
+[0;35m📹 MANUAL-RECORD MODUS: Reine Aufnahme (kein Detection)[0m
+[0;36m⏱️  Aufnahmedauer: 10 Sekunden[0m
+[0;36m🎤 Mit Audio-Track[0m
+[0;36m[0m
+[0;36m🔍 System-Check...[0m
+[0;36m[0m
+📡 SSH-Verbindung zu roimme@raspberrypi-5-ai-had ... 2026-03-10 08:38:55,712 - paramiko.transport - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2026-03-10 08:38:57,387 - paramiko.transport - INFO - Authentication (publickey) successful!
+2026-03-10 08:38:57,387 - ssh_manager - INFO - SSH-Verbindung zu roimme@raspberrypi-5-ai-had hergestellt
+[0;32m✅[0m
+[0;36m[0m
+[0;36m   📌 Lokale Version:  v2.1.0[0m
+[0;36m   📍 Remote Version:  v2.1.0[0m
+🔄 Remote-Skripte synchronisieren ... [0;36m🔄 Prüfe Remote-Skripte auf Aktualität...[0m
+[0;32m✅ Aktuell: unified-camera-monitor.py[0m
+[0;32m✅ Aktuell: unified-camera-monitor-auto.py[0m
+[0;32m✅ Aktuell: unified-camera-monitor-manual.py[0m
+[0;32m✅ Aktuell: unified-camera-monitor-detect-only.py[0m
+[0;32m✅ Alle Remote-Skripte sind aktuell[0m
+[0;32m✅[0m
+📄 Remote Scripts ... [0;32m✅[0m
+[0;36m[0m
+[0;32m✅ System-Check erfolgreich[0m
+[0;36m[0m
+[0;36m=======================================================================[0m
+[0;36m🚀 FREIGABE-CHECK:[0m
+[0;36m=======================================================================[0m
+[0;36m   ✅ SSH-Verbindung hergestellt[0m
+[0;36m   ✅ Remote-Skripte synchronisiert[0m
+[0;36m   ✅ Alle Dateien vorhanden[0m
+[0;36m=======================================================================[0m
+[0;36m[0m
+[0;32m✅ SYSTEM BEREIT ZUM START[0m
+[0;36m[0m
+🧹 Alte Kamera-Prozesse bereinigen ... [0;32m✅[0m
+[0;36m[0m
+[0;36m🚀 Starte MANUAL-RECORD (reine Aufnahme mit rpicam-vid)...[0m
+[1;34m   Parameters: duration=10m, fps=0, resolution=default, bitrate=default[0m
+[0;32m✅ Remote Monitor gestartet[0m
+[0;36m⏳ Warte auf Monitor-Start...[0m
+[0;36m======================================================================[0m
+[0;36m📊 INITIALER STATUS-REPORT[0m
+[0;36m======================================================================[0m
+[0;32m✅ Monitor läuft (PID: 1593 | CPU: 47.0% | RAM: 4.7%)[0m
+[0;36m[0m
+[0;36m📋 Letzte Log-Zeilen:[0m
+[1;34m   ======================================================================[0m
+[1;34m   🔴 MANUELLE AUFNAHME AKTIVIERT - VOGELERKENNUNG DEAKTIVIERT[0m
+[1;34m   ======================================================================[0m
+[1;34m   🎬 Aufnahme: Dienstag__2026-03-10__08-39-03 (600s)[0m
+[1;34m   ⏱️  ░░░░░░░░░░░░░░░░░░░░░░░░ 0% (0/600s)2026-03-10 08:39:03,589 - ERROR - ❌ Audio-Thread Fehler: arecord: main:850: Fehler beim Öffnen des Gerätes: Das Gerät oder die Ressource ist belegt[0m
+[1;34m   ⏱️  ░░░░░░░░░░░░░░░░░░░░░░░░ 0% (0/600s)⏱️  ░░░░░░░░░░░░░░░░░░░░░░░░ 0% (0/600s)⏱️  ░░░░░░░░░░░░░░░░░░░░░░░░ 0% (0/600s)⏱️  ░░░░░░░░░░░░░░░░░░░░░░░░ 0% (0/600s)[0m
+[0;36m======================================================================[0m
+[0;36m[0m
+[0;36m📊 Starte lokale Monitoring-Dienste...[0m
+[0;36m[0m
+[0;36m📡 Starte Live-Event-Monitor...[0m
+[0;32m✅ Event-Monitor gestartet (PID: 140734057345376)[0m
+[0;36m🎥 Starte Video-Watcher...[0m
+[0;32m✅ Video-Watcher gestartet (PID: 140734048891232)[0m
+[0;32m✅ Status-Reporter gestartet (PID: 140734040437088)[0m
+[0;36m[0m
+[0;36m======================================================================[0m
+[0;36m✅ SYSTEM BEREIT - Alle Komponenten gestartet[0m
+[0;36m======================================================================[0m
+[0;36m[0m
+[0;36m🔄 Monitoring aktiv - Drücke Ctrl+C zum Beenden[0m
+[0;36m[0m
+[1;33m[0m
+[1;33m⏳ Warte auf Video-Synchronisation...[0m
+[0;36m⏱️  Warte 66s auf Sync...[0m
+[0;36m    Aufnahme→Konvertierung→Audio-Merge→rsync-Transfer[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Samstag__2026-03-07__08-45-05[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Samstag__2026-03-07__08-45-05[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Samstag__2026-03-07__08-45-05[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Samstag__2026-03-07__08-45-05__4096x2160__25fps.mp4 (51.5 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-15-13[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-15-13[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-15-13[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__17-15-13__4096x2160__25fps.mp4 (54.9 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-19-35[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-19-35[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-19-35[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__17-19-35__4096x2160__25fps.mp4 (59.9 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-25-48[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-25-48[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-25-48[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__17-25-48__4096x2160__25fps.mp4 (57.0 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-27-45[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-27-45[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-27-45[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__17-27-45__4096x2160__30fps.mp4 (56.3 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-33-33[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-33-33[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-33-33[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__17-33-33__4096x2160__24fps.mp4 (54.3 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-51-48[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-51-48[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__17-51-48[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__17-51-48__4096x2160__24fps.mp4 (56.2 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-04-26[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-04-26[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-04-26[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-04-26__4096x2160__24fps.mp4 (53.4 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-07-08[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-07-08[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-07-08[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-07-08__4096x2160__24fps.mp4 (53.4 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-10-56[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-10-56[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-10-56[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-10-56__4096x2160__24fps.mp4 (52.3 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-14-19[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-14-19[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-14-19[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-14-19__4096x2160__24fps.mp4 (26.2 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-18-25[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-18-25[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-18-25[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-18-25__4096x2160__24fps.mp4 (51.3 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-24-53[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-24-53[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-24-53[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-24-53__4096x2160__24fps.mp4 (50.8 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-31-35[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-31-35[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-31-35[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-31-35__4096x2160__24fps.mp4 (50.3 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-43-19[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-43-19[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-43-19[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-43-19__4096x2160__24fps.mp4 (51.1 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-50-46[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-50-46[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__18-50-46[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__18-50-46__4096x2160__24fps.mp4 (51.0 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-09-44[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-09-44[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-09-44[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-09-44__4096x2160__24fps.mp4 (227.1 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-15-59[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-15-59[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-15-59[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-15-59__4096x2160__24fps.mp4 (222.6 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-21-45[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-21-45[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-21-45[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-21-45__4096x2160__24fps.mp4 (226.6 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-33-51[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-33-51[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-33-51[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-33-51__4096x2160__24fps.mp4 (37.4 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-35-09[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-35-09[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-35-09[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-35-09__4096x2160__30fps.mp4 (16.8 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-35-43[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-35-43[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-35-43[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-35-43__4096x2160__30fps.mp4 (17.0 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-42-28[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-42-28[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-42-28[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-42-28__4096x2160__30fps.mp4 (18.8 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-51-00[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-51-00[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-51-00[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-51-00__4096x2160__24fps.mp4 (183.5 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-58-10[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-58-10[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__19-58-10[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__19-58-10__4096x2160__30fps.mp4 (13.1 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__20-00-21[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__20-00-21[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__20-00-21[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__20-00-21__4096x2160__30fps.mp4 (160.1 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__20-05-18[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__20-05-18[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/10/Sonntag__2026-03-08__20-05-18[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Sonntag__2026-03-08__20-05-18__4096x2160__24fps.mp4 (160.5 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__07-27-39[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__07-27-39[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__07-27-39[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Montag__2026-03-09__07-27-39__4096x2160__24fps.mp4 (111.4 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__08-53-20[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__08-53-20[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__08-53-20[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Montag__2026-03-09__08-53-20__4096x2160__30fps.mp4 (50.3 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__09-57-17[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__09-57-17[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__09-57-17[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Montag__2026-03-09__09-57-17__4096x2160__30fps.mp4 (970.3 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__12-41-59[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__12-41-59[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__12-41-59[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Montag__2026-03-09__12-41-59__4096x2160__30fps.mp4 (52.4 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__12-58-29[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__12-58-29[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__12-58-29[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Montag__2026-03-09__12-58-29__4096x2160__30fps.mp4 (52.1 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__13-27-40[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__13-27-40[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__13-27-40[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Montag__2026-03-09__13-27-40__4096x2160__30fps.mp4 (133.6 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__15-29-12[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__15-29-12[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/AI-HAD/2026/11/Montag__2026-03-09__15-29-12[0m
+[0;32m✅ 1 Video(s) übertragen[0m
+   📊 Montag__2026-03-09__15-29-12__4096x2160__30fps.mp4 (51.1 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[1;33m⏳ Neue Videos gefunden - starte Synchronisation...[0m
+[1;33m   Quelle: /home/roimme/Videos/Vogelhaus/Zeitlupe/2026/10/Freitag__2026-03-06__17-08-22[0m
+[0;36m📥 Synchronisiere Videos via rsync[0m
+[0;36m   Remote: /home/roimme/Videos/Vogelhaus/Zeitlupe/2026/10/Freitag__2026-03-06__17-08-22[0m
+[0;36m   Lokal:  /home/imme/Videos/Vogelhaus/Zeitlupe/2026/10/Freitag__2026-03-06__17-08-22[0m
+[0;32m✅ 5 Video(s) übertragen[0m
+   📊 Freitag__2026-03-06__17-08-22__1536x864__5fps.mp4 (156.8 MB)[0m
+   📊 Freitag__2026-03-06__17-08-22__1536x864__120fps.mp4 (156.8 MB)[0m
+   📊 Freitag__2026-03-06__17-08-22__1536x864__30fps.mp4 (156.8 MB)[0m
+   📊 Freitag__2026-03-06__17-08-22__1536x864__20fps.mp4 (156.8 MB)[0m
+   📊 Freitag__2026-03-06__17-08-22__1536x864__10fps.mp4 (156.8 MB)[0m
+[0;32m✅ Markiert als synchronisiert[0m
+[0;32m✅ Video-Synchronisation abgeschlossen![0m
+[1;33m[0m
+[1;33m🛑 Manuelle Aufnahme abgeschlossen - Beende System...[0m
+[1;33m[0m
