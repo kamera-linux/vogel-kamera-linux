@@ -114,9 +114,46 @@ SSH_HOST=raspberrypi-5-ai-had
 
 ## Verwendung
 
-## Verwendung
+### 🆕 DETECT-AND-RECORD Modus (EMPFOHLEN!) ⭐
 
-### 🔍 AUTO-RECORD Modus (Vogel-Monitoring)
+Zwei-Phasen-Modus: Erst Vogelerkennung ohne Video (schnell), dann automatische Aufnahme beim Trigger.
+
+```bash
+# Standard: Einmalige Session mit Vogelekennung
+python3 unified_monitor_client.py normal --detect-and-record \
+  --threshold 0.4 --duration 30
+
+# Mit Schleife: Endloses Monitoring
+python3 unified_monitor_client.py normal --detect-and-record \
+  --threshold 0.4 --cooldown 15 --trigger 1.0 --duration 30 --repeat
+
+# Schneller Threshold (sensibel): 0.3
+python3 unified_monitor_client.py normal --detect-and-record \
+  --threshold 0.3 --duration 30 --repeat
+
+# Hoher Threshold (nur sichere Erkennungen): 0.7
+python3 unified_monitor_client.py normal --detect-and-record \
+  --threshold 0.7 --duration 60 --repeat
+
+# Slowmo-Modus für bessere Qualität
+python3 unified_monitor_client.py slowmo --detect-and-record \
+  --threshold 0.4 --duration 30 --repeat
+
+# 4K With Detect-and-Record
+python3 unified_monitor_client.py 4k --detect-and-record \
+  --threshold 0.4 --duration 30 --repeat
+```
+
+**Vorteile:**
+- ✅ Verhindert Time-Lapse/beschleunigte Vorschau-Probleme
+- ✅ CPU-effizient: Detection-Overhead nur bis Vogel erkannt
+- ✅ Saubere Prozess-Trennung zwischen Detection und Recording
+
+---
+
+### 🔍 AUTO-RECORD Modus (Legacy - veraltet ⚠️)
+
+⚠️ **Hinweis:** Kann zu beschleunigter Video-Verarbeitung führen. Nutze stattdessen `--detect-and-record`.
 
 ```bash
 # Standard: Kontinuierlich überwachen, bei Vogel-Erkennung aufnehmen
@@ -167,17 +204,20 @@ python3 unified_monitor_client.py 4k
 ### Mit zusätzlichen Parametern
 
 ```bash
+# Detect-and-Record mit Loop
+python3 unified_monitor_client.py normal --detect-and-record --repeat
+
 # Kürzerer Cooldown zwischen Aufnahmen
-python3 unified_monitor_client.py slowmo --auto-record --cooldown 5
+python3 unified_monitor_client.py slowmo --detect-and-record --cooldown 5 --repeat
 
 # Benutzerdefinierte Aufnahmedauer
 python3 unified_monitor_client.py 4k --manual-record --duration 60
 
 # Höherer Erkennungs-Schwellenwert
-python3 unified_monitor_client.py normal --auto-record --threshold 0.7
+python3 unified_monitor_client.py normal --detect-and-record --threshold 0.7 --repeat
 
 # Verbose-Logging für Debugging
-python3 unified_monitor_client.py 4k --manual-record --verbose
+python3 unified_monitor_client.py 4k --detect-and-record --verbose
 ```
 
 ### Hilfe anzeigen
@@ -186,43 +226,55 @@ python3 unified_monitor_client.py 4k --manual-record --verbose
 python3 unified_monitor_client.py --help
 ```
 
-## Grundlegende Befehle
+---
+
+## 🛑 Graceful Shutdown (Neu in v2.1.1)
+
+Drücke **Ctrl+C** um eine Session sauber zu beenden:
 
 ```bash
-# Test-Modus: 5 Sekunden (zum Testen der Verbindung)
-python3 unified_monitor_client.py test
+# Starten
+$ python3 unified_monitor_client.py normal --detect-and-record --repeat
 
-# Standard-Modus (1920x1080 @ 30fps + Audio)
-python3 unified_monitor_client.py normal
-
-# Zeitlupe-Modus (60fps @ 1536x864)
-python3 unified_monitor_client.py slowmo
-
-# Cinema 4K (4096x2160 @ 30fps + Audio, rpicam-vid)
-python3 unified_monitor_client.py 4k
+# Ctrl+C drücken:
+# 🛑 Abgebrochen vom Benutzer (Ctrl+C)
+# 🧹 Räume auf und killen alle Remote-Prozesse...
+#    ✅ Status-Reporter beendet
+#    ✅ Detection-Prozess beendet
+#    ✅ Remote-Prozesse gekilled
+#    ✅ SSH-Verbindung geschlossen
+# ✅ Cleanup complete - Auf Wiedersehen!
 ```
 
-### Mit Parametern
+**Vorteile:**
+- ✅ Keine Zombie-Prozesse
+- ✅ V4L2-Device-Lock wird freigegeben
+- ✅ Sauber für sofortigen Neustart
 
-```bash
-# Kürzerer Cooldown zwischen Aufnahmen
-python3 unified_monitor_client.py slowmo --cooldown 5
+---
 
-# Benutzerdefinierte Aufnahmedauer
-python3 unified_monitor_client.py 4k 60  # 60 Sekunden statt default
+## 🔧 Process Management Verbesserungen (v2.1.1)
 
-# Höherer Erkennungs-Schwellenwert
-python3 unified_monitor_client.py normal --threshold 0.7
+### 3-stufige Cleanup-Strategie
 
-# Verbose-Logging für Debugging
-python3 unified_monitor_client.py 4k --verbose
+Die neue Cleanup-Logik ist intelligenter und schonender:
+
+1. **SIGTERM** - Normales Beenden (respektiert Cleanup)
+2. **Warten** - 5 Sekunden für höfliches Shutdown
+3. **SIGKILL** - Nur wenn SIGTERM nicht hilft
+
+**Vorteil:** Verhindert "Device or resource busy" Fehler beim Neustart
+
+### Diagnostik vor Cleanup
+
+Automatisch vor dem Cleanup angezeigt:
+```
+=== LAUFENDE PROZESSE ===
+=== OFFENE FILE HANDLES ===
+=== V4L2 DEVICES ===
 ```
 
-### Hilfe anzeigen
-
-```bash
-python3 unified_monitor_client.py --help
-```
+Hilft bei der Fehlersuche von Hardware-Fehlern.
 
 ## Architektur
 
@@ -234,7 +286,7 @@ unified-monitor-client/
 ├── version_manager.py          # Version-Control & Skript-Sync
 ├── monitors.py                 # Log-Tailing, Video-Watching, Status-Reporting
 ├── requirements.txt            # Python-Abhängigkeiten
-├── VERSION                     # Versionsnummer (v2.1.0)
+├── VERSION                     # Versionsnummer (v2.1.1)
 └── README.md                   # Diese Datei
 ```
 
@@ -259,7 +311,7 @@ Robuste SSH-Verwaltung mit:
 - Semantische Versionsvergleiche
 
 #### `monitors.py`
-Drei parallele Monitoring-Threads mit v2.1.0 Features:
+Drei parallele Monitoring-Threads mit v2.1.1 Features:
 
 1. **LogMonitor** – Live-Log-Tailing
    - Zeigt wichtige Events in Echtzeit (Audio/Video Sync Status)
@@ -282,17 +334,19 @@ Drei parallele Monitoring-Threads mit v2.1.0 Features:
 
 **Die Python-Version ersetzt die alte Bash-basierte `start-unified-monitoring.sh`:**
 
-| Feature | Bash (Legacy) | Python (v2.1.0) |
+| Feature | Bash (Legacy) | Python (v2.1.1) |
 |---------|------|--------|
 | **Log-Parsing** | ❌ Fehleranfällig (Whitespace-Verlust) | ✅ Robustes String-Parsing mit Regex |
 | **SSH-Fehlerbehandlung** | ⚠️ Einfache Retries | ✅ Strukturierte Retry-Logik mit Exponential Backoff |
 | **Audio/Video Sync Detection** | ❌ Nicht sichtbar | ✅ Zeigt ffmpeg -fflags +genpts Integration |
 | **Threading/Parallelisierung** | ⚠️ BGP + Race Conditions | ✅ Sichere Threading mit Locks |
 | **Performance** | ⚠️ Viele Subshells | ✅ Direkte Prozess-Verwaltung |
+| **Graceful Shutdown** | ❌ Killall (Zombie-Prozesse) | ✅ 3-stufige Cleanup (SIGTERM → Warten → SIGKILL) |
 | **Fehler-Debugging** | 😰 Shell-Stack-Traces unlesbar | ✅ Klare Python Exceptions + Logging |
 | **Typ-Sicherheit** | ❌ Dynamisch, keine Validierung | ✅ Type-Hints für IDE-Support |
 | **rpicam-vid Parameter** | ⚠️ Limited (nur basic Optionen) | ✅ Alle Parameter (4K, Rotation 180°, Codec, etc.) |
 | **Video-Transfer** | 🔄 rsync mit einfacher Logik | ✅ rsync mit Completion-Checks |
+| **Detect-and-Record** | ❌ Nicht vorhanden | ✅ Zwei-Phasen Mode (Detection → Recording) |
 | **remote-unified-control.sh** | 🔄 Legacy Shell-Wrapper | ✅ Vollständige Python-Integration |
 
 ## Debugging
@@ -353,30 +407,43 @@ ssh -i ~/.ssh/id_rsa_pi pi_user@raspberry-pi-monitor \
 # Der Python-Client läuft auf DEINEM PC/Laptop, nicht auf dem Pi!
 # Er orchestriert nur die Remote-Aufnahme auf dem Pi
 cd unified-monitor-client
-python3 unified_monitor_client.py 4k
 
-# oder
-python3 unified_monitor_client.py slowmo --cooldown 10
+# Empfohlen: Detect-and-Record mit Schleife
+python3 unified_monitor_client.py normal --detect-and-record \
+  --threshold 0.4 --duration 30 --repeat
+
+# oder nur kurze Session
+python3 unified_monitor_client.py 4k --detect-and-record --duration 30
+
+# oder klassisch Manual
+python3 unified_monitor_client.py slowmo --manual-record --duration 60
 ```
 
-## Migration: Bash → Python (v2.1.0)
+## Migration: Bash → Python (v2.1.1)
 
 **Alte Bash-basierte Methode (gelöscht):**
 ```bash
 ./auto-start-kamera/start-unified-monitoring.sh 4k  # ⛔ NICHT MEHR VORHANDEN
 ```
 
-**Neue Python-basierte Methode (aktiv):**
+**Neue Python-basierte Methode (aktiv in v2.1.1):**
 ```bash
 cd unified-monitor-client
-python3 unified_monitor_client.py 4k  # ✅ EMPFOHLEN
+# Empfohlen: Mit Detect-and-Record & Schleife
+python3 unified_monitor_client.py normal --detect-and-record \
+  --threshold 0.4 --duration 30 --repeat
+
+# Oder einfach Manual
+python3 unified_monitor_client.py 4k --manual-record --duration 60  # ✅ EMPFOHLEN
 ```
 
-**Status (v2.1.0):**
+**Status (v2.1.1):**
 - ✅ `unified-monitor-client/` – Aktiv & vollständig
-- ✅ `unified-monitor-client/unified_monitor_client.py` – Haupt-Client
+- ✅ `unified-monitor-client/unified_monitor_client.py` – Haupt-Client mit Detect-and-Record
 - ✅ `unified-monitor-client/setup_environment.py` – Automatisiertes Setup
 - ✅ `unified-monitor-client/diagnose_remote_system.py` – System-Diagnose
+- ✅ **Graceful Shutdown (Ctrl+C)** – Saubere Process-Cleanup
+- ✅ **Improved Process Management** – 3-stufige Cleanup
 - ❌ `auto-start-kamera/start-unified-monitoring.sh` – Gelöscht
 - ❌ `auto-start-kamera/remote-unified-control.sh` – Gelöscht (Funktionalität in Python integriert)
 
