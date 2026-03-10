@@ -96,5 +96,8 @@ git-automation/temp_askpass.sh
 wiki-content
 wiki-repo/
 
+# Prompts und Agent-Konfigurationen (lokal, nicht versionieren)
+.github/prompts/
+
 # Wiki-Sync-Skript ist im Repository für alle Nutzer verfügbar
 # wiki_sync.py - bewusst NICHT ignoriert
