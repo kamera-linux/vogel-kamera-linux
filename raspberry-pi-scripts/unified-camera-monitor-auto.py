@@ -80,7 +80,7 @@ class UnifiedCameraMonitor:
         threshold: float = 0.4,
         cooldown: int = 15,
         trigger_duration: float = 1.0,
-        video_base_path: str = "/home/<your-username>/Videos/Vogelhaus",
+        video_base_path: str = None,  # Will be set to ~/Videos/Vogelhaus if None
         model_path: Optional[str] = None,
         preview_width: int = 640,
         preview_height: int = 480,
@@ -115,6 +115,10 @@ class UnifiedCameraMonitor:
         self.cooldown = cooldown
         self.trigger_duration = trigger_duration
         self.recording_duration = recording_duration
+        
+        # Set video_base_path with fallback to ~/Videos/Vogelhaus
+        if video_base_path is None:
+            video_base_path = os.path.expanduser('~/Videos/Vogelhaus')
         self.video_base_path = Path(video_base_path)
         self.preview_width = preview_width
         self.preview_height = preview_height
@@ -717,7 +721,7 @@ class UnifiedCameraMonitor:
                     result = subprocess.run(
                         ['ffmpeg', '-fflags', '+genpts', '-r', str(playback_fps),
                          '-i', str(h264_file), '-i', str(self.audio_file),
-                         '-c:v', 'copy', '-c:a', 'aac', '-shortest', '-y', str(mp4_file)],
+                         '-c:v', 'copy', '-c:a', 'aac', '-af', 'volume=4.0,loudnorm=I=-23', '-shortest', '-y', str(mp4_file)],
                         capture_output=True,
                         text=True,
                         timeout=300
@@ -980,7 +984,7 @@ def main():
     parser.add_argument('--threshold', type=float, default=0.4, help='AI-Erkennungs-Schwelle (default: 0.4)')
     parser.add_argument('--cooldown', type=int, default=15, help='Cooldown zwischen Aufnahmen in Sekunden (default: 15)')
     parser.add_argument('--trigger-duration', type=float, default=1.0, help='Mindest-Dauer für Trigger in Sekunden (default: 1.0)')
-    parser.add_argument('--video-path', type=str, default='/home/<your-username>/Videos/Vogelhaus', help='Basis-Pfad für Videos')
+    parser.add_argument('--video-path', type=str, default=None, help='Basis-Pfad für Videos (default: ~/Videos/Vogelhaus)')
     parser.add_argument('--model', type=str, help='Pfad zum YOLO-Model (optional)')
     parser.add_argument('--preview-fps', type=int, default=6, help='Preview FPS (default: 6)')
     parser.add_argument('--recording-width', type=int, default=4096, help='Aufnahme-Breite (default: 4096 - Cinema 4K)')

@@ -1,5 +1,49 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.1.2] - 11. März 2026 🔒 **Sichere Konfiguration & Datenschutz**
+
+### 🔐 Major Features & Security
+- **Sichere Konfigurationsverwaltung**
+  - `config.py` und `.env` in `.gitignore` - persönliche Daten werden nicht synced
+  - Template-Dateien: `config.example.py` und `.env.example` für öffentliches Repo
+  - Neutrale Platzhalter in Example-Dateien für neue Benutzer
+  - Realistische Defaults in produktiven Dateien (lokal)
+
+- **Flexible SSH-Konfiguration**
+  - SSH-Werte nach Priorität geladen: `.env` → Fallback-Defaults
+  - Dynamische Path-Konstruktion: `/home/{SSH_USER}/..` statt hardcoded `/home/roimme/`
+  - Support für Custom-SSH-Keys, Usernames, Hostnames
+  - SSH_PORT Konfiguration hinzugefügt
+
+- **Datenschutz im Repo**
+  - `.gitignore` schützt: `.env`, `config.py`, `unified-monitor-client/.env`, `unified-monitor-client/config.py`
+  - `.example`-Dateien as Dokumentation & Setup-Vorlage
+  - KEINE hardcoded persönlichen Daten in Skripten
+
+### ✨ Improvements
+- `monitors.py`: Dynamische `PI_HOME` statt hardcoded `/home/roimme`
+- `unified-monitor-client/`: Vollständige Konfigurationsstruktur mit Beispielen
+- Klar gekennzeichnete Example-Dateien mit ausführlicher Setup-Anleitung
+- Version-Vollständigkeit: alle Komponenten auf 2.1.2 synchronisiert
+
+### 🔧 Technical Changes
+- `config.py` liest `.env` via `python-dotenv`
+- Fallback-System ermöglicht Scripts ohne `.env` (mit Defaults)
+- Alle Remote-Pfade basieren auf `SSH_USER` Variable
+- Robuste Handling von fehlenden Umgebungsvariablen
+
+### 📁 Files Updated
+- `VERSION` → 2.1.2
+- `unified-monitor-client/VERSION` → 2.1.2
+- `raspberry-pi-scripts/VERSION` → 2.1.2
+- `scripts/__version__.py` → 2.1.2
+- `.gitignore` → erweitert mit config-Dateien
+- `.env` → reale Werte
+- `config.py` → reale Defaults + dotenv-Integration
+- `.env.example` → neutrale Platzhalter
+- `config.example.py` → Template für neue Nutzer
+- `monitors.py` → dynamische Pfade statt hardcoded
+
 ## [2.1.1] - 10. März 2026 🧹 **Graceful Shutdown & Process Management**
 
 ### 🛑 Major Features

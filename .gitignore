@@ -1,6 +1,8 @@
 # Konfigurationsdateien mit persönlichen Daten
 .env
 config_local.py
+unified-monitor-client/.env
+unified-monitor-client/config.py
 
 # Python
 __pycache__/

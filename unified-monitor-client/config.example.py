@@ -1,5 +1,11 @@
 """
 Konfiguration für Unified Monitor Client
+TEMPLATE/BEISPIEL: Kopiere diese Datei zu config.py und passe die SSH-Daten an!
+
+⚠️  WICHTIG:
+  - Kopieren: cp config.example.py config.py
+  - Bearbeiten: Passe SSH_KEY, SSH_USER, SSH_HOST an dein System an
+  - config.py ist in .gitignore - wird NICHT synced!
 """
 import os
 from pathlib import Path
@@ -10,16 +16,17 @@ ENV_FILE = Path(__file__).parent / '.env'
 if ENV_FILE.exists():
     load_dotenv(ENV_FILE)
 
-# SSH-Konfiguration (aus .env oder Defaults)
-SSH_KEY = os.getenv('SSH_KEY', os.path.expanduser('~/.ssh/id_rsa_ai-had'))
-SSH_USER = os.getenv('SSH_USER', 'roimme')
-SSH_HOST = os.getenv('SSH_HOST', 'raspberrypi-5-ai-had')
+# SSH-Konfiguration
+# 🔧 ANPASSEN: Ersetze die Defaults mit deinen echten Werten!
+SSH_KEY = os.getenv('SSH_KEY', os.path.expanduser('~/.ssh/id_rsa_pi'))
+SSH_USER = os.getenv('SSH_USER', 'pi')
+SSH_HOST = os.getenv('SSH_HOST', 'raspberry-pi.local')
 SSH_PORT = int(os.getenv('SSH_PORT', '22'))
 SSH_TIMEOUT = 5
 SSH_RETRIES = 3
 SSH_RETRY_DELAY = 2
 
-# Remote-Paths
+# Remote-Paths (basieren auf SSH_USER)
 PI_HOME = f'/home/{SSH_USER}'
 REMOTE_REPO_DIR = f'{PI_HOME}/vogel-kamera-linux'
 REMOTE_SCRIPT_DIR = f'{REMOTE_REPO_DIR}/raspberry-pi-scripts'

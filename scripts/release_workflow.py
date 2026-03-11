@@ -4,6 +4,8 @@ Vollständiger Release-Workflow mit Git-Automatisierung
 Erstellt Branches, Tags und führt kompletten Release-Prozess durch
 
 Version History:
+- v2.1.2: Sichere Konfiguration, Datenschutz, dynamische SSH-Pfade
+- v2.1.1: Graceful Shutdown & Process Management, Detect-and-Record Mode
 - v2.1.0: Audio/Video-Synchronisation, rpicam-vid Integration
 - v2.0.2: YOLO26 Migration, Trixie Support
 - v2.0.1: rpicam-vid Integration
@@ -15,7 +17,7 @@ from pathlib import Path
 sys.path.append('git-automation/')
 from git_automation import SecureGitAutomation
 
-def complete_release_workflow(version="2.1.0"):
+def complete_release_workflow(version="2.1.2"):
     """Vollständiger Release-Workflow"""
     print(f"🚀 Vollständiger Release-Workflow für v{version}")
     print("=" * 60)
@@ -40,7 +42,7 @@ def complete_release_workflow(version="2.1.0"):
             automation.run_command("git add .")
             
             # Commit für die Version
-            commit_msg = f"🔖 Release v{version} - Audio/Video-Synchronisation & rpicam-vid Integration"
+            commit_msg = f"🔖 Release v{version} - Sichere Konfiguration & Datenschutz"
             success, output = automation.run_command(f'git commit -m "{commit_msg}"')
             
             if success:
@@ -62,7 +64,7 @@ def complete_release_workflow(version="2.1.0"):
         
         # 4. Tag erstellen
         print(f"\n🏷️ Erstelle Tag v{version}...")
-        success, output = automation.run_command(f"git tag -a v{version} -m 'Release v{version}: Audio/Video-Sync, rpicam-vid, 4K Cinema'")
+        success, output = automation.run_command(f"git tag -a v{version} -m 'Release v{version}: Secure Config, Dynamic Paths, Data Privacy'")
         if success:
             print(f"✅ Tag v{version} erstellt")
         else:
@@ -174,7 +176,7 @@ def simple_commit_and_push():
 
 def main():
     """Hauptmenü für Git-Automatisierung"""
-    print("🔐 Git-Automatisierung v2.1.0")
+    print("🔐 Git-Automatisierung v2.1.2")
     print("=" * 40)
     print("1️⃣ Vollständiger Release-Workflow (mit Tags & Branches)")
     print("2️⃣ Einfacher Commit & Push")
@@ -183,7 +185,7 @@ def main():
     choice = input("\nWahl (1-3): ").strip()
     
     if choice == "1":
-        version = input("Version eingeben (Standard: 2.1.0): ").strip() or "2.1.0"
+        version = input("Version eingeben (Standard: 2.1.2): ").strip() or "2.1.2"
         complete_release_workflow(version)
     elif choice == "2":
         simple_commit_and_push()

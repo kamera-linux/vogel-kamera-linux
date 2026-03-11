@@ -146,7 +146,7 @@ class UnifiedCameraMonitor:
         threshold: float = 0.4,
         cooldown: int = 15,
         trigger_duration: float = 1.0,
-        video_base_path: str = "/home/<your-username>/Videos/Vogelhaus",
+        video_base_path: str = None,  # Will be set to ~/Videos/Vogelhaus if None
         model_path: Optional[str] = None,
         preview_width: int = 640,
         preview_height: int = 480,
@@ -199,6 +199,10 @@ class UnifiedCameraMonitor:
         self.cooldown = cooldown
         self.trigger_duration = trigger_duration
         self.recording_duration = recording_duration
+        
+        # Set video_base_path with fallback to ~/Videos/Vogelhaus
+        if video_base_path is None:
+            video_base_path = os.path.expanduser('~/Videos/Vogelhaus')
         self.video_base_path = Path(video_base_path)
         self.preview_width = preview_width
         self.preview_height = preview_height
@@ -468,7 +472,8 @@ class UnifiedCameraMonitor:
     
     def _start_audio_recording(self, audio_file: Path, duration_seconds: int) -> bool:
         """
-        Startet Audio-Aufnahme mit arecord (parallel zu Video).
+        Startet Audio-Aufnahme mit ffmpeg (parallel zu Video).
+        Nutzt ffmpeg statt arecord für bessere Input-Verstärkungskontrolle.
         
         Args:
             audio_file: Pfad zur WAV-Datei
@@ -481,19 +486,25 @@ class UnifiedCameraMonitor:
             return False
         
         try:
-            # arecord: 44100Hz, Mono, 16-bit, WAV-Format
+            # ffmpeg mit Input-Verstärkung UND Rausch-Reduktion
+            # -af: Audio-Filter chain:
+            #   anoisremove=om=o: Rausch-Reduktion (om=o = aus Stille lernen)
+            #   highpass=f=100: Hochpass-Filter (schneidet tiefe Rausch-Frequenzen)
+            #   volume=2.0: 2x Verstärkung (plus 23.81dB vom Mikrofon = ausreichend)
             cmd = [
-                'arecord',
-                '-D', self.audio_device,
-                '-f', 'S16_LE',  # 16-bit signed LE
-                '-r', '44100',   # Sample rate
-                '-c', '1',       # Mono
-                '-t', 'wav',     # WAV format
-                '-d', str(duration_seconds),  # Duration
+                'ffmpeg',
+                '-f', 'alsa',
+                '-i', self.audio_device,
+                '-t', str(duration_seconds),
+                '-af', 'anoisremove=om=o,highpass=f=100,volume=2.0',  # Rausch-Reduktion + Boost
+                '-acodec', 'pcm_s16le',
+                '-ar', '44100',
+                '-ac', '1',
+                '-y',  # Überschreibe Datei ohne Frage
                 str(audio_file)
             ]
             
-            logger.info(f"🎤 Starte Audio-Aufnahme: {audio_file.name}")
+            logger.info(f"🎤 Starte Audio-Aufnahme (ffmpeg mit Rausch-Reduktion): {audio_file.name}")
             self.audio_process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -882,6 +893,7 @@ class UnifiedCameraMonitor:
                     # WICHTIG: Exakt wie alte Lösung:
                     # -fflags +genpts: Korrekte Zeitstempel-Generierung
                     # -r {fps}: Framerate für Playback
+                    # -af: Audio-Filter: volume=2.0 (sanftes Boost statt aggressive 4x)
                     # KEIN -shortest: Beide Streams bleiben vorhanden!
                     ffmpeg_cmd = [
                         'ffmpeg',
@@ -891,9 +903,10 @@ class UnifiedCameraMonitor:
                         '-i', str(audio_file),         # Audio Input
                         '-c:v', 'copy',                # Video codec: copy (no re-encode)
                         '-c:a', 'aac',                 # Audio codec: AAC
+                        '-af', 'volume=2.0,loudnorm=I=-23',  # 2x sanfter Boost + Normalisierung
                         '-y', str(mp4_file)
                     ]
-                    logger.debug(f"🎬 FFmpeg mit Audio: {' '.join(ffmpeg_cmd)}")
+                    logger.debug(f"🎬 FFmpeg mit Audio (rausch-reduziert + 2x boost): {' '.join(ffmpeg_cmd)}")
                 else:
                     # Nur Video mit FFmpeg Zeitstempel-Fix
                     ffmpeg_cmd = [
@@ -1353,7 +1366,7 @@ def main():
     parser.add_argument('--threshold', type=float, default=0.4, help='AI-Erkennungs-Schwelle (default: 0.4)')
     parser.add_argument('--cooldown', type=int, default=15, help='Cooldown zwischen Aufnahmen in Sekunden (default: 15)')
     parser.add_argument('--trigger-duration', type=float, default=1.0, help='Mindest-Dauer für Trigger in Sekunden (default: 1.0)')
-    parser.add_argument('--video-path', type=str, default='/home/<your-username>/Videos/Vogelhaus', help='Basis-Pfad für Videos')
+    parser.add_argument('--video-path', type=str, default=None, help='Basis-Pfad für Videos (default: ~/Videos/Vogelhaus)')
     parser.add_argument('--model', type=str, help='Pfad zum YOLO-Model (optional)')
     parser.add_argument('--preview-fps', type=int, default=6, help='Preview FPS (default: 6)')
     parser.add_argument('--recording-width', type=int, default=4096, help='Aufnahme-Breite (default: 4096 - Cinema 4K)')

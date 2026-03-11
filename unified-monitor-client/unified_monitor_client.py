@@ -266,7 +266,7 @@ def cleanup_remote_processes(ssh: SSHManager):
         log_colored('yellow', "⚠️  (Cleanup Fehler, versuche trotzdem fortzufahren)")
 
 
-def start_remote_monitor(ssh: SSHManager, mode: str, threshold: float, cooldown: int, trigger: float, audio_threshold: float, duration: int = 0, audio_only: bool = False, fps: int = 0, resolution: str = None, bitrate: int = 0, auto_record: bool = False, manual_record: bool = False) -> bool:
+def start_remote_monitor(ssh: SSHManager, mode: str, threshold: float, cooldown: int, trigger: float, audio_threshold: float, duration: int = 0, audio_only: bool = False, fps: int = 0, resolution: str = None, bitrate: int = 0, rotation: str = '180', auto_record: bool = False, manual_record: bool = False) -> bool:
     """
     Startet Remote Monitor auf Pi - wählt zwischen zwei Architekturen:
     
@@ -308,7 +308,13 @@ def start_remote_monitor(ssh: SSHManager, mode: str, threshold: float, cooldown:
         if fps > 0:
             args.append(f"--recording-fps {fps}")
         
-        log_colored('blue', f"   Parameter: threshold={threshold}, cooldown={cooldown}s, trigger={trigger}s")
+        # Rotation-Parameter
+        if rotation and rotation != '180':  # Only add if not default
+            args.append(f"--rotation {rotation}")
+        elif rotation == '180':  # Always set rotation to ensure correct orientation
+            args.append(f"--rotation 180")
+        
+        log_colored('blue', f"   Parameter: threshold={threshold}, cooldown={cooldown}s, trigger={trigger}s, rotation={rotation}°")
         
     else:  # manual_record
         log_colored('cyan', "🚀 Starte MANUAL-RECORD (reine Aufnahme mit rpicam-vid)...")
@@ -359,7 +365,13 @@ def start_remote_monitor(ssh: SSHManager, mode: str, threshold: float, cooldown:
         if bitrate > 0:
             args.append(f"--bitrate {bitrate}k")
         
-        log_colored('blue', f"   Parameters: duration={duration}s, fps={fps}, resolution={resolution or 'default'}, bitrate={bitrate or 'default'}")
+        # Rotation-Parameter
+        if rotation and rotation != '180':  # Only add if not default
+            args.append(f"--rotation {rotation}")
+        elif rotation == '180':  # Always set rotation to ensure correct orientation
+            args.append(f"--rotation 180")
+        
+        log_colored('blue', f"   Parameters: duration={duration}s, fps={fps}, resolution={resolution or 'default'}, bitrate={bitrate or 'default'}, rotation={rotation}°")
     
     # Baue kompletten Befehl mit nohup im Hintergrund
     args_str = " ".join(args)
@@ -700,6 +712,7 @@ def signal_handler(signum, frame):
 @click.option('--audio-threshold', type=float, default=DEFAULT_AUDIO_THRESHOLD, help='Audio-Schwellenwert für AI-HAD')
 @click.option('--duration', type=int, default=10, help='Aufnahmedauer nach Erkennung in Sekunden (default: 10)')
 @click.option('--audio-only', is_flag=True, default=False, help='Nur Audio aufnehmen (kein Video)')
+@click.option('--enable-audio', is_flag=True, default=False, help='Audio-Track mit Video aufnehmen')
 @click.option('--fps', type=int, default=0, help='Framerate (fps): 15, 24, 30, 60, 120')
 @click.option('--resolution', type=click.Choice(['480p', '720p', '1080p', '2k', '4k']), default=None, required=False, help='Auflösungs-Preset')
 @click.option('--bitrate', type=int, default=0, help='Video-Bitrate in kbps (z.B. 5000, 10000)')
@@ -707,7 +720,8 @@ def signal_handler(signum, frame):
 @click.option('--repeat', is_flag=True, default=False, help='🔄 Endlosschleife: Nach Aufnahme wieder auf Vogel warten (mit --detect-and-record)')
 @click.option('--auto-record', is_flag=True, default=False, help='[VERALTET] Automatische Vogelerkennung + Aufnahme')
 @click.option('--manual-record', is_flag=True, default=False, help='Manuelle Aufnahme ohne Vogelerkennung')
-def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_threshold: float, duration: int, audio_only: bool, fps: int, resolution: str, bitrate: int, detect_and_record: bool, repeat: bool, auto_record: bool, manual_record: bool):
+@click.option('--rotation', type=click.Choice(['0', '90', '180', '270']), default='180', help='Rotation des Videos (0, 90, 180, 270 Grad) - default: 180')
+def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_threshold: float, duration: int, audio_only: bool, enable_audio: bool, fps: int, resolution: str, bitrate: int, detect_and_record: bool, repeat: bool, auto_record: bool, manual_record: bool, rotation: str):
     """
     🎥 UNIFIED MONITORING SYSTEM - Vogel-Beobachtung
     
@@ -1176,7 +1190,7 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
     elif auto_record:
         log_colored('cyan', "")
         # Starte Remote Monitor (mit auto_record oder manual_record)
-        if not start_remote_monitor(ssh, mode, threshold, cooldown, trigger, audio_threshold, duration, audio_only, fps, resolution, bitrate, auto_record, manual_record=False):
+        if not start_remote_monitor(ssh, mode, threshold, cooldown, trigger, audio_threshold, duration, audio_only, fps, resolution, bitrate, rotation, auto_record, manual_record=False):
             sys.exit(1)
         
         # Zeige initialen Status
@@ -1204,7 +1218,7 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
     else:  # manual_record
         log_colored('cyan', "")
         # Starte Remote Monitor (mit manual_record)
-        if not start_remote_monitor(ssh, mode, threshold, cooldown, trigger, audio_threshold, duration, audio_only, fps, resolution, bitrate, auto_record=False, manual_record=manual_record):
+        if not start_remote_monitor(ssh, mode, threshold, cooldown, trigger, audio_threshold, duration, audio_only, fps, resolution, bitrate, rotation, auto_record=False, manual_record=manual_record):
             sys.exit(1)
         
         # Zeige initialen Status

@@ -4,39 +4,42 @@
 
 ![Vogel-Kamera-Linux Banner](docs/pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
 
-## Release v2.1.1 — Graceful Shutdown & Zwei-Phasen-Detection 🆕
+## Release v2.1.2 — Sichere Konfiguration & Datenschutz 🔒
 
-- **Version:** v2.1.1 (März 2026)
-- **🆕 Major Features:**
-  - **Detect-and-Record Mode** (Zwei-Phasen-Betrieb - EMPFOHLEN!)
-    - Phase 1: Schnelle Vogelerkennung OHNE Video-Speicherung
-    - Phase 2: Nach Trigger → Volle Aufnahme mit Audio
-    - Verhindert Time-Lapse und beschleunigte Vorschau-Probleme
-  - **Graceful Ctrl+C Shutdown** - Sauberes Cleanup aller Remote-Prozesse
-  - **Process Diagnostics** - `diagnose_remote_processes()` vor Cleanup
-  - **Improved Process Cleanup** - 3-stagige Cleanup (nicht mehr Kill-All)
-  - **Signal Handler Enhanced** mit globalen Variablen für SSH & StatusReporter
+- **Version:** v2.1.2 (März 2026)
+- **🔐 Major Features:**
+  - **Sichere Konfigurationsverwaltung** (NEU!)
+    - `config.py` und `.env` sind geschützt (.gitignore)
+    - KEINE persönlichen Daten gehen online
+    - `.example` Dateien als Vorlagen für neue Nutzer
+  - **Flexible SSH-Konfiguration** (NEU!)
+    - Support für Custom-Hostnames, Usernames, SSH-Keys
+    - Dynamische Remote-Pfade basierend auf `SSH_USER`
+    - `.env` Datei für lokale Konfiguration
+  - **Datenschutz im öffentlichen Repo** (NEU!)
+    - Sample-Dateien mit Platzhaltern
+    - Realistische Defaults lokal
+    - Robuste Fallbacks
 
 - **🔧 Technical Improvements:**
-  - ✅ Keine Zombie-Prozesse mehr nach Ctrl+C
-  - ✅ Sichtbarkeit in blockierende Prozesse (LAUFENDE, FILE HANDLES, V4L2)
-  - ✅ SIGTERM → Warten → SIGKILL (elegant degradation)
-  - ✅ V4L2-Device-Locks sauber freigeben
-  - ✅ Targeted Process-Killing (nicht alle python3!)
+  - ✅ Alle Versionsnummern auf 2.1.2 synchronisiert
+  - ✅ `monitors.py` mit dynamischen Pfaden statt hardcoded
+  - ✅ `config.py` liest aus `.env` mit Fallbacks
+  - ✅ `release_workflow.py` aktualisiert
+  - ✅ `.gitignore` erweitert um Config-Dateien
 
-**Quick Start:** [`QUICK_REFERENCE_v2.1.1.md`](QUICK_REFERENCE_v2.1.1.md)  
-**Vollständige Release-Notes:** [`releases/v2.1.1/RELEASE_NOTES_v2.1.1.md`](releases/v2.1.1/)  
+**Quick Start:** [`QUICK_REFERENCE_v2.1.2.md`](#) (coming soon)  
+**Vollständige Release-Notes:** [`releases/v2.1.2/RELEASE_NOTES_v2.1.2.md`](releases/v2.1.2/)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.1.1-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.1.1)
-[![Detect-and-Record](https://img.shields.io/badge/Feature-Detect%20%26%20Record-informational)]()
+[![Version](https://img.shields.io/badge/Version-v2.1.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.1.2)
+[![Security](https://img.shields.io/badge/Feature-Secure%20Config-critical)]()
 [![Client Python](https://img.shields.io/badge/Architecture-Python%20Client-success)]()
 
-### v2.1.0 (Archiv)
-**Audio/Video-Synchronisation & Professionelle Aufnahmen**
-- **Version:** v2.1.0 (März 2026)
-- Siehe [Archiv-Release](releases/v2.1.0/) für Details oder [v2.1.0 Quick Reference](QUICK_REFERENCE_v2.1.0.md)
-[![License](https://img.shields.io/github/license/kamera-linux/vogel-kamera-linux)](LICENSE)
+### v2.1.1 (Archiv)
+**Graceful Shutdown & Detect-and-Record Mode**
+- **Version:** v2.1.1 (März 2026)
+- Siehe [Archiv-Release](releases/v2.1.1/) für Details oder CHANGELOG.md
 
 > ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
 > 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)  
@@ -476,7 +479,7 @@ python3 unified_monitor_client.py normal --detect-and-record
 - **[unified-monitor-client/README.md](unified-monitor-client/README.md)** - Haupttool Dokumentation
 - **[unified-monitor-client/SETUP_GUIDE.md](unified-monitor-client/SETUP_GUIDE.md)** - Detailliertes Setup
 - **[CHANGELOG.md](CHANGELOG.md)** - Vollständige Versionshistorie
-- **[QUICK_REFERENCE_v2.1.0.md](QUICK_REFERENCE_v2.1.0.md)** - Schnelle Befehlsreferenz
+- **[QUICK_REFERENCE_v2.1.2.md](QUICK_REFERENCE_v2.1.2.md)** - Schnelle Befehlsreferenz
 - **[raspberry-pi-scripts/UNIFIED-MONITOR-README.md](raspberry-pi-scripts/UNIFIED-MONITOR-README.md)** - Remote-System
 - **[docs/TRIXIE-MIGRATION.md](docs/TRIXIE-MIGRATION.md)** - Trixie Setup-Guide
 - **[docs/SECURITY.md](docs/SECURITY.md)** - Sicherheitsrichtlinien
@@ -521,5 +524,5 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ---
 
-**Version:** v2.1.0 (März 2026) | **Status:** Produktionsreif ✅  
-**Raspberry Pi 5 + Debian Trixie (13) | Audio/Video-Synchronisation | YOLO26n KI-Erkennung**
+**Version:** v2.1.2 (März 2026) | **Status:** Produktionsreif ✅  
+**Raspberry Pi 5 + Debian Trixie (13) | Sichere Konfiguration & Datenschutz | YOLO26n KI-Erkennung**

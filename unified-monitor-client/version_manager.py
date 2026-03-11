@@ -40,13 +40,26 @@ class VersionManager:
         return "UNKNOWN"
     
     def get_remote_version(self) -> str:
-        """Liest Remote-Version"""
+        """Liest Remote-Version - versucht mehrere Orte"""
         if not self.remote_version:
-            version_file = f'{REMOTE_REPO_DIR}/auto-start-kamera/VERSION'
-            self.remote_version = self.ssh.exec_command_safe(
-                f"cat '{version_file}' 2>/dev/null | tr -d '[:space:]'",
-                fallback="UNKNOWN"
-            )
+            # Versuche mehrere Orts-Optionen
+            version_files = [
+                f'{REMOTE_REPO_DIR}/auto-start-kamera/VERSION',  # Primary
+                f'{REMOTE_REPO_DIR}/unified-monitor-client/VERSION',  # Alternative
+                f'{REMOTE_REPO_DIR}/VERSION',  # Root Version
+            ]
+            
+            version = "UNKNOWN"
+            for version_file in version_files:
+                version = self.ssh.exec_command_safe(
+                    f"cat '{version_file}' 2>/dev/null | tr -d '[:space:]'",
+                    fallback=None
+                )
+                if version and version != "UNKNOWN":
+                    break
+            
+            self.remote_version = version if version else "UNKNOWN"
+        
         return self.remote_version
     
     def compare_versions(self) -> bool:
@@ -138,6 +151,29 @@ class VersionManager:
             else:
                 self._log('red', f"   ❌ Fehler beim Upload: {script_name}")
                 return False
+        
+        # Synchronisiere auch VERSION-Dateien (NEU in v2.1.2!)
+        # Dies stellt sicher, dass Remote-Version aktuell ist
+        version_files_to_sync = [
+            ('Root VERSION', LOCAL_REPO_DIR / 'VERSION', f'{REMOTE_REPO_DIR}/VERSION'),
+            ('Auto-start VERSION', LOCAL_REPO_DIR / 'auto-start-kamera' / 'VERSION', f'{REMOTE_REPO_DIR}/auto-start-kamera/VERSION'),
+            ('Unified-Monitor VERSION', Path(__file__).parent / 'VERSION', f'{REMOTE_REPO_DIR}/unified-monitor-client/VERSION'),
+            ('Raspberry Pi Scripts VERSION', LOCAL_REPO_DIR / 'raspberry-pi-scripts' / 'VERSION', f'{REMOTE_REPO_DIR}/raspberry-pi-scripts/VERSION'),
+        ]
+        
+        for desc, local_path, remote_path in version_files_to_sync:
+            if not local_path.exists():
+                continue
+            
+            local_hash = self._calculate_md5(local_path)
+            remote_hash = self.ssh.get_file_hash(remote_path)
+            
+            if remote_hash is None or local_hash != remote_hash:
+                if self.ssh.send_file(local_path, remote_path):
+                    scripts_updated += 1
+        
+        # Invalidiere Version-Cache - wird beim nächsten compare_versions() neu gelesen
+        self.remote_version = None
         
         if scripts_updated == 0:
             self._log('green', f"✅ Alle Remote-Skripte sind aktuell")
