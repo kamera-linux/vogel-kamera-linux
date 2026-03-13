@@ -1,0 +1,37 @@
+# ── Verbindungseinstellungen (aus ansible/.env geladen) ─────────────────────
+# Werte werden per  set -a; source .env; set +a  in build_and_deploy.sh
+# als Shell-Umgebungsvariablen exportiert und hier per lookup('env') gelesen.
+ansible_host:                 "{{ lookup('env', 'PI_HOST')    | default('raspberry-pi.local') }}"
+ansible_user:                 "{{ lookup('env', 'PI_USER')    | default('pi') }}"
+ansible_ssh_private_key_file: "{{ lookup('env', 'PI_SSH_KEY') | default('~/.ssh/id_rsa') }}"
+
+# ── Allgemeine Variablen ────────────────────────────────────────────────────
+pi_host: "{{ lookup('env', 'PI_HOST') | default('raspberry-pi.local') }}"
+pi_user: "{{ lookup('env', 'PI_USER') | default('pi') }}"
+pi_home: "/home/{{ lookup('env', 'PI_USER') | default('pi') }}"
+
+# Docker Image
+pi_daemon_image:     vogel-pi
+pi_daemon_image_tag: latest
+
+# Pfade auf dem Pi
+pi_daemon_dir:       /opt/pi-daemon          # docker-compose + .env liegen hier
+pi_certs_dir:        /etc/pi-daemon/certs      # SSL-Zertifikate
+pi_video_dir:        "{{ pi_home }}/Videos"   # Aufnahmen (Host-Volume)
+pi_log_dir:          /var/log/pi-daemon
+
+# Netzwerk
+pi_daemon_port:      8443
+
+# Token-Gültigkeit (Stunden)
+pi_token_expiry_h:   8
+
+# Detection-Skript innerhalb des Containers
+pi_detection_script: "{{ pi_home }}/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor-detect-only.py"
+
+# Keepalive SSH (verhindert Timeout)
+ansible_ssh_common_args: "-o ServerAliveInterval=30"
+
+# ── Build-Host (lokaler Rechner) ────────────────────────────────────────────
+# Wird von ansible/roles/build-host/tasks/main.yml verwendet.
+build_host_user: "{{ lookup('env', 'USER') }}"

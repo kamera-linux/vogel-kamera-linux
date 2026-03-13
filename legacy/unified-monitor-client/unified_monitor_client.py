@@ -17,6 +17,7 @@ import signal
 import click
 import threading
 import subprocess
+import queue
 from pathlib import Path
 from datetime import datetime
 
@@ -26,9 +27,10 @@ from config import (
     LOG_COLORS, SSH_HOST, SSH_USER, SSH_KEY, REMOTE_VIDEO_BASE,
     REMOTE_SCRIPT_DIR
 )
-from ssh_manager import get_ssh_manager, SSHManager
+from ssh_manager import get_ssh_manager, SSHManager, SSHHealthChecker
 from version_manager import VersionManager
 from monitors import LogMonitor, VideoWatcher, StatusReporter
+from camera_pipeline_sequential import SequentialPipeline, RecordingJob, DetectionEvent
 
 # Logging-Setup
 logging.basicConfig(
@@ -40,6 +42,7 @@ logger = logging.getLogger(__name__)
 # Globale Variablen für Signal-Handler
 _global_ssh = None
 _global_status_reporter = None
+_global_health_checker = None
 _cleanup_on_exit = False
 
 
@@ -131,26 +134,16 @@ def system_check(ssh: SSHManager) -> bool:
     if not vm.compare_versions():
         log_colored('yellow', "⚠️  Remote-Skripte sind veraltet")
     
-    # Remote-Skripte synchronisieren
-    sys.stdout.write("🔄 Remote-Skripte synchronisieren ... ")
-    sys.stdout.flush()
-    
+    # Remote-Skripte synchronisieren (Output kommt von VersionManager)
     if not vm.sync_remote_scripts():
-        log_colored('red', "❌")
-        log_colored('red', "Fehler beim Synchronisieren der Remote-Skripte")
+        log_colored('red', "❌ Fehler beim Synchronisieren der Remote-Skripte")
         return False
     
-    log_colored('green', "✅")
-    
-    # Prüfe Dateien auf Pi
-    sys.stdout.write("📄 Remote Scripts ... ")
-    sys.stdout.flush()
-    
+    # Verifiziere dass Scripts auf Pi vorhanden sind
     if ssh.file_exists(f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor.py'):
-        log_colored('green', "✅")
+        log_colored('green', "✅ Remote Scripts vorhanden")
     else:
-        log_colored('red', "❌")
-        log_colored('red', "FEHLER: Scripts fehlen auf Pi!")
+        log_colored('red', "❌ FEHLER: Scripts fehlen auf Pi!")
         return False
     
     log_colored('cyan', "")
@@ -158,6 +151,82 @@ def system_check(ssh: SSHManager) -> bool:
     log_colored('cyan', "")
     
     return True
+
+
+def show_pi_system_status(ssh: SSHManager):
+    """Zeigt aktuelle System-Status des Raspberry Pi (CPU, RAM, Disk, Temperatur)"""
+    log_colored('cyan', "")
+    log_colored('cyan', "📊 RASPBERRY PI SYSTEM-STATUS:")
+    log_colored('cyan', "=" * 75)
+    log_colored('cyan', "")
+    
+    try:
+        # Nutze das get_pi_status.sh Script - viel robuster als Shell-One-Liner
+        cmd_status = "bash ~/vogel-kamera-linux/unified-monitor-client/get_pi_status.sh"
+        
+        success, status_output, err = ssh.exec_command(cmd_status, timeout=5)
+        
+        # Parse Werte aus CSV: load_avg,ram_percent,disk_percent,temp_celsius,proc_count
+        cpu_load = -1
+        mem_pct = -1
+        disk_pct = -1
+        temp_c = -1
+        proc_count = 0
+        
+        if success and status_output:
+            try:
+                parts = status_output.strip().split(',')
+                if len(parts) >= 5:
+                    cpu_load = float(parts[0])
+                    mem_pct = float(parts[1])
+                    disk_pct = float(parts[2])
+                    temp_c = float(parts[3])
+                    proc_count = int(parts[4])
+                else:
+                    logger.warning(f"Status Parse: Erwartet 5 Felder, bekommen {len(parts)}: {status_output}")
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Status Parse Error: {e} | Output: {status_output}")
+        elif not success:
+            logger.warning(f"Status Command fehlgeschlagen: {err}")
+        
+        # Anzeige mit Farbcodierung
+        mem_color = 'red' if mem_pct > 85 else 'yellow' if mem_pct > 70 else 'green'
+        disk_color = 'red' if disk_pct > 85 else 'yellow' if disk_pct > 70 else 'green'
+        temp_color = 'red' if temp_c > 80 else 'yellow' if temp_c > 70 else 'green'
+        load_color = 'red' if cpu_load > 4 else 'yellow' if cpu_load > 2 else 'green'
+        
+        # CPU Load
+        if cpu_load >= 0:
+            log_colored(load_color, f"   ⚙️  CPU Load:     {cpu_load:6.2f}")
+        else:
+            log_colored('yellow', f"   ⚙️  CPU Load:     N/A")
+        
+        # RAM
+        if mem_pct >= 0:
+            log_colored(mem_color, f"   🧠 RAM:         {mem_pct:6.1f}%")
+        else:
+            log_colored('yellow', f"   🧠 RAM:         N/A")
+        
+        # Disk
+        if disk_pct >= 0:
+            log_colored(disk_color, f"   💾 Disk:        {disk_pct:6.1f}%")
+        else:
+            log_colored('yellow', f"   💾 Disk:        N/A")
+        
+        # Temperatur
+        if temp_c >= 0:
+            log_colored(temp_color, f"   🌡️  Temp:        {temp_c:6.1f}°C")
+        else:
+            log_colored('yellow', f"   🌡️  Temp:        N/A")
+        
+        # Prozesse
+        log_colored('cyan', f"   🔄 Kamera-Procs: {proc_count}")
+        
+    except Exception as e:
+        logger.error(f"show_pi_system_status Exception: {e}")
+        log_colored('yellow', f"   ⚠️  Fehler beim Status-Abruf: {e}")
+    
+    log_colored('cyan', "")
 
 
 def approval_check():
@@ -181,7 +250,7 @@ def diagnose_remote_processes(ssh: SSHManager):
     # Prüfe was noch läuft
     diag_script = (
         "echo '=== LAUFENDE PROZESSE ===' && "
-        "ps aux | grep -E 'python|camera|libcamera|picamera|rpicam' | grep -v grep && "
+        "ps aux | grep -E 'python|detect-only|camera|libcamera|picamera|rpicam' | grep -v grep && "
         "echo '' && "
         "echo '=== OFFENE FILE HANDLES ===' && "
         "lsof 2>/dev/null | grep -i 'camera\\|video\\|/dev/video' | head -10 || echo '(keine)' && "
@@ -209,33 +278,43 @@ def cleanup_remote_processes(ssh: SSHManager):
     # 3. Verify nach jedem Schritt
     
     cleanup_script = (
-        "# ===== STAGE 1: Gezielte SIGTERM zu Camera-Prozessen =====\n"
+        "# ===== STAGE 1: Gezielte SIGTERM zu Camera & Konversions-Prozessen =====\n"
         "pkill -TERM -f 'unified-camera-monitor' 2>/dev/null\n"
+        "pkill -TERM -f 'detect-only' 2>/dev/null\n"
         "pkill -TERM -f 'picamera' 2>/dev/null\n"
         "pkill -TERM -f 'libcamera' 2>/dev/null\n"
+        "pkill -TERM -f 'ffmpeg' 2>/dev/null\n"
+        "pkill -TERM -f 'rsync' 2>/dev/null\n"
         "sleep 2\n"
         "\n"
         "# ===== STAGE 2: Wenn noch da, harder SIGKILL (aber NICHT alle python3!) =====\n"
         "pkill -9 -f 'unified-camera-monitor' 2>/dev/null\n"
+        "pkill -9 -f 'detect-only' 2>/dev/null\n"
         "pkill -9 -f 'rpicam' 2>/dev/null\n"
+        "pkill -9 -f 'ffmpeg' 2>/dev/null\n"
+        "pkill -9 -f 'rsync' 2>/dev/null\n"
         "sleep 1\n"
         "\n"
         "# ===== STAGE 3: V4L2/libcamera Device-Locks freigeben =====\n"
-        "# Prüfe ob noch was läuft\n"
-        "REMAINING=$(ps aux | grep -E 'unified-camera|libcamera|picamera' | grep -v grep | wc -l)\n"
+        "# Prüfe ob noch was läuft (Camera, Konversions- oder Sync-Prozesse)\n"
+        "REMAINING=$(ps aux | grep -E 'unified-camera|detect-only|libcamera|picamera|ffmpeg|rsync' | grep -v grep | wc -l)\n"
         "if [ \"$REMAINING\" -gt 0 ]; then\n"
         "    echo 'WARNING: Still found processes, forcing cleanup...'\n"
         "    pkill -9 -f 'unified-camera' 2>/dev/null || true\n"
+        "    pkill -9 -f 'detect-only' 2>/dev/null || true\n"
+        "    pkill -9 -f 'ffmpeg' 2>/dev/null || true\n"
+        "    pkill -9 -f 'rsync' 2>/dev/null || true\n"
         "    sleep 2\n"
         "fi\n"
         "\n"
         "# ===== STAGE 4: Cleanup Log und State-Files =====\n"
         "rm -f /tmp/unified-camera-monitor.log 2>/dev/null || true\n"
+        "rm -f /tmp/hailo-detection.log 2>/dev/null || true\n"
         "rm -f /tmp/*.pid 2>/dev/null || true\n"
         "sleep 1\n"
         "\n"
         "# ===== FINAL: Verify that cleanup was successful =====\n"
-        "ps aux | grep -E 'unified-camera|libcamera[^:]|picamera' | grep -v grep | wc -l\n"
+        "ps aux | grep -E 'unified-camera|detect-only|libcamera[^:]|picamera|ffmpeg|rsync' | grep -v grep | wc -l\n"
         "echo 'CLEANUP_DONE'"
     )
     
@@ -386,7 +465,8 @@ def start_remote_monitor(ssh: SSHManager, mode: str, threshold: float, cooldown:
         
         # Für background processes ist exit code nicht zu verlässlich
         # Prüfe stattdessen ob der process gestartet wurde
-        time.sleep(1)
+        # WICHTIG: Skript braucht Zeit zum Laden (YOLO Models, etc!)
+        time.sleep(5)  # 5 Sekunden für Init-Phase
         check_cmd = f"ps aux | grep 'python3.*unified-camera-monitor' | grep -v grep | wc -l"
         success, count_str, _ = ssh.exec_command(check_cmd, timeout=5)
         
@@ -410,21 +490,22 @@ def start_remote_monitor(ssh: SSHManager, mode: str, threshold: float, cooldown:
 
 def watch_detection_log(ssh: SSHManager, detection_started_event, bird_detected_event, max_wait: int = 600) -> bool:
     """
-    Überwacht Remote-Log auf Vogel-Erkennung.
+    Überwacht Remote-Log auf Vogel-Erkennung und Prozess-Ende.
     
     Gibt True zurück wenn Vogel erkannt wurde.
-    Gibt False zurück nach Timeout oder Error.
+    Gibt False zurück nach Timeout, Prozess beendet oder Error.
     """
     log_colored('cyan', "👁️  Überwache Detection-Log...\n")
     
     start_time = time.time()
     last_position = 0
     detection_started = False
+    process_exited = False
     
     while time.time() - start_time < max_wait:
         try:
             # Lese aktuelle Log-Größe
-            size_cmd = "wc -c < /tmp/unified-camera-monitor.log 2>/dev/null || echo 0"
+            size_cmd = "wc -c < /tmp/hailo-detection.log 2>/dev/null || echo 0"
             success, size_str, _ = ssh.exec_command(size_cmd, timeout=3)
             
             if not success or not size_str.strip():
@@ -435,7 +516,7 @@ def watch_detection_log(ssh: SSHManager, detection_started_event, bird_detected_
             
             # Lese neue Log-Lines ab last_position
             if current_size > last_position:
-                tail_cmd = f"tail -c +{last_position + 1} /tmp/unified-camera-monitor.log"
+                tail_cmd = f"tail -c +{last_position + 1} /tmp/hailo-detection.log"
                 success, output, _ = ssh.exec_command(tail_cmd, timeout=3)
                 
                 if success and output:
@@ -445,17 +526,40 @@ def watch_detection_log(ssh: SSHManager, detection_started_event, bird_detected_
                         detection_started_event.set()
                         log_colored('green', "✅ Detection-Prozess läuft\n")
                     
-                    # Prüfe auf Erkennungs-Trigger
+                    # Prüfe auf verschiedene Events
                     for line in output.split('\n'):
-                        if any(keyword in line.lower() for keyword in 
-                               ['vogel erkannt', 'bird detected', 'detection confirmed']):
-                            log_colored('green', f"🐦 VOGEL ERKANNT: {line}")
-                            log_colored('cyan', "")
-                            bird_detected_event.set()
-                            return True
+                        line_lower = line.lower()
                         
-                        # Zeige auch andere wichtige Events
-                        if any(keyword in line.lower() for keyword in 
+                        # 1. Vogel erkannt
+                        if any(keyword in line_lower for keyword in 
+                               ['vogel erkannt', 'bird detected', 'detection confirmed', 'birds:']):
+                            if 'birds:' in line_lower:
+                                # Nur wenn tatsächlich Vögel erkannt (nicht Birds: 0)
+                                try:
+                                    birds_val = int(line_lower.split('birds:')[1].split('|')[0].strip())
+                                    if birds_val > 0:
+                                        log_colored('green', f"🐦 VOGEL ERKANNT: {line}")
+                                        log_colored('cyan', "")
+                                        bird_detected_event.set()
+                                        return True
+                                except:
+                                    pass
+                            else:
+                                log_colored('green', f"🐦 VOGEL ERKANNT: {line}")
+                                log_colored('cyan', "")
+                                bird_detected_event.set()
+                                return True
+                        
+                        # 2. Prozess beendet (Duration erreicht oder selbst beendet)
+                        if any(keyword in line_lower for keyword in 
+                               ['duration reached', 'detektor beendet', 'detector stopped',
+                                'shutting it down', 'aborted']):
+                            process_exited = True
+                            log_colored('yellow', f"⏱️  Detection beendet: {line}")
+                            return False  # Beende Log-Watch ohne lange zu warten
+                        
+                        # 3. Fehler
+                        if any(keyword in line_lower for keyword in 
                                ['error', 'fehler', 'exception']):
                             log_colored('red', f"⚠️  {line}")
                     
@@ -471,56 +575,154 @@ def watch_detection_log(ssh: SSHManager, detection_started_event, bird_detected_
     return False
 
 
-def start_detection_only(ssh: SSHManager, mode: str, threshold: float, cooldown: int, trigger: float) -> bool:
+def start_detection_only(ssh: SSHManager, mode: str, threshold: float, cooldown: int, trigger: float, use_hailo: bool = False, detect_hybrid: bool = False, hailo_threshold: float = 0.5, onnx_threshold: float = 0.3, frame_skip: int = 1, detect_and_record: bool = False) -> bool:
     """
     Startet reinen Detection-Prozess (OHNE Video-Recording).
     
     Dieser Prozess:
     - Überwacht kontinuierlich die Kamera
-    - Führt YOLO-Erkennung durch
+    - Führt YOLO- oder HAILO-Erkennung durch (je nach use_hailo/detect_hybrid Flag)
     - Loggt Erkennungen
     - Beendet sich bei erfolgreichem Trigger
+    
+    Args:
+        detect_hybrid: Nutze optimierten hailo_onnx_perf.py statt hailo_onnx_hybrid.py
+        hailo_threshold: Hailo Detektions-Schwellenwert (0.0-1.0)
+        onnx_threshold: ONNX Klassifizierungs-Schwellenwert (0.0-1.0)
+        frame_skip: Verarbeite jeden Nth Frame (1=alle, 2=jeden 2.)
+        detect_and_record: True wenn im --detect-and-record Modus (Detection läuft unbegrenzt)
     """
-    log_colored('cyan', "🔍 Starte DETECTION-ONLY Prozess (kein Video-Speicherung)...")
     
-    # Neues, schlankes Detection-only Skript
-    script = f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-detect-only.py'
-    
-    # Args für Detection-only Mode
-    args = [
-        f"--threshold {threshold}",
-        f"--cooldown {cooldown}",
-        f"--trigger-duration {trigger}",
-    ]
-    
-    args_str = " ".join(args)
-    cmd = (
-        f"nohup python3 {script} {args_str} "
-        f"> /tmp/unified-camera-monitor.log 2>&1 &"
-    )
-    
+    # Lösche altes Log vor neuem Run
     try:
-        success, out, err = ssh.exec_command(cmd, timeout=5)
-        time.sleep(2)
+        cleanup_cmd = "rm -f /tmp/hailo-detection.log"
+        ssh.exec_command(cleanup_cmd, timeout=3)
+    except:
+        pass  # Ignoriere Fehler beim Löschen
+    
+    if detect_hybrid:
+        # Optimierter HAILO + ONNX Hybrid Detector mit automatischem Fallback
+        log_colored('cyan', "🔍 Starte DETECTION-ONLY Prozess mit INTELLIGENT HYBRID (25+ fps target)...")
+        log_colored('cyan', f"   🚀 HAILO-8 NPU: Generische Erkennung (threshold: {hailo_threshold})")
+        log_colored('cyan', f"   🐦 ONNX Filter: Vogelklassifizierung (threshold: {onnx_threshold})")
+        log_colored('cyan', f"   ⚡ Frame-Skip: {frame_skip} (Speed: {frame_skip}× schneller)")
+        log_colored('cyan', f"   🔄 AUTO-FALLBACK: Wenn Hailo nicht antwortet → Pure ONNX (12.4 fps guaranteed)")
         
-        # Prüfe ob Prozess läuft
-        check_cmd = f"ps aux | grep 'python3.*unified-camera-monitor-detect-only' | grep -v grep | wc -l"
-        success, count_str, _ = ssh.exec_command(check_cmd, timeout=5)
+        script = f'{REMOTE_SCRIPT_DIR}/hailo_onnx_fallback.py'
+        args = [
+            f"--hailo-threshold {hailo_threshold}",
+            f"--onnx-threshold {onnx_threshold}",
+            f"--frame-skip {frame_skip}",
+        ]
+        
+        # WICHTIG: Duration nur für Standalone-Modus (nicht für detect-and-record)
+        # Bei detect-and-record läuft Detection unbegrenzt bis Vogel erkannt
+        if not detect_and_record and trigger:
+            args.append(f"--duration {int(trigger * 10)}")
+        
+        args_str = " ".join(args)
+        cmd = (
+            f"nohup python3 {script} {args_str} "
+            f"> /tmp/hailo-detection.log 2>&1 &"
+        )
         
         try:
-            process_count = int(count_str.strip())
-            if process_count > 0:
-                log_colored('green', "✅ Detection-Prozess gestartet")
+            success, out, err = ssh.exec_command(cmd, timeout=5)
+            if success:
+                log_colored('green', "   ✅ Intelligenter Hybrid Detector gestartet")
                 return True
-        except ValueError:
-            pass
-        
-        log_colored('red', "❌ Detection-Prozess konnte nicht gestartet werden")
-        return False
+            else:
+                log_colored('red', f"   ❌ Fehler beim Start: {err}")
+                return False
+        except Exception as e:
+            log_colored('red', f"   ❌ SSH-Fehler: {e}")
+            return False
     
-    except Exception as e:
-        log_colored('red', f"❌ SSH-Fehler: {e}")
-        return False
+    elif use_hailo:
+        # Standard HAILO + ONNX Hybrid Detection Mode
+        log_colored('cyan', "🔍 Starte DETECTION-ONLY Prozess mit HAILO (28 fps)...")
+        log_colored('cyan', "   🚀 HAILO-8 NPU: Generische Erkennung")
+        log_colored('cyan', "   🐦 ONNX Filter: Deutsche Vogelklassifizierung")
+        
+        script = f'{REMOTE_SCRIPT_DIR}/hailo_onnx_hybrid.py'
+        args = [
+            f"--fps 25",
+            f"--confidence 0.50",
+        ]
+        # WICHTIG: Duration nur für Standalone-Modus (nicht für detect-and-record)
+        if not detect_and_record and trigger:
+            args.append(f"--duration {int(trigger * 10)}")
+        
+        args_str = " ".join(args)
+        cmd = (
+            f"nohup python3 {script} {args_str} "
+            f"> /tmp/hailo-detection.log 2>&1 &"
+        )
+        
+        try:
+            success, out, err = ssh.exec_command(cmd, timeout=5)
+            time.sleep(2)
+            
+            # Prüfe ob Prozess läuft
+            check_cmd = f"ps aux | grep 'python3.*hailo_onnx_hybrid' | grep -v grep | wc -l"
+            success, count_str, _ = ssh.exec_command(check_cmd, timeout=5)
+            
+            try:
+                process_count = int(count_str.strip())
+                if process_count > 0:
+                    log_colored('green', "✅ HAILO Detection-Prozess gestartet")
+                    return True
+            except ValueError:
+                pass
+            
+            log_colored('red', "❌ HAILO Detection-Prozess konnte nicht gestartet werden")
+            return False
+        
+        except Exception as e:
+            log_colored('red', f"❌ SSH-Fehler: {e}")
+            return False
+    
+    else:
+        # YOLO Detection Mode (Standard)
+        log_colored('cyan', "🔍 Starte DETECTION-ONLY Prozess mit YOLO (5-15 fps)...")
+        
+        script = f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-detect-only.py'
+        
+        # Args für Detection-only Mode
+        args = [
+            f"--threshold {threshold}",
+            f"--cooldown {cooldown}",
+            f"--trigger-duration {trigger}",
+        ]
+        
+        args_str = " ".join(args)
+        cmd = (
+            f"nohup python3 {script} {args_str} "
+            f"> /tmp/unified-camera-monitor.log 2>&1 &"
+        )
+        
+        try:
+            success, out, err = ssh.exec_command(cmd, timeout=5)
+            time.sleep(2)
+            
+            # Prüfe ob Prozess läuft
+            check_cmd = f"ps aux | grep 'python3.*unified-camera-monitor-detect-only' | grep -v grep | wc -l"
+            success, count_str, _ = ssh.exec_command(check_cmd, timeout=5)
+            
+            try:
+                process_count = int(count_str.strip())
+                if process_count > 0:
+                    log_colored('green', "✅ YOLO Detection-Prozess gestartet")
+                    return True
+            except ValueError:
+                pass
+            
+            log_colored('red', "❌ Detection-Prozess konnte nicht gestartet werden")
+            return False
+        
+        except Exception as e:
+            log_colored('red', f"❌ SSH-Fehler: {e}")
+            return False
 
 
 def stop_detection_process(ssh: SSHManager) -> bool:
@@ -555,6 +757,117 @@ def stop_detection_process(ssh: SSHManager) -> bool:
     except Exception as e:
         log_colored('red', f"❌ Fehler beim Beenden: {e}")
         return False
+
+
+def show_pi_system_resources(ssh: SSHManager):
+    """Zeigt PI-Systemressourcen direkt vom System an (nicht aus Logs)"""
+    log_colored('cyan', "")
+    log_colored('cyan', "🌡️  PI-RESSOURCEN (Echtzeit-Check):")
+    
+    try:
+        # CPU-Temperatur - Robuster Bash-Befehl mit direkter Mathematik
+        cmd_temp = "[ -f /sys/class/thermal/thermal_zone0/temp ] && echo $(($(cat /sys/class/thermal/thermal_zone0/temp)/1000)) || echo N/A"
+        success, temp_str, _ = ssh.exec_command(cmd_temp, timeout=3)
+        if success and temp_str.strip() and temp_str.strip() != 'N/A':
+            try:
+                temp = float(temp_str.strip())
+                if temp < 60:
+                    temp_emoji = "🟢"
+                elif temp < 75:
+                    temp_emoji = "🟡"
+                else:
+                    temp_emoji = "🔴"
+                log_colored('cyan', f"   {temp_emoji} CPU-Temperatur: {temp:.1f}°C")
+            except ValueError:
+                log_colored('cyan', f"   ⚠️  CPU-Temperatur: (Lesefehler)")
+        else:
+            log_colored('cyan', f"   ⚠️  CPU-Temperatur: (nicht verfügbar)")
+        
+        # CPU Load
+        cmd_load = "awk '{print $1}' /proc/loadavg 2>/dev/null || echo 'N/A'"
+        success, load_str, _ = ssh.exec_command(cmd_load, timeout=3)
+        if success and load_str.strip() and load_str.strip() != 'N/A':
+            try:
+                load = float(load_str.strip())
+                if load < 2.0:
+                    load_emoji = "🟢"
+                elif load < 3.5:
+                    load_emoji = "🟡"
+                else:
+                    load_emoji = "🔴"
+                log_colored('cyan', f"   {load_emoji} CPU Load (1Min): {load:.2f}")
+            except ValueError:
+                log_colored('cyan', f"   ⚠️  CPU Load: (Konvertierungsfehler)")
+        else:
+            log_colored('cyan', f"   ⚠️  CPU Load: (nicht verfügbar)")
+        
+        # Memory
+        cmd_mem = "awk '/^MemTotal:/ {total=$2} /^MemAvailable:/ {avail=$2} END {print int((total-avail)/total*100)}' /proc/meminfo 2>/dev/null || echo 'N/A'"
+        success, mem_str, _ = ssh.exec_command(cmd_mem, timeout=3)
+        if success and mem_str.strip() and mem_str.strip() != 'N/A':
+            try:
+                mem_percent = int(mem_str.strip())
+                if mem_percent < 60:
+                    mem_emoji = "🟢"
+                elif mem_percent < 80:
+                    mem_emoji = "🟡"
+                else:
+                    mem_emoji = "🔴"
+                log_colored('cyan', f"   {mem_emoji} Memory (RAM): {mem_percent}% genutzt")
+            except ValueError:
+                log_colored('cyan', f"   ⚠️  Memory: (Konvertierungsfehler)")
+        else:
+            log_colored('cyan', f"   ⚠️  Memory: (nicht verfügbar)")
+        
+        # Hardware-Backend Info - Intelligent: Mehrere Strategien für schnelle Erkennung
+        hw_shown = False
+        
+        # Strategie 1: Prüfe ob Hailo Device existiert (schnellste Methode!)
+        cmd_hailo = "[ -c /dev/hailo0 ] && echo 'hailo' || echo ''"
+        success, hailo_check, _ = ssh.exec_command(cmd_hailo, timeout=1)
+        
+        if success and hailo_check.strip():
+            log_colored('cyan', f"   🚀 HAILO-8 Hardware erkannt + ⚡ ONNX Runtime")
+            hw_shown = True
+        
+        # Strategie 2: Prüfe ob ONNX-Variant läuft (schnell, kein Warten)
+        if not hw_shown:
+            cmd_proc = "ps aux | grep 'detect-only' | grep -v grep | head -1"
+            success, proc_line, _ = ssh.exec_command(cmd_proc, timeout=1)
+            
+            if success and proc_line.strip():
+                if 'ONNX' in proc_line or 'onnx' in proc_line:
+                    log_colored('cyan', f"   ⚡ Hardware: ONNX Runtime (beschleunigt)")
+                    hw_shown = True
+        
+        # Strategie 3: Fallback - Versuche aus Logs zu lesen (schnell, keine Wiederholung)
+        if not hw_shown:
+            cmd_hw_log = "grep -i -E 'HAILO|hailo|ONNX|onnx' /tmp/unified-camera-monitor.log 2>/dev/null | tail -1"
+            success, hw_log, _ = ssh.exec_command(cmd_hw_log, timeout=1)
+            
+            if success and hw_log.strip():
+                if 'hailo' in hw_log.lower() and 'onnx' in hw_log.lower():
+                    log_colored('cyan', f"   🚀 HAILO-8 Hardware erkannt + ⚡ ONNX Runtime")
+                    hw_shown = True
+                elif 'hailo' in hw_log.lower():
+                    log_colored('cyan', f"   🚀 Hardware: Hailo-8 (26 TOPS NPU aktiv)")
+                    hw_shown = True
+                elif 'onnx' in hw_log.lower():
+                    log_colored('cyan', f"   ⚡ Hardware: ONNX Runtime (beschleunigt)")
+                    hw_shown = True
+                elif 'cpu' in hw_log.lower() or 'pytorch' in hw_log.lower():
+                    log_colored('cyan', f"   💻 Hardware: CPU (PyTorch Fallback)")
+                    hw_shown = True
+        
+        # Strategie 4: Default - Script heißt detect-only-ONNX.py, also ONNX verwenden
+        if not hw_shown:
+            log_colored('cyan', f"   ⚡ Hardware: ONNX Runtime (Standard)")
+        
+        log_colored('cyan', "")
+    
+    except Exception as e:
+        log_colored('yellow', f"   ⚠️  Fehler beim Abrufen von Systemressourcen: {e}")
+        log_colored('cyan', "")
 
 
 def show_initial_status(ssh: SSHManager):
@@ -663,10 +976,18 @@ class MonitoringSession:
 
 def signal_handler(signum, frame):
     """Behandelt Ctrl+C - Sauberes Cleanup aller Prozesse"""
-    global _global_ssh, _global_status_reporter, _cleanup_on_exit
+    global _global_ssh, _global_status_reporter, _global_health_checker, _cleanup_on_exit
     
     log_colored('yellow', "\n\n🛑 Abgebrochen vom Benutzer (Ctrl+C)")
     log_colored('yellow', "🧹 Räume auf und killen alle Remote-Prozesse...\n")
+    
+    # Stoppe Health-Checker
+    if _global_health_checker:
+        try:
+            _global_health_checker.stop()
+            log_colored('cyan', "   ✅ SSH Health-Checker beendet")
+        except Exception as e:
+            logger.warning(f"Health-Checker Fehler: {e}")
     
     # Stoppe Status-Reporter
     if _global_status_reporter:
@@ -717,11 +1038,16 @@ def signal_handler(signum, frame):
 @click.option('--resolution', type=click.Choice(['480p', '720p', '1080p', '2k', '4k']), default=None, required=False, help='Auflösungs-Preset')
 @click.option('--bitrate', type=int, default=0, help='Video-Bitrate in kbps (z.B. 5000, 10000)')
 @click.option('--detect-and-record', is_flag=True, default=False, help='🆕 Zwei-Phasen-Modus: Erst Detection, dann Recording')
+@click.option('--detect-hybrid', is_flag=True, default=False, help='🐦 HAILO + ONNX Hybrid Bird Detector (25+ fps mit Vogelklassifizierung)')
+@click.option('--hailo-threshold', type=float, default=0.5, help='Hailo Detektions-Schwellenwert (0.0-1.0, default: 0.5)')
+@click.option('--onnx-threshold', type=float, default=0.3, help='ONNX Klassifizierungs-Schwellenwert (0.0-1.0, default: 0.3)')
+@click.option('--frame-skip', type=int, default=1, help='Frame-Skipping: Verarbeite jeden Nth Frame (1=alle, 2=jeden 2., default: 1)')
+@click.option('--use-hailo', is_flag=True, default=False, help='🚀 Nutze HAILO statt YOLO für --detect-and-record (28 fps statt 5-15 fps)')
 @click.option('--repeat', is_flag=True, default=False, help='🔄 Endlosschleife: Nach Aufnahme wieder auf Vogel warten (mit --detect-and-record)')
 @click.option('--auto-record', is_flag=True, default=False, help='[VERALTET] Automatische Vogelerkennung + Aufnahme')
 @click.option('--manual-record', is_flag=True, default=False, help='Manuelle Aufnahme ohne Vogelerkennung')
 @click.option('--rotation', type=click.Choice(['0', '90', '180', '270']), default='180', help='Rotation des Videos (0, 90, 180, 270 Grad) - default: 180')
-def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_threshold: float, duration: int, audio_only: bool, enable_audio: bool, fps: int, resolution: str, bitrate: int, detect_and_record: bool, repeat: bool, auto_record: bool, manual_record: bool, rotation: str):
+def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_threshold: float, duration: int, audio_only: bool, enable_audio: bool, fps: int, resolution: str, bitrate: int, detect_and_record: bool, detect_hybrid: bool, hailo_threshold: float, onnx_threshold: float, frame_skip: int, use_hailo: bool, repeat: bool, auto_record: bool, manual_record: bool, rotation: str):
     """
     🎥 UNIFIED MONITORING SYSTEM - Vogel-Beobachtung
     
@@ -740,8 +1066,11 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
     
     🆕 --detect-and-record (EMPFOHLEN für Vogel-Aufnahmen):
     
-      # Standard Vogel-Erkennung + 10 Sekunden aufnehmen
+      # Standard Vogel-Erkennung (YOLO, 5-15 fps)
       python3 unified_monitor_client.py normal --detect-and-record
+      
+      # Mit HAILO-Hybrid (28 fps, viel schneller!) ✨ EMPFOHLEN
+      python3 unified_monitor_client.py normal --detect-and-record --use-hailo
       
       # Mit längerer Aufnahme (30 Sekunden) und besserer Konfiguration
       python3 unified_monitor_client.py normal --detect-and-record \\
@@ -749,6 +1078,10 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
         --cooldown 15 \\
         --trigger 1.0 \\
         --duration 30
+      
+      # HAILO + Repeat-Modus (Endlosschleife mit bester Performance)
+      python3 unified_monitor_client.py normal --detect-and-record \\
+        --use-hailo --repeat --duration 60
       
       # 4K Cinema mit Audio
       python3 unified_monitor_client.py 4k --detect-and-record \\
@@ -811,14 +1144,30 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
     # Signal-Handler für Ctrl+C
     signal.signal(signal.SIGINT, signal_handler)
     
-    # Validierung: Genau EINER der drei Modes muss gesetzt sein!
+    # Globale Variablen-Deklarationen müssen am Anfang stehen (vor Benutzung)
+    global _global_ssh, _global_status_reporter, _global_health_checker
+    
+    # Validierung: 
+    # 1. Genau EINER der Haupt-Modi muss gesetzt sein: detect-and-record, auto-record, manual-record
+    # 2. detect-hybrid kann optionalen mit detect-and-record kombiniert werden
     modes_set = sum([detect_and_record, auto_record, manual_record])
     
-    if modes_set != 1:
-        log_colored('red', "❌ FEHLER: Nutze GENAU EINEN der folgenden Modi:")
+    # Spezielle Behandlung: detect-hybrid ist nur mit detect-and-record erlaubt
+    if detect_hybrid and not detect_and_record:
+        log_colored('cyan', "💡 Hinweis: --detect-hybrid wird als Standalone-Modus betrieben")
+        log_colored('cyan', "   Für Recording mit Hybrid-Detection nutze: --detect-and-record --detect-hybrid")
+    
+    if modes_set == 0 and not detect_hybrid:
+        log_colored('red', "❌ FEHLER: Nutze einen der folgenden Modi:")
         log_colored('yellow', "")
         log_colored('yellow', "  ✅ --detect-and-record  = Zwei-Phasen: Detection → Recording")
-        log_colored('yellow', "     (Schnelle, saubere Trennung, für normale Aufnahmen)")
+        log_colored('yellow', "     (Optional: --detect-hybrid für optimierte Vogelklassifizierung)")
+        log_colored('yellow', "     (Optional: --use-hailo für HAILO statt YOLO)")
+        log_colored('yellow', "     (Optional: --repeat für Endlosschleife)")
+        log_colored('yellow', "")
+        log_colored('yellow', "  --detect-hybrid          = 🐦 HAILO + ONNX Hybrid Detector (25+ fps)")
+        log_colored('yellow', "     (Standalone: Nur Vogelerkennung, keine Aufnahme)")
+        log_colored('yellow', "     (Mit --detect-and-record: Hybrid in Zwei-Phasen-Modus)")
         log_colored('yellow', "")
         log_colored('yellow', "  --auto-record            = Kontinuierliche Detection+Recording")
         log_colored('yellow', "     (Veraltet, kann zu beschleunigter Video-Verarbeitung führen)")
@@ -827,6 +1176,40 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
         log_colored('yellow', "     (Für direkte Video-Aufnahme ohne Erkennung)")
         log_colored('yellow', "")
         sys.exit(1)
+    
+    if modes_set > 1:
+        log_colored('red', "❌ FEHLER: Nutze NUR EINEN der Haupt-Modi!")
+        log_colored('yellow', "   (detect-and-record, auto-record, oder manual-record)")
+        sys.exit(1)
+    
+    # detect-hybrid Validierung
+    if detect_hybrid and detect_and_record:
+        log_colored('cyan', "✅ Nutze optimierten HAILO + ONNX Hybrid in Zwei-Phasen-Modus")
+        if use_hailo:
+            log_colored('yellow', "⚠️  Hinweis: --use-hailo wird ignoriert, da --detect-hybrid bereits HAILO nutzt")
+    elif detect_hybrid and not detect_and_record:
+        # Standalone detect-hybrid wird später behandelt
+        pass
+    
+    # ===== EARLY SSH CHECK: BEVOR irgendwelche Prozesse gestartet werden =====
+    # Alle Modi benötigen SSH-Verbindung (remote Prozesse)
+    sys.stdout.write("🔍 Überprüfe SSH-Verbindung zum Raspberry Pi... ")
+    sys.stdout.flush()
+    
+    ssh = get_ssh_manager()
+    
+    if not ssh.connect():
+        log_colored('red', "❌")
+        log_colored('red', "")
+        log_colored('red', "❌ FEHLER: Keine SSH-Verbindung zu {SSH_USER}@{SSH_HOST}")
+        log_colored('red', "   Stelle sicher, dass:")
+        log_colored('red', "   1. Der Raspberry Pi erreichbar ist")
+        log_colored('red', "   2. SSH-Schlüssel konfiguriert ist (~/.ssh/id_rsa_ai-had)")
+        log_colored('red', "   3. SSH-Host/User in config.py korrekt eingestellt ist")
+        sys.exit(1)
+    
+    log_colored('green', "✅")
+    _global_ssh = ssh  # Setze Global SSH für Signal-Handler
     
     # Lese Version
     version_file = Path(__file__).parent / 'VERSION'
@@ -868,6 +1251,14 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
         log_colored('yellow', "   💡 Tipp: Nutze stattdessen --detect-and-record für bessere Performance")
         log_colored('cyan', "")
     
+    elif detect_hybrid:
+        log_colored('magenta', f"🐦 HAILO + ONNX HYBRID BIRD DETECTOR MODUS")
+        log_colored('cyan', f"   Hailo-8 NPU:  28-29 fps (generische Objektdetektion)")
+        log_colored('cyan', f"   ONNX Filter:  Vogelklassifizierung (8 deutsche Vogelarten)")
+        log_colored('cyan', f"   Target:       8-10 fps mit Vogel-Fokus")
+        log_colored('cyan', f"   Duration:     {duration if duration else 'Infinite'} seconds")
+        log_colored('cyan', "")
+    
     else:  # manual_record
         log_colored('magenta', f"📹 MANUAL-RECORD MODUS: Reine Aufnahme (kein Detection)")
         video_params = []
@@ -887,14 +1278,7 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
     
     log_colored('cyan', "")
     
-    # SSH-Manager
-    ssh = get_ssh_manager()
-    
-    # Setze Global SSH für Signal-Handler
-    global _global_ssh
-    _global_ssh = ssh
-    
-    # System-Check
+    # System-Check (SSH-Verbindung bereits überprüft)
     if not system_check(ssh):
         sys.exit(1)
     
@@ -907,288 +1291,226 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
     # Bereinigung alter Prozesse
     cleanup_remote_processes(ssh)
     
-    # ===== DETECT-AND-RECORD MODE: Zwei-Phasen-Betrieb =====
-    if detect_and_record:
-        cycle_count = 0  # Zähler für Wiederholungen
+    # Zeige Pi System-Status beim START
+    show_pi_system_status(ssh)
+    
+    # ===== HYBRID DETECTOR MODE: Hailo + ONNX (OPTIMIZED) - STANDALONE ONLY =====
+    # Nur ausführen, wenn detect_hybrid OHNE detect_and_record gesetzt ist
+    if detect_hybrid and not detect_and_record:
+        log_colored('cyan', "🚀 STARTE INTELLIGENTEN HAILO + ONNX HYBRID BIRD DETECTOR auf Pi")
+        log_colored('cyan', f"   Hailo-Threshold: {hailo_threshold} (0 = auto-fallback nach 5s)")
+        log_colored('cyan', f"   ONNX-Threshold: {onnx_threshold}")
+        log_colored('cyan', f"   Frame-Skip: {frame_skip}")
+        log_colored('cyan', f"   🔄 AUTO-FALLBACK: Bei Hailo=0 → Pure ONNX (12.4 fps guaranteed)")
+        log_colored('cyan', "")
         
-        # Starte Status-Reporter (alle 5 Minuten)
+        # SSH-Befehl zum Starten des intelligenten Hybrid Detectors
+        hybrid_duration = f"--duration {duration}" if duration else ""
+        cmd = f"cd ~/vogel-kamera-linux/raspberry-pi-scripts && python3 hailo_onnx_fallback.py --hailo-threshold {hailo_threshold} --onnx-threshold {onnx_threshold} --frame-skip {frame_skip} {hybrid_duration}"
+        
+        log_colored('cyan', f"   Kommando: {cmd}")
+        log_colored('cyan', "")
+        
+        try:
+            log_colored('cyan', "⏳ Starte Detector auf Pi...")
+            success, output, err = ssh.exec_command(cmd, timeout=3600)  # 1 Stunde Timeout
+            
+            if success:
+                log_colored('green', "✅ Hybrid Detector abgeschlossen")
+                print("\n" + output)
+            else:
+                if err:
+                    log_colored('red', "❌ Fehler:")
+                    print("STDERR: " + err)
+                if output:
+                    print("STDOUT: " + output)
+        
+        except Exception as e:
+            log_colored('red', f"❌ Fehler beim Ausführen: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        finally:
+            ssh.close()
+            log_colored('cyan', "✅ SSH-Verbindung geschlossen")
+        
+        sys.exit(0)
+    
+    # ===== DETECT-AND-RECORD MODE: Neue Thread-basierte Pipeline =====
+    if detect_and_record:
+        """
+        NEUE ARCHITEKTUR (Task #7 Migration):
+        
+        Statt sequenzielle Detection→Recording→Conversion→Sync:
+        Nutze Thread-basierte Pipeline mit Queues
+        
+        1. DetectionThread läuft ständig → liest Vogel-Events aus Log
+        2. RecordingThread konsumiert aus detection_queue → startet Recording
+        3. ConversionThread konsumiert aus recording_queue → H364→MP4
+        4. SyncThread konsumiert aus conversion_queue → rsync zu Client
+        
+        Vorteil: Alle Prozesse laufen PARALLEL, nicht SEQUENZIELL!
+        """
+        
+        log_colored('cyan', "")
+        log_colored('cyan', "=" * 75)
+        log_colored('cyan', "🚀 STARTE NEUE THREAD-BASIERTE PIPELINE")
+        log_colored('cyan', "=" * 75)
+        log_colored('cyan', "")
+        log_colored('cyan', "✨ SEQUENZIELLE PIPELINE (v3 Vereinfachung):")
+        log_colored('cyan', "   Vogel erkannt → Aufnahme → Konvertierung → Sync")
+        log_colored('cyan', "   ... SEQUENZIELL ohne Queues und Thread-Chaos!")
+        log_colored('cyan', "")
+        
+        # ===== CLEANUP ALTER PROZESSE =====
+        log_colored('yellow', "🧹 Räume alte Prozesse auf...")
+        cleanup_remote_processes(ssh)
+        log_colored('green', "✅ Cleanup abgeschlossen\n")
+        
+        # ===== INITIALISIERE PIPELINE =====
+        try:
+            pipeline_config = {
+                'resolution': resolution or '2k',
+                'fps': fps or 30,
+                'bitrate': bitrate or 6000,
+                'enable_audio': enable_audio or (mode == 'ai-had'),
+            }
+            pipeline = SequentialPipeline(ssh_manager=ssh, config_dict=pipeline_config)
+            log_colored('green', "✅ SequentialPipeline initialisiert\n")
+        except Exception as e:
+            log_colored('red', f"❌ Pipeline-Init Fehler: {e}")
+            ssh.close()
+            sys.exit(1)
+        
+        # ===== STARTE DETECTION-THREAD IM HINTERGRUND =====
+        try:
+            log_colored('green', "✅ DetectionThread gestartet (läuft im Hintergrund)")
+            log_colored('green', "   - Vogel-Erkennung: kontinuierlich")
+            log_colored('green', "   - Recording→Konvertierung→Sync: linear\n")
+        except Exception as e:
+            log_colored('red', f"❌ Thread-Start Fehler: {e}")
+            pipeline.stop()
+            ssh.close()
+            sys.exit(1)
+        
+        # ===== STATUS-MONITORING =====
         status_reporter = StatusReporter(interval=300)
         status_reporter_thread = status_reporter.start()
-        
-        # Setze Global Status Reporter für Signal-Handler
-        global _global_status_reporter
         _global_status_reporter = status_reporter
+        log_colored('cyan', "📊 Status-Reporter gestartet (alle 5 Min)\n")
         
-        log_colored('cyan', "📊 Status-Reporter gestartet (aktualisiert alle 5 Min)\n")
+        # ===== MONITOR DETECTIONS UND VERARBEITE SEQUENZIELL =====
+        cycle_count = 0
+        jobs_created = 0
         
-        while True:
-            cycle_count += 1
+        try:
+            log_colored('cyan', "👁️  Überwache auf Vogel-Erkennungen...")
+            log_colored('cyan', "(Drücke Ctrl+C um abzubrechen)\n")
             
-            # Zeige Zyklus-Info
-            if cycle_count == 1:
-                log_colored('cyan', "=" * 75)
-                log_colored('cyan', "🚀 PHASE 1️⃣  - DETECTION (fokussiert, ohne Video-Speicherung)")
-                log_colored('cyan', "=" * 75)
-            else:
-                log_colored('cyan', "")
-                log_colored('cyan', "=" * 75)
-                log_colored('cyan', f"🔄 WIEDERHOLUNG #{cycle_count} - DETECTION Phase")
-                log_colored('cyan', "=" * 75)
-            
-            log_colored('cyan', "")
-            
-            # Events für Synchronisation zwischen Log-Watcher und Main Thread
-            detection_started = threading.Event()
-            bird_detected = threading.Event()
-            
-            # Starte Detection-only Prozess
-            if not start_detection_only(ssh, mode, threshold, cooldown, trigger):
-                log_colored('red', "❌ Detection-Prozess konnte nicht gestartet werden")
-                ssh.close()
-                sys.exit(1)
-            
-            # Starte Log-Watcher im Hintergrund
-            log_watcher_thread = threading.Thread(
-                target=watch_detection_log,
-                args=(ssh, detection_started, bird_detected, 600),  # 10 Min Timeout
-                daemon=True
-            )
-            log_watcher_thread.start()
-            
-            # Warte auf Detection Start
-            if cycle_count == 1:
-                log_colored('cyan', "⏳ Warte auf Detection Thread-Start...")
-            
-            if detection_started.wait(timeout=10):
-                if cycle_count == 1:
-                    log_colored('green', "✅ Detection läuft\n")
-            else:
-                log_colored('yellow', "⚠️  Detection-Start Timeout - aber fahre fort...\n")
-            
-            # Warte auf Vogel-Erkennung
-            if cycle_count == 1:
-                log_colored('cyan', "👁️  Überwache auf Vogel-Erkennung...")
-                log_colored('cyan', "(Drücke Ctrl+C um abzubrechen)\n")
-            else:
-                log_colored('cyan', "👁️  Warte auf nächsten Vogel...")
-                if repeat:
-                    log_colored('cyan', "(Drücke Ctrl+C zum Beenden)\n")
-            
-            try:
-                if bird_detected.wait(timeout=600):  # 10 Min Timeout
-                    log_colored('green', "\n✅ Vogel erkannt! Starte Recording...\n")
-                else:
-                    log_colored('yellow', "\n⏱️  Timeout: Kein Vogel in 10 Minuten erkannt")
-                    log_colored('cyan', "")
-                    stop_detection_process(ssh)
+            while True:
+                try:
+                    # Lese Detection aus Pipeline (mit Timeout)
+                    detection_event = pipeline.detection_queue.get(timeout=1)
                     
+                    cycle_count += 1
+                    jobs_created += 1
+                    
+                    log_colored('green', f"\n🐦 VOGEL ERKANNT (Event #{jobs_created})!")
+                    log_colored('cyan', f"   Vögel: {detection_event.bird_count}")
+                    log_colored('cyan', f"   Konfidenz: {detection_event.confidence:.1%}")
+                    
+                    log_colored('cyan', "")
+                    
+                    # ===== ERSTELLE RECORDING-JOB =====
+                    recording_job = RecordingJob(
+                        job_id=f"REC-{jobs_created:04d}",
+                        detection_event=detection_event,
+                        duration_seconds=duration,
+                        resolution=resolution or "2k",
+                        fps=fps or 30,
+                        bitrate=bitrate or 6000,
+                        enable_audio=enable_audio or (mode == 'ai-had')
+                    )
+                    
+                    log_colored('cyan', f"📋 Job: {recording_job.job_id}")
+                    log_colored('cyan', f"   Dauer: {duration}s | {resolution or '2k'} @ {fps or 30}fps")
+                    log_colored('cyan', "")
+                    
+                    # ===== SEQUENZIELLE VERARBEITUNG: Linear nacheinander! =====
+                    log_colored('cyan', "⏳ STARTE SEQUENZIELLE VERARBEITUNG...")
+                    success = pipeline.process_detection(detection_event, recording_job)
+                    
+                    log_colored('cyan', "")
+                    if success:
+                        log_colored('green', "=" * 70)
+                        log_colored('green', f"✅ VIDEO #{jobs_created} ERFOLGREICH VERARBEITET!")
+                        log_colored('green', "=" * 70)
+                    else:
+                        log_colored('red', "=" * 70)
+                        log_colored('red', f"❌ VIDEO #{jobs_created} FEHLGESCHLAGEN!")
+                        log_colored('red', "=" * 70)
+                    
+                    log_colored('cyan', "")
+                    
+                    # ===== ENTSCHEIDUNG: Single oder Repeat =====
                     if not repeat:
-                        # Single-Shot Mode: Beende nach Timeout
+                        log_colored('green', "✅ DETECT-AND-RECORD ABGESCHLOSSEN")
+                        log_colored('cyan', f"   {jobs_created} Video(s) aufgenommen und übertragen")
+                        log_colored('cyan', "")
+                        
+                        pipeline.stop()
                         status_reporter.stop()
                         ssh.close()
                         sys.exit(0)
                     else:
-                        # Repeat-Mode: Gehe zur nächsten Detection
-                        log_colored('cyan', "")
-                        log_colored('magenta', f"🔄 BEREIT FÜR NÄCHSTE DETECTION (Zyklus #{cycle_count + 1})")
-                        log_colored('cyan', "💡 Drücke Ctrl+C um zu beenden")
-                        log_colored('cyan', "=" * 75)
-                        time.sleep(2)
-                        cleanup_remote_processes(ssh)
-                        continue  # Weiter zum nächsten Zyklus
-            except KeyboardInterrupt:
-                log_colored('yellow', "\n\n🛑 Abgebrochen vom Benutzer")
-                status_reporter.stop()
-                stop_detection_process(ssh)
-                ssh.close()
-                sys.exit(0)
-        
-            # ===== Beende Detection Phase =====
-            log_colored('cyan', "=" * 75)
-            log_colored('cyan', "🛑 Detection-Prozess beendet")
-            log_colored('cyan', "=" * 75)
-            stop_detection_process(ssh)
-            log_colored('cyan', "")
-        
-            # ===== Starte Recording Phase =====
-            log_colored('cyan', "=" * 75)
-            log_colored('cyan', "🎥 PHASE 2️⃣  - RECORDING (volle Qualität, mit Audio)")
-            log_colored('cyan', "=" * 75)
-            log_colored('cyan', "")
-        
-            # Kurz warten bis die Kamera frei ist
-            log_colored('cyan', "⏳ Setze Kamera zurück (500ms Pause)...")
-            time.sleep(0.5)
-        
-            # Starte Recording mit manual-record Architektur
-            if not start_remote_monitor(ssh, mode, threshold, cooldown, trigger, audio_threshold, duration, audio_only, fps, resolution, bitrate, auto_record=False, manual_record=True):
-                log_colored('red', "❌ Recording konnte nicht gestartet werden")
-                status_reporter.stop()
-                ssh.close()
-                sys.exit(1)
-        
-            # Merke Aufnahmestart-Zeit für späteren Pfad-Konstruktion
-            record_start_time = datetime.now()
-        
-            # Zeige initialen Status
-            show_initial_status(ssh)
-        
-            # Warte bis Recording abgeschlossen
-            log_colored('cyan', "⏳ Recording läuft ({} Sekunden)...".format(duration))
-            time.sleep(duration + 8)  # +8s Puffer für finale Verarbeitung
-        
-            # Zeige Status nach Recording
-            log_colored('green', "✅ Recording abgeschlossen!\n")
-            log_colored('cyan', "⏳ Warte auf Video-Verarbeitung auf Pi...")
-        
-            # Warte auf Konvertierung (H264→MP4 + Audio-Merge)
-            # Formula: realistische Wartezeit basierend auf Video-Dauer
-            # WICHTIG: Audio-Merge dauert länger als reines H264→MP4
-            # - Extraktion Audio aus RIFF WAV: ~10% der Video-Dauer
-            # - Konvertierung H264→MP4: ~15% der Video-Dauer  
-            # - Audio-Merge in ffmpeg: ~20% der Video-Dauer
-            actual_wait = int(duration * 0.6 + 25)  # MIN 25s für alle Konvertierungen
-            log_colored('cyan', f"⏱️  Warte {actual_wait}s auf H264→MP4 + Audio-Merge...")
-        
-            # Polling während des Wartens - zeige Status
-            remaining = actual_wait
-            polling_interval = 5  # Alle 5 Sekunden Status checken
-            while remaining > 0:
-                sleep_time = min(polling_interval, remaining)
-                time.sleep(sleep_time)
-                remaining -= sleep_time
-            
-                if remaining > 0:
-                    sys.stdout.write(f"\r   ⏳ Noch {remaining}s Wartezeit...")
-                    sys.stdout.flush()
-        
-            # ===== PHASE 2b: rsync zum Client =====
-            log_colored('cyan', "")
-            sys.stdout.write("📡 Synchronisiere Video zum Client ... ")
-            sys.stdout.flush()
-        
-            # Konstruiere Remote-Pfad (verwende die aufnahme-startzeit vom Client)
-            kw = record_start_time.strftime("%V")  # ISO Kalenderwoche
-            year = record_start_time.strftime("%Y")
-            weekday = _get_german_weekday(record_start_time)
-            date_time = record_start_time.strftime("%Y-%m-%d__%H-%M-%S")
-        
-            # Remote-Verzeichnis (approximativ - könnte 1-2 Sekunden abweichen)
-            remote_video_base = f"{REMOTE_VIDEO_BASE}/AI-HAD/{year}/{kw}"
-            remote_search_pattern = f"{remote_video_base}/*{weekday}*{date_time[:10]}*/"  # Führende Tage
-        
-            # Lokales Zielverzeichnis
-            local_video_base = Path.home() / "Videos/Vogelhaus/AI-HAD"
-        
-            try:
-                # Versuche rsync vom Pi zum Client (pull) mit SSH-Key-Authentifizierung
-                # SSH-Optionen für passwordless-Authentifizierung
-                ssh_opts = (
-                    f"-i {SSH_KEY} "  # SSH-Key-Datei
-                    "-o StrictHostKeyChecking=no "  # Host-Key-Überprüfung disablieren
-                    "-o UserKnownHostsFile=/dev/null "  # Keine bekannten_hosts-Überprüfung
-                    "-o ConnectTimeout=10 "  # Timeout für SSH-Verbindung
-                    "-o BatchMode=yes "  # Non-interactive mode (keine Passwort-Prompts)
-                )
-            
-                rsync_cmd = [
-                    'rsync',
-                    '-avz',
-                    '--remove-source-files',
-                    '-e', f'ssh {ssh_opts}',  # SSH-Befehl mit Optionen
-                    f'{SSH_USER}@{SSH_HOST}:{remote_video_base}/',
-                    str(local_video_base / year / kw / "")
-                ]
-            
-                result = subprocess.run(
-                    rsync_cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=300  # 5 Min timeout für rsync
-                )
-            
-                if result.returncode == 0:
-                    log_colored('green', "✅")
-                    log_colored('cyan', "")
-                else:
-                    log_colored('yellow', "⚠️  (mit Fehlern)")
-                    log_colored('cyan', "")
-                    if result.stderr:
-                        logger.warning(f"rsync Warnung: {result.stderr[:200]}")
-        
-            except subprocess.TimeoutExpired:
-                log_colored('yellow', "⚠️  (Timeout)")
-                log_colored('yellow', "   Videos sind auf Pi verfügbar, Sync dauerte zu lange")
-            except Exception as e:
-                log_colored('yellow', "⚠️  (Fehler)")
-                log_colored('yellow', f"   rsync Fehler: {e}")
-        
-            log_colored('green', "✅ Video sollte jetzt lokal verfügbar sein!")
-            log_colored('cyan', "")
-        
-            # Finde die tatsächlich erstellte lokale Datei (robuster als timestamp-basiert)
-            kw = record_start_time.strftime("%V")  # ISO Kalenderwoche
-            year = record_start_time.strftime("%Y")
-            local_video_base = Path.home() / "Videos/Vogelhaus/AI-HAD"
-            search_dir = local_video_base / year / kw
-        
-            # Suche nach der neuesten MP4-Datei im Zielverzeichnis
-            local_video_file = None
-            if search_dir.exists():
-                try:
-                    # Finde die neueste MP4-Datei (mit größtem Timestamp)
-                    mp4_files = sorted(
-                        search_dir.rglob('*.mp4'),
-                        key=lambda p: p.stat().st_mtime,
-                        reverse=True
-                    )
-                    if mp4_files:
-                        local_video_file = mp4_files[0]
-                except Exception as e:
-                    logger.warning(f"Fehler bei Dateisuche: {e}")
-        
-            # Fallback auf konstruierten Pfad falls Suche nicht funktioniert
-            if not local_video_file:
-                weekday = _get_german_weekday(record_start_time)
-                date_time = record_start_time.strftime("%Y-%m-%d__%H-%M-%S")
-                mode_settings = RECORDING_MODES.get(mode, {})
-                width = mode_settings.get('default_width', 1920)
-                height = mode_settings.get('default_height', 1080)
-                fps_val = fps if fps else mode_settings.get('default_fps', 30)
-            
-                local_video_file = search_dir / f"{weekday}__{date_time}" / f"{weekday}__{date_time}__{width}x{height}__{fps_val}fps.mp4"
-            
-                # Zeige Pfad an
-                log_colored('cyan', "")
-                log_colored('green', f"✅ Video #{cycle_count} erfolgreich gespeichert")
-                log_colored('cyan', f"📍 Pfad: {local_video_file}")
-                log_colored('cyan', "")
-            
-                # **ENTSCHEIDUNG: Weiterloop oder beenden?**
-                if not repeat:
-                    # Single-Shot Mode: Beende nach einer Aufnahme
-                    log_colored('cyan', "=" * 75)
-                    log_colored('green', "✅ DETECT-AND-RECORD ERFOLGREICH ABGESCHLOSSEN!")
-                    log_colored('cyan', "=" * 75)
-                    log_colored('cyan', "")
-                    status_reporter.stop()
-                    ssh.close()
-                    sys.exit(0)
-                else:
-                    # Repeat-Mode: Loop zurück zu Detection
-                    log_colored('cyan', "=" * 75)
-                    log_colored('magenta', f"🔄 BEREIT FÜR NÄCHSTE AUFNAHME (Zyklus #{cycle_count + 1})")
-                    log_colored('cyan', "💡 Drücke Ctrl+C um zu beenden")
-                    log_colored('cyan', "=" * 75)
-                    time.sleep(2)  # Kurze Pause bevor nächster Zyklus
+                        # Repeat-Mode: Warte auf nächsten Vogel
+                        log_colored('magenta', f"🔄 BEREIT FÜR NÄCHSTEN VOGEL (#{jobs_created + 1})")
+                        log_colored('cyan', "(Drücke Ctrl+C zum Beenden)\n")
                 
-                    # Cleanup alte Prozesse vor nächstem Zyklus
-                    cleanup_remote_processes(ssh)
-                    # Weiter zu nächster While-Iteration
+                except queue.Empty:
+                    # Kein Event in Queue - continue looping
+                    continue
+                except KeyboardInterrupt:
+                    raise  # Re-raise für äußeres Handling
+        
+        except KeyboardInterrupt:
+            log_colored('yellow', "\n\n🛑 Abgebrochen vom Benutzer")
+            log_colored('cyan', "")
+            log_colored('cyan', "⏳ Fahre verbleibende Jobs zu Ende...")
+            log_colored('cyan', "   (Threads stoppen nach aktuellem Job)")
+            log_colored('cyan', "")
+            
+            pipeline.stop()
+            status_reporter.stop()
+            
+            # Kurze Wartezeit für abschließende Jobs
+            time.sleep(5)
+            
+            ssh.close()
+            log_colored('yellow', "✅ Cleanup complete\n")
+            sys.exit(0)
+        
+        except Exception as e:
+            log_colored('red', f"❌ Pipeline Fehler: {e}")
+            logger.exception("Pipeline Exception:")
+            pipeline.stop()
+            status_reporter.stop()
+            ssh.close()
+            sys.exit(1)
     
+
+        
     # ===== AUTO-RECORD MODE (veraltet) =====
     elif auto_record:
         log_colored('cyan', "")
+        
+        # Starte SSH Health-Checker (alle 2 Minuten)
+        health_checker = SSHHealthChecker(ssh, interval=120)
+        health_checker_thread = health_checker.start()
+        _global_health_checker = health_checker
+        
+        log_colored('cyan', "🏥 SSH Health-Checker gestartet (Ping alle 2 Min)\n")
+        
         # Starte Remote Monitor (mit auto_record oder manual_record)
         if not start_remote_monitor(ssh, mode, threshold, cooldown, trigger, audio_threshold, duration, audio_only, fps, resolution, bitrate, rotation, auto_record, manual_record=False):
             sys.exit(1)
@@ -1211,12 +1533,21 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
             pass
         
         # Cleanup
+        health_checker.stop()
         session.stop()
         ssh.close()
     
     # ===== MANUAL-RECORD MODE =====
     else:  # manual_record
         log_colored('cyan', "")
+        
+        # Starte SSH Health-Checker (alle 2 Minuten)
+        health_checker = SSHHealthChecker(ssh, interval=120)
+        health_checker_thread = health_checker.start()
+        _global_health_checker = health_checker
+        
+        log_colored('cyan', "🏥 SSH Health-Checker gestartet (Ping alle 2 Min)\n")
+        
         # Starte Remote Monitor (mit manual_record)
         if not start_remote_monitor(ssh, mode, threshold, cooldown, trigger, audio_threshold, duration, audio_only, fps, resolution, bitrate, rotation, auto_record=False, manual_record=manual_record):
             sys.exit(1)
@@ -1232,13 +1563,18 @@ def main(mode: str, threshold: float, cooldown: int, trigger: float, audio_thres
         log_colored('yellow', "⏳ Warte auf Video-Synchronisation...")
         
         # Warte bis Video da ist  (duration + Konvertierung + Audio-Merge + rsync-Transfer)
-        actual_wait = int(duration * 0.6 + 60)
+        actual_wait = int(duration * 2.5 + 60)
         
         log_colored('cyan', f"⏱️  Warte {actual_wait}s auf Sync...")
         log_colored('cyan', f"    Aufnahme→Konvertierung→Audio-Merge→rsync-Transfer")
         time.sleep(actual_wait)
         
         log_colored('green', "✅ Video-Synchronisation abgeschlossen!")
+        
+        # Cleanup
+        health_checker.stop()
+        session.stop()
+        ssh.close()
         log_colored('yellow', "")
         log_colored('yellow', "🛑 Manuelle Aufnahme abgeschlossen - Beende System...")
         

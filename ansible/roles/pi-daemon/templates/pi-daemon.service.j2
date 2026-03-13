@@ -1,0 +1,17 @@
+# Jinja2-Template → /etc/systemd/system/pi-daemon.service
+[Unit]
+Description=Vogel-Kamera Pi Daemon (Docker)
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User={{ pi_user }}
+WorkingDirectory={{ pi_daemon_dir }}
+ExecStart=/usr/bin/docker compose up
+ExecStop=/usr/bin/docker compose down
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

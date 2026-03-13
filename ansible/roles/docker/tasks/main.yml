@@ -1,0 +1,43 @@
+---
+# Docker CE auf Raspberry Pi OS Bookworm installieren
+- name: Keyring-Verzeichnis anlegen
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Docker GPG-Key hinzufügen (moderner Keyring-Weg)
+  ansible.builtin.shell: |
+    curl -fsSL https://download.docker.com/linux/debian/gpg \
+      | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod 644 /etc/apt/keyrings/docker.gpg
+  args:
+    creates: /etc/apt/keyrings/docker.gpg
+
+- name: Docker APT-Repository hinzufügen
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=arm64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable"
+    state: present
+    filename: docker
+
+- name: Docker CE installieren
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: User zur docker-Gruppe hinzufügen
+  ansible.builtin.user:
+    name: "{{ pi_user }}"
+    groups: docker
+    append: true
+
+- name: Docker-Dienst aktivieren und starten
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started

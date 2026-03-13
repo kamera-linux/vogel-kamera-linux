@@ -1,0 +1,140 @@
+---
+# Richtet den lokalen Build-Rechner (Gentoo x86_64) ein:
+#   - Docker CE + Buildx
+#   - QEMU (User-Space, aarch64)
+#   - QEMU-binfmt dauerhaft registriert (via local.d)
+#
+# Ausführen (einmalig, lokal als root oder mit sudo):
+#   ansible-playbook playbooks/setup-build-host.yml --ask-become-pass
+
+# ── Basics ────────────────────────────────────────────────────────────────
+- name: package.accept_keywords – Docker
+  ansible.builtin.lineinfile:
+    path: /etc/portage/package.accept_keywords
+    line: "{{ item }}"
+    create: true
+  loop:
+    - "app-containers/docker ~amd64"
+    - "app-containers/docker-cli ~amd64"
+    - "app-containers/docker-buildx ~amd64"
+  become: true
+
+- name: package.accept_keywords – QEMU
+  ansible.builtin.lineinfile:
+    path: /etc/portage/package.accept_keywords
+    line: "app-emulation/qemu ~amd64"
+    create: true
+  become: true
+
+- name: package.use – QEMU nur User-Space aarch64
+  ansible.builtin.copy:
+    dest: /etc/portage/package.use/qemu
+    content: |
+      # Nur User-Space-Emulation; kein KVM/SOFTMMU-Overhead
+      app-emulation/qemu static-user
+      app-emulation/qemu QEMU_USER_TARGETS: aarch64
+    mode: "0644"
+  become: true
+
+# ── Pakete installieren ───────────────────────────────────────────────────
+- name: Docker CE installieren
+  community.general.portage:
+    package:
+      - app-containers/docker
+      - app-containers/docker-cli
+      - app-containers/docker-buildx
+    state: present
+  become: true
+
+- name: QEMU (User-Space) installieren
+  community.general.portage:
+    package: app-emulation/qemu
+    state: present
+  become: true
+
+# ── Docker-Dienst starten ─────────────────────────────────────────────────
+- name: Docker-Dienst aktivieren (OpenRC)
+  ansible.builtin.service:
+    name: docker
+    enabled: true
+    state: started
+  become: true
+  when: ansible_service_mgr == "openrc"
+
+- name: Docker-Dienst aktivieren (systemd)
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+  become: true
+  when: ansible_service_mgr == "systemd"
+
+# ── User zur docker-Gruppe hinzufügen ─────────────────────────────────────
+- name: "{{ build_host_user }} zu docker-Gruppe hinzufügen"
+  ansible.builtin.user:
+    name: "{{ build_host_user }}"
+    groups: docker
+    append: true
+  become: true
+
+# ── binfmt_misc: ARM64 dauerhaft registrieren ─────────────────────────────
+- name: binfmt_misc als Kernelmodul laden (falls nötig)
+  community.general.modprobe:
+    name: binfmt_misc
+    state: present
+  become: true
+
+- name: binfmt_misc beim Start laden
+  ansible.builtin.lineinfile:
+    path: /etc/modules-load.d/binfmt_misc.conf
+    line: binfmt_misc
+    create: true
+  become: true
+
+- name: OpenRC local.d – QEMU-binfmt Start-Skript anlegen
+  ansible.builtin.copy:
+    dest: /etc/local.d/qemu-binfmt.start
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      # Registriert QEMU-aarch64 für binfmt_misc (nach Neustart)
+      docker run --privileged --rm tonistiigi/binfmt --install arm64
+  become: true
+  when: ansible_service_mgr == "openrc"
+
+- name: QEMU-binfmt sofort registrieren (diese Sitzung)
+  ansible.builtin.command:
+    cmd: docker run --privileged --rm tonistiigi/binfmt --install arm64
+  become: true
+  changed_when: true
+
+# ── Docker Buildx Kontext anlegen ─────────────────────────────────────────
+- name: Buildx-Kontext 'pi-builder' anlegen
+  ansible.builtin.command:
+    cmd: docker buildx create --name pi-builder --driver docker-container
+  register: buildx_create
+  failed_when:
+    - buildx_create.rc != 0
+    - '"already exists" not in buildx_create.stderr'
+  changed_when: buildx_create.rc == 0
+  become: false
+
+- name: Buildx-Kontext bootstrappen
+  ansible.builtin.command:
+    cmd: docker buildx inspect pi-builder --bootstrap
+  changed_when: false
+  become: false
+
+- name: pi-builder als aktiven Kontext setzen
+  ansible.builtin.command:
+    cmd: docker buildx use pi-builder
+  changed_when: false
+  become: false
+
+# ── Zusammenfassung ───────────────────────────────────────────────────────
+- name: Setup abgeschlossen
+  ansible.builtin.debug:
+    msg:
+      - "✅ Docker, QEMU (aarch64) und buildx sind eingerichtet."
+      - "   Neu einloggen oder 'newgrp docker' ausführen, damit die Gruppe wirksam wird."
+      - "   Danach: ./ansible/build_and_deploy.sh --install"

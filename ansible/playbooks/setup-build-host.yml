@@ -1,0 +1,28 @@
+---
+# Installiert Docker, QEMU (aarch64) und buildx auf dem lokalen Gentoo Build-Rechner.
+#
+# Ausführen:
+#   ansible-playbook ansible/playbooks/setup-build-host.yml --ask-become-pass
+# ODER kürzer via Wrapper:
+#   ./ansible/build_and_deploy.sh --setup-host
+
+- name: Build-Host einrichten (Gentoo x86_64)
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    build_host_user: "{{ lookup('env', 'USER') }}"
+
+  roles:
+    - role: build-host
+
+  post_tasks:
+    - name: Setup abgeschlossen
+      ansible.builtin.debug:
+        msg:
+          - "✅ Docker, QEMU (aarch64) und buildx sind eingerichtet."
+          - "   Bitte neu einloggen oder 'newgrp docker' ausführen,"
+          - "   damit die Gruppenzugehörigkeit aktiv wird."
+          - "   Danach Image bauen und deployen:"
+          - "   ./ansible/build_and_deploy.sh --install"

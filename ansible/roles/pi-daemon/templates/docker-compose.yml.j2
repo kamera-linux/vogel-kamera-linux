@@ -1,0 +1,53 @@
+# Jinja2-Template → {{ pi_daemon_dir }}/docker-compose.yml
+# Ansible-Variablen in Doppel-Klammern werden ersetzt.
+# Docker-Compose-Variablen werden als literale Werte eingetragen.
+services:
+  pi-daemon:
+    image: {{ pi_daemon_image }}:{{ pi_daemon_image_tag }}
+    container_name: pi-daemon
+    restart: always
+
+    ports:
+      - "{{ pi_daemon_port }}:{{ pi_daemon_port }}"
+
+    # Kamera, Hailo NPU, Audio
+    devices:
+      - /dev/video0:/dev/video0
+      - /dev/hailo0:/dev/hailo0        # Hailo-8L NPU (AI HAT+)
+      - /dev/snd:/dev/snd             # ALSA Audio
+
+    # Kernel-UEvents für libcamera
+    volumes:
+      - {{ pi_video_dir }}:/videos
+      - /etc/pi-daemon:/config         # beschreibbar: sync-config.json + SSH-Key
+      - {{ pi_certs_dir }}:/certs:ro
+      - /run/udev:/run/udev:ro
+      - /proc:/proc:ro               # psutil braucht /proc
+
+    env_file:
+      - /etc/pi-daemon/app.env
+
+    # bcrypt-Hash separat: $ muss als $$ escaped werden, damit Docker Compose
+    # sie nicht als Variablen-Expansion interpretiert.
+    # vault_pi_daemon_password_hash = "$2b$12$<53chars>" → Template schreibt "$$2b$$12$$<53chars>"
+    environment:
+      PI_DAEMON_PASSWORD_HASH: $$2b$$12$${{ vault_pi_daemon_password_hash | replace('$2b$12$', '') }}
+
+    # Gruppe für Camera/Audio-Zugriff
+    group_add:
+      - video
+      - audio
+
+    # libcamera benötigt apparmor:unconfined in Docker
+    security_opt:
+      - apparmor:unconfined
+
+    # tmpfs für schnelle Temp-Dateien
+    tmpfs:
+      - /tmp:size=256m
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

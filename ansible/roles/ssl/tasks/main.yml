@@ -1,0 +1,41 @@
+---
+# Self-signed SSL-Zertifikat auf dem Pi generieren
+- name: openssl installieren
+  ansible.builtin.apt:
+    name: openssl
+    state: present
+
+- name: Zertifikats-Verzeichnis anlegen
+  ansible.builtin.file:
+    path:  "{{ pi_certs_dir }}"
+    state: directory
+    owner: root
+    group: "{{ pi_user }}"
+    mode:  "0755"
+
+- name: Prüfen ob Zertifikat existiert
+  ansible.builtin.stat:
+    path: "{{ pi_certs_dir }}/cert.pem"
+  register: cert_file
+
+- name: Self-signed Zertifikat generieren (10 Jahre)
+  ansible.builtin.command:
+    cmd: >
+      openssl req -x509 -newkey rsa:4096 -sha256 -days 3650
+      -nodes
+      -keyout {{ pi_certs_dir }}/key.pem
+      -out    {{ pi_certs_dir }}/cert.pem
+      -subj   "/CN=raspberrypi-5-ai-had/O=VogelKamera/C=DE"
+      -addext "subjectAltName=DNS:raspberrypi-5-ai-had,IP:127.0.0.1"
+  when: not cert_file.stat.exists
+
+- name: Zertifikat-Berechtigungen setzen
+  ansible.builtin.file:
+    path:  "{{ item.path }}"
+    owner: root
+    group: "{{ pi_user }}"
+    mode:  "{{ item.mode }}"
+  loop:
+    - { path: "{{ pi_certs_dir }}/cert.pem", mode: "0644" }
+    - { path: "{{ pi_certs_dir }}/key.pem",  mode: "0644" }
+  when: not cert_file.stat.exists

@@ -1,0 +1,63 @@
+# Git-Metadaten
+.git
+.gitignore
+.gitattributes
+
+# Python Cache
+__pycache__
+*.pyc
+*.pyo
+.mypy_cache
+.pytest_cache
+
+# Virtuelle Umgebungen
+.venv
+venv
+env
+
+# Testdaten & Logs
+*.log
+test_*.log
+final_test.log
+sequential_test.log
+
+# Temporäre Dateien
+*.tmp
+*.swp
+*~
+
+# Docker selbst
+docker/
+
+# Ansible (nicht im Image)
+ansible/
+
+# Docs
+docs/
+wiki-content/
+wiki-repo/
+wiki-sync/
+releases/
+veranstaltungen/
+3d-konstruktion/
+
+# Legacy
+legacy/
+ai-training-tools/
+assets/
+scripts/
+tools/
+git-automation/
+
+# Build-Skripte (lokal)
+build_and_deploy.sh
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Env-Dateien (Secrets nie ins Image!)
+.env
+*.env
+unified-monitor-client/.env

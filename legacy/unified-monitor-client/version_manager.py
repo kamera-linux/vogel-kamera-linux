@@ -109,22 +109,29 @@ class VersionManager:
         self._log('cyan', "🔄 Prüfe Remote-Skripte auf Aktualität...")
         
         # Synchronisiere alle wichtigen Remote-Skripte
+        # Format: (lokaler_pfad, remote_pfad)
         # - unified-camera-monitor.py: Fallback für manuelle Aufnahme
         # - unified-camera-monitor-auto.py: Vogelerkennung + Auto-Recording
         # - unified-camera-monitor-manual.py: Manuelle Aufnahme (rpicam-vid)
-        # - unified-camera-monitor-detect-only.py: YOLO Detection ohne Video (Phase 1 nur)
+        # - unified-camera-monitor-detect-only.py: YOLO Detection ohne Video
+        # - hailo_onnx_hybrid.py: HAILO + ONNX Hybrid Bird Detector (NEU! 28 fps)
+        # - monitors.py: Status-Reporting, Log-Tailing, Video-Watching (Hilfsfunktionen)
+        # - get_pi_status.sh: System-Status Abruf (CPU, RAM, Disk, Temp, Procs) - WICHTIG!
         scripts_to_sync = [
-            ('unified-camera-monitor.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor.py'),
-            ('unified-camera-monitor-auto.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-auto.py'),
-            ('unified-camera-monitor-manual.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-manual.py'),
-            ('unified-camera-monitor-detect-only.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-detect-only.py'),
+            (LOCAL_REPO_DIR / 'raspberry-pi-scripts' / 'unified-camera-monitor.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor.py'),
+            (LOCAL_REPO_DIR / 'raspberry-pi-scripts' / 'unified-camera-monitor-auto.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-auto.py'),
+            (LOCAL_REPO_DIR / 'raspberry-pi-scripts' / 'unified-camera-monitor-manual.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-manual.py'),
+            (LOCAL_REPO_DIR / 'raspberry-pi-scripts' / 'unified-camera-monitor-detect-only.py', f'{REMOTE_SCRIPT_DIR}/unified-camera-monitor-detect-only.py'),
+            (LOCAL_REPO_DIR / 'raspberry-pi-scripts' / 'hailo_onnx_hybrid.py', f'{REMOTE_SCRIPT_DIR}/hailo_onnx_hybrid.py'),
+            (Path(__file__).parent / 'monitors.py', f'{REMOTE_SCRIPT_DIR}/monitors.py'),
+            (Path(__file__).parent / 'get_pi_status.sh', f'{REMOTE_SCRIPT_DIR}/get_pi_status.sh'),
         ]
         
         scripts_updated = 0
         
-        for script_name, remote_path in scripts_to_sync:
-            # Finde lokale Datei
-            local_path = LOCAL_REPO_DIR / 'raspberry-pi-scripts' / script_name
+        for local_path, remote_path in scripts_to_sync:
+            # Lokaler und Remote-Pfad sind jetzt direkt definiert
+            script_name = local_path.name
             
             if not local_path.exists():
                 self._log('yellow', f"⚠️  Lokale Datei nicht gefunden: {script_name}")
