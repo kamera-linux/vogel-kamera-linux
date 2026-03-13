@@ -1,0 +1,9 @@
+---
+- name: pi-daemon neu starten
+  ansible.builtin.systemd:
+    name:  pi-daemon
+    state: restarted
+
+- name: systemd reload
+  ansible.builtin.systemd:
+    daemon_reload: true

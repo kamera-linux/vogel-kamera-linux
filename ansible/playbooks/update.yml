@@ -1,0 +1,56 @@
+---
+# Nur das Docker-Image austauschen (kein Docker-Reinstall, kein SSL-Reset):
+#   ansible-playbook playbooks/update.yml --ask-vault-pass
+#
+# Dieses Playbook wird von build_and_deploy.sh --update aufgerufen.
+
+- name: Pi-Daemon Image-Update
+  hosts: all
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all/vars.yml
+    - ../group_vars/all/vault.yml
+
+  tasks:
+    - name: Prüfen ob Image-Archiv vorhanden
+      ansible.builtin.stat:
+        path: /tmp/vogel-pi.tar.gz
+      register: image_archive
+
+    - name: Docker-Image laden
+      ansible.builtin.command:
+        cmd: docker load -i /tmp/vogel-pi.tar.gz
+      become: true
+      when: image_archive.stat.exists
+
+    - name: Image-Archiv aufräumen
+      ansible.builtin.file:
+        path: /tmp/vogel-pi.tar.gz
+        state: absent
+      when: image_archive.stat.exists
+
+    - name: .env aktualisieren (Secrets)
+      ansible.builtin.template:
+        src:   ../roles/pi-daemon/templates/env.j2
+        dest:  "{{ pi_daemon_dir }}/.env"
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode:  "0600"
+      no_log: true
+
+    - name: pi-daemon neu starten
+      ansible.builtin.systemd:
+        name:  pi-daemon
+        state: restarted
+
+    - name: Warte bis Daemon wieder erreichbar
+      ansible.builtin.wait_for:
+        port:    "{{ pi_daemon_port }}"
+        host:    "{{ inventory_hostname }}"
+        delay:   5
+        timeout: 60
+
+    - name: Update abgeschlossen
+      ansible.builtin.debug:
+        msg: "✅ Update fertig – https://{{ inventory_hostname }}:{{ pi_daemon_port }}"

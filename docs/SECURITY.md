@@ -10,14 +10,17 @@ Wir bieten Sicherheits-Updates für die folgenden Versionen:
 
 | Version | Unterstützt        | OS-Basis | Architektur |
 | ------- | ------------------ | -------- | ----------- |
-| 2.0.x   | ✅ Vollständig     | Trixie (Debian 13) | Unified Monitor |
-| 1.3.x   | ⚠️ Kritische Fixes | Trixie (Debian 13) | Legacy Remote-Control |
-| 1.2.x   | ⚠️ Kritische Fixes | Bookworm (Debian 12) | Legacy Remote-Control |
+| 2.2.x   | ✅ Vollständig     | Trixie (Debian 13) | Docker + HTTPS Web API (aktuell) |
+| 2.1.x   | ⚠️ Kritische Fixes | Trixie (Debian 13) | Unified Monitor (SSH-Client) |
+| 2.0.x   | ⚠️ Kritische Fixes | Trixie (Debian 13) | Unified Monitor (Legacy) |
+| 1.3.x   | ❌ Nicht mehr unterstützt | Trixie (Debian 13) | Legacy Remote-Control |
+| 1.2.x   | ❌ Nicht mehr unterstützt | Bookworm (Debian 12) | Legacy Remote-Control |
 | 1.1.x   | ❌ Nicht mehr unterstützt | Bookworm | Legacy |
-| 1.0.x   | ❌ Nicht mehr unterstützt | Bookworm | Legacy |
-| < 1.0   | ❌ Nicht mehr unterstützt | - | - |
+| < 1.1   | ❌ Nicht mehr unterstützt | - | - |
 
-> ⚠️ **Wichtig:** v2.0.x verwendet **Unified Camera Monitor** ohne SSH-Overhead. Legacy-Versionen (v1.x) sind in `legacy/` archiviert.
+> ✅ **Aktuell (v2.2.x):** Docker-Container mit Flask HTTPS-API, JWT + TOTP 2FA. Kein SSH-Overhead vom Client.
+> 
+> ⚠️ **Ältere Versionen (v2.1.x, v2.0.x):** SSH-basierter Python-Client. Skripte in `legacy/` archiviert.
 > 
 > 📘 **Für Bookworm (Debian 12):** Verwenden Sie [bookworm-legacy Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)
 

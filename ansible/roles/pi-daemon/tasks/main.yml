@@ -1,0 +1,85 @@
+---
+# Verzeichnisse anlegen (pi_daemon_dir + pi_log_dir nur für pi_user)
+- name: Arbeitsverzeichnisse anlegen
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ pi_user }}"
+    group: "{{ pi_user }}"
+    mode: "0750"
+  loop:
+    - "{{ pi_daemon_dir }}"
+    - "{{ pi_log_dir }}"
+
+# Video-Verzeichnis muss vom Docker-Container (appuser, UID 999) beschreibbar sein
+- name: Video-Verzeichnis anlegen (world-writable fuer Container-User)
+  ansible.builtin.file:
+    path: "{{ pi_video_dir }}"
+    state: directory
+    owner: "{{ pi_user }}"
+    group: "{{ pi_user }}"
+    mode: "0777"
+
+# docker-compose.yml aus Template deployen
+- name: docker-compose.yml deployen
+  ansible.builtin.template:
+    src:   docker-compose.yml.j2
+    dest:  "{{ pi_daemon_dir }}/docker-compose.yml"
+    owner: "{{ pi_user }}"
+    group: "{{ pi_user }}"
+    mode:  "0640"
+  notify: pi-daemon neu starten
+
+# .env (Secrets) aus Vault deployen
+- name: /etc/pi-daemon Verzeichnis anlegen
+  ansible.builtin.file:
+    path: /etc/pi-daemon
+    state: directory
+    owner: root
+    group: "{{ pi_user }}"
+    mode: "0757"   # o+rwx: appuser (UID 999) kann sync-config.json + SSH-Key schreiben
+
+- name: app.env mit Secrets deployen
+  ansible.builtin.template:
+    src:   env.j2
+    dest:  /etc/pi-daemon/app.env
+    owner: root
+    group: "{{ pi_user }}"
+    mode:  "0640"   # nur Owner + Gruppe darf lesen
+  notify: pi-daemon neu starten
+  no_log: true      # Secrets nicht ins Ansible-Log
+
+# Docker-Image laden (wurde per SCP kopiert von build_and_deploy.sh)
+- name: Prüfen ob Image-Archiv vorhanden ist
+  ansible.builtin.stat:
+    path: /tmp/vogel-pi.tar.gz
+  register: image_archive
+
+- name: Docker-Image laden
+  ansible.builtin.command:
+    cmd: docker load -i /tmp/vogel-pi.tar.gz
+  when: image_archive.stat.exists
+  become: true
+
+- name: Image-Archiv aufräumen
+  ansible.builtin.file:
+    path: /tmp/vogel-pi.tar.gz
+    state: absent
+  when: image_archive.stat.exists
+
+# systemd-Unit für docker-compose
+- name: systemd-Unit deployen
+  ansible.builtin.template:
+    src:   pi-daemon.service.j2
+    dest:  /etc/systemd/system/pi-daemon.service
+    mode:  "0644"
+  notify:
+    - systemd reload
+    - pi-daemon neu starten
+
+- name: pi-daemon Dienst aktivieren
+  ansible.builtin.systemd:
+    name:    pi-daemon
+    enabled: true
+    state:   started
+    daemon_reload: true

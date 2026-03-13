@@ -2,39 +2,37 @@
 
 > 🌐 **Multi-Language Documentation:** This README is available in multiple languages!  
 
-![Vogel-Kamera-Linux Banner](docs/pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
+![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu.png)
 
-## Release v2.1.2 — Sichere Konfiguration & Datenschutz 🔒
+## Release v2.2.0 — Docker Web API & sichere Deployments 🐳
 
-- **Version:** v2.1.2 (März 2026)
-- **🔐 Major Features:**
-  - **Sichere Konfigurationsverwaltung** (NEU!)
-    - `config.py` und `.env` sind geschützt (.gitignore)
-    - KEINE persönlichen Daten gehen online
-    - `.example` Dateien als Vorlagen für neue Nutzer
-  - **Flexible SSH-Konfiguration** (NEU!)
-    - Support für Custom-Hostnames, Usernames, SSH-Keys
-    - Dynamische Remote-Pfade basierend auf `SSH_USER`
-    - `.env` Datei für lokale Konfiguration
-  - **Datenschutz im öffentlichen Repo** (NEU!)
-    - Sample-Dateien mit Platzhaltern
-    - Realistische Defaults lokal
-    - Robuste Fallbacks
+- **Version:** v2.2.0 (2026)
+- **🚀 Major Features:**
+  - **Docker-Container auf dem Raspberry Pi** (Hauptarchitektur)
+    - `pi_daemon_secure.py` — Gesicherter Flask-HTTPS-Daemon (JWT + TOTP 2FA)
+    - Web-GUI unter `https://<pi-host>:8443/` — kein lokaler Python-Client nötig
+    - Verwaltung von Detection, Aufnahme, Konvertierung und Transfer über den Browser
+  - **Ansible-Deployment** (Einmalig einrichten, danach per Skript aktualisieren)
+    - `ansible/.env` für alle persönlichen Einstellungen (gitignored)
+    - `ansible/.env.example` als Vorlage für neue Nutzer
+    - `./ansible/build_and_deploy.sh --install` / `--update`
+  - **Komplette Repo-Bereinigung**
+    - Alle veralteten Skripte in `legacy/` archiviert
+    - KEINE persönlichen Daten im Repository
 
-- **🔧 Technical Improvements:**
-  - ✅ Alle Versionsnummern auf 2.1.2 synchronisiert
-  - ✅ `monitors.py` mit dynamischen Pfaden statt hardcoded
-  - ✅ `config.py` liest aus `.env` mit Fallbacks
-  - ✅ `release_workflow.py` aktualisiert
-  - ✅ `.gitignore` erweitert um Config-Dateien
+- **🔧 Technical Stack:**
+  - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
+  - ✅ JWT-Authentifizierung + TOTP-2FA (PyOTP)
+  - ✅ `unified-camera-monitor-detect-only.py` als Subprocess im Container
+  - ✅ Automatische Video-Konvertierung (H264 → MP4) und SSH-Sync zu Zielsystemen
+  - ✅ Persönliche Konfiguration ausschließlich in `ansible/.env` (gitignored)
 
-**Quick Start:** [`QUICK_REFERENCE_v2.1.2.md`](#) (coming soon)  
-**Vollständige Release-Notes:** [`releases/v2.1.2/RELEASE_NOTES_v2.1.2.md`](releases/v2.1.2/)  
+**Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.1.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.1.2)
-[![Security](https://img.shields.io/badge/Feature-Secure%20Config-critical)]()
-[![Client Python](https://img.shields.io/badge/Architecture-Python%20Client-success)]()
+[![Version](https://img.shields.io/badge/Version-v2.2.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.0)
+[![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
+[![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
 
 ### v2.1.1 (Archiv)
 **Graceful Shutdown & Detect-and-Record Mode**
@@ -43,7 +41,7 @@
 
 > ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
 > 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)  
-> 📖 **Migration-Guide:** [TRIXIE-MIGRATION.md](docs/TRIXIE-MIGRATION.md)
+> 📖 **Migration-Guide:** [legacy/docs/TRIXIE-MIGRATION.md](legacy/docs/TRIXIE-MIGRATION.md)
 
 ![Komplettes Vogel-Kamera System](assets/vogelhaus-kamera-komplett.png)
 
@@ -53,11 +51,14 @@
 
 ### 🚀 Quickstart
 ```bash
-# 🎯 EMPFOHLEN: Unified Monitor Client (vom lokalen PC)
-cd unified-monitor-client
-python3 unified_monitor_client.py 4k      # Cinema 4K mit Audio
-python3 unified_monitor_client.py normal  # Standard HD
-python3 unified_monitor_client.py slowmo  # Zeitlupe 120fps
+# 1. Konfiguration: persönliche Werte eintragen (.env wird nicht versioniert)
+cp ansible/.env.example ansible/.env && nano ansible/.env
+
+# 2. Erstinstallation auf dem Raspberry Pi
+./ansible/build_and_deploy.sh --install
+
+# 3. Web-GUI im Browser öffnen
+# https://<PI_HOST>:8443/
 ```
 
 > 📺 **Live-Demo:** [YouTube-Kanal](https://www.youtube.com/@vogel-kamera-linux) - Echte Aufnahmen vom vogel-kamera-linux System!
@@ -113,83 +114,71 @@ python3 unified_monitor_client.py slowmo  # Zeitlupe 120fps
 - 🌐 **Netzwerk-Diagnostics** für Performance-Analyse *(Neu in v1.2.0)*
 - 📊 **System-Monitoring** mit CPU-Load und Temperaturüberwachung *(Seit v1.1.9)*
 - ⚡ **Performance-Optimierung** für verschiedene Aufnahmemodi *(Seit v1.1.9)*
-- 🌐 **Remote-Steuerung** über SSH
+- 🌐 **Remote-Steuerung** über Web-GUI (HTTPS, JWT + TOTP 2FA)
 - 📁 **Automatische Dateiorganisation** nach Jahr/Woche
-- ⚙️ **Flexible Konfiguration** über .env-Dateien
+- ⚙️ **Flexible Konfiguration** über `ansible/.env` (gitignored)
 - 📊 **Fortschrittsanzeige** während der Aufnahme
 - 🔄 **Automatische Video-/Audio-Synchronisation**
 - 📱 **YouTube-Integration** mit QR-Codes für mobile Nutzer
-- 🔧 **Einfache Installation** mit config/requirements.txt
+- 🔧 **Einfache Installation** per Ansible (`build_and_deploy.sh`)
 - ✅ **Automatische Konfigurationsvalidierung**
 - 🎯 **Eigene AI-Modelle** trainierbar für spezifische Vogelarten
 
-## 🎯 Zwei Modi - Eine Lösung
+## 🎯 Web-GUI — browserbasierte Steuerung
 
-Das System v2.1.0 unterstützt **zwei spezialisierte Aufnahme-Modi** mit unterschiedlichen Backends, die Sie je nach Anforderung wählen:
+Das System läuft als **Docker-Container auf dem Raspberry Pi** und wird vollständig über eine HTTPS-Web-Oberfläche bedient — kein lokaler Python-Client nötig.
 
-### 🔍 AUTO-RECORD Mode (KI-basiertes Monitoring)
+### Architektur-Überblick
 
-**Automatische Vogel-Erkennung mit YOLO26n**
-
-```bash
-# Kontinuierliche Überwachung mit automatischer Aufnahme bei Vogelerkennung
-python3 unified-monitor-client/unified_monitor_client.py normal --auto-record
-
-# Mit Parametern (höherer Schwellenwert)
-python3 unified-monitor-client/unified_monitor_client.py normal --auto-record --threshold 0.7
+```
+Browser  →  https://<pi-host>:8443/  (HTTPS, JWT + TOTP 2FA)
+                    ↓
+        pi_daemon_secure.py  (Flask, Docker-Container)
+                    ↓
+  unified-camera-monitor-detect-only.py  (Subprocess, Detection+Recording)
+                    ↓
+    rpicam-vid + arecord  →  H264+WAV  →  MP4-Merge  →  SSH-Sync
 ```
 
-**Charakteristiken:**
-- 📷 **Backend:** picamera2 (Dual-Stream) für gleichzeitige Recording + Preview
-- 🤖 **Erkennung:** YOLO26n Vogel-Detektion in Echtzeit
-- 💾 **Trigger:** Automatische Aufnahme bei Vogel-Erkennung (einstellbar)
-- ⚙️ **Parameter:** `--threshold`, `--cooldown`, `--trigger-duration`
-- 🎯 **Perfekt für:** 24/7 Monitoring während Vogel-Saison
-- 📊 **Performance:** ~50-70% CPU (+ AI-Overhead)
+### Web-GUI Features
 
-**Anwendungsszenario:** Kontinuierliche Überwachung eines Vogel-Futterplatzes. Die Kamera läuft 24/7 und nimmt automatisch auf, wenn Vögel erkannt werden.
+| Funktion | Beschreibung |
+|----------|--------------|
+| **Detection starten / stoppen** | KI-gestützte Vogelerkennung mit automatischer Aufnahme bei Trigger |
+| **Manuelle Aufnahme** | Zeitgesteuerte Aufnahme ohne Erkennungs-Overhead |
+| **Konvertierung** | Automatische H264 → MP4 Konvertierung im Container |
+| **Transfer** | SSH-Sync zu konfigurierten Zielsystemen |
+| **Download** | Direkte Browser-Downloads von Aufnahmen |
+| **Löschen** | Verwaltung der Aufnahmen im Container |
 
-### 📹 MANUAL-RECORD Mode (Reine Aufnahmen)
-
-**Direkte Video-Aufnahmen ohne AI-Overhead**
+### Deployment
 
 ```bash
-# 5 Minuten kontinuierliche Aufnahme
-python3 unified-monitor-client/unified_monitor_client.py normal --manual-record --duration 300
+# Einmalig: persönliche Konfiguration anlegen
+cp ansible/.env.example ansible/.env
+nano ansible/.env          # PI_HOST, PI_USER, PI_SSH_KEY eintragen
 
-# 4K Cinema Mode, 30 Sekunden
-python3 unified-monitor-client/unified_monitor_client.py 4k --manual-record --duration 30
+# Erstinstallation auf dem Pi
+./ansible/build_and_deploy.sh --install
+
+# Update nach Code-Änderungen
+./ansible/build_and_deploy.sh --update
 ```
-
-**Charakteristiken:**
-- 📷 **Backend:** rpicam-vid (Single-Stream) für stabile H264-Encoding
-- 🎬 **Funktion:** Direkte Video-Aufnahmen ohne KI-Verarbeitung
-- ⏱️ **Trigger:** Manuelles Start/Stop mit fester Dauer
-- ⚙️ **Parameter:** `--duration`, `--fps`, `--resolution`, `--bitrate`
-- 🎯 **Perfekt für:** Geplante Aufnahme-Sessions, Zeitlupen-Videos
-- 📊 **Performance:** ~200% CPU (H264 Encoding)
-
-**Anwendungsszenario:** Sie möchten täglich zwischen 16:00-17:00 Uhr aufnehmen, um Vogel-Aktivität zu erheben. AUTO-RECORD würde während dieser Zeit unzählige Aufnahmen erzeugen, MANUAL-RECORD hingegen nur eine präzise kontrollierte Aufnahme.
-
-### Schnellentscheidung: Welcher Modus?
-
-| Frage | Antwort → Modus |
-|-------|-----------------|
-| Soll die Kamera **kontinuierlich 24/7** laufen? | ➜ **AUTO-RECORD** |
-| Sollen Videos nur bei **Vogel-Erkennung** gestartet werden? | ➜ **AUTO-RECORD** |
-| Möchte ich **zeitgesteuert** Videos aufnehmen? | ➜ **MANUAL-RECORD** |
-| Möchte ich **geplante Sessions** ohne AI? | ➜ **MANUAL-RECORD** |
-| Will ich **Slow-Motion Videos** aufnehmen? | ➜ **MANUAL-RECORD** |
-| Interessieren mich **alle Vögel automatisch**? | ➜ **AUTO-RECORD** |
 
 ## 📸 Hardware-Galerie
 
 **Modulare Kamera-Lösung:**
-![Einzelnes Vogelhaus](assets/vogelhaus-kamera-solo.png)
+![Vogelhaus Modell 2025-01](assets/vogelhaus-kamera-solo.png)  
+
 *Flexible Platzierung für optimale Aufnahmen*
+
+![Vogelhaus Modell 2026-01](assets/vogelhaus-kamera-solo-neu-2.png)  
+
+*Neue Version vom Vogelhaus mit Kamera*
 
 **Live-Aufnahmen & Community:**
 ![YouTube Kanal Impression](assets/Youtube-Kanal.png) 
+
 *Echte Vogelbeobachtungen auf YouTube*
 
 > 💡 **3D-Konstruktions-Dateien verfügbar!** Alle CAD-Dateien für den Nachbau finden Sie im [`3d-konstruktion/`](3d-konstruktion/) Verzeichnis
@@ -197,11 +186,8 @@ python3 unified-monitor-client/unified_monitor_client.py 4k --manual-record --du
 ## 🤖 KI-Objekterkennung mit YOLO26
 
 ### Standard: YOLO26n Vogelarten-Erkennung
-```bash
-# Automatische Integration in unified-monitor-client:
-cd unified-monitor-client
-python3 unified_monitor_client.py 4k
-```
+
+Die KI-Erkennung läuft **im Docker-Container auf dem Pi** — keine lokale Installation nötig. Aktivierung über die Web-GUI oder Ansible-Deployment.
 
 **YOLO26n Features:**
 - ✅ Spezialisiert auf deutsche Vogelarten
@@ -252,14 +238,9 @@ Mehr Informationen: [`docs/AI-MODELLE-VOGELARTEN.md`](docs/AI-MODELLE-VOGELARTEN
 
 🛠️ **Basis-Tools**: [`ai-training-tools/`](ai-training-tools/) - Legacy Training-Scripts für fortgeschrittene Nutzer
 
-#### 🎯 **Eigenes Modell verwenden**
+#### 🎯 **Eigenes Modell im Docker-Container verwenden**
 
-```bash
-# Eigenes Modell verwenden
-python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
-  --duration 5 --ai-modul on --ai-model custom \
-  --ai-model-path /pfad/zu/eigenem/modell.json
-```
+Das eigene Modell wird per `ansible/group_vars/all/vars.yml` referenziert und beim Deployment in den Container kopiert. Details: [`docs/ANLEITUNG-EIGENES-AI-MODELL.md`](docs/ANLEITUNG-EIGENES-AI-MODELL.md)
 
 ## 🛠️ Voraussetzungen
 
@@ -268,24 +249,27 @@ python3 ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py \
 - USB-Mikrofon für Audioaufnahme
 - Stabile Netzwerkverbindung (Gigabit LAN empfohlen)
 
-### Software
-- **Raspberry Pi OS Trixie (Debian 13)** - ERFORDERLICH
-- **Python 3.13+** auf beiden Systemen
-- **rpicam-apps v1.9.1+**, **FFmpeg 7.1.2+**, **ALSA** (Raspberry Pi)
-- **SSH-Zugang** konfiguriert
+### Software auf dem lokalen Rechner (deploy-PC)
+- **Docker** (für den Build des Container-Images)
+- **Ansible** (`ansible-playbook`)
+- **Python** (für Ansible-Skripte, 3.8+)
 
-### Client-PC Setup
+### Software auf dem Raspberry Pi (wird automatisch per Ansible installiert)
+- **Raspberry Pi OS Trixie (Debian 13)**
+- **Docker** (Ansible richtet das ein)
+- **rpicam-apps**, **FFmpeg**, **ALSA**
+
+### Deployment Setup (einmalig)
 ```bash
-# 1. Virtuelle Umgebung
-python3 -m venv venv
-source venv/bin/activate  # Linux/macOS oder venv\Scripts\activate (Windows)
+# 1. Konfigurationsdatei aus Vorlage erstellen (.env wird nicht versioniert)
+cp ansible/.env.example ansible/.env
+nano ansible/.env     # PI_HOST, PI_USER, PI_SSH_KEY, VAULT_PASS_FILE eintragen
 
-# 2. Dependencies
-pip install -r config/requirements.txt
+# 2. Erstinstallation
+./ansible/build_and_deploy.sh --install
 
-# 3. Konfiguration (Hostname, User, SSH-Key)
-cd unified-monitor-client
-python3 setup_environment.py
+# 3. Web-GUI öffnen
+# https://<PI_HOST>:8443/
 ```
 
 ## 📂 Projektstruktur
@@ -295,121 +279,78 @@ vogel-kamera-linux/
 ├── README.md                                                     # Hauptdokumentation
 ├── LICENSE                                                       # MIT Lizenz
 ├── .gitignore                                                    # Git-Ignore-Regeln
-├── config/                                                       # 🔧 Konfigurationsdateien
-│   └── requirements.txt                                          # Python-Abhängigkeiten
-├── scripts/                                                      # 🔧 Build/Deploy-Skripte  
-│   ├── version.py                                               # Zentrale Versionsverwaltung
-│   ├── release_workflow.py                                     # Release-Automatisierung
-│   └── update_version.py                                       # Versions-Update-Skript
+├── ansible/                                                      # 🚀 Deployment & Konfiguration
+│   ├── .env.example                                             # Vorlage für persönliche Konfiguration
+│   ├── build_and_deploy.sh                                      # Build + Deploy Skript
+│   ├── ansible.cfg                                              # Ansible-Konfiguration
+│   ├── inventory/hosts.yml                                      # Pi-Inventar (ohne persönliche Daten)
+│   └── group_vars/all/vars.yml                                  # Variablen (liest PI_HOST, PI_USER, PI_SSH_KEY aus .env)
+├── unified-monitor-client/                                       # 🐳 Docker-Container  
+│   ├── pi_daemon_secure.py                                      # ⭐ HAUPT-SYSTEM: Flask HTTPS-Daemon (JWT + TOTP)
+│   ├── web/                                                     # Web-GUI (HTML/CSS/JS)
+│   ├── requirements_daemon.txt                                  # Python-Dependencies im Container
+│   ├── README.md                                                # Container-Dokumentation
+│   ├── SETUP_GUIDE.md                                           # Deployment-Anleitung
+│   └── DETECT_AND_RECORD.md                                     # Detect-and-Record Dokumentation
+├── raspberry-pi-scripts/                                        # 🍓 Aktive Pi-Skripte (im Container)
+│   ├── unified-camera-monitor-detect-only.py                   # ⭐ Detection-Skript (wird in Docker kopiert)
+│   ├── UNIFIED-MONITOR-README.md                                # Unified Monitor Dokumentation
+│   ├── HAILO-README.md                                          # Hailo-Accelerator Dokumentation
+│   └── requirements-pi.txt                                      # Python-Dependencies für Raspberry Pi
 ├── docs/                                                         # 📚 Dokumentation
-│   ├── CHANGELOG.md                                             # Versionshistorie (v2.0.2)
-│   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur mit Mermaid-Diagrammen *(v1.2.0)*
-│   ├── PROJEKT-REORGANISATION.md                                # Projekt-Reorganisations-Dokumentation
-│   ├── TRIXIE-MIGRATION.md                                      # Trixie Migration Guide
+│   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur Docker+Web API
 │   ├── SECURITY.md                                              # Sicherheitsrichtlinien
 │   ├── DOKUMENTATION-UEBERSICHT.md                              # Dokumentations-Index
 │   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
 │   ├── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
-│   ├── i18n/                                                    # 🌐 Multilingual Documentation *(v2.0)*
-│   │   ├── README.md                                            # 🇬🇧 English Documentation
-│   │   ├── README.de.md                                         # 🇩🇪 Deutsche Dokumentation
-│   │   └── README.ja.md                                         # 🇯🇵 日本語ドキュメント
-│   └── legacy/                                                  # 📦 Archivierte Dokumente *(v2.0)*
-│       ├── README.md                                            # Legacy-Docs Migration Guide
-│       ├── AUTO-TRIGGER-PERFORMANCE-OPTIMIZATION.md             # Obsolet (in README integriert)
-│       ├── AUTO-TRIGGER-STREAM-RESTART.md                       # Obsolet (Unified System)
-│       ├── FIX-API-KEY-ZUGRIFF.md                               # Obsolet
-│       ├── FIX-PREVIEW-STREAM-RESTART.md                        # Obsolet
-│       ├── PARAMETER-NO-STREAM-RESTART.md                       # Obsolet
-│       ├── README-IMPROVEMENTS.md                               # Obsolet (implementiert)
-│       ├── SYSTEM-READY.md                                      # Obsolet
-│       ├── UNIFIED-MONITORING-SYSTEM.md                         # In README integriert
-│       └── INSTALLATION-TRIXIE.md                               # In TRIXIE-MIGRATION.md
-├── python-toolbox/                                             # 🐍 Python Packages & Tools *(v1.3.2)*
+│   ├── VERSIONIERUNG.md                                         # Versionierungsrichtlinien
+│   └── i18n/                                                    # 🌐 Mehrsprachige Dokumentation
+│       ├── README.md                                            # 🇬🇧 English Documentation
+│       ├── README.de.md                                         # 🇩🇪 Deutsche Dokumentation
+│       └── README.ja.md                                         # 🇯🇵 日本語ドキュメント
+├── scripts/                                                      # 🔧 Build/Deploy-Skripte
+│   ├── version.py                                               # Zentrale Versionsverwaltung
+│   ├── release_workflow.py                                      # Release-Automatisierung
+│   └── update_version.py                                        # Versions-Update-Skript
+├── python-toolbox/                                             # 🐍 Python Packages & Tools
 │   ├── vogel-video-analyzer/                                   # Video-Analyse-Tool (Git Submodule)
 │   ├── requirements.txt                                         # Python-Dependencies
 │   └── README.md                                                # Python-Toolbox Dokumentation
-├── tools/                                                        # 🛠️ Test & Entwicklungstools
-│   ├── check_emojis.py                                          # Emoji-Validator für Markdown
-│   ├── automation_test.txt                                      # Automatisierungs-Tests
-│   ├── test_ai_features.py                                      # AI-Feature Tests
-│   └── README.md                                                # Tools-Dokumentation
-├── auto-start-kamera/                                           # 🚀 Auto-Start Skripte *(v2.0)*
-│   ├── start-unified-monitoring.sh                              # Remote-Wrapper für Unified Monitor
-│   ├── remote-unified-control.sh                                # Remote Control Tool
-│   └── README.md                                                # Auto-Start Dokumentation
-├── raspberry-pi-scripts/                                        # 🍓 Raspberry Pi Skripte *(v2.0)*
-│   ├── unified-camera-monitor.py                                # ⭐ HAUPT-SYSTEM: Vereinheitlichter Kamera-Monitor
-│   ├── UNIFIED-MONITOR-README.md                                # Unified Monitor Dokumentation
-│   └── requirements-pi.txt                                      # Python-Dependencies für Raspberry Pi
+├── ai-training-tools/                                           # 🤖 KI-Trainings-Tools
+│   ├── train_bird_model.py                                      # Modell-Training
+│   ├── extract_frames.py                                        # Frame-Extraktion
+│   └── README.md                                                # Training-Dokumentation
+├── python-skripte/                                             # 🐍 Diagnose-Hilfsskripte
+│   ├── check_ai_models.py                                       # 🔍 AI-Modell-Validierung
+│   ├── quick_system_check.py                                    # ⚡ Schnelle System-Checks
+│   └── remote_system_monitor.py                                 # 📊 Umfassendes System-Monitoring
 ├── releases/                                                     # 📋 Release-Dokumentation
 │   ├── README.md                                                # Release-Übersicht
 │   └── vX.X.X/                                                  # Versionierte Release-Archive
-│       └── RELEASE_NOTES_vX.X.X.md                              # Archivierte Release-Notes (v2.0.2, v2.0.1, v2.0.0, ...)
 ├── assets/                                                       # 📸 QR-Codes & Medien
-│   ├── qr-youtube-channel.png                                   # YouTube-Kanal QR-Code
-│   ├── qr-playlists.png                                         # Playlists QR-Code  
-│   ├── qr-subscribe.png                                         # Abonnieren QR-Code
 │   ├── generate_qr_codes.py                                     # QR-Code Generator
 │   └── QR-CODE-ANLEITUNG.md                                     # QR-Code Dokumentation
 ├── git-automation/                                              # 🔐 Git-Automatisierung
 │   ├── git_automation.py                                        # Sichere Git-Operationen mit AES-256
-│   ├── setup_ssh_credentials.py                                 # SSH-Credentials Setup
-│   ├── test_*.py                                                # Umfassende Test-Suite
-│   ├── .git_secrets_encrypted.json                             # Verschlüsselte SSH-Secrets
 │   └── README.md                                                # Git-Automation Dokumentation
 ├── wiki-sync/                                                   # 📚 Wiki-Synchronisation
-│   ├── wiki_sync.py                                            # Automatische Wiki-GitHub-Sync
 │   └── README.md                                                # Wiki-Sync Dokumentation
-├── legacy/                                                      # 📦 Archivierte Skripte & Docs *(v2.0)*
+├── legacy/                                                      # 📦 Archivierte Skripte & Docs *(< v2.2)*
 │   ├── README.md                                                # Legacy Migration Guide
-│   ├── kamera-auto-trigger/                                     # 🎯 Altes Auto-Trigger System (v1.2.0)
-│   │   ├── start-vogel-beobachtung.sh                          # Interaktiver Wrapper (obsolet)
-│   │   ├── scripts/ai-had-kamera-auto-trigger.py               # Auto-Trigger mit Legacy-Skripten (obsolet)
-│   │   ├── docs/                                                # Auto-Trigger Dokumentation
-│   │   └── README.md                                            # Auto-Trigger Dokumentation
-│   ├── network-tools/                                           # 🌐 Netzwerk-Diagnose (v1.2.0, obsolet)
-│   │   ├── test-network-quality.py                             # TCP-Stream-Diagnostik (obsolet)
-│   │   └── README.md                                            # Network-Tools Dokumentation
-│   ├── raspberry-pi-scripts/                                    # 🍓 Alte Stream-Skripte (v1.2.0, obsolet)
-│   │   ├── start-preview-stream.sh                             # Preview-Stream (obsolet)
-│   │   ├── start-preview-stream-v2.sh                          # Preview-Stream v2 (obsolet)
-│   │   ├── start-preview-stream-watchdog.sh                    # Stream-Watchdog (obsolet)
-│   │   ├── start-rtsp-stream.sh                                # RTSP-Stream (obsolet)
-│   │   ├── start-tcp-preview-stream.sh                         # TCP-Stream (obsolet)
-│   │   ├── start-tcp-preview-watchdog.sh                       # TCP-Watchdog (obsolet)
-│   │   └── audio-monitor.sh                                     # Audio-Monitor (obsolet)
-│   ├── ai-had-audio-remote-param-vogel-libcamera-single.py     # Audio-Aufnahme (veraltet)
-│   ├── ai-had-kamera-remote-param-vogel-libcamera-single-AI-Modul.py  # Video+AI (veraltet)
-│   ├── ai-had-kamera-remote-param-vogel-libcamera-zeitlupe.py  # Zeitlupe (veraltet)
-│   ├── config.py                                                # Config-System (veraltet)
-│   └── .env.example                                             # Env-Template (veraltet)
+│   ├── docs/                                                    # Veraltete Dokumentation
+│   ├── config/                                                  # Alte Konfigurationsdateien
+│   ├── unified-monitor-client/                                  # Alter SSH-basierter Python-Client
+│   ├── raspberry-pi-scripts/                                    # Alte Pi-Skripte (Hailo, benchmark, etc.)
+│   ├── python-skripte/                                          # Veraltete Python-Modulversionen
+│   ├── kamera-auto-trigger/                                     # Auto-Trigger System (v1.x, obsolet)
+│   └── network-tools/                                           # Netzwerk-Diagnose (v1.x, obsolet)
 ├── 3d-konstruktion/                                            # 🔧 3D-Konstruktions-Dateien
-│   ├── README.md                                                # 3D-Konstruktions-Dokumentation
-│   └── YYYY-MM-DD/                                             # Versionierte Konstruktions-Ordner
-│       ├── README.md                                            # Version-spezifische Dokumentation
-│       └── stp-dateien/                                        # STEP-Konstruktionsdateien (*.stp)
-│           └── *.stp                                           # 3D-CAD Dateien für Hardware
-├── veranstaltungen/                                             # 🎤 Event-Management
-│   ├── README.md                                                # Event-Übersicht
-│   └── YYYY-MM-DD-eventname/                                   # Event-spezifische Ordner
-│       ├── README.md                                            # Event-Details
-│       ├── slides/                                              # Präsentationsmaterialien
-│       │   ├── README.md                                        # Slide-Dokumentation
-│       │   └── *.pdf/*.pptx                                    # Präsentationsdateien
-│       └── resources/                                           # Event-Ressourcen
-│           ├── README.md                                        # Resource-Dokumentation
-│           ├── generate_qr_codes.py                            # Event-QR-Codes
-│           └── *.png                                           # QR-Code Bilder
-└── python-skripte/                                             # 🐍 Haupt-Python-Module
-    ├── __version__.py                                           # Modul-Versionsverwaltung
-    ├── check_ai_models.py                                       # 🔍 AI-Modell-Validierung
-    ├── quick_system_check.py                                    # ⚡ Schnelle System-Checks *(v1.1.9)*
-    ├── remote_system_monitor.py                                 # 📊 Umfassendes System-Monitoring *(v1.1.9)*
-    └── .env                                                     # Lokale Konfiguration (nicht im Git)
+│   └── README.md                                                # 3D-Konstruktions-Dokumentation
+└── veranstaltungen/                                             # 🎤 Event-Management
+    └── README.md                                                # Event-Übersicht
 ```
 
-## 🚀 Schnellstart: 4 Schritte
+## 🚀 Schnellstart: 3 Schritte
 
 ### 1️⃣ Repository klonen
 ```bash
@@ -417,56 +358,31 @@ git clone https://github.com/kamera-linux/vogel-kamera-linux.git
 cd vogel-kamera-linux
 ```
 
-### 2️⃣ SSH-Konfiguration (für Remote Raspberry Pi)
+### 2️⃣ Konfiguration anlegen (einmalig, wird NICHT versioniert)
 ```bash
-cd unified-monitor-client
-
-# .env-Datei aus Vorlage erstellen
-cp .env.example .env
-
-# Konfiguration anpassen (SSH Host, User, Key)
-nano .env
+# Vorlage kopieren und eigene Werte eintragen
+cp ansible/.env.example ansible/.env
+nano ansible/.env
 ```
 
-**Wichtige .env-Parameter:**
+**Wichtige `.env`-Parameter:**
 ```bash
-SSH_KEY=~/.ssh/id_rsa_pi          # SSH Private Key
-SSH_USER=pi                        # Raspberry Pi Benutzer
-SSH_HOST=raspberry-pi.local        # Hostname/IP des Pi
+PI_HOST=raspberry-pi.local      # Hostname oder IP des Raspberry Pi
+PI_USER=pi                       # SSH-Benutzername auf dem Pi
+PI_SSH_KEY=~/.ssh/id_rsa_pi     # Pfad zum SSH Private Key
+VAULT_PASS_FILE=~/.pi-vault-pass # Ansible Vault Passwort-Datei
 ```
 
-### 3️⃣ Automatisiertes Setup (Remote + Lokal)
+### 3️⃣ Deployment starten
 ```bash
-# Setup-Skript ausführen
-chmod +x setup_environment.sh
-./setup_environment.sh
+# Erstinstallation (Docker + Daemon + TLS-Zertifikate)
+./ansible/build_and_deploy.sh --install
 
-# Oder direkt mit Python
-python3 setup_environment.py
-```
+# Nach Code-Änderungen: Container aktualisieren
+./ansible/build_and_deploy.sh --update
 
-Das Skript automatisiert:
-- ✅ System-Updates auf Remote Pi
-- ✅ Installation aller Abhängigkeiten (rpicam, ffmpeg, YOLO, Python-Module)
-- ✅ Repository-Setup auf Remote Pi
-- ✅ Lokale venv und Dependencies
-
-### 4️⃣ Erste Aufnahme starten
-```bash
-# Aktiviere lokale venv
-source ../venv/bin/activate
-
-# Test: 5 Sekunden
-python3 unified_monitor_client.py test
-
-# Standard: 4K Cinema mit Audio
-python3 unified_monitor_client.py 4k
-
-# Zeitlupe: 120fps
-python3 unified_monitor_client.py slowmo
-
-# Neu: Detect-and-Record Mode (empfohlen!)
-python3 unified_monitor_client.py normal --detect-and-record
+# Web-GUI öffnen
+# https://<PI_HOST>:8443/
 ```
 
 📚 **Mehr Details:** [`unified-monitor-client/SETUP_GUIDE.md`](unified-monitor-client/SETUP_GUIDE.md)
@@ -476,12 +392,10 @@ python3 unified_monitor_client.py normal --detect-and-record
 
 ## 📚 Weitere Dokumentation
 
-- **[unified-monitor-client/README.md](unified-monitor-client/README.md)** - Haupttool Dokumentation
-- **[unified-monitor-client/SETUP_GUIDE.md](unified-monitor-client/SETUP_GUIDE.md)** - Detailliertes Setup
+- **[unified-monitor-client/README.md](unified-monitor-client/README.md)** - Web-API und Container-Dokumentation
+- **[unified-monitor-client/SETUP_GUIDE.md](unified-monitor-client/SETUP_GUIDE.md)** - Deployment-Anleitung (Ansible)
 - **[CHANGELOG.md](CHANGELOG.md)** - Vollständige Versionshistorie
-- **[QUICK_REFERENCE_v2.1.2.md](QUICK_REFERENCE_v2.1.2.md)** - Schnelle Befehlsreferenz
-- **[raspberry-pi-scripts/UNIFIED-MONITOR-README.md](raspberry-pi-scripts/UNIFIED-MONITOR-README.md)** - Remote-System
-- **[docs/TRIXIE-MIGRATION.md](docs/TRIXIE-MIGRATION.md)** - Trixie Setup-Guide
+- **[raspberry-pi-scripts/UNIFIED-MONITOR-README.md](raspberry-pi-scripts/UNIFIED-MONITOR-README.md)** - Detection-Skript
 - **[docs/SECURITY.md](docs/SECURITY.md)** - Sicherheitsrichtlinien
 
 ## 📁 Dateiorganisation

@@ -1,5 +1,45 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.2.0] - 13. März 2026 🐳 **Docker & Ansible Build-Infrastruktur**
+
+### 🐳 Major Features
+- **Ansible Build-Host Rolle (Gentoo)**
+  - Neue Rolle `ansible/roles/build-host/` richtet lokalen Rechner ein
+  - Installiert Docker CE, QEMU (aarch64 User-Space), docker-buildx via `emerge`
+  - Persistente `binfmt_misc`-Registrierung via `/etc/local.d/qemu-binfmt.start`
+  - Idempotent: kann mehrfach ausgeführt werden ohne unbeabsichtigte Änderungen
+
+- **Neuer `--setup-host` Befehl**
+  - `./ansible/build_and_deploy.sh --setup-host` richtet Gentoo Build-Rechner ein
+  - Läuft vollständig lokal (kein Pi-Zugriff nötig)
+  - Interaktive `sudo`-Passwort-Abfrage via `--ask-become-pass`
+
+- **Ansible Playbook für Build-Host**
+  - `ansible/playbooks/setup-build-host.yml` targets `localhost`
+  - `build_host_user` wird automatisch aus `$USER` ermittelt
+
+### ✨ Improvements
+- `ansible/README.md`: Neue vollständige Ansible-Dokumentation hinzugefügt
+- `docker/README.md`: Ansible-Tipp-Box für automatische Einrichtung ergänzt
+- `ansible/group_vars/all/vars.yml`: `build_host_user` Variable hinzugefügt
+- `build_and_deploy.sh --help`: Alle vier Befehle dokumentiert
+
+### 📁 Files Added
+- `ansible/README.md` → neue Dokumentation
+- `ansible/playbooks/setup-build-host.yml` → neues Playbook
+- `ansible/roles/build-host/tasks/main.yml` → neue Rolle
+- `docker/README.md` → Gentoo Cross-Compilation Anleitung
+
+### 📁 Files Updated
+- `VERSION` → 2.2.0
+- `unified-monitor-client/VERSION` → 2.2.0
+- `raspberry-pi-scripts/VERSION` → 2.2.0
+- `scripts/__version__.py` → 2.2.0
+- `ansible/build_and_deploy.sh` → `--setup-host` Flag ergänzt
+- `ansible/group_vars/all/vars.yml` → `build_host_user` ergänzt
+
+---
+
 ## [2.1.2] - 11. März 2026 🔒 **Sichere Konfiguration & Datenschutz**
 
 ### 🔐 Major Features & Security

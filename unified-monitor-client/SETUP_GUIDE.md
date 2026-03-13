@@ -1,334 +1,205 @@
-# 🚀 Unified Monitor Client - Setup Guide v2.1.0
+# 🚀 Setup Guide — Docker-Deployment via Ansible
 
-Automatisiertes Setup-Skript für Remote Raspberry Pi und lokalen Client mit Audio/Video-Synchronisation.
-
-## ✨ Features
-
-Das Setup-Skript automatisiert:
-
-✅ **Remote Pi Setup:**
-- System-Updates (apt-get)
-- rpicam-apps + ffmpeg + ALSA (Audio/Video Sync)
-- Python-Abhängigkeiten (paramiko, python-dotenv)
-- Repository klonen/updaten
-
-✅ **Lokaler Client Setup:**
-- Virtuelle Python-Umgebung (venv)
-- Python-Module installieren (paramiko, click, dotenv)
-- Skripte ausführbar machen
-
-✅ **Verifikation:**
-- SSH-Verbindung testen
-- rpicam-vid + ffmpeg Verfügbarkeit prüfen
-- Audio-Devices prüfen
-- Python-Versionen validieren
-
-## 📋 Voraussetzungen
-
-### Remote Raspberry Pi:
-- Raspberry Pi OS Trixie (Debian 13) oder Bookworm (Debian 12)
-- SSH-Zugang aktiviert
-- Internetverbindung
-
-### Lokaler Client:
-- Python 3.8+
-- `python3-pip` und `python3-venv`
-- SSH-Client
-- Git (für Repository klonen)
-
-### SSH-Setup:
-```bash
-# 1. SSH-Schlüssel generieren (falls noch nicht vorhanden)
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_pi
-
-# 2. Öffentlichen Schlüssel auf Pi kopieren
-ssh-copy-id -i ~/.ssh/id_rsa_pi.pub pi@raspberry-pi.local
-
-# 3. Verbindung testen
-ssh -i ~/.ssh/id_rsa_pi pi@raspberry-pi.local "echo 'SSH OK'"
-```
-
-## 🚀 Quick Start
-
-### 1. Konfiguration vorbereiten
-```bash
-cd unified-monitor-client
-
-# .env-Datei erstellen
-cp .env.example .env
-
-# Werte anpassen (Hostname, SSH-Key, etc.)
-nano .env
-```
-
-### 2. Setup ausführen
-```bash
-# Option A: Shell-Skript (empfohlen)
-chmod +x setup_environment.sh
-./setup_environment.sh
-
-# Option B: Direkt Python
-python3 setup_environment.py
-```
-
-### 3. Bestätigung
-```
-Dieses Skript wird:
-   • System-Pakete auf dem Remote Pi aktualisieren (apt-get)
-   • Python-Abhängigkeiten installieren
-   • Das Repository auf den Remote Pi klonen/updaten
-   • Lokale venv und Dependencies installieren
-
-Möchten Sie fortfahren? (ja/nein): ja
-```
-
-## 📊 Was wird installiert
-
-### Remote Raspberry Pi
-```
-System-Updates & Tools:
-✓ build-essential, python3-dev
-✓ rpicam-apps (v1.9.1+) - Moderne Kamera-Control statt libcamera
-✓ ffmpeg (7.1.2+) - Video-Merge & Audio-Sync
-✓ alsa-utils (arecord) - Audio-Aufnahme, hw:0,0 Auto-Detection
-
-Python-Abhängigkeiten:
-✓ python3-pip, python3-venv
-✓ paramiko - SSH-Remote-Komm
-✓ python-dotenv - Environment-Konfiguration
-```
-
-### Lokaler Client
-```
-Python Packages (venv):
-✓ paramiko   - SSH-Remote-Befehle
-✓ click      - CLI-Framework mit Typsicherheit
-✓ python-dotenv - .env Konfiguration laden
-```
-
-## 🔧 Konfiguration (.env)
-
-```bash
-# SSH-Verbindung
-SSH_KEY=~/.ssh/id_rsa_pi
-SSH_USER=pi
-SSH_HOST=raspberry-pi.local
-
-# Remote Pfade
-REMOTE_REPO_DIR=/home/pi/vogel-kamera-linux
-REMOTE_SCRIPT_DIR=/home/pi/vogel-kamera-linux/raspberry-pi-scripts
-REMOTE_VIDEO_BASE=/home/pi/Videos/Vogelhaus
-
-# Parameter
-DEFAULT_THRESHOLD=0.5
-DEFAULT_COOLDOWN=15
-DEFAULT_TRIGGER_DURATION=1.0
-```
-
-## ✔️ Verifikation nach Setup
-
-```bash
-# SSH-Verbindung testen
-ssh -i ~/.ssh/id_rsa_pi pi@raspberry-pi.local "uname -a"
-
-# Remote Python-Version prüfen
-ssh -i ~/.ssh/id_rsa_pi pi@raspberry-pi.local "python3 --version"
-
-# Lokales venv testen
-source ../venv/bin/activate
-python3 --version
-pip list | grep paramiko
-```
-
-## 🚀 Nach dem Setup
-
-### Unified Monitor Client starten
-```bash
-# Aktiviere venv (falls noch nicht aktiv)
-source ../venv/bin/activate
-
-# Starte Client mit verschiedenen Modi:
-python3 unified_monitor_client.py test       # 5 Sekunden Test
-python3 unified_monitor_client.py normal     # Standard 1920x1080
-python3 unified_monitor_client.py slowmo     # Zeitlupe 120fps
-python3 unified_monitor_client.py 4k         # Cinema 4K mit Audio
-```
-
-### System-Diagnose
-```bash
-# Remote-System überprüfen
-python3 diagnose_remote_system.py
-# → Prüft Kamera, Audio-Devices, rpicam-apps, ffmpeg, etc.
-```
-
-### Remote-Monitoring direkt auf Raspberry Pi
-```bash
-# SSH-Zugriff auf den Pi
-ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5
-
-# System-Service überprüfen
-systemctl status unified-monitor || echo "Service nicht aktiv"
-
-# Logs anschauen
-tail -50 /tmp/unified-camera-monitor.log
-```
-
-## 🐛 Troubleshooting
-
-### SSH-Verbindung erfolglos
-```bash
-# 1. .env-Werte prüfen
-cat .env
-
-# 2. SSH-Key prüfen
-ls ~/.ssh/id_rsa_pi
-ssh -i ~/.ssh/id_rsa_pi pi@raspberry-pi.local "echo 'OK'"
-
-# 3. Ping prüfen
-ping -c 1 raspberry-pi.local
-
-# 4. SSH-Debug
-ssh -vvv -i ~/.ssh/id_rsa_pi pi@raspberry-pi.local
-```
-
-### Python-Module fehlen (Remote)
-```bash
-# Manuell installieren (falls Setup fehlschlägt)
-ssh -i ~/.ssh/id_rsa_rpi roimme@raspberrypi-5 << 'EOF'
-# Basis-Python
-sudo apt-get install -y python3-pip python3-venv
-
-# SSH-Kommunikation
-python3 -m pip install --upgrade paramiko python-dotenv
-
-# rpicam-apps (moderne Kamera-Control)
-sudo apt-get install -y rpicam-apps ffmpeg alsa-utils
-EOF
-```
-
-### Lokales venv beschädigt
-```bash
-# Neue venv erstellen
-rm -rf ../venv
-python3 -m venv ../venv
-source ../venv/bin/activate
-pip install paramiko click python-dotenv qrcode[pil]
-```
-
-### Setup unterbrochen
-```bash
-# Erneut ausführen (es ist sicher, doppelt zu installieren)
-./setup_environment.sh
-```
-
-## �️ Deinstallation / Cleanup
-
-Wenn Sie alle Komponenten entfernen möchten:
-
-```bash
-# Option 1: Via Wrapper (empfohlen)
-./setup_environment.sh --uninstall
-
-# Option 2: Direkt mit Python
-python3 setup_environment.py --uninstall
-```
-
-### Was wird gelöscht?
-
-**Remote (Raspberry Pi):**
-- ✓ Python Virtual Environment und Dependencies (paramiko, dotenv, etc.)
-- ✓ YOLO und andere Pakete
-- ⚠️ Repository (optional, wird nachgefragt)
-
-**Lokal (Client-PC):**
-- ✓ Python Virtual Environment (.venv)
-- ✓ Alle installierten Abhängigkeiten
-- ✓ Python Cache (__pycache__)
-- ✗ NICHT gelöscht: .env (bleibt für späteren Re-Setup)
-
-### Beispiel Deinstallation:
-
-```
-🗑️  UNIFIED MONITOR CLIENT - Deinstallation
-======================================================================
-
-⚠️  WARNUNG - Dies wird folgende Daten LÖSCHEN:
-   REMOTE (Raspberry Pi):
-   • Python Virtual Environment und Abhängigkeiten
-   • Optional: Repository
-
-   LOKAL (Client-PC):
-   • Python Virtual Environment (.venv)
-   • Alle installierten Abhängigkeiten
-   • NICHT gelöscht: .env und Konfigurationsdatei
-======================================================================
-
-Sind Sie sicher? (ja/nein): ja
-
-✓ Remote Dependencies entfernt
-Repository 'home/pi/vogel-kamera-linux' löschen? (ja/nein): nein
-✓ Remote Cleanup abgeschlossen
-
-✓ venv gelöscht
-✓ 3 Caches gelöscht
-✓ Lokales Cleanup abgeschlossen
-
-✨ Deinstallation abgeschlossen!
-```
-
-### Nach Deinstallation
-
-**Verbleibende Dateien:**
-- `.env` - Konfigurationsdatei (bleibt für späteren Re-Setup)
-- Source-Code und Dokumentation
-- Remote Dateien (Videos, Logs) auf dem Pi
-
-**Neu installieren:**
-```bash
-./setup_environment.sh
-```
-
-**Manueller Cleanup:**
-```bash
-# Nur venv löschen
-rm -rf venv
-
-# Kompletter Cleanup (ohne Deinstallations-Menü)
-rm -rf venv
-find . -type d -name __pycache__ -exec rm -r {} +
-```
-
-## �📚 Dokumentation
-
-- **[README.md](README.md)** - Unified Monitor Client Dokumentation
-- **[config.py](config.py)** - Konfiguration und Konstanten
-- **[.env.example](.env.example)** - Environment-Template
-- **[setup_environment.py](setup_environment.py)** - Setup-Skript-Code
-- **[setup_environment.sh](setup_environment.sh)** - Shell-Wrapper
-
-## 📝 Logs
-
-Das Setup-Skript gibt detaillierte Logs aus. Für Debugging:
-
-```bash
-# Vollständigen Output speichern
-./setup_environment.sh > setup.log 2>&1
-
-# Log anschauen
-cat setup.log
-```
+Dieses Dokument beschreibt die Installation und Aktualisierung des Vogel-Kamera-Systems.  
+Das System läuft als **Docker-Container auf dem Raspberry Pi** und wird über einen Browser gesteuert.
 
 ---
 
-**Version:** v2.1.0  
-**Aktualisiert:** März 2026  
-**Lizenz:** MIT
+## Voraussetzungen
 
-## 🌐 Weitere Ressourcen
+### Lokaler Rechner (deploy-PC)
 
-- **[README.md](README.md)** - Hauptdokumentation Unified Monitor Client
-- **[../raspberry-pi-scripts/UNIFIED-MONITOR-README.md](../raspberry-pi-scripts/UNIFIED-MONITOR-README.md)** - Remote System Docs
-- **[../QUICK_REFERENCE_v2.1.0.md](../QUICK_REFERENCE_v2.1.0.md)** - Schnelle Befehlsreferenz
-- **[../docs/TRIXIE-MIGRATION.md](../docs/TRIXIE-MIGRATION.md)** - Trixie Setup-Guide
-- **[config.py](config.py)** - Konfiguration und Konstanten
-- **[.env.example](.env.example)** - Environment-Template
+- **Docker** (für den Image-Build)
+- **Ansible** (`ansible`, `ansible-playbook`)
+- **SSH-Key** für den Raspberry Pi eingerichtet
+
+```bash
+# Prüfen ob alles vorhanden ist
+docker --version
+ansible --version
+ssh -i ~/.ssh/id_rsa_pi pi@raspberry-pi.local "echo OK"
+```
+
+### Raspberry Pi
+
+- **Raspberry Pi OS Trixie (Debian 13)** oder neuer
+- SSH-Zugang mit Key-Authentifizierung aktiviert
+- Kamera-Modul (IMX708 Wide) und USB-Mikrofon angeschlossen
+
+---
+
+## Einrichtung (einmalig)
+
+### 1. Konfiguration anlegen
+
+```bash
+# Vorlage kopieren — die erzeugte .env-Datei wird NICHT versioniert
+cp ansible/.env.example ansible/.env
+```
+
+Dann in `ansible/.env` die eigenen Werte eintragen:
+
+```bash
+PI_HOST=raspberry-pi.local       # Hostname oder IP des Raspberry Pi
+PI_USER=pi                        # SSH-Benutzername auf dem Pi
+PI_SSH_KEY=~/.ssh/id_rsa_pi      # Pfad zum lokalen SSH Private Key
+VAULT_PASS_FILE=~/.pi-vault-pass  # Ansible Vault Passwort-Datei (wird erzeugt)
+```
+
+### 2. Vault-Passwort-Datei anlegen (für verschlüsselte Secrets)
+
+```bash
+# Sicheres Passwort in eine Datei schreiben (600-Rechte!)
+echo "mein-sicheres-passwort" > ~/.pi-vault-pass
+chmod 600 ~/.pi-vault-pass
+```
+
+> Der Vault wird beim `--install` automatisch erzeugt und enthält den TOTP-Seed.
+
+### 3. Erstinstallation starten
+
+```bash
+./ansible/build_and_deploy.sh --install
+```
+
+Das Skript erledigt automatisch:
+- ✅ Docker-Image bauen (ARM64, für Raspberry Pi 5)
+- ✅ Image auf den Pi übertragen
+- ✅ Docker auf dem Pi installieren (falls nötig)
+- ✅ TLS-Zertifikate erzeugen (selbstsigniert)
+- ✅ TOTP-Seed generieren und im Vault verschlüsseln
+- ✅ Container starten und als Systemdienst einrichten
+- ✅ QR-Code für Authenticator-App anzeigen (einmalig!)
+
+### 4. Authenticator-App einrichten
+
+Beim ersten `--install` wird ein QR-Code im Terminal angezeigt.  
+Diesen **jetzt** mit einer TOTP-App einscannen (z. B. Google Authenticator, andOTP, Aegis):
+
+```
+⚠️  TOTP-QR-Code (einmalig — jetzt einscannen!):
+
+  ██████████████  ██  ████  ██████████████
+  ...
+```
+
+Der QR-Code wird nicht erneut angezeigt. Falls verloren: `--install` erneut ausführen (erzeugt neuen Seed).
+
+### 5. Web-GUI öffnen
+
+```
+https://<PI_HOST>:8443/
+```
+
+Das Zertifikat ist selbstsigniert → Browser-Warnung einmalig bestätigen ("Trotzdem fortfahren").
+
+---
+
+## Aktualisierung
+
+Nach Code-Änderungen an `pi_daemon_secure.py`, `web/` oder dem Detection-Skript:
+
+```bash
+./ansible/build_and_deploy.sh --update
+```
+
+Dieser Befehl:
+- ✅ Baut das Docker-Image neu
+- ✅ Überträgt nur geänderte Schichten (effizient)
+- ✅ Startet den Container neu
+- ⚠️ TOTP-Seed und Zertifikate bleiben unverändert
+
+---
+
+## Was läuft wo?
+
+| Komponente | Ort | Beschreibung |
+|------------|-----|--------------|
+| `pi_daemon_secure.py` | Im Docker-Container | Flask HTTPS-Daemon, Port 8443 |
+| `web/` | Im Docker-Container | Web-GUI (HTML/CSS/JS) |
+| `unified-camera-monitor-detect-only.py` | Im Docker-Container | Detection-Subprocess |
+| Aufnahmen | Container-Volume `/videos` | Persistentes Verzeichnis auf dem Pi (`/home/<user>/Videos`) |
+| `ansible/.env` | Lokaler Rechner | Persönliche Konfiguration (gitignored!) |
+| TLS-Zertifikat | Pi + Container | `/etc/pi-daemon/tls/` |
+| TOTP-Seed | Ansible Vault | Verschlüsselt in `ansible/group_vars/all/vault.yml` |
+
+---
+
+## Ansible-Variablen
+
+Alle anpassbaren Einstellungen in `ansible/group_vars/all/vars.yml`:
+
+| Variable | Beschreibung | Standard |
+|----------|--------------|---------|
+| `pi_host` | Pi-Hostname (aus `PI_HOST` env) | — |
+| `pi_user` | SSH-User (aus `PI_USER` env) | — |
+| `pi_home` | Home-Verzeichnis | `/home/<pi_user>` |
+| `pi_detection_script` | Pfad zum Detection-Skript im Container | `/app/detect.py` |
+| `pi_video_dir` | Aufnahme-Verzeichnis auf dem Pi | `~/Videos/Vogelhaus` |
+| `daemon_https_port` | HTTPS-Port des Daemons | `8443` |
+| `pi_sync_targets` | Liste der SSH-Zielsysteme für Transfer | `[]` |
+
+---
+
+## Fehlerbehebung
+
+### Ansible-Fehler: `.env` nicht gefunden
+
+```
+ERROR: ansible/.env not found. Copy ansible/.env.example to ansible/.env and fill in your values.
+```
+
+→ `cp ansible/.env.example ansible/.env` und Werte eintragen.
+
+### SSH-Verbindung schlägt fehl
+
+```bash
+# SSH-Key auf Pi kopieren
+ssh-copy-id -i ~/.ssh/id_rsa_pi.pub pi@raspberry-pi.local
+
+# Verbindung testen
+ssh -i ~/.ssh/id_rsa_pi pi@raspberry-pi.local "echo OK"
+```
+
+### Container startet nicht
+
+```bash
+# Container-Status auf dem Pi
+ssh <PI_USER>@<PI_HOST> "docker ps -a | grep vogel"
+
+# Container-Logs
+ssh <PI_USER>@<PI_HOST> "docker logs vogel-pi --tail 100"
+
+# Docker-Service neu starten
+ssh <PI_USER>@<PI_HOST> "sudo systemctl restart docker"
+```
+
+### Kamera nicht verfügbar
+
+```bash
+# Kamera-Gruppe prüfen (appuser muss in 'video' sein)
+ssh <PI_USER>@<PI_HOST> "docker exec vogel-pi id appuser"
+
+# Kamera-Test direkt im Container
+ssh <PI_USER>@<PI_HOST> "docker exec vogel-pi rpicam-hello -t 1000"
+```
+
+### TOTP-Code wird abgelehnt
+
+1. Systemzeit auf Pi prüfen: `ssh <pi> "date"`
+2. NTP aktiv: `ssh <pi> "systemctl status systemd-timesyncd"`
+3. TOTP-Seed neu erzeugen: `./ansible/build_and_deploy.sh --install` (überschreibt Vault)
+
+---
+
+## Legacy: Alter SSH-basierter Python-Client
+
+Der frühere `unified_monitor_client.py` (SSH-basiert, Python-Skript auf dem lokalen PC) ist in `legacy/unified-monitor-client/` archiviert und nicht mehr aktiv. Für Referenzzwecke oder Rollback ist er dort erhalten.
+
+---
+
+**Weiterführende Dokumentation:**
+- [README.md](README.md) — Web-API und Container-Dokumentation
+- [DETECT_AND_RECORD.md](DETECT_AND_RECORD.md) — Detection-Modus
+- [../docs/ARCHITEKTUR.md](../docs/ARCHITEKTUR.md) — Systemarchitektur
+- [../docs/SECURITY.md](../docs/SECURITY.md) — Sicherheitsrichtlinien

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vogel-Kamera Steuerung</title>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #58a6ff;
+      --green:   #3fb950;
+      --yellow:  #d29922;
+      --red:     #f85149;
+      --r:       8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ──── LOGIN ──────────────────────────────────────────────────── */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 1rem;
+    }
+    .login-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 2rem; width: 100%; max-width: 360px;
+    }
+    .login-box h1 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .login-box p  { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 0.875rem; color: var(--muted);
+                   margin-bottom: 0.35rem; }
+    .field input {
+      width: 100%; padding: 0.6rem 0.75rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--r); color: var(--text); font-size: 1rem;
+      outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.6rem 1rem; border: none; border-radius: var(--r);
+      font-size: 0.9rem; cursor: pointer; transition: opacity 0.15s;
+      font-weight: 500; text-decoration: none;
+    }
+    .btn:active { opacity: 0.75; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary  { background: var(--accent); color: #000; }
+    .btn-success  { background: var(--green);  color: #000; }
+    .btn-danger   { background: var(--red);    color: #fff; }
+    .btn-warning  { background: var(--yellow); color: #000; }
+    .btn-neutral  { background: var(--border); color: var(--text); }
+    .btn-full { width: 100%; justify-content: center; }
+    #login-error { color: var(--red); font-size: 0.875rem;
+                   margin-top: 0.5rem; display: none; }
+
+    /* ──── DASHBOARD ──────────────────────────────────────────────── */
+    #dashboard { display: none; }
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 10;
+    }
+    .topbar h1 { font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .topbar .actions { display: flex; align-items: center; gap: 0.75rem; }
+    #last-update { color: var(--muted); font-size: 0.75rem; }
+
+    .main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+
+    /* Status cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+             gap: 1rem; margin-bottom: 1.5rem; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1rem;
+    }
+    .card .label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.35rem; }
+    .card .value { font-size: 1.4rem; font-weight: 600; }
+    .pill {
+      display: inline-block; padding: 0.15rem 0.6rem; border-radius: 99px;
+      font-size: 0.8rem; font-weight: 600;
+    }
+    .pill-green  { background: rgba(63,185,80,.15);  color: var(--green); }
+    .pill-red    { background: rgba(248,81,73,.15);  color: var(--red); }
+    .pill-yellow { background: rgba(210,153,34,.15); color: var(--yellow); }
+
+    /* Action panel */
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.25rem; margin-bottom: 1.5rem;
+    }
+    .panel h2 { font-size: 0.9rem; color: var(--muted); text-transform: uppercase;
+                letter-spacing: .06em; margin-bottom: 1rem; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+    .sep { width: 1px; height: 24px; background: var(--border); margin: 0 0.25rem; }
+    .slider-group { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
+    .slider-group input[type=range] { accent-color: var(--accent); cursor: pointer; }
+    #rec-dur-label { min-width: 2.5rem; color: var(--accent); font-weight: 600; }
+
+    /* Select */
+    select {
+      padding: 0.5rem 0.6rem; background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--r); color: var(--text); font-size: 0.875rem; cursor: pointer;
+    }
+
+    /* Recordings */
+    .recordings-list { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead th { text-align: left; padding: 0.5rem 0.75rem; color: var(--muted);
+               border-bottom: 1px solid var(--border); font-weight: 500; }
+    tbody tr:hover { background: rgba(255,255,255,.03); }
+    tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(48,54,61,.5); }
+    .size-col { color: var(--muted); }
+    .empty-state { color: var(--muted); font-size: 0.875rem; padding: 2rem 0;
+                   text-align: center; }
+
+    /* Error box */
+    #error-box {
+      background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.4);
+      border-radius: var(--r); padding: 0.75rem 1rem; margin-bottom: 1rem;
+      font-size: 0.875rem; display: none;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 0.75rem 1rem;
+      font-size: 0.875rem; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; max-width: 300px; z-index: 100;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ──── EINSTELLUNGEN ──────────────────────────────────────────── */
+    #settings-panel {
+      display: none;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.25rem; margin-bottom: 1.5rem;
+    }
+    #settings-panel h2 { font-size: 0.9rem; color: var(--muted); text-transform: uppercase;
+                         letter-spacing: .06em; margin-bottom: 1rem; }
+    .target-card {
+      border: 1px solid var(--border); border-radius: var(--r);
+      padding: 1rem; margin-bottom: 1rem; background: var(--bg);
+    }
+    .target-card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .target-card-header input.name-input {
+      font-weight: 600; font-size: 0.9rem; flex: 1;
+      background: transparent; border: none; border-bottom: 1px solid var(--border);
+      color: var(--text); padding: 0.2rem 0.3rem;
+    }
+    .target-card-header input.name-input:focus { outline: none; border-color: var(--accent); }
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
+    .field textarea {
+      width: 100%; padding: 0.6rem 0.75rem; font-family: monospace; font-size: 0.78rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      color: var(--text); resize: vertical; min-height: 90px;
+    }
+    .field textarea:focus { border-color: var(--accent); outline: none; }
+    .test-result-inline { font-size: 0.8rem; padding: 0.3rem 0.6rem;
+                          border-radius: var(--r); display: none; margin-left: auto; }
+    .test-ok  { background: rgba(63,185,80,.1);  border: 1px solid rgba(63,185,80,.3);  color: var(--green); }
+    .test-err { background: rgba(248,81,73,.1);  border: 1px solid rgba(248,81,73,.3);  color: var(--red); }
+    .toggle-label { display:flex; align-items:center; gap:.4rem; font-size:.85rem;
+                    color:var(--muted); cursor:pointer; user-select:none; }
+    .toggle-label input { accent-color: var(--accent); width:1rem; height:1rem; cursor:pointer; }
+    #pending-badge {
+      display: none; background: var(--yellow); color: #000;
+      font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.45rem;
+      border-radius: 99px; margin-left: 0.25rem;
+    }
+
+    /* ──── KALENDER-ZEILEN ────────────────────────────────────────── */
+    .date-header td {
+      background: rgba(88,166,255,.06); color: var(--accent);
+      font-size: 0.8rem; font-weight: 600;
+      padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border);
+      letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 480px) {
+      .topbar { padding: 0.75rem 1rem; }
+      .main   { padding: 1rem; }
+      .cards  { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ──── HILFE-MODAL ───────────────────────────────────────────── */
+    #help-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.65); z-index: 200;
+      align-items: flex-start; justify-content: center;
+      padding: 2rem 1rem; overflow-y: auto;
+    }
+    #help-overlay.open { display: flex; }
+    #help-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.75rem; width: 100%;
+      max-width: 680px; position: relative;
+    }
+    #help-modal h2 { font-size: 1.05rem; margin-bottom: 1.25rem; }
+    #help-modal h3 { font-size: 0.85rem; color: var(--accent); text-transform: uppercase;
+                     letter-spacing: .06em; margin: 1.25rem 0 0.5rem; }
+    #help-modal p, #help-modal li {
+      font-size: 0.875rem; color: var(--muted); line-height: 1.6;
+    }
+    #help-modal ul { padding-left: 1.25rem; }
+    #help-modal li { margin-bottom: 0.3rem; }
+    #help-modal code {
+      font-family: monospace; font-size: 0.82rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 4px; padding: 0.1rem 0.4rem; color: var(--text);
+    }
+    #help-modal hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+    .help-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none; color: var(--muted);
+      font-size: 1.4rem; cursor: pointer; line-height: 1;
+    }
+    .help-close:hover { color: var(--text); }
+    .help-badge {
+      display: inline-block; background: var(--border); color: var(--text);
+      border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.78rem;
+      font-weight: 600; font-family: monospace; vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ──── LOGIN ─────────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🐦 Vogel-Kamera</h1>
+    <p>Raspberry Pi Steuerung</p>
+
+    <div class="field">
+      <label for="pw">Passwort</label>
+      <input type="password" id="pw" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="field">
+      <label for="totp">2FA-Code</label>
+      <input type="text" id="totp" placeholder="123456" inputmode="numeric"
+             maxlength="6" autocomplete="one-time-code">
+    </div>
+    <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">
+      Anmelden
+    </button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- ──── DASHBOARD ──────────────────────────────────────────────────────── -->
+<div id="dashboard">
+  <div class="topbar">
+    <h1>🐦 Vogel-Kamera</h1>
+    <div class="actions">
+      <span id="last-update">–</span>
+      <button class="btn btn-neutral" onclick="openHelp()" title="Hilfe">❓ Hilfe</button>
+      <button class="btn btn-neutral" onclick="toggleSettings()">⚙ Einstellungen</button>
+      <button class="btn btn-neutral" onclick="doLogout()">Abmelden</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="error-box"></div>
+
+    <!-- ── Einstellungen (ausgeklappt) ──────────────────────────── -->
+    <div id="settings-panel">
+      <h2>⚙ Sync-Ziele</h2>
+      <div id="targets-container"></div>
+      <div class="action-row" style="margin-top: 0.5rem;">
+        <button class="btn btn-neutral" onclick="addTarget()">＋ Ziel hinzufügen</button>
+        <button class="btn btn-primary" onclick="saveAllTargets()">💾 Alle speichern</button>
+        <span id="save-status" style="font-size:0.85rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <!-- Status-Karten -->
+    <div class="cards">
+      <div class="card">
+        <div class="label">Detection</div>
+        <div class="value" id="s-detect">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Recording</div>
+        <div class="value" id="s-rec">–</div>
+      </div>
+      <div class="card">
+        <div class="label">CPU</div>
+        <div class="value" id="s-cpu">–</div>
+      </div>
+      <div class="card">
+        <div class="label">RAM genutzt</div>
+        <div class="value" id="s-mem">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Freier Speicher</div>
+        <div class="value" id="s-disk">–</div>
+      </div>
+    </div>
+
+    <!-- Aktionen -->
+    <div class="panel">
+      <h2>Detection</h2>
+      <div class="action-row">
+        <button class="btn btn-success" onclick="detectionStart()">▶ Starten</button>
+        <button class="btn btn-danger"  onclick="detectionStop()">■ Stoppen</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Aufnahme</h2>
+      <div class="action-row">
+        <span class="slider-group">
+          <label for="rec-dur">Dauer</label>
+          <input type="range" id="rec-dur" min="5" max="120" step="5" value="15"
+                 oninput="document.getElementById('rec-dur-label').textContent=this.value+'s'">
+          <span id="rec-dur-label">15s</span>
+        </span>
+        <div class="sep"></div>
+        <select id="rec-res">
+          <option value="720p">720p</option>
+          <option value="1080p">1080p</option>
+          <option value="2k" selected>2K</option>
+          <option value="4k">4K</option>
+        </select>
+        <button class="btn btn-primary" id="rec-btn" onclick="startRecord()">
+          ⏺ Aufnahme
+        </button>
+        <button class="btn btn-neutral" id="convert-btn" onclick="startConvert()">
+          🔄 Konvertieren <span id="pending-badge"></span>
+        </button>
+        <button class="btn btn-neutral" id="transfer-btn" onclick="startTransfer()" title="Alle MP4s an SSH-Ziele übertragen">
+          📤 Übertragen
+        </button>
+      </div>
+    </div>
+
+    <!-- Aufnahmen -->
+    <div class="panel">
+      <h2>Letzte Aufnahmen</h2>
+      <div class="recordings-list">
+        <table>
+          <thead>
+            <tr>
+              <th>Dateiname</th>
+              <th>Größe</th>
+              <th>Zeit</th>
+              <th>Download</th>
+              <th>Löschen</th>
+            </tr>
+          </thead>
+          <tbody id="recordings-body">
+            <tr><td colspan="5" class="empty-state">Lädt…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──── HILFE-MODAL ──────────────────────────────────────────────────────── -->
+<div id="help-overlay" onclick="closeHelpOnBg(event)">
+  <div id="help-modal">
+    <button class="help-close" onclick="closeHelp()" title="Schließen">✕</button>
+    <h2>❓ Online-Hilfe – Vogel-Kamera</h2>
+
+    <h3>Übersicht</h3>
+    <p>Diese Oberfläche steuert den Vogel-Kamera-Daemon auf dem Raspberry Pi.
+       Alle Aktionen werden direkt per HTTPS-API ausgeführt. Das Dashboard aktualisiert
+       sich automatisch alle 5 Sekunden.</p>
+
+    <hr>
+    <h3>🔴 Detection starten / stoppen</h3>
+    <p>Startet oder stoppt die KI-Bewegungserkennung (YOLO / Hailo).
+       Wird eine Bewegung erkannt, beginnt automatisch eine Aufnahme.</p>
+
+    <hr>
+    <h3>⏺ Manuelle Aufnahme</h3>
+    <ul>
+      <li><strong>Dauer</strong> – Aufnahmelänge in Sekunden (Schieberegler)</li>
+      <li><strong>Auflösung</strong> – HD / Full-HD / 4K</li>
+      <li>Die Aufnahme startet sofort und erzeugt eine <code>.h264</code>-Rohdatei.</li>
+    </ul>
+
+    <hr>
+    <h3>🔄 Konvertieren</h3>
+    <p>Konvertiert alle vorhandenen <code>.h264</code>-Rohdateien in das abspielbare
+       <code>.mp4</code>-Format (via <code>ffmpeg</code>). Anschließend werden die
+       MP4s automatisch an alle aktiven Sync-Ziele übertragen.</p>
+    <ul>
+      <li>Die Zahl im gelben Badge zeigt die Anzahl noch nicht konvertierter H264-Dateien.</li>
+      <li>Die Konvertierung läuft auch <strong>automatisch alle 3 Minuten</strong> im
+          Hintergrund – ohne Button-Klick.</li>
+    </ul>
+
+    <hr>
+    <h3>📤 Alle übertragen (SSH)</h3>
+    <p>Überträgt alle fertigen <code>.mp4</code>-Dateien per <code>rsync</code> über SSH
+       an alle konfigurierten und aktiven Sync-Ziele – ohne erneute Konvertierung.
+       Nützlich wenn ein früherer Transfer fehlgeschlagen ist.</p>
+
+    <hr>
+    <h3>⚙ Sync-Ziele konfigurieren</h3>
+    <p>Unter <span class="help-badge">⚙ Einstellungen</span> können beliebig viele
+       SSH-Ziele eingerichtet werden:</p>
+    <ul>
+      <li><strong>Host / IP</strong> – Hostname oder IP-Adresse des Zielrechners</li>
+      <li><strong>SSH Benutzer</strong> – Benutzername auf dem Zielsystem</li>
+      <li><strong>Ziel-Pfad</strong> – Verzeichnis auf dem Zielrechner, z.&nbsp;B.
+          <code>/home/roimme/Videos/</code></li>
+      <li><strong>SSH Private Key</strong> – Privaten Schlüssel einfügen (OpenSSH-Format).
+          Einmal gespeichert, muss er nicht erneut eingegeben werden.</li>
+      <li>Mit <span class="help-badge">🔌 Testen</span> die Verbindung prüfen, bevor
+          gespeichert wird.</li>
+      <li>Mehrere Ziele möglich – z.&nbsp;B. NAS + Laptop gleichzeitig.</li>
+    </ul>
+    <p style="margin-top:.6rem">Der SSH-Key wird sicher im Container unter
+       <code>/config/sync_key_N</code> gespeichert und verlässt den Pi nicht.</p>
+
+    <hr>
+    <h3>📋 Aufnahmen-Tabelle</h3>
+    <ul>
+      <li><span class="help-badge">⬇ Download</span> – MP4 direkt im Browser herunterladen</li>
+      <li><span class="help-badge">🗑 Löschen</span> – MP4 und zugehörige H264-Quelldatei
+          nach Bestätigung dauerhaft löschen</li>
+    </ul>
+
+    <hr>
+    <h3>🔐 Sicherheit</h3>
+    <ul>
+      <li>Login erfordert <strong>Passwort + 2FA-Code (TOTP)</strong> – kompatibel mit
+          Google Authenticator, Aegis, Bitwarden u.&nbsp;a.</li>
+      <li>Alle API-Aufrufe sind Bearer-Token-geschützt. Das Token ist nur für diese
+          Browser-Session gültig.</li>
+      <li>Die Verbindung ist per TLS (HTTPS, selbstsigniertes Zertifikat) verschlüsselt.</li>
+    </ul>
+
+    <div style="margin-top:1.5rem;text-align:right">
+      <button class="btn btn-neutral" onclick="closeHelp()">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API_BASE = '';
+  const REFRESH_INTERVAL = 5000;
+  let token = sessionStorage.getItem('pi_token') || '';
+  let refreshTimer = null;
+  let _targets = [];   // lokale Kopie der Sync-Ziele
+
+  // ── Hilfsfunktionen ────────────────────────────────────────────────────
+  function toast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.borderColor = type === 'error' ? 'rgba(248,81,73,.5)'
+                         : type === 'ok'    ? 'rgba(63,185,80,.5)'
+                         : 'var(--border)';
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  async function apiFetch(path, method = 'GET', body = null) {
+    const opts = {
+      method,
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API_BASE + path, opts);
+    if (res.status === 401) { doLogout(); return null; }
+    return res.json().catch(() => ({}));
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Login ──────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const pw   = document.getElementById('pw').value;
+    const totp = document.getElementById('totp').value;
+    const btn  = document.getElementById('login-btn');
+    if (!pw || !totp) { showLoginErr('Bitte beide Felder ausfüllen.'); return; }
+    btn.disabled = true; btn.textContent = 'Anmelden…';
+    document.getElementById('login-error').style.display = 'none';
+    try {
+      const res = await fetch(API_BASE + '/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw, totp }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showLoginErr(data.error || 'Anmeldung fehlgeschlagen.'); return; }
+      token = data.token; sessionStorage.setItem('pi_token', token);
+      showDashboard();
+    } catch (e) { showLoginErr('Verbindungsfehler: ' + e.message);
+    } finally { btn.disabled = false; btn.textContent = 'Anmelden'; }
+  }
+
+  function showLoginErr(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  document.getElementById('totp').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+  document.getElementById('pw').addEventListener('keydown',   e => { if (e.key==='Enter') document.getElementById('totp').focus(); });
+
+  // ── Dashboard ──────────────────────────────────────────────────────────
+  function showDashboard() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    refreshAll();
+    refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL);
+  }
+
+  function doLogout() {
+    clearInterval(refreshTimer); token = '';
+    sessionStorage.removeItem('pi_token');
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('pw').value = ''; document.getElementById('totp').value = '';
+  }
+
+  // ── Status ─────────────────────────────────────────────────────────────
+  async function refreshAll() {
+    await Promise.all([fetchStatus(), fetchRecordings(), fetchPending()]);
+  }
+
+  async function fetchStatus() {
+    const data = await apiFetch('/api/status');
+    if (!data) return;
+    const errBox = document.getElementById('error-box');
+    if (data.last_error) { errBox.textContent = '⚠ Letzter Fehler: ' + data.last_error; errBox.style.display = 'block'; }
+    else errBox.style.display = 'none';
+    setText('s-detect', pill(data.detection_running, 'Aktiv', 'Gestoppt'));
+    setText('s-rec',    pill(data.recording_running,  'Läuft', 'Bereit'));
+    document.getElementById('rec-btn').disabled = data.recording_running;
+    const sys = data.system || {};
+    setText('s-cpu',  sys.cpu_percent != null ? sys.cpu_percent.toFixed(0) + ' %' : '–');
+    if (sys.mem_used_mb && sys.mem_total_mb) setText('s-mem', sys.mem_used_mb + ' / ' + sys.mem_total_mb + ' MB');
+    if (sys.disk_free_gb != null) setText('s-disk', sys.disk_free_gb + ' GB frei');
+    document.getElementById('last-update').textContent = 'Update: ' + new Date().toLocaleTimeString('de-DE');
+  }
+
+  async function fetchPending() {
+    const d = await apiFetch('/api/pending');
+    if (!d) return;
+    const badge = document.getElementById('pending-badge');
+    if (d.pending > 0) { badge.textContent = d.pending; badge.style.display = 'inline'; }
+    else badge.style.display = 'none';
+  }
+
+  function pill(active, t, f) {
+    return `<span class="pill ${active?'pill-green':'pill-red'}">${active?t:f}</span>`;
+  }
+  function setText(id, html) { const el=document.getElementById(id); if(el) el.innerHTML=html; }
+
+  // ── Detection ──────────────────────────────────────────────────────────
+  async function detectionStart() {
+    const d = await apiFetch('/api/detection/start', 'POST');
+    toast(d?.success ? '✅ Detection gestartet' : '❌ Fehler', d?.success ? 'ok' : 'error');
+    fetchStatus();
+  }
+  async function detectionStop() {
+    const d = await apiFetch('/api/detection/stop', 'POST');
+    toast(d?.success ? '⏹ Detection gestoppt' : '❌ Fehler', d?.success ? 'ok' : 'error');
+    fetchStatus();
+  }
+
+  // ── Recording ──────────────────────────────────────────────────────────
+  async function startRecord() {
+    const duration = parseInt(document.getElementById('rec-dur').value);
+    const resolution = document.getElementById('rec-res').value;
+    const btn = document.getElementById('rec-btn');
+    btn.disabled = true;
+    const d = await apiFetch('/api/record', 'POST', { duration, resolution });
+    if (d?.success) toast(`⏺ Aufnahme gestartet (${duration}s, ${resolution})`, 'ok');
+    else { toast('❌ ' + (d?.error || 'Aufnahme fehlgeschlagen'), 'error'); btn.disabled = false; }
+    fetchStatus();
+  }
+
+  async function startConvert() {
+    const btn = document.getElementById('convert-btn');
+    btn.disabled = true;
+    const d = await apiFetch('/api/convert', 'POST');
+    toast(d?.success ? '🔄 Konvertierung läuft – alle ausstehenden H264 werden verarbeitet' : '❌ ' + (d?.error || 'Fehler'),
+          d?.success ? 'ok' : 'error');
+    setTimeout(() => { btn.disabled = false; fetchPending(); fetchRecordings(); }, 3000);
+  }
+
+  // ── Aufnahmen mit Kalender-Gruppierung + Download ─────────────────────
+  async function fetchRecordings() {
+    const list = await apiFetch('/api/recordings');
+    if (!list) return;
+    const tbody = document.getElementById('recordings-body');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Keine MP4-Aufnahmen vorhanden</td></tr>';
+      return;
+    }
+    let lastDate = '';
+    tbody.innerHTML = list.map(r => {
+      let hdr = '';
+      const d = (r.date || '').split(' ')[0];
+      if (d && d !== lastDate) {
+        lastDate = d;
+        let label = d;
+        try { label = new Date(d + 'T00:00:00').toLocaleDateString('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); } catch(_){}
+        hdr = `<tr class="date-header"><td colspan="5">📅 ${escHtml(label)}</td></tr>`;
+      }
+      const dlUrl = '/api/download?p=' + encodeURIComponent(r.rel_path || r.name);
+      const relPath = r.rel_path || r.name;
+      return `${hdr}<tr>
+        <td>${escHtml(r.name)}</td>
+        <td class="size-col">${r.size_mb} MB</td>
+        <td>${escHtml((r.created||'').slice(11))}</td>
+        <td><a href="${escHtml(dlUrl)}" class="btn btn-neutral" style="padding:.25rem .6rem;font-size:.8rem;" download>⬇ Download</a></td>
+        <td><button class="btn btn-danger" style="padding:.25rem .6rem;font-size:.8rem;"
+                onclick="deleteVideo('${escHtml(relPath).replace(/'/g,"\\'")}')">🗑 Löschen</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Manueller Transfer ───────────────────────────────────────────────────
+  async function startTransfer() {
+    const btn = document.getElementById('transfer-btn');
+    btn.disabled = true;
+    const d = await apiFetch('/api/transfer', 'POST');
+    toast(d?.success ? '📤 Übertragung gestartet – alle MP4s werden gesendet' : '❌ ' + (d?.error || 'Fehler'),
+          d?.success ? 'ok' : 'error');
+    setTimeout(() => { btn.disabled = false; }, 4000);
+  }
+
+  // ── Hilfe-Modal ──────────────────────────────────────────────────────────
+  function openHelp()  { document.getElementById('help-overlay').classList.add('open'); }
+  function closeHelp() { document.getElementById('help-overlay').classList.remove('open'); }
+  function closeHelpOnBg(e) { if (e.target === document.getElementById('help-overlay')) closeHelp(); }
+
+  // ── Video löschen ──────────────────────────────────────────────────────
+  async function deleteVideo(relPath) {
+    if (!confirm(`"${relPath}" wirklich löschen?\n(inkl. H264-Quelldatei falls vorhanden)`)) return;
+    const d = await apiFetch('/api/delete', 'POST', { p: relPath });
+    if (d?.success) {
+      toast('🗑 Gelöscht: ' + (d.deleted || []).join(', '), 'ok');
+      fetchRecordings();
+      fetchPending();
+    } else {
+      toast('❌ ' + (d?.error || 'Fehler beim Löschen'), 'error');
+    }
+  }
+
+  // ── Einstellungen: Multi-Target ────────────────────────────────────────
+  function toggleSettings() {
+    const p = document.getElementById('settings-panel');
+    const visible = p.style.display === 'block';
+    p.style.display = visible ? 'none' : 'block';
+    if (!visible) loadSettings();
+  }
+
+  async function loadSettings() {
+    const d = await apiFetch('/api/settings');
+    if (!d) return;
+    _targets = d.targets || [];
+    renderTargets();
+  }
+
+  function renderTargets() {
+    const c = document.getElementById('targets-container');
+    if (!_targets.length) {
+      c.innerHTML = '<p style="color:var(--muted);font-size:.875rem;margin-bottom:.75rem;">Noch keine Sync-Ziele konfiguriert. Klicke auf „＋ Ziel hinzufügen".</p>';
+      return;
+    }
+    c.innerHTML = _targets.map((t, i) => `
+      <div class="target-card" id="tc-${i}">
+        <div class="target-card-header">
+          <input class="name-input" type="text" value="${escHtml(t.name||'Ziel '+(i+1))}"
+                 oninput="_targets[${i}].name=this.value" placeholder="Name des Ziels">
+          <label class="toggle-label">
+            <input type="checkbox" ${t.enabled!==false?'checked':''} onchange="_targets[${i}].enabled=this.checked">
+            Aktiv
+          </label>
+          <button class="btn btn-danger" style="padding:.25rem .6rem;font-size:.8rem;" onclick="removeTarget(${i})">✕</button>
+        </div>
+        <div class="settings-grid">
+          <div class="field">
+            <label>Host / IP</label>
+            <input type="text" value="${escHtml(t.host||'')}" placeholder="192.168.1.100"
+                   oninput="_targets[${i}].host=this.value">
+          </div>
+          <div class="field">
+            <label>SSH Benutzer</label>
+            <input type="text" value="${escHtml(t.user||'')}" placeholder="roimme"
+                   oninput="_targets[${i}].user=this.value">
+          </div>
+          <div class="field" style="grid-column:span 2">
+            <label>Ziel-Pfad (Remote)</label>
+            <input type="text" value="${escHtml(t.path||'')}" placeholder="/home/roimme/Videos/"
+                   oninput="_targets[${i}].path=this.value">
+          </div>
+          <div class="field" style="grid-column:span 2">
+            <label>SSH Private Key <span style="color:var(--muted);font-weight:400">${t.key_set?'(gespeichert – leer lassen = unverändert)':'(leer lassen = Key-Auth deaktiviert)'}</span></label>
+            <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"
+                      oninput="_targets[${i}].ssh_key=this.value"></textarea>
+          </div>
+        </div>
+        <div class="action-row" style="margin-top:.5rem;">
+          <button class="btn btn-neutral" style="font-size:.82rem;padding:.3rem .7rem;"
+                  onclick="testTarget(${i}, this)">🔌 Testen</button>
+          <span class="test-result-inline" id="tr-${i}"></span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function addTarget() {
+    _targets.push({ name: `Ziel ${_targets.length + 1}`, host: '', user: '', path: '', enabled: true });
+    renderTargets();
+    document.getElementById(`tc-${_targets.length-1}`)?.scrollIntoView({ behavior:'smooth' });
+  }
+
+  function removeTarget(i) {
+    _targets.splice(i, 1);
+    renderTargets();
+  }
+
+  async function saveAllTargets() {
+    const btn = document.querySelector('[onclick="saveAllTargets()"]');
+    const status = document.getElementById('save-status');
+    btn.disabled = true; status.textContent = 'Speichert…';
+    const d = await apiFetch('/api/settings/targets', 'POST', { targets: _targets });
+    btn.disabled = false;
+    if (d?.success) {
+      toast('💾 Sync-Ziele gespeichert', 'ok');
+      _targets = d.targets;
+      renderTargets();
+      status.textContent = '✓ Gespeichert';
+      setTimeout(() => status.textContent = '', 3000);
+    } else {
+      toast('❌ ' + (d?.error || 'Fehler beim Speichern'), 'error');
+      status.textContent = '';
+    }
+  }
+
+  async function testTarget(i, btn) {
+    const t = _targets[i];
+    const res = document.getElementById(`tr-${i}`);
+    btn.disabled = true; btn.textContent = '🔌 Teste…';
+    res.style.display = 'none';
+    // Erst speichern damit der Key auf dem Server ist
+    await apiFetch('/api/settings/targets', 'POST', { targets: _targets });
+    const d = await apiFetch('/api/settings/test', 'POST', { target_id: i });
+    btn.disabled = false; btn.textContent = '🔌 Testen';
+    res.style.display = 'inline-block';
+    res.className = 'test-result-inline ' + (d?.success ? 'test-ok' : 'test-err');
+    res.textContent = d?.message || d?.error || 'Keine Antwort';
+  }
+
+  // ── Autostart wenn Token vorhanden ─────────────────────────────────────
+  if (token) showDashboard();
+</script>
+</body>
+</html>

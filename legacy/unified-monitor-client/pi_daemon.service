@@ -1,0 +1,20 @@
+[Unit]
+Description=Raspberry Pi Bird Camera Daemon
+After=network.target
+StartLimitIntervalSec=10
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=roimme
+WorkingDirectory=/home/roimme/vogel-kamera-linux/unified-monitor-client
+ExecStart=/usr/bin/python3 /home/roimme/vogel-kamera-linux/unified-monitor-client/pi_daemon.py
+Restart=on-failure
+RestartSec=5
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

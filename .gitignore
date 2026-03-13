@@ -3,6 +3,7 @@
 config_local.py
 unified-monitor-client/.env
 unified-monitor-client/config.py
+ansible/.env
 
 # Python
 __pycache__/
@@ -74,6 +75,10 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Logdateien (Testläufe, lokale Entwicklung)
+*.log
+*.log.*
 
 # Video/Audio-Dateien (falls lokal gespeichert)
 *.mp4

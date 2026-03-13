@@ -1,0 +1,34 @@
+---
+# UFW Firewall konfigurieren
+- name: UFW installieren
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: UFW – SSH erlauben (IMMER zuerst, sonst Lockout!)
+  community.general.ufw:
+    rule:    allow
+    port:    "22"
+    proto:   tcp
+    comment: SSH
+
+- name: UFW – HTTPS Daemon Port erlauben
+  community.general.ufw:
+    rule:    allow
+    port:    "{{ pi_daemon_port }}"
+    proto:   tcp
+    comment: "Vogel-Kamera Daemon HTTPS"
+
+- name: UFW – Standard eingehend verweigern
+  community.general.ufw:
+    default: deny
+    direction: incoming
+
+- name: UFW – Standard ausgehend erlauben
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+
+- name: UFW aktivieren
+  community.general.ufw:
+    state: enabled

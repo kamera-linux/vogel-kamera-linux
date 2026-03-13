@@ -368,6 +368,8 @@ class StatusReporter:
         # Temperatur auslesen
         self._log('', "")
         self._log('', "🌡️  PI-RESSOURCEN:")
+        
+        # CPU-Temperatur
         temp_output = self.ssh.exec_command_safe("vcgencmd measure_temp 2>/dev/null || echo 'N/A'")
         if temp_output and "temp=" in temp_output:
             # Extrahiere Temperatur (z.B. "temp=45.1'C" → 45.1°C)
@@ -388,6 +390,70 @@ class StatusReporter:
                 self._log(color, f"   {emoji} CPU-Temperatur: {temp}°C")
         else:
             self._log('yellow', f"   ⚠️  Temperatur: N/A (vcgencmd nicht verfügbar)")
+        
+        # CPU Load Auslesen (1-Minute Average)
+        load_output = self.ssh.exec_command_safe("cat /proc/loadavg 2>/dev/null")
+        if load_output:
+            try:
+                load_parts = load_output.split()
+                if load_parts:
+                    load_1min = float(load_parts[0])
+                    # Ampel-Logik für CPU Load (basierend auf 4-Core Pi)
+                    # 0-2.0: grün, 2.0-3.5: gelb, >3.5: rot
+                    if load_1min < 2.0:
+                        load_color = 'green'
+                        load_emoji = "🟢"
+                    elif load_1min < 3.5:
+                        load_color = 'yellow'
+                        load_emoji = "🟡"
+                    else:
+                        load_color = 'red'
+                        load_emoji = "🔴"
+                    self._log(load_color, f"   {load_emoji} CPU Load (1Min): {load_1min:.2f}")
+            except (ValueError, IndexError):
+                self._log('cyan', f"   ⚙️  CPU Load: N/A")
+        
+        # Memory (RAM) Auslesen
+        # Nutze 'free' ohne -b flag (besser kompatibel) und extrahiere 2. Zeile (Mem:)
+        mem_cmd = "free 2>/dev/null | awk 'NR==2 {if($2>0) print int($3/$2*100); else print 0}'"
+        mem_output = self.ssh.exec_command_safe(mem_cmd, fallback="")
+        if mem_output and mem_output.strip():
+            try:
+                mem_percent = int(mem_output.strip())
+                # Ampel-Logik für Memory: 0-60% grün, 60-80% gelb, >80% rot
+                if mem_percent < 60:
+                    mem_color = 'green'
+                    mem_emoji = "🟢"
+                elif mem_percent < 80:
+                    mem_color = 'yellow'
+                    mem_emoji = "🟡"
+                else:
+                    mem_color = 'red'
+                    mem_emoji = "🔴"
+                self._log(mem_color, f"   {mem_emoji} Memory (RAM): {mem_percent}% genutzt")
+            except (ValueError, IndexError):
+                self._log('yellow', f"   ⚠️  Memory: N/A")
+        else:
+            self._log('yellow', f"   ⚠️  Memory: N/A")
+        
+        # ACCELERATOR Status Auslesen
+        # Prüfe letzte Detection-Log für Hardware-Status
+        detection_log = f"/tmp/unified-camera-monitor.log"
+        # Suche nach der spezifischen Hardware-Backend-Status-Zeile (nicht allgemeinen "fallback")
+        accel_status_cmd = f"grep -i 'Backend:' '{detection_log}' 2>/dev/null | tail -1 || grep -i 'hailo\\|onnx\\|runtime' '{detection_log}' 2>/dev/null | tail -1 || echo ''"
+        accel_output = self.ssh.exec_command_safe(accel_status_cmd)
+        
+        if accel_output and accel_output.strip():
+            if 'HAILO' in accel_output or 'hailo' in accel_output:
+                self._log('green', f"   🚀 Hardware: Hailo-8 (26 TOPS Accelerator aktiv)")
+            elif 'ONNX' in accel_output or 'onnx' in accel_output:
+                self._log('green', f"   🚀 Hardware: ONNX Runtime (Hardware-Beschleunigung)")
+            elif 'CPU' in accel_output or 'fallback' in accel_output or 'PyTorch' in accel_output:
+                self._log('cyan', f"   ⚙️  Hardware: CPU (PyTorch Fallback aktiv)")
+            else:
+                self._log('yellow', f"   ❓ Hardware: Erkannt aber Status unklar")
+        else:
+            self._log('yellow', f"   ❓ Hardware: Status unbekannt (Detection läuft noch nicht)")
         
         # Disk-Speicher prüfen
         pi_home = f'/home/{SSH_USER}'

@@ -1,0 +1,34 @@
+---
+# Vollständiges Erstdeployment:
+#   docker buildx build ... && ansible-playbook playbooks/deploy.yml --ask-vault-pass
+#
+# Dieses Playbook wird von build_and_deploy.sh aufgerufen.
+
+- name: Pi-Daemon Deployment
+  hosts: all
+  gather_facts: true
+
+  vars_files:
+    - ../group_vars/all/vars.yml
+    - ../group_vars/all/vault.yml
+
+  roles:
+    - role: docker      # Docker CE installieren
+    - role: ssl         # Self-signed Zertifikat
+    - role: firewall    # UFW-Regeln
+    - role: pi-daemon   # Image laden + docker-compose + systemd
+
+  post_tasks:
+    - name: Warte bis Daemon erreichbar ist
+      ansible.builtin.wait_for:
+        port:    "{{ pi_daemon_port }}"
+        host:    "{{ inventory_hostname }}"
+        delay:   5
+        timeout: 60
+
+    - name: Deployment abgeschlossen
+      ansible.builtin.debug:
+        msg:
+          - "✅ Pi-Daemon läuft auf https://{{ inventory_hostname }}:{{ pi_daemon_port }}"
+          - "   Web-GUI: https://{{ inventory_hostname }}:{{ pi_daemon_port }}/"
+          - "   Zertifikat: self-signed, Browser-Ausnahme nötig beim ersten Aufruf"
