@@ -293,70 +293,72 @@ nano ansible/.env     # PI_HOST, PI_USER, PI_SSH_KEY, VAULT_PASS_FILE eintragen
 
 ## 📂 Projektstruktur
 
-```mermaid
-mindmap
-  root((🐦 vogel-kamera-linux))
-    🚀 ansible
-      build_and_deploy.sh
-      .env / .env.example
-      ansible.cfg
-      inventory/hosts.yml
-      group_vars/all/vars.yml
-      group_vars/all/vault.yml
-      playbooks/deploy.yml
-      playbooks/update.yml
-      roles/pi-daemon
-      roles/ssl
-      roles/docker
-      roles/firewall
-      roles/build-host
-    🐳 unified-monitor-client
-      pi_daemon_secure.py ⭐
-      web/index.html
-      web/logo.png
-      requirements_daemon.txt
-      README.md
-    🍓 raspberry-pi-scripts
-      unified-camera-monitor-detect-only.py ⭐
-      requirements-pi.txt
-      HAILO-README.md
-    📚 docs
-      ARCHITEKTUR.md
-      SECURITY.md
-      AI-MODELLE-VOGELARTEN.md
-      ANLEITUNG-EIGENES-AI-MODELL.md
-      VERSIONIERUNG.md
-      i18n DE / EN / JA
-    🔧 scripts
-      version.py
-      release_workflow.py
-      update_version.py
-    📋 releases
-      README.md
-      v2.2.1 aktuell
-      ältere Versionen
-    📸 assets
-      WebGUI-Login.png
-      WebGUI-Status.png
-      WebGUI-Manuelles-Video.png
-      WebGUI-OnlineHilfe.png
-      Vogelhaus-Fotos
-    🤖 ai-training-tools
-      train_bird_model.py
-      extract_frames.py
-      vogel-model-trainer
-    🐍 python-toolbox
-      vogel-video-analyzer
-    🐍 python-skripte
-      check_ai_models.py
-      remote_system_monitor.py
-    🔐 git-automation
-      git_automation.py
-    🔧 3d-konstruktion
-    📦 legacy
-      archiviert bis v2.1.x
-    📚 wiki-sync
-    🎤 veranstaltungen
+```
+vogel-kamera-linux/
+├── ansible/                          # 🚀 Deployment & Konfiguration
+│   ├── group_vars/all/               #    Variablen + Vault (Secrets)
+│   ├── inventory/hosts.yml           #    Raspberry Pi (Alias: pi-camera)
+│   ├── playbooks/                    #    deploy.yml · update.yml · setup-build-host.yml
+│   ├── roles/                        #    build-host · docker · firewall · pi-daemon · ssl
+│   ├── build_and_deploy.sh           #    ⭐ Haupt-Skript (--install / --update / --e2e)
+│   └── ansible.cfg
+│
+├── unified-monitor-client/           # 🐳 Docker-Container (Hauptsystem)
+│   ├── web/                          #    Web-GUI (index.html + logo.png)
+│   ├── pi_daemon_secure.py           #    ⭐ Flask HTTPS-Daemon (JWT + TOTP)
+│   ├── requirements_daemon.txt
+│   └── README.md / SETUP_GUIDE.md
+│
+├── raspberry-pi-scripts/             # 🍓 Detection-Skript (läuft im Container)
+│   ├── unified-camera-monitor-detect-only.py   # ⭐ YOLO Detection + Recording
+│   ├── requirements-pi.txt
+│   └── HAILO-README.md
+│
+├── docker/                           # 🐳 Dockerfile (ARM64, python:3.13-slim-bookworm)
+│
+├── docs/                             # 📚 Dokumentation
+│   ├── i18n/                         #    README.de.md · README.md · README.ja.md
+│   ├── ARCHITEKTUR.md
+│   ├── SECURITY.md
+│   ├── AI-MODELLE-VOGELARTEN.md
+│   └── ANLEITUNG-EIGENES-AI-MODELL.md
+│
+├── releases/                         # 📋 Release-Archiv
+│   ├── v2.2.1/                       #    ← aktuelle Version
+│   ├── v2.2.0/ … v1.1.1/            #    ältere Versionen
+│   └── README.md
+│
+├── assets/                           # 📸 Bilder & Screenshots
+│   ├── WebGUI-Login.png
+│   ├── WebGUI-Status.png
+│   ├── WebGUI-Manuelles-Video.png
+│   ├── WebGUI-OnlineHilfe.png
+│   └── vogelhaus-kamera-*.png
+│
+├── scripts/                          # 🔧 Versions- & Release-Skripte
+│   ├── version.py
+│   ├── release_workflow.py
+│   └── update_version.py
+│
+├── ai-training-tools/                # 🤖 KI-Trainings-Tools (optional)
+│   ├── train_bird_model.py
+│   ├── extract_frames.py
+│   └── vogel-model-trainer/
+│
+├── python-toolbox/                   # 🐍 Python-Tools
+│   └── vogel-video-analyzer/         #    Video-Analyse (Git Submodule)
+│
+├── git-automation/                   # 🔐 Git-Automatisierung (AES-256)
+│   └── git_automation.py
+│
+├── wiki-sync/                        # 📚 GitHub-Wiki Synchronisation
+├── 3d-konstruktion/                  # 🔧 CAD-Dateien für Vogelhaus-Baupläne
+├── legacy/                           # 📦 Archiviert (< v2.2, SSH-basierter Client)
+├── veranstaltungen/                  # 🎤 Event-Management
+│
+├── CHANGELOG.md
+├── VERSION                           # 2.2.1
+└── README.md
 ```
 
 > ⭐ = Hauptsystem-Einstiegspunkte
