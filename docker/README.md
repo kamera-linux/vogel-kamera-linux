@@ -1,233 +1,226 @@
-# 🐳 Docker — ARM64-Image auf Gentoo Linux bauen
+# 🐳 Docker — ARM64-Image für den Vogel-Kamera-Daemon
 
-Schritt-für-Schritt-Anleitung für das Cross-Compilation des Vogel-Kamera Docker-Images (`linux/arm64`) auf einem **Gentoo x86_64**-System.
+Cross-Compilation des `pi-daemon`-Images (`linux/arm64`) auf einem **Gentoo x86_64**-Rechner über QEMU-Emulation.
+
+> **Tipp – alles automatisch per Ansible:**
+> ```bash
+> cd ansible
+> bash build_and_deploy.sh --setup-host   # Build-Host einrichten (einmalig)
+> bash build_and_deploy.sh --update       # Image bauen + auf Pi deployen
+> ```
+> Die manuelle Anleitung unten erklärt, was dabei im Hintergrund passiert.
 
 ---
 
-## Voraussetzungen
+## Image-Architektur
 
-> **Tipp – automatisch per Ansible:**
-> ```bash
-> ./ansible/build_and_deploy.sh --setup-host
-> ```
-> Installiert Docker, QEMU (aarch64) und buildx automatisch.
-> Danach einmal neu einloggen oder `newgrp docker` ausführen.
+```mermaid
+graph TD
+    subgraph Image["🐳 vogel-pi:latest (linux/arm64)"]
+        BASE["python:3.13-slim-bookworm\n(ARM64 Basis)"]
+        PKG["System-Pakete\nffmpeg · alsa-utils · curl · libgl1"]
+        PY["Python-Abhängigkeiten\n(requirements_daemon.txt)\nFlask · pyotp · bcrypt · psutil · ..."]
+        APP["App-Code\npi_daemon_secure.py\nweb/ (HTML/CSS/JS)"]
+        DET["Detection-Skript\nunified-camera-monitor-detect-only.py"]
+        WRP["Wrapper-Skripte\n/usr/local/bin/rpicam-vid\n/usr/local/bin/python3-trixie"]
+        BASE --> PKG --> PY --> APP
+        APP --> DET
+        PKG --> WRP
+    end
+
+    subgraph HostMounts["📂 Bind-Mounts aus Pi-Host (docker-compose)"]
+        HV["/host/lib + /host/usr/lib\n(Trixie libc/libs)"]
+        HRPIC["/opt/rpicam-vid\n(rpicam-apps Binary)"]
+        HCAM["/dev/video* · /dev/media*\nKamera-Devices"]
+        HVID["~/Videos\nAufnahmen"]
+        HSSL["/etc/pi-daemon/certs\nTLS-Zertifikat"]
+    end
+
+    WRP -->|"ld-linux-aarch64.so.1\n--library-path /host/lib"| HV
+    WRP --> HRPIC
+    APP --> HCAM
+    APP --> HVID
+    APP --> HSSL
+```
+
+**Warum kein `rpicam-apps` im Image?**
+`rpicam-apps` ist auf Raspberry Pi OS Trixie gegen eine neuere glibc gelinkt als im
+`bookworm`-Basis-Image. Statt das gesamte Trixie-System ins Image zu packen, werden die
+Binaries und Libs per **Bind-Mount** aus dem Pi-Host eingebunden. Ein Wrapper-Skript
+(`/usr/local/bin/rpicam-vid`) ruft `rpicam-vid` über den Trixie-Dynamic-Linker auf —
+dadurch lädt es die Trixie-Libs ohne den Python-3.13-Interpreter des Images zu beeinflussen.
+
+---
+
+## Voraussetzungen auf dem Build-Host (Gentoo)
 
 ### Schritt 1 — Docker installieren
 
 Auf Gentoo wird Docker über `app-containers/docker` installiert:
 
 ```bash
-# USE-Flags setzen (empfohlen)
 echo 'app-containers/docker ~amd64' >> /etc/portage/package.accept_keywords
 echo 'app-containers/docker-cli ~amd64' >> /etc/portage/package.accept_keywords
+echo 'app-containers/docker-buildx ~amd64' >> /etc/portage/package.accept_keywords
 
-# Docker installieren
-emerge --ask app-containers/docker app-containers/docker-cli
-```
-
-Docker-Daemon beim Systemstart aktivieren und starten:
-
-```bash
-# OpenRC
-rc-update add docker default
-rc-service docker start
+emerge --ask app-containers/docker app-containers/docker-cli app-containers/docker-buildx
 
 # systemd
 systemctl enable --now docker
-```
 
-Eigenen User zur `docker`-Gruppe hinzufügen (kein `sudo` nötig):
-
-```bash
+# User zur docker-Gruppe hinzufügen (kein sudo nötig)
 gpasswd -a $USER docker
-newgrp docker          # Gruppe sofort aktivieren (oder neu einloggen)
-```
-
-Prüfen:
-
-```bash
-docker version
-docker run --rm hello-world
+newgrp docker
 ```
 
 ---
 
-### Schritt 2 — QEMU-User-Static installieren
-
-QEMU wird benötigt, um ARM64-Binaries auf x86_64 auszuführen:
+### Schritt 2 — QEMU (ARM64-Emulation) installieren
 
 ```bash
 echo 'app-emulation/qemu ~amd64' >> /etc/portage/package.accept_keywords
-
-# Minimales USE-Flag: nur User-Space-Emulation, kein KVM-Overhead
-echo 'app-emulation/qemu static-user QEMU_SOFTMMU_TARGETS: QEMU_USER_TARGETS: aarch64' \
-  >> /etc/portage/package.use/qemu
+echo 'app-emulation/qemu static-user' >> /etc/portage/package.use/qemu
+echo 'QEMU_USER_TARGETS="aarch64"' >> /etc/portage/make.conf
 
 emerge --ask app-emulation/qemu
 ```
 
-QEMU-Binary-Formate im Kernel registrieren:
+binfmt dauerhaft einrichten (wird von `--setup-host` automatisch konfiguriert):
 
 ```bash
-# Prüfen ob binfmt_misc geladen ist
-lsmod | grep binfmt_misc
-# Falls nicht: modprobe binfmt_misc
+# Flags: P=preserve-argv[0], O=open-binary, C=credentials, F=fix-binary
+# F ist entscheidend: Kernel öffnet QEMU-Binary beim Registrieren →
+# funktioniert auch innerhalb von Docker-Containern ohne /usr/bin-Zugriff
+echo ':qemu-aarch64:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/usr/bin/qemu-aarch64:POCF' \
+    > /etc/binfmt.d/qemu-aarch64.conf
 
-# QEMU-Interpreter für ARM64 mit Docker registrieren (einmalig)
-docker run --privileged --rm tonistiigi/binfmt --install arm64
+systemctl enable --now systemd-binfmt
 
-# Prüfen ob aarch64 registriert ist
+# Prüfen
 cat /proc/sys/fs/binfmt_misc/qemu-aarch64
+# → enabled
 ```
-
-> Die Registrierung über `tonistiigi/binfmt` ist nach einem Neustart weg.  
-> Für dauerhafte Registrierung: `sys-apps/binfmt-support` oder einen OpenRC-/systemd-Dienst einrichten  
-> (siehe Anhang unten).
 
 ---
 
-### Schritt 3 — Docker Buildx einrichten
-
-`docker buildx` ist in neueren Docker-Versionen enthalten. Prüfen:
+### Schritt 3 — docker buildx Kontext anlegen
 
 ```bash
-docker buildx version
-```
-
-Einen neuen Builder mit Multi-Plattform-Unterstützung anlegen:
-
-```bash
-docker buildx create --name multiarch --driver docker-container --use
+docker buildx create --name pi-builder --use
 docker buildx inspect --bootstrap
+# → Platforms: linux/amd64, linux/arm64, ...
 ```
-
-Ausgabe sollte `linux/amd64, linux/arm64` unter "Platforms" zeigen.
 
 ---
 
 ## Image bauen
 
-### Schritt 4 — Repository klonen
+**Wichtig:** Build-Kontext ist das **Repo-Root** (nicht `docker/`), da der Dockerfile
+Dateien aus `unified-monitor-client/` und `raspberry-pi-scripts/` kopiert.
 
 ```bash
-git clone https://github.com/kamera-linux/vogel-kamera-linux.git
-cd vogel-kamera-linux
-```
+cd vogel-kamera-linux   # Repo-Root
 
-### Schritt 5 — ARM64-Image bauen
-
-**Wichtig:** Der Build-Kontext muss das **Repo-Root** sein (nicht `docker/`), da der Dockerfile Dateien aus `unified-monitor-client/` und `raspberry-pi-scripts/` kopiert.
-
-```bash
 docker buildx build \
-  --platform linux/arm64 \
-  --file docker/Dockerfile \
-  --tag vogel-pi:latest \
-  --load \
-  .
+    --platform linux/arm64 \
+    --file docker/Dockerfile \
+    --tag vogel-pi:latest \
+    --load \
+    .
 ```
 
 | Flag | Bedeutung |
 |------|-----------|
 | `--platform linux/arm64` | Ziel-Architektur (Raspberry Pi 5) |
-| `--file docker/Dockerfile` | Dockerfile-Pfad (Kontext ist `.`) |
-| `--tag vogel-pi:latest` | Image-Name und Tag |
-| `--load` | Image ins lokale `docker images` laden |
+| `--file docker/Dockerfile` | Dockerfile relativ zum Build-Kontext |
+| `--tag vogel-pi:latest` | Image-Name |
+| `--load` | Ins lokale `docker images` laden (nicht pushen) |
 
-Der Build dauert auf x86_64 via QEMU-Emulation typisch **5–15 Minuten** (abhängig von CPU und `rpicam-apps`-Paket).
-
----
-
-### Schritt 6 — Image prüfen
-
+Mit Cache-Reset (nach Dependency-Updates):
 ```bash
-# Architektur verifizieren
-docker inspect vogel-pi:latest | grep Architecture
-# Erwartet: "Architecture": "arm64"
+docker buildx build --platform linux/arm64 --file docker/Dockerfile \
+    --tag vogel-pi:latest --load --no-cache .
+```
 
-# Image-Größe
+Baudauer: ~**3–8 Minuten** (gecacht: ~30 s).
+
+Image prüfen:
+```bash
+docker inspect vogel-pi:latest | grep Architecture
+# → "Architecture": "arm64"
 docker images vogel-pi
 ```
 
 ---
 
-## Image auf den Raspberry Pi übertragen
+## Image auf den Pi übertragen
 
-### Option A — Direkt per SSH (kein Registry nötig)
+### Automatisch (empfohlen)
 
 ```bash
-# As tar.gz exportieren
-docker save vogel-pi:latest | gzip > vogel-pi-arm64.tar.gz
-
-# Zum Pi übertragen
-scp -i ~/.ssh/id_rsa_pi vogel-pi-arm64.tar.gz pi@raspberry-pi.local:~
-
-# Auf dem Pi laden
-ssh -i ~/.ssh/id_rsa_pi pi@raspberry-pi.local "docker load < ~/vogel-pi-arm64.tar.gz"
+cd ansible
+bash build_and_deploy.sh --update
+# → baut, komprimiert, SCP, docker load, systemctl restart pi-daemon
 ```
 
-### Option B — Ansible (empfohlen für dieses Projekt)
+### Manuell
 
 ```bash
-cp ansible/.env.example ansible/.env
-nano ansible/.env    # PI_HOST, PI_USER, PI_SSH_KEY eintragen
+docker save vogel-pi:latest | gzip > /tmp/vogel-pi.tar.gz
+scp -i ~/.ssh/id_rsa_ai-had /tmp/vogel-pi.tar.gz roimme@raspberrypi-5-ai-had:/tmp/
 
-./ansible/build_and_deploy.sh --install
-```
-
-Das Skript erledigt Build + Export + Transfer + Container-Start automatisch.
-
----
-
-## Container lokal testen (optional)
-
-Da `rpicam-apps` Kamera-Hardware erwartet, kann der Container lokal nur eingeschränkt getestet werden. Für reine API-Tests:
-
-```bash
-docker run --rm -it \
-  -p 8443:8443 \
-  --platform linux/arm64 \
-  vogel-pi:latest \
-  python3 -c "import flask, pyotp; print('Imports OK')"
+ssh -i ~/.ssh/id_rsa_ai-had roimme@raspberrypi-5-ai-had \
+    "docker load -i /tmp/vogel-pi.tar.gz && systemctl restart pi-daemon"
 ```
 
 ---
 
-## Anhang: QEMU-Registrierung dauerhaft einrichten (OpenRC)
+## Container-Konfiguration (docker-compose)
 
-Damit `binfmt_misc` nach einem Neustart erhalten bleibt:
+Der Container läuft auf dem Pi mit `privileged: true` und folgenden Bind-Mounts:
 
-```bash
-# /etc/local.d/qemu-binfmt.start
+| Mount | Richtung | Zweck |
+|-------|----------|-------|
+| `~/Videos` → `/root/Videos` | Host → Container | Aufnahmen persistent speichern |
+| `/etc/pi-daemon/certs` | Host → Container | TLS-Zertifikat (HTTPS Port 8443) |
+| `/usr/bin/rpicam-vid` → `/opt/rpicam-vid` | Host → Container | rpicam-apps Binary (Trixie) |
+| `/lib/aarch64-linux-gnu` → `/host/lib` | Host → Container | Trixie-libc für rpicam-vid |
+| `/usr/lib/aarch64-linux-gnu` → `/host/usr/lib` | Host → Container | Trixie-Libs |
+| `/usr/lib/python3` → `/host/usr/lib2` | Host → Container | picamera2 / numpy Trixie-Libs |
+| `/dev/video*`, `/dev/media*` | Host-Devices | Kamera-Hardware-Zugriff |
+
+---
+
+## Wrapper-Skripte im Container
+
+### `/usr/local/bin/rpicam-vid`
+```sh
 #!/bin/sh
-docker run --privileged --rm tonistiigi/binfmt --install arm64
+exec /host/lib/ld-linux-aarch64.so.1 \
+    --library-path /host/lib:/host/usr/lib:/host/usr/lib/pulseaudio \
+    /opt/rpicam-vid "$@"
 ```
+Ruft das Host-`rpicam-vid` über den Trixie-Dynamic-Linker auf → lädt automatisch die
+passenden Trixie-Libs statt der Bookworm-Libs des Containers.
 
-```bash
-chmod +x /etc/local.d/qemu-binfmt.start
-rc-update add local default
+### `/usr/local/bin/python3-trixie`
+```sh
+#!/bin/sh
+exec /host/lib/ld-linux-aarch64.so.1 \
+    --library-path /host/lib:/host/usr/lib:/host/usr/lib2 \
+    /opt/python3-host "$@"
 ```
+Wird vom Detection-Skript verwendet, das `picamera2` / YOLO / Hailo-Libs benötigt —
+diese sind nur als Trixie-Pakete auf dem Host verfügbar.
 
 ---
 
-## Anhang: Kern-Konfiguration für binfmt_misc
+## Health-Check
 
-Falls `binfmt_misc` nicht als Modul vorhanden ist:
-
+Der Container prüft sich alle 30 Sekunden selbst:
 ```bash
-# Prüfen
-zcat /proc/config.gz | grep BINFMT_MISC
-# Erwartet: CONFIG_BINFMT_MISC=y oder CONFIG_BINFMT_MISC=m
-```
-
-Falls nicht gesetzt → Kernel neu kompilieren mit:
-
-```
-Kernel hacking  --->
-  [*] Magic SysRq key
-General setup  --->
-  [*] Enable binfmt_misc
+docker inspect --format='{{.State.Health.Status}}' pi-daemon
+# → healthy
 ```
 
 ---
@@ -235,32 +228,41 @@ General setup  --->
 ## Fehlerbehebung
 
 **`exec format error` beim Build:**
-QEMU ist nicht korrekt registriert.
 ```bash
-docker run --privileged --rm tonistiigi/binfmt --install arm64
+# QEMU-binfmt neu registrieren
+systemctl restart systemd-binfmt
+cat /proc/sys/fs/binfmt_misc/qemu-aarch64   # → muss "enabled" zeigen
 ```
+
+**`GLIBC_PRIVATE not found` im Container:**
+Die Trixie-Libs auf dem Pi-Host sind nicht korrekt gemountet. Prüfen ob die Bind-Mounts
+in `docker-compose.yml` auf die richtigen Host-Pfade zeigen.
 
 **`docker buildx` nicht gefunden:**
 ```bash
 emerge --ask app-containers/docker-buildx
-# oder: Plugin manuell nach ~/.docker/cli-plugins/ herunterladen
 ```
 
-**Build bricht bei `rpicam-apps` ab:**
-Das Paket zieht viele Abhängigkeiten nach. Erhöhe den Buildtime-Timeout:
+**Build sehr langsam:**
+QEMU-Emulation ist ~10–20× langsamer als native ARM64-Hardware — nur beim ersten Build
+ohne Cache. Danach werden Layer gecacht (~30 s):
 ```bash
-# In /etc/docker/daemon.json
-{ "default-network-opts": {}, "log-level": "warn" }
-```
-Oder baue mit `--progress=plain` für detaillierte Ausgabe:
-```bash
-docker buildx build --platform linux/arm64 --progress=plain -f docker/Dockerfile --tag vogel-pi:latest --load .
+docker buildx build ... --progress=plain   # detaillierte Ausgabe
 ```
 
 **Kein Speicherplatz:**
-QEMU-Builds benötigen erheblich mehr temporären Disk-Speicher (~3–5 GB).
 ```bash
-# Build-Cache aufräumen
-docker buildx prune -f
-docker system prune -f
+docker buildx prune -f     # Build-Cache löschen (~3–5 GB bei QEMU-Builds)
+docker system prune -f     # ungenutzte Images/Container löschen
 ```
+
+---
+
+## Weiterführende Dokumentation
+
+| Dokument | Inhalt |
+|----------|--------|
+| [ansible/README.md](../ansible/README.md) | Build & Deploy Workflow, E2E-Test |
+| [unified-monitor-client/](../unified-monitor-client/) | `pi_daemon_secure.py`, Web-GUI |
+| [raspberry-pi-scripts/UNIFIED-MONITOR-README.md](../raspberry-pi-scripts/UNIFIED-MONITOR-README.md) | Detection-Skript, YOLO, Hailo |
+| [docs/ARCHITEKTUR.md](../docs/ARCHITEKTUR.md) | Gesamtarchitektur |

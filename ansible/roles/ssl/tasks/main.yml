@@ -25,8 +25,8 @@
       -nodes
       -keyout {{ pi_certs_dir }}/key.pem
       -out    {{ pi_certs_dir }}/cert.pem
-      -subj   "/CN=raspberrypi-5-ai-had/O=VogelKamera/C=DE"
-      -addext "subjectAltName=DNS:raspberrypi-5-ai-had,IP:127.0.0.1"
+      -subj   "/CN={{ pi_host }}/O=VogelKamera/C=DE"
+      -addext "subjectAltName=DNS:{{ pi_host }},DNS:localhost,IP:{{ ansible_default_ipv4.address | default('127.0.0.1') }},IP:127.0.0.1"
   when: not cert_file.stat.exists
 
 - name: Zertifikat-Berechtigungen setzen

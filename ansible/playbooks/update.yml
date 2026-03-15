@@ -13,7 +13,7 @@
     - ../group_vars/all/vault.yml
 
   tasks:
-    - name: Prüfen ob Image-Archiv vorhanden
+    - name: Prüfen ob Image-Archiv vorhanden (SCP-Upload durch build_and_deploy.sh)
       ansible.builtin.stat:
         path: /tmp/vogel-pi.tar.gz
       register: image_archive
@@ -39,6 +39,14 @@
         mode:  "0600"
       no_log: true
 
+    - name: docker-compose.yml aktualisieren
+      ansible.builtin.template:
+        src:   ../roles/pi-daemon/templates/docker-compose.yml.j2
+        dest:  "{{ pi_daemon_dir }}/docker-compose.yml"
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode:  "0644"
+
     - name: pi-daemon neu starten
       ansible.builtin.systemd:
         name:  pi-daemon
@@ -47,10 +55,18 @@
     - name: Warte bis Daemon wieder erreichbar
       ansible.builtin.wait_for:
         port:    "{{ pi_daemon_port }}"
-        host:    "{{ inventory_hostname }}"
-        delay:   5
-        timeout: 60
+        host:    "{{ ansible_host }}"
+        delay:   10
+        timeout: 180
+      ignore_errors: true
+      register: wait_result
 
     - name: Update abgeschlossen
       ansible.builtin.debug:
-        msg: "✅ Update fertig – https://{{ inventory_hostname }}:{{ pi_daemon_port }}"
+        msg: >-
+          {% if wait_result.failed | default(false) %}
+          ⚠️  Update deployt, Daemon antwortet noch nicht auf Port {{ pi_daemon_port }} – bitte manuell prüfen:
+          docker logs pi-daemon
+          {% else %}
+          ✅ Update fertig – https://{{ inventory_hostname }}:{{ pi_daemon_port }}
+          {% endif %}

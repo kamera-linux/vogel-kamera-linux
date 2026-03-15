@@ -10,11 +10,10 @@ services:
     ports:
       - "{{ pi_daemon_port }}:{{ pi_daemon_port }}"
 
-    # Kamera, Hailo NPU, Audio
-    devices:
-      - /dev/video0:/dev/video0
-      - /dev/hailo0:/dev/hailo0        # Hailo-8L NPU (AI HAT+)
-      - /dev/snd:/dev/snd             # ALSA Audio
+    # Privilegierter Modus: Gibt vollen Zugriff auf ALLE Host-Devices (/dev/videoN, /dev/media*, etc.)
+    # und entfernt masked paths (/sys/firmware/devicetree ist für rpicam-apps sichtbar).
+    # Akzeptabel für eine dedizierte, nicht-multi-tenant Raspberry-Pi-Kamera.
+    privileged: true
 
     # Kernel-UEvents für libcamera
     volumes:
@@ -22,7 +21,25 @@ services:
       - /etc/pi-daemon:/config         # beschreibbar: sync-config.json + SSH-Key
       - {{ pi_certs_dir }}:/certs:ro
       - /run/udev:/run/udev:ro
-      - /proc:/proc:ro               # psutil braucht /proc
+      - /proc:/proc:ro                 # psutil braucht /proc
+      - /sys/bus/i2c:/sys/bus/i2c      # Kamera-Reset via imx708 sysfs (unbind/bind)
+      # rpicam-apps: Binary + Libraries vom Pi-Host einbinden (kein apt-Install nötig)
+      - /usr/bin/rpicam-vid:/opt/rpicam-vid:ro              # Binary (Wrapper in /usr/local/bin/rpicam-vid)
+      - /lib/aarch64-linux-gnu:/host/lib:ro                  # Pi-spezifische Trixie-Libs (libcamera, libpisp ...)
+      - /usr/lib/aarch64-linux-gnu:/host/usr/lib:ro            # Weitere Trixie-Libs (libav/ffmpeg H.264-Codec etc.)
+      - /usr/lib/aarch64-linux-gnu/rpicam-apps-encoder:/usr/lib/aarch64-linux-gnu/rpicam-apps-encoder:ro  # H.264-Encoder-Plugin
+      - /usr/lib/aarch64-linux-gnu/pulseaudio:/host/usr/lib/pulseaudio:ro  # libpulsecommon für libav-encoder
+      - /usr/lib/aarch64-linux-gnu/libcamera:/usr/lib/aarch64-linux-gnu/libcamera:ro  # libcamera IPA-Module
+      - /usr/share/libpisp:/usr/share/libpisp:ro             # libpisp-Konfigurationsdateien
+      - /usr/share/libcamera:/usr/share/libcamera:ro         # libcamera IPA-Tuning-/Config-Dateien (imx708_wide.json etc.)
+      - /dev/dma_heap:/dev/dma_heap                          # DMA-Heap inkl. vidbuf_cached-Symlink (fehlt sonst im Container)
+      - /usr/lib/python3/dist-packages:/usr/lib/python3/dist-packages:ro  # picamera2 + libcamera + numpy Python-Bindings (Trixie System-Pakete)
+      # Host-Python 3.13 (Trixie) für Detection-Script – gleiche glibc wie libcamera/picamera2
+      - /usr/bin/python3.13:/opt/python3-host:ro                          # Host Python 3.13 Binary
+      - /usr/lib/python3.13:/usr/lib/python3.13:ro                        # Host Python 3.13 Stdlib
+      - /home/roimme/.local/lib/python3.13/site-packages:/opt/host-site-packages:ro  # cv2 + ultralytics
+      - /usr/lib:/host/usr/lib2:ro                                        # Weitere Trixie-Libs (z.B. libarmadillo)
+      - /home/roimme/vogel-kamera-linux/raspberry-pi-scripts/yolov8n.pt:/home/roimme/vogel-kamera-linux/raspberry-pi-scripts/yolov8n.pt:ro  # YOLO Model
 
     env_file:
       - /etc/pi-daemon/app.env
@@ -31,16 +48,8 @@ services:
     # sie nicht als Variablen-Expansion interpretiert.
     # vault_pi_daemon_password_hash = "$2b$12$<53chars>" → Template schreibt "$$2b$$12$$<53chars>"
     environment:
+      TZ: Europe/Berlin
       PI_DAEMON_PASSWORD_HASH: $$2b$$12$${{ vault_pi_daemon_password_hash | replace('$2b$12$', '') }}
-
-    # Gruppe für Camera/Audio-Zugriff
-    group_add:
-      - video
-      - audio
-
-    # libcamera benötigt apparmor:unconfined in Docker
-    security_opt:
-      - apparmor:unconfined
 
     # tmpfs für schnelle Temp-Dateien
     tmpfs:

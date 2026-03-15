@@ -32,6 +32,7 @@
     }
     .login-box h1 { font-size: 1.25rem; margin-bottom: 0.25rem; }
     .login-box p  { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+    .login-logo { display: block; height: 220px; width: auto; margin: 0 auto 1.25rem; object-fit: contain; }
     .field { margin-bottom: 1rem; }
     .field label { display: block; font-size: 0.875rem; color: var(--muted);
                    margin-bottom: 0.35rem; }
@@ -67,6 +68,7 @@
       justify-content: space-between; position: sticky; top: 0; z-index: 10;
     }
     .topbar h1 { font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .topbar h1 .version-badge { font-size: 0.65rem; font-weight: 400; color: var(--muted); background: var(--border); border-radius: 99px; padding: 0.1em 0.55em; letter-spacing: 0.02em; }
     .topbar .actions { display: flex; align-items: center; gap: 0.75rem; }
     #last-update { color: var(--muted); font-size: 0.75rem; }
 
@@ -176,6 +178,19 @@
       border-radius: 99px; margin-left: 0.25rem;
     }
 
+    /* ──── LIVE-PREVIEW ──────────────────────────────────────── */
+    #preview-panel img {
+      width: 100%; max-width: 640px; border-radius: var(--r);
+      display: block; background: #000;
+    }
+    #preview-panel .preview-placeholder {
+      width: 100%; max-width: 640px; height: 240px;
+      background: var(--bg); border: 1px dashed var(--border);
+      border-radius: var(--r); display: flex; align-items: center;
+      justify-content: center; color: var(--muted); font-size: 0.875rem;
+    }
+    #preview-toggle-btn { margin-top: 0.75rem; }
+
     /* ──── KALENDER-ZEILEN ────────────────────────────────────────── */
     .date-header td {
       background: rgba(88,166,255,.06); color: var(--accent);
@@ -184,10 +199,27 @@
       letter-spacing: 0.04em;
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
       .topbar { padding: 0.75rem 1rem; }
-      .main   { padding: 1rem; }
-      .cards  { grid-template-columns: 1fr 1fr; }
+      .topbar h1 { font-size: 0.9rem; }
+      #last-update { display: none; }
+      .main   { padding: 0.75rem; }
+      .cards  { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+      .card .value { font-size: 1.1rem; }
+      .panel { padding: 1rem; }
+      .action-row { flex-direction: column; align-items: stretch; }
+      .action-row .btn { width: 100%; justify-content: center; }
+      .action-row .sep { display: none; }
+      .action-row .slider-group { width: 100%; justify-content: space-between; }
+      .action-row .slider-group input[type=range] { flex: 1; }
+      select { width: 100%; }
+      table { font-size: 0.8rem; }
+      thead th, tbody td { padding: 0.4rem 0.5rem; }
+      .recordings-list { -webkit-overflow-scrolling: touch; }
+      #preview-panel img, #preview-panel .preview-placeholder { max-width: 100%; }
+    }
+    @media (max-width: 380px) {
+      .cards { grid-template-columns: 1fr; }
     }
 
     /* ──── HILFE-MODAL ───────────────────────────────────────────── */
@@ -235,6 +267,7 @@
 <!-- ──── LOGIN ─────────────────────────────────────────────────────────── -->
 <div id="login-screen">
   <div class="login-box">
+    <img src="/web/logo.png" alt="Vogel-Kamera Logo" class="login-logo">
     <h1>🐦 Vogel-Kamera</h1>
     <p>Raspberry Pi Steuerung</p>
 
@@ -251,13 +284,20 @@
       Anmelden
     </button>
     <div id="login-error"></div>
+    <p style="margin-top:1.25rem;font-size:0.75rem;color:var(--muted);text-align:center;">
+      Selbstsigniertes Zertifikat –
+      <a href="/cert.pem" download="vogel-kamera.pem" style="color:var(--accent);">Zertifikat herunterladen</a><br>
+      Chrome: <code style="font-size:0.7rem;">chrome://settings/certificates</code>
+      → <em>Zertifizierungsstellen</em> → <em>Importieren</em>
+      → „Für Websites vertrauen" ✓
+    </p>
   </div>
 </div>
 
 <!-- ──── DASHBOARD ──────────────────────────────────────────────────────── -->
 <div id="dashboard">
   <div class="topbar">
-    <h1>🐦 Vogel-Kamera</h1>
+    <h1><img src="/web/logo.png" alt="" style="height:32px;width:auto;vertical-align:middle;margin-right:0.35rem;">Vogel-Kamera <small id="gui-version" class="version-badge"></small></h1>
     <div class="actions">
       <span id="last-update">–</span>
       <button class="btn btn-neutral" onclick="openHelp()" title="Hilfe">❓ Hilfe</button>
@@ -268,6 +308,12 @@
 
   <div class="main">
     <div id="error-box"></div>
+    <div id="hw-error-box" style="display:none;background:#7f1d1d;color:#fecaca;
+        border-left:4px solid #ef4444;border-radius:6px;padding:0.9rem 1.1rem;
+        margin-bottom:0.8rem;font-size:0.9rem;">
+      🔴 <strong>Kamera-Hardware-Fehler:</strong> IMX708-Sensor antwortet nicht mehr.
+      Auto-Reset wurde versucht. <strong>Pi-Neustart erforderlich.</strong>
+    </div>
 
     <!-- ── Einstellungen (ausgeklappt) ──────────────────────────── -->
     <div id="settings-panel">
@@ -287,12 +333,28 @@
         <div class="value" id="s-detect">–</div>
       </div>
       <div class="card">
+        <div class="label">Modus</div>
+        <div class="value" id="s-det-mode">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Vögel aufgenommen</div>
+        <div class="value" id="s-birds">–</div>
+      </div>
+      <div class="card">
         <div class="label">Recording</div>
         <div class="value" id="s-rec">–</div>
       </div>
       <div class="card">
         <div class="label">CPU</div>
         <div class="value" id="s-cpu">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Temperatur</div>
+        <div class="value" id="s-temp">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Load Avg</div>
+        <div class="value" id="s-load" style="font-size:0.95rem">–</div>
       </div>
       <div class="card">
         <div class="label">RAM genutzt</div>
@@ -308,29 +370,69 @@
     <div class="panel">
       <h2>Detection</h2>
       <div class="action-row">
-        <button class="btn btn-success" onclick="detectionStart()">▶ Starten</button>
-        <button class="btn btn-danger"  onclick="detectionStop()">■ Stoppen</button>
+        <button class="btn btn-success" id="det-start-btn" onclick="detectionModeStart()">▶ Detection-Modus starten</button>
+        <button class="btn btn-danger"  id="det-stop-btn"  onclick="detectionModeStop()">■ Detection-Modus stoppen</button>
+      </div>
+      <div id="det-mode-info" style="display:none;margin-top:0.6rem;padding:0.5rem 0.75rem;background:var(--accent,#2563eb);color:#fff;border-radius:6px;font-size:0.9rem;">
+        🤖 <strong>Detection-Modus aktiv</strong> – bei Vogelerkennung wird automatisch aufgenommen.
+        Manuelle Aufnahme gesperrt. <span id="det-birds-inline"></span>
       </div>
     </div>
-
-    <div class="panel">
+    <!-- Live-Preview -->
+    <div class="panel" id="preview-panel">
+      <h2>&#128247; Live-Vorschau</h2>
+      <div class="preview-placeholder" id="preview-placeholder">&#128247; Vorschau wird geladen…</div>
+      <img id="preview-img" style="display:none; transform:rotate(180deg)" alt="Live-Vorschau">
+      <div class="action-row" style="margin-top:0.75rem;">
+        <button class="btn btn-neutral" id="preview-toggle-btn" onclick="togglePreview()">&#128247; Vorschau starten</button>
+        <span id="preview-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="panel" id="record-panel">
       <h2>Aufnahme</h2>
+      <div id="rec-blocked-info" style="display:none;margin-bottom:0.6rem;padding:0.5rem 0.75rem;background:#7c3aed;color:#fff;border-radius:6px;font-size:0.9rem;">
+        🔒 Manuelle Aufnahme gesperrt – Detection-Modus ist aktiv.
+      </div>
+      <div id="rec-progress-wrap" style="display:none;margin-bottom:0.8rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <progress id="rec-progress" max="100" value="0"
+                    style="flex:1;height:14px;accent-color:#2563eb;"></progress>
+          <span id="rec-progress-label" style="font-size:0.85rem;color:var(--muted,#6b7280);min-width:3.2rem;text-align:right;">0 %</span>
+        </div>
+        <div id="rec-progress-time" style="font-size:0.8rem;color:var(--muted,#6b7280);margin-top:0.2rem;"></div>
+      </div>
+      <div id="aud-progress-wrap" style="display:none;margin-bottom:0.8rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <span style="font-size:0.8rem;white-space:nowrap;">🎤 Audio:</span>
+          <progress id="aud-progress" max="100" value="0"
+                    style="flex:1;height:14px;accent-color:#16a34a;"></progress>
+          <span id="aud-progress-label" style="font-size:0.85rem;color:var(--muted,#6b7280);min-width:3.2rem;text-align:right;">0 %</span>
+        </div>
+        <div id="aud-progress-time" style="font-size:0.8rem;color:var(--muted,#6b7280);margin-top:0.2rem;"></div>
+      </div>
       <div class="action-row">
         <span class="slider-group">
           <label for="rec-dur">Dauer</label>
-          <input type="range" id="rec-dur" min="5" max="120" step="5" value="15"
-                 oninput="document.getElementById('rec-dur-label').textContent=this.value+'s'">
-          <span id="rec-dur-label">15s</span>
+          <input type="range" id="rec-dur" min="1" max="10" step="1" value="1"
+                 oninput="document.getElementById('rec-dur-label').textContent=this.value+' min'">
+          <span id="rec-dur-label">1 min</span>
         </span>
         <div class="sep"></div>
-        <select id="rec-res">
-          <option value="720p">720p</option>
-          <option value="1080p">1080p</option>
-          <option value="2k" selected>2K</option>
-          <option value="4k">4K</option>
+        <select id="rec-profile">
+          <option value="normal_hd">Normal HD (1080p 30fps)</option>
+          <option value="normal_2k">Normal 2K (30fps)</option>
+          <option value="normal_4k">Normal 4K (25fps – max)</option>
+          <option value="slowmo_720p">Zeitlupe 720p (120fps)</option>
+          <option value="slowmo_1080p">Zeitlupe 1080p (60fps)</option>
         </select>
         <button class="btn btn-primary" id="rec-btn" onclick="startRecord()">
           ⏺ Aufnahme
+        </button>
+        <button class="btn btn-neutral" id="aud-btn" onclick="startAudio()" title="Nur Audio aufnehmen (kein Video, max 3600s)">
+          🎤 Audio
+        </button>
+        <button class="btn btn-danger" id="rec-kill-btn" onclick="killRecord()" style="display:none;" title="Hängenden Aufnahme- oder Audio-Prozess sofort beenden">
+          ⛔ Kill
         </button>
         <button class="btn btn-neutral" id="convert-btn" onclick="startConvert()">
           🔄 Konvertieren <span id="pending-badge"></span>
@@ -372,31 +474,87 @@
 
     <h3>Übersicht</h3>
     <p>Diese Oberfläche steuert den Vogel-Kamera-Daemon auf dem Raspberry Pi.
-       Alle Aktionen werden direkt per HTTPS-API ausgeführt. Das Dashboard aktualisiert
-       sich automatisch alle 5 Sekunden.</p>
+       Alle Aktionen laufen per HTTPS-API. Das Dashboard aktualisiert sich automatisch
+       alle 5 Sekunden.</p>
 
     <hr>
-    <h3>🔴 Detection starten / stoppen</h3>
-    <p>Startet oder stoppt die KI-Bewegungserkennung (YOLO / Hailo).
-       Wird eine Bewegung erkannt, beginnt automatisch eine Aufnahme.</p>
+    <h3>🤖 Detection-Modus (Automatik)</h3>
+    <p>Im Detection-Modus überwacht die KI (YOLO / Hailo) kontinuierlich das Kamerabild.
+       Erkennt sie einen Vogel, startet automatisch eine Aufnahme mit dem gewählten Profil.</p>
+    <ul>
+      <li><span class="help-badge">▶ Detection-Modus starten</span> – aktiviert die
+          automatische Vogelüberwachung</li>
+      <li><span class="help-badge">■ Detection-Modus stoppen</span> – beendet die
+          Überwachung; laufende Aufnahmen werden abgeschlossen</li>
+      <li>Während der Modus aktiv ist, sind <strong>manuelle Aufnahmen gesperrt</strong>
+          (lila Hinweis erscheint)</li>
+      <li>Der Zähler <strong>Vogel-Aufnahmen</strong> zeigt, wie viele automatische
+          Aufnahmen in dieser Session entstanden sind</li>
+    </ul>
 
     <hr>
     <h3>⏺ Manuelle Aufnahme</h3>
     <ul>
-      <li><strong>Dauer</strong> – Aufnahmelänge in Sekunden (Schieberegler)</li>
-      <li><strong>Auflösung</strong> – HD / Full-HD / 4K</li>
-      <li>Die Aufnahme startet sofort und erzeugt eine <code>.h264</code>-Rohdatei.</li>
+      <li><strong>Dauer</strong> – 1 bis 10 Minuten (1-Minuten-Schritte) per Schieberegler wählbar</li>
+      <li><strong>Aufnahme-Profil</strong> – Qualität und Framerate vorauswählen:
+        <ul style="margin-top:.3rem">
+          <li><code>Normal HD</code> – 1080p, 30 fps</li>
+          <li><code>Normal 2K</code> – 2560×1440, 30 fps</li>
+          <li><code>Normal 4K</code> – 4096×2160, 25 fps (Sensor-Maximum)</li>
+          <li><code>Zeitlupe 720p</code> – 120 fps → 4× Zeitlupe bei Wiedergabe</li>
+          <li><code>Zeitlupe 1080p</code> – 60 fps → 2× Zeitlupe bei Wiedergabe</li>
+        </ul>
+      </li>
+      <li>Während eine Aufnahme läuft, zeigt ein <strong>Fortschrittsbalken</strong>
+          den aktuellen Fortschritt und die verbleibende Zeit an</li>
     </ul>
 
     <hr>
-    <h3>🔄 Konvertieren</h3>
-    <p>Konvertiert alle vorhandenen <code>.h264</code>-Rohdateien in das abspielbare
-       <code>.mp4</code>-Format (via <code>ffmpeg</code>). Anschließend werden die
-       MP4s automatisch an alle aktiven Sync-Ziele übertragen.</p>
+    <h3>🎤 Audio-Only Aufnahme</h3>
+    <p>Nimmt ausschließlich Audio auf (kein Video). Nützlich für Vogelgesang-Aufzeichnungen
+       ohne Kameralast. Maximale Dauer: <strong>60 Minuten</strong>.</p>
     <ul>
-      <li>Die Zahl im gelben Badge zeigt die Anzahl noch nicht konvertierter H264-Dateien.</li>
-      <li>Die Konvertierung läuft auch <strong>automatisch alle 3 Minuten</strong> im
-          Hintergrund – ohne Button-Klick.</li>
+      <li>Startet mit dem <span class="help-badge">🎤 Audio</span>-Button neben der
+          Video-Aufnahme</li>
+      <li>Ein eigener <strong>Fortschrittsbalken</strong> (grün) zeigt Fortschritt und
+          Restzeit</li>
+      <li>Die erzeugte <code>.wav</code>-Datei erscheint in der Aufnahmen-Tabelle und
+          kann direkt heruntergeladen werden</li>
+      <li>Während eine Audio-Aufnahme läuft, sind Video-Aufnahmen gesperrt (und
+          umgekehrt)</li>
+    </ul>
+
+    <hr>
+    <h3>📷 Live-Vorschau</h3>
+    <p>Zeigt ein Live-Bild der Kamera (MJPEG-Stream via Detection). Setzt voraus, dass
+       der <strong>Detection-Modus aktiv ist</strong>, da die Kamera sonst nicht
+       initialisiert ist.</p>
+    <ul>
+      <li>Mit <span class="help-badge">📷 Vorschau starten</span> aktivieren –
+          aktualisiert sich automatisch alle 250 ms</li>
+      <li>Mit <span class="help-badge">⏹ Vorschau stoppen</span> wieder beenden (spart
+          Bandbreite und CPU)</li>
+      <li>Erscheint <em>„Warte auf Detection…"</em>, ist der Detection-Modus noch nicht
+          gestartet</li>
+    </ul>
+
+    <hr>
+    <h3>⛔ Aufnahme abbrechen (Kill)</h3>
+    <p>Erscheint automatisch sobald eine Aufnahme läuft. Beendet einen hängenden
+       <code>rpicam-vid</code>-Prozess sofort (SIGTERM → SIGKILL).
+       Nützlich wenn z.&nbsp;B. 4K bei 30 fps den Sensor blockiert hätte.</p>
+    <p><strong>Hinweis:</strong> Die bis dahin aufgezeichneten Rohdaten bleiben erhalten
+       und können noch konvertiert werden.</p>
+
+    <hr>
+    <h3>🔄 Konvertieren</h3>
+    <p>Konvertiert alle <code>.h264</code>-Rohdateien in abspielbare <code>.mp4</code>-Dateien
+       (via <code>ffmpeg</code>). Danach werden die MP4s automatisch an alle aktiven
+       Sync-Ziele übertragen.</p>
+    <ul>
+      <li>Der gelbe Badge zeigt die Anzahl noch nicht konvertierter H264-Dateien</li>
+      <li>Konvertierung läuft auch <strong>automatisch alle 3 Minuten</strong> im
+          Hintergrund</li>
     </ul>
 
     <hr>
@@ -413,22 +571,36 @@
       <li><strong>Host / IP</strong> – Hostname oder IP-Adresse des Zielrechners</li>
       <li><strong>SSH Benutzer</strong> – Benutzername auf dem Zielsystem</li>
       <li><strong>Ziel-Pfad</strong> – Verzeichnis auf dem Zielrechner, z.&nbsp;B.
-          <code>/home/roimme/Videos/</code></li>
+          <code>/home/imme/Videos/Vogelhaus/2026</code></li>
       <li><strong>SSH Private Key</strong> – Privaten Schlüssel einfügen (OpenSSH-Format).
           Einmal gespeichert, muss er nicht erneut eingegeben werden.</li>
-      <li>Mit <span class="help-badge">🔌 Testen</span> die Verbindung prüfen, bevor
-          gespeichert wird.</li>
-      <li>Mehrere Ziele möglich – z.&nbsp;B. NAS + Laptop gleichzeitig.</li>
+      <li>Mit <span class="help-badge">🔌 Testen</span> die Verbindung direkt prüfen</li>
+      <li>Mehrere Ziele möglich – z.&nbsp;B. NAS + Laptop gleichzeitig</li>
     </ul>
-    <p style="margin-top:.6rem">Der SSH-Key wird sicher im Container unter
-       <code>/config/sync_key_N</code> gespeichert und verlässt den Pi nicht.</p>
+    <p style="margin-top:.5rem"><strong>Voraussetzung:</strong> Der <em>Public Key</em> des
+       eingetragenen Private Keys muss auf dem Zielrechner in
+       <code>~/.ssh/authorized_keys</code> eingetragen sein:</p>
+    <p><code>ssh-copy-id -i /pfad/zum/key.pub benutzer@zielrechner</code></p>
+    <p style="margin-top:.4rem">Der Private Key wird sicher im Container unter
+       <code>/config/sync_key_N</code> gespeichert (chmod 600) und verlässt den Pi nicht.</p>
 
     <hr>
     <h3>📋 Aufnahmen-Tabelle</h3>
     <ul>
-      <li><span class="help-badge">⬇ Download</span> – MP4 direkt im Browser herunterladen</li>
+      <li><span class="help-badge">⬇ Download</span> – MP4/WAV direkt im Browser herunterladen</li>
       <li><span class="help-badge">🗑 Löschen</span> – MP4 und zugehörige H264-Quelldatei
           nach Bestätigung dauerhaft löschen</li>
+    </ul>
+
+    <hr>
+    <h3>📊 System-Status</h3>
+    <ul>
+      <li><strong>CPU</strong> – aktuelle CPU-Auslastung in Prozent</li>
+      <li><strong>RAM</strong> – belegter / gesamter Arbeitsspeicher in MB</li>
+      <li><strong>Disk</strong> – freier Speicher auf dem Video-Volume</li>
+      <li><strong>Detection</strong> – ob die KI-Erkennung gerade läuft</li>
+      <li><strong>Modus</strong> – Automatik (Detection-Modus) oder Manuell</li>
+      <li><strong>Aufnahme</strong> – ob gerade aufgezeichnet wird</li>
     </ul>
 
     <hr>
@@ -436,9 +608,8 @@
     <ul>
       <li>Login erfordert <strong>Passwort + 2FA-Code (TOTP)</strong> – kompatibel mit
           Google Authenticator, Aegis, Bitwarden u.&nbsp;a.</li>
-      <li>Alle API-Aufrufe sind Bearer-Token-geschützt. Das Token ist nur für diese
-          Browser-Session gültig.</li>
-      <li>Die Verbindung ist per TLS (HTTPS, selbstsigniertes Zertifikat) verschlüsselt.</li>
+      <li>Alle API-Aufrufe sind Bearer-Token-geschützt (Session-gültig)</li>
+      <li>Verbindung ist TLS-verschlüsselt (HTTPS, selbstsigniertes Zertifikat)</li>
     </ul>
 
     <div style="margin-top:1.5rem;text-align:right">
@@ -516,6 +687,7 @@
   function showDashboard() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
+    loadProfiles();   // Profile-Dropdown einmal befüllen
     refreshAll();
     refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL);
   }
@@ -539,14 +711,62 @@
     const errBox = document.getElementById('error-box');
     if (data.last_error) { errBox.textContent = '⚠ Letzter Fehler: ' + data.last_error; errBox.style.display = 'block'; }
     else errBox.style.display = 'none';
-    setText('s-detect', pill(data.detection_running, 'Aktiv', 'Gestoppt'));
-    setText('s-rec',    pill(data.recording_running,  'Läuft', 'Bereit'));
-    document.getElementById('rec-btn').disabled = data.recording_running;
+    document.getElementById('hw-error-box').style.display = data.camera_hw_error ? 'block' : 'none';
+    setText('s-detect',   pill(data.detection_running, 'Aktiv', 'Gestoppt'));
+    setText('s-det-mode', pill(data.detection_mode,    '🤖 Automatik', 'Manuell'));
+    setText('s-birds',    data.birds_recorded != null ? String(data.birds_recorded) : '–');
+    setText('s-rec',      pill(data.recording_running, 'Läuft', 'Bereit'));
+    const blocked = data.detection_mode;
+    const anyRunning = data.recording_running || data.audio_running;
+    document.getElementById('rec-btn').disabled = anyRunning || blocked;
+    document.getElementById('aud-btn').disabled = anyRunning || blocked;
+    document.getElementById('rec-kill-btn').style.display = anyRunning ? 'inline-flex' : 'none';
+    document.getElementById('rec-blocked-info').style.display = blocked ? 'block' : 'none';
+    // Fortschrittsbalken Video
+    const recWrap = document.getElementById('rec-progress-wrap');
+    if (data.recording_running && data.recording_progress != null) {
+      recWrap.style.display = 'block';
+      document.getElementById('rec-progress').value       = data.recording_progress;
+      document.getElementById('rec-progress-label').textContent = data.recording_progress + ' %';
+      const dur = data.recording_duration || 0;
+      const rem = data.recording_remaining ?? 0;
+      const elapsed = dur - rem;
+      document.getElementById('rec-progress-time').textContent =
+        elapsed + ' s / ' + dur + ' s (≈ ' + rem + ' s verbleibend)';
+    } else {
+      recWrap.style.display = 'none';
+      document.getElementById('rec-progress').value = 0;
+    }
+    // Fortschrittsbalken Audio-Only
+    const audWrap = document.getElementById('aud-progress-wrap');
+    if (data.audio_running && data.audio_progress != null) {
+      audWrap.style.display = 'block';
+      document.getElementById('aud-progress').value       = data.audio_progress;
+      document.getElementById('aud-progress-label').textContent = data.audio_progress + ' %';
+      const adur = data.audio_duration || 0;
+      const arem = data.audio_remaining ?? 0;
+      document.getElementById('aud-progress-time').textContent =
+        (adur - arem) + ' s / ' + adur + ' s (≈ ' + arem + ' s verbleibend)';
+    } else {
+      audWrap.style.display = 'none';
+      document.getElementById('aud-progress').value = 0;
+    }
+    document.getElementById('det-mode-info').style.display = blocked ? 'block' : 'none';
+    const birdsEl = document.getElementById('det-birds-inline');
+    if (birdsEl) birdsEl.textContent = data.birds_recorded ? `(${data.birds_recorded} Vogel-Aufnahme${data.birds_recorded!==1?'n':''})` : '';
     const sys = data.system || {};
     setText('s-cpu',  sys.cpu_percent != null ? sys.cpu_percent.toFixed(0) + ' %' : '–');
+    if (sys.cpu_temp != null) {
+      const t = sys.cpu_temp;
+      const col = t >= 75 ? '#ef4444' : t >= 60 ? '#f97316' : '#22c55e';
+      setText('s-temp', `<span style="color:${col};font-weight:600">${t.toFixed(1)} °C</span>`);
+    } else { setText('s-temp', '–'); }
+    if (sys.load_1min != null) setText('s-load', sys.load_1min + ' / ' + sys.load_5min + ' / ' + sys.load_15min);
     if (sys.mem_used_mb && sys.mem_total_mb) setText('s-mem', sys.mem_used_mb + ' / ' + sys.mem_total_mb + ' MB');
     if (sys.disk_free_gb != null) setText('s-disk', sys.disk_free_gb + ' GB frei');
     document.getElementById('last-update').textContent = 'Update: ' + new Date().toLocaleTimeString('de-DE');
+    const verEl = document.getElementById('gui-version');
+    if (verEl && data.version && !verEl.textContent) verEl.textContent = 'v' + data.version;
   }
 
   async function fetchPending() {
@@ -563,28 +783,84 @@
   function setText(id, html) { const el=document.getElementById(id); if(el) el.innerHTML=html; }
 
   // ── Detection ──────────────────────────────────────────────────────────
-  async function detectionStart() {
-    const d = await apiFetch('/api/detection/start', 'POST');
-    toast(d?.success ? '✅ Detection gestartet' : '❌ Fehler', d?.success ? 'ok' : 'error');
+  async function detectionModeStart() {
+    const d = await apiFetch('/api/detection/mode/start', 'POST');
+    if (d?.success) toast('✅ Detection-Modus gestartet – Aufnahme bei Vogelerkennung', 'ok');
+    else toast('❌ ' + (d?.error || 'Fehler beim Starten'), 'error');
     fetchStatus();
   }
-  async function detectionStop() {
-    const d = await apiFetch('/api/detection/stop', 'POST');
-    toast(d?.success ? '⏹ Detection gestoppt' : '❌ Fehler', d?.success ? 'ok' : 'error');
+  async function detectionModeStop() {
+    const d = await apiFetch('/api/detection/mode/stop', 'POST');
+    if (d?.success) {
+      const n = d.birds_recorded || 0;
+      toast(`⏹ Detection-Modus gestoppt (${n} Aufnahme${n!==1?'n':''})`, 'ok');
+    } else toast('❌ Fehler beim Stoppen', 'error');
     fetchStatus();
   }
 
   // ── Recording ──────────────────────────────────────────────────────────
   async function startRecord() {
-    const duration = parseInt(document.getElementById('rec-dur').value);
-    const resolution = document.getElementById('rec-res').value;
+    const duration = parseInt(document.getElementById('rec-dur').value) * 60;
+    const profile  = document.getElementById('rec-profile').value;
     const btn = document.getElementById('rec-btn');
     btn.disabled = true;
-    const d = await apiFetch('/api/record', 'POST', { duration, resolution });
-    if (d?.success) toast(`⏺ Aufnahme gestartet (${duration}s, ${resolution})`, 'ok');
+    const d = await apiFetch('/api/record', 'POST', { duration, profile });
+    if (d?.success) toast(`⏺ ${d.message || 'Aufnahme gestartet'}`, 'ok');
     else { toast('❌ ' + (d?.error || 'Aufnahme fehlgeschlagen'), 'error'); btn.disabled = false; }
     fetchStatus();
   }
+
+  async function killRecord() {
+    if (!confirm('Hängenden Aufnahme-/Audio-Prozess jetzt sofort beenden?')) return;
+    const btn = document.getElementById('rec-kill-btn');
+    btn.disabled = true;
+    const d = await apiFetch('/api/record/kill', 'POST', {});
+    if (d?.success) toast('⛔ Prozess beendet', 'ok');
+    else toast('❌ ' + (d?.error || 'Kill fehlgeschlagen'), 'error');
+    btn.disabled = false;
+    fetchStatus();
+  }
+
+  async function startAudio() {
+    const duration = parseInt(document.getElementById('rec-dur').value) * 60;
+    const btn = document.getElementById('aud-btn');
+    btn.disabled = true;
+    const d = await apiFetch('/api/record/audio', 'POST', { duration });
+    if (d?.success) toast('🎤 ' + (d.message || 'Audio-Aufnahme gestartet'), 'ok');
+    else { toast('❌ ' + (d?.error || 'Audio-Aufnahme fehlgeschlagen'), 'error'); btn.disabled = false; }
+    fetchStatus();
+  }
+
+  // Profile-Labels nachladen und Dropdown befüllen
+  async function loadProfiles() {
+    const profiles = await apiFetch('/api/profiles');
+    if (!profiles) return;
+    const sel = document.getElementById('rec-profile');
+    if (!sel) return;
+    sel.innerHTML = Object.entries(profiles)
+      .map(([k, v]) => `<option value="${k}">${escHtml(v.label)}</option>`)
+      .join('');
+    // Gespeicherte Einstellung wiederherstellen
+    const settings = await apiFetch('/api/rec-settings');
+    if (settings?.profile && profiles[settings.profile]) {
+      sel.value = settings.profile;
+    }
+    if (settings?.duration) {
+      const dur = document.getElementById('rec-dur');
+      // gespeicherter Wert ist in Sekunden → in Minuten umrechnen (min 1, max 10)
+      const mins = Math.min(10, Math.max(1, Math.round(settings.duration / 60)));
+      if (dur) { dur.value = mins; document.getElementById('rec-dur-label').textContent = mins + ' min'; }
+    }
+  }
+
+  // Profil-Änderung persistent speichern
+  document.addEventListener('DOMContentLoaded', () => {
+    const sel = document.getElementById('rec-profile');
+    if (sel) sel.addEventListener('change', () => {
+      const dur = document.getElementById('rec-dur')?.value || 1;
+      apiFetch('/api/rec-settings', 'POST', { profile: sel.value, duration: parseInt(dur) * 60 });
+    });
+  });
 
   async function startConvert() {
     const btn = document.getElementById('convert-btn');
@@ -601,7 +877,7 @@
     if (!list) return;
     const tbody = document.getElementById('recordings-body');
     if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Keine MP4-Aufnahmen vorhanden</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Keine Aufnahmen vorhanden</td></tr>';
       return;
     }
     let lastDate = '';
@@ -614,17 +890,44 @@
         try { label = new Date(d + 'T00:00:00').toLocaleDateString('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); } catch(_){}
         hdr = `<tr class="date-header"><td colspan="5">📅 ${escHtml(label)}</td></tr>`;
       }
-      const dlUrl = '/api/download?p=' + encodeURIComponent(r.rel_path || r.name);
       const relPath = r.rel_path || r.name;
+      const isAudio = r.type === 'audio';
+      const badge = isAudio
+        ? '<span style="font-size:.7rem;background:#1d4ed8;color:#fff;padding:.1rem .35rem;border-radius:3px;margin-right:.35rem;">🎵 Audio</span>'
+        : '<span style="font-size:.7rem;background:#166534;color:#fff;padding:.1rem .35rem;border-radius:3px;margin-right:.35rem;">🎬 Video</span>';
       return `${hdr}<tr>
-        <td>${escHtml(r.name)}</td>
+        <td>${badge}${escHtml(r.name)}</td>
         <td class="size-col">${r.size_mb} MB</td>
         <td>${escHtml((r.created||'').slice(11))}</td>
-        <td><a href="${escHtml(dlUrl)}" class="btn btn-neutral" style="padding:.25rem .6rem;font-size:.8rem;" download>⬇ Download</a></td>
+        <td><button class="btn btn-neutral" style="padding:.25rem .6rem;font-size:.8rem;" onclick="downloadVideo('${escHtml(relPath).replace(/'/g,"\\'")}')">⬇ Download</button></td>
         <td><button class="btn btn-danger" style="padding:.25rem .6rem;font-size:.8rem;"
-                onclick="deleteVideo('${escHtml(relPath).replace(/'/g,"\\'")}')">🗑 Löschen</button></td>
+                onclick="deleteFile('${escHtml(relPath).replace(/'/g,"\\'")}')">🗑 Löschen</button></td>
       </tr>`;
     }).join('');
+  }
+
+  // ── Video-Download (fetch+Blob, umgeht Chrome-SSL-Sperre bei self-signed Cert) ──
+  async function downloadVideo(relPath) {
+    try {
+      const url = '/api/download?p=' + encodeURIComponent(relPath) + '&token=' + encodeURIComponent(token);
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        let msg = 'HTTP ' + resp.status;
+        try { const j = await resp.json(); msg = j.error || msg; } catch(_) {}
+        toast('\u274c Download-Fehler: ' + msg, 'error');
+        return;
+      }
+      const blob = await resp.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = relPath.split('/').pop() || 'recording.mp4';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    } catch(e) {
+      toast('\u274c Download-Fehler: ' + e.message, 'error');
+    }
   }
 
   // ── Manueller Transfer ───────────────────────────────────────────────────
@@ -643,8 +946,10 @@
   function closeHelpOnBg(e) { if (e.target === document.getElementById('help-overlay')) closeHelp(); }
 
   // ── Video löschen ──────────────────────────────────────────────────────
-  async function deleteVideo(relPath) {
-    if (!confirm(`"${relPath}" wirklich löschen?\n(inkl. H264-Quelldatei falls vorhanden)`)) return;
+  async function deleteFile(relPath) {
+    const isAudio = relPath.endsWith('.wav');
+    const extra = isAudio ? '' : '\n(inkl. H264-Quelldatei und WAV falls vorhanden)';
+    if (!confirm(`"${relPath}" wirklich löschen?${extra}`)) return;
     const d = await apiFetch('/api/delete', 'POST', { p: relPath });
     if (d?.success) {
       toast('🗑 Gelöscht: ' + (d.deleted || []).join(', '), 'ok');
@@ -759,6 +1064,74 @@
     res.style.display = 'inline-block';
     res.className = 'test-result-inline ' + (d?.success ? 'test-ok' : 'test-err');
     res.textContent = d?.message || d?.error || 'Keine Antwort';
+  }
+
+  // ── Live-Preview (Polling via fetch+Blob, wie Download – SSL-safe) ────
+  let _previewActive = false;
+  let _previewTimer  = null;
+  let _previewErrCnt = 0;
+
+  function togglePreview() {
+    const img         = document.getElementById('preview-img');
+    const placeholder = document.getElementById('preview-placeholder');
+    const btn         = document.getElementById('preview-toggle-btn');
+    const statusEl    = document.getElementById('preview-status');
+    _previewActive = !_previewActive;
+    if (_previewActive) {
+      _previewErrCnt = 0;
+      btn.textContent = '⏹ Vorschau stoppen';
+      placeholder.textContent = '📷 Bild wird geladen…';
+      placeholder.style.display = 'flex';
+      img.style.display = 'none';
+      _pollFrame();
+    } else {
+      clearTimeout(_previewTimer);
+      if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+      img.src = '';
+      img.style.display = 'none';
+      placeholder.style.display = 'flex';
+      placeholder.textContent = '📷 Vorschau wird geladen…';
+      btn.textContent = '📷 Vorschau starten';
+      statusEl.textContent = '';
+    }
+  }
+
+  async function _pollFrame() {
+    if (!_previewActive) return;
+    const img         = document.getElementById('preview-img');
+    const placeholder = document.getElementById('preview-placeholder');
+    const statusEl    = document.getElementById('preview-status');
+    try {
+      const resp = await fetch('/api/snapshot?token=' + encodeURIComponent(token));
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const url  = URL.createObjectURL(blob);
+        const old  = img.src;
+        img.src    = url;
+        if (old && old.startsWith('blob:')) URL.revokeObjectURL(old);
+        img.style.display   = 'block';
+        placeholder.style.display = 'none';
+        statusEl.textContent = 'Stream aktiv ●';
+        _previewErrCnt = 0;
+      } else if (resp.status === 503) {
+        // Kein Frame vorhanden – Detection noch nicht gestartet / keine Kamera
+        _previewErrCnt++;
+        statusEl.textContent = 'Warte auf Detection…';
+        if (_previewErrCnt > 40) {
+          placeholder.textContent = '⚠ Kein Bild – Detection gestartet?';
+          placeholder.style.display = 'flex';
+          img.style.display = 'none';
+        }
+      } else if (resp.status === 401) {
+        doLogout(); return;
+      } else {
+        statusEl.textContent = '⚠ Fehler: HTTP ' + resp.status;
+      }
+    } catch(e) {
+      _previewErrCnt++;
+      if (_previewErrCnt > 5) statusEl.textContent = '⚠ ' + e.message;
+    }
+    if (_previewActive) _previewTimer = setTimeout(_pollFrame, 250);
   }
 
   // ── Autostart wenn Token vorhanden ─────────────────────────────────────

@@ -26,14 +26,20 @@
     create: true
   become: true
 
-- name: package.use – QEMU nur User-Space aarch64
-  ansible.builtin.copy:
-    dest: /etc/portage/package.use/qemu
-    content: |
-      # Nur User-Space-Emulation; kein KVM/SOFTMMU-Overhead
-      app-emulation/qemu static-user
-      app-emulation/qemu QEMU_USER_TARGETS: aarch64
-    mode: "0644"
+- name: package.use – QEMU static-user
+  ansible.builtin.lineinfile:
+    path: /etc/portage/package.use/qemu
+    line: "app-emulation/qemu static-user"
+    create: true
+  become: true
+
+# QEMU_USER_TARGETS ist eine make.conf-Variable, kein USE-Flag → gehört in
+# /etc/portage/make.conf oder /etc/portage/env, NICHT in package.use.
+- name: make.conf – QEMU_USER_TARGETS auf aarch64 setzen
+  ansible.builtin.lineinfile:
+    path: /etc/portage/make.conf
+    regexp: '^QEMU_USER_TARGETS='
+    line: 'QEMU_USER_TARGETS="aarch64"'
   become: true
 
 # ── Pakete installieren ───────────────────────────────────────────────────
@@ -91,13 +97,32 @@
     create: true
   become: true
 
+# binfmt.d-Konfiguration (von systemd-binfmt beim Start geladen)
+# F-Flag: binary-FD wird beim Registrieren geöffnet → funktioniert auch
+# mit dynamisch gelinktem qemu-aarch64 in Container-Kontexten.
+- name: binfmt.d – QEMU-aarch64-Eintrag anlegen
+  ansible.builtin.copy:
+    dest: /etc/binfmt.d/qemu-aarch64.conf
+    content: |
+      :qemu-aarch64:M:0:\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/usr/bin/qemu-aarch64:POCF
+    mode: "0644"
+  become: true
+
+- name: systemd-binfmt aktivieren und starten
+  ansible.builtin.systemd:
+    name: systemd-binfmt
+    enabled: true
+    state: restarted
+  become: true
+  when: ansible_service_mgr == "systemd"
+
 - name: OpenRC local.d – QEMU-binfmt Start-Skript anlegen
   ansible.builtin.copy:
     dest: /etc/local.d/qemu-binfmt.start
     mode: "0755"
     content: |
       #!/bin/sh
-      # Registriert QEMU-aarch64 für binfmt_misc (nach Neustart)
+      # Registriert QEMU-aarch64 für binfmt_misc (Fallback für OpenRC-Systeme)
       docker run --privileged --rm tonistiigi/binfmt --install arm64
   become: true
   when: ansible_service_mgr == "openrc"

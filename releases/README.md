@@ -4,24 +4,41 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.1.1** - "Graceful Shutdown & Detect-and-Record Mode" 🆕
+**Version 2.2.1** - "Web-GUI Verbesserungen & HTTPS-Komfort" 🆕
 - **Branch:** main
-- **Release Notes:** [v2.1.1/RELEASE_NOTES_v2.1.1.md](v2.1.1/RELEASE_NOTES_v2.1.1.md)
-- **Quick Reference:** [../QUICK_REFERENCE_v2.1.1.md](../QUICK_REFERENCE_v2.1.1.md)
-- **Release Date:** 2026-03-10
+- **Release Notes:** [v2.2.1/RELEASE_NOTES_v2.2.1.md](v2.2.1/RELEASE_NOTES_v2.2.1.md)
+- **Release Date:** 2026-03-15
 - **🆕 Features:**
-  - 🆕 **Detect-and-Record Mode** (Zwei-Phasen: Detection → Recording) - EMPFOHLEN!
-  - 🆕 **Graceful Ctrl+C Shutdown** mit sequenziellem Cleanup
-  - 🔍 **Process Diagnostics** vor Cleanup
-  - 🔧 **Improved 3-Stage Process Cleanup** (SIGTERM → SIGKILL → Verify)
-- **Highlights:**
-  - ✅ Keine Zombie-Prozesse mehr
-  - ✅ "Device or resource busy" Fehler behoben
-  - ✅ Time-Lapse/beschleunigte Vorschau-Probleme gelöst
-  - ✅ Saubere Remote-Prozess-Verwaltung
+  - 🆕 **Versions-Badge** in der Web-GUI-Topbar (live aus `/api/status`)
+  - 🆕 **Projekt-Logo** auf Login-Seite (220 px) und Topbar (32 px)
+  - 🆕 **HTTPS-Komfort:** `GET /cert.pem` Route + Chrome-Importanleitung auf der Login-Seite
+  - 🆕 **Hilfe-Modal** um Audio-Only und Live-Vorschau Sektionen ergänzt
+- **🐛 Bugfixes:**
+  - E2E-Test Profilname `FHD` → `normal_hd` (HTTP 400 behoben)
+  - Dockerfile `--platform`-Warnung `RedundantTargetPlatform` behoben
 - **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
 
 ## 📦 Vorherige Versionen
+
+### Version 2.2.0 - "Docker & Ansible Build-Infrastruktur"
+- **Release Notes:** [v2.2.0/RELEASE_NOTES_v2.2.0.md](v2.2.0/RELEASE_NOTES_v2.2.0.md)
+- **Release Date:** 2026-03-13
+- **Features:**
+  - 🐳 Ansible-Rolle `build-host` für Gentoo Build-Rechner
+  - 🐳 Neuer `--setup-host` Befehl in `build_and_deploy.sh`
+  - 🐳 Playbook `setup-build-host.yml` für lokalen Cross-Compilation-Host
+  - 📖 Vollständige `ansible/README.md` + `docker/README.md`
+- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
+
+### Version 2.1.1 - "Graceful Shutdown & Detect-and-Record Mode"
+- **Release Notes:** [v2.1.1/RELEASE_NOTES_v2.1.1.md](v2.1.1/RELEASE_NOTES_v2.1.1.md)
+- **Release Date:** 2026-03-10
+- **Features:**
+  - 🆕 Detect-and-Record Mode (Zwei-Phasen: Detection → Recording)
+  - 🆕 Graceful Ctrl+C Shutdown mit sequenziellem Cleanup
+  - 🔍 Process Diagnostics vor Cleanup
+  - 🔧 Improved 3-Stage Process Cleanup (SIGTERM → SIGKILL → Verify)
+- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
 
 ### Version 2.1.0 - "Audio/Video-Synchronisation & Professionelle Aufnahmen"
 - **Release Notes:** [v2.1.0/RELEASE_NOTES_v2.1.0.md](v2.1.0/RELEASE_NOTES_v2.1.0.md)

@@ -145,7 +145,7 @@ class DetectionOnlyMonitor:
         
         while self.capture_alive:
             try:
-                # capture_array() blockiert - aber nur in diesem Thread!
+                # capture_array() blockiert bis zum nächsten Frame des Video-Streams
                 frame = self.picam2.capture_array()
                 
                 # Frame in Queue einreihen (max 2, älteste Frames werden ignoriert)
@@ -154,8 +154,6 @@ class DetectionOnlyMonitor:
                 except:
                     # Queue voll - ignoriere ältestes Frame
                     pass
-                
-                # Keine Sleep-Zeit - wir wollen Frames so schnell wie möglich
             
             except Exception as e:
                 logger.error(f"❌ Capture-Thread Fehler: {e}")
@@ -229,7 +227,6 @@ class DetectionOnlyMonitor:
                 
                 try:
                     import subprocess
-                    from pathlib import Path
                     
                     # Standard-Pfade für TFLite Modelle (Coral TPU)
                     possible_models = [
@@ -504,7 +501,9 @@ class DetectionOnlyMonitor:
             True wenn Vogel erkannt wurde, False wenn abgebrochen
         """
         logger.info("🔄 Starte Detection-Schleife...")
-        
+        consecutive_timeouts = 0
+        MAX_CONSECUTIVE_TIMEOUTS = 5  # Nach 5×5s = 25s ohne Frame → Neustart erzwingen
+
         try:
             while not self.stop_event:
                 try:
@@ -513,14 +512,33 @@ class DetectionOnlyMonitor:
                     
                     if frame is None:
                         # Timeout - picamera2 ist hängengeblieben
-                        logger.warning("❌ Capture-Timeout - picamera2 antwortet nicht, versuche Reset...")
-                        # Manager hat einen Hanged Capture-Thread?
-                        # Normalerweise sollte der bg-thread weiter versuchen
+                        consecutive_timeouts += 1
+                        logger.warning(
+                            f"⚠️  Capture-Timeout {consecutive_timeouts}/{MAX_CONSECUTIVE_TIMEOUTS}"
+                            " - picamera2 antwortet nicht..."
+                        )
+                        if consecutive_timeouts >= MAX_CONSECUTIVE_TIMEOUTS:
+                            logger.error("💀 Zu viele Timeouts - beende Script für Neustart durch Daemon")
+                            os._exit(1)  # Sofortiger Exit ohne Python-Cleanup (verhindert picam2.stop()-Deadlock)
                         time.sleep(1)
                         continue
                     
+                    consecutive_timeouts = 0  # Reset bei erfolgreichem Frame
                     self.frames_processed += 1
-                    
+
+                    # JPEG-Frame für MJPEG-Stream (alle 4 Frames ~1 FPS bei 4 FPS Effektiv-Rate)
+                    if self.frames_processed % 4 == 0:
+                        try:
+                            # RGB → BGR für OpenCV, dann JPEG encoden
+                            bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                            ok, buf = cv2.imencode('.jpg', bgr, [cv2.IMWRITE_JPEG_QUALITY, 75])
+                            if ok:
+                                tmp = Path('/tmp/det_latest_frame.tmp.jpg')
+                                tmp.write_bytes(buf.tobytes())
+                                tmp.rename('/tmp/det_latest_frame.jpg')
+                        except Exception:
+                            pass
+
                     # Detection
                     bird_detected, confidence = self._detect_bird(frame)
                     

@@ -4,21 +4,17 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu.png)
 
-## Release v2.2.0 — Docker Web API & sichere Deployments 🐳
+## Release v2.2.1 — Web-GUI Verbesserungen & HTTPS-Komfort 🖥️
 
-- **Version:** v2.2.0 (2026)
-- **🚀 Major Features:**
-  - **Docker-Container auf dem Raspberry Pi** (Hauptarchitektur)
-    - `pi_daemon_secure.py` — Gesicherter Flask-HTTPS-Daemon (JWT + TOTP 2FA)
-    - Web-GUI unter `https://<pi-host>:8443/` — kein lokaler Python-Client nötig
-    - Verwaltung von Detection, Aufnahme, Konvertierung und Transfer über den Browser
-  - **Ansible-Deployment** (Einmalig einrichten, danach per Skript aktualisieren)
-    - `ansible/.env` für alle persönlichen Einstellungen (gitignored)
-    - `ansible/.env.example` als Vorlage für neue Nutzer
-    - `./ansible/build_and_deploy.sh --install` / `--update`
-  - **Komplette Repo-Bereinigung**
-    - Alle veralteten Skripte in `legacy/` archiviert
-    - KEINE persönlichen Daten im Repository
+- **Version:** v2.2.1 (März 2026)
+- **🚀 Neue Features:**
+  - **Versions-Badge** in der Web-GUI-Topbar (live aus `/api/status`)
+  - **Projekt-Logo** auf Login-Seite (220 px) und in der Topbar (32 px)
+  - **HTTPS-Komfort:** Zertifikat-Download + Chrome-Importanleitung auf der Login-Seite
+  - **Hilfe-Modal** um Audio-Only und Live-Vorschau ergänzt
+- **🐛 Bugfixes:**
+  - E2E-Test: Profilname `FHD` → `normal_hd` (HTTP 400 behoben)
+  - Dockerfile: `--platform`-Warnung `RedundantTargetPlatform` behoben
 
 - **🔧 Technical Stack:**
   - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
@@ -28,11 +24,17 @@
   - ✅ Persönliche Konfiguration ausschließlich in `ansible/.env` (gitignored)
 
 **Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
-**Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
+**Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
+**Release Notes:** [`releases/v2.2.1/`](releases/v2.2.1/RELEASE_NOTES_v2.2.1.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.2.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.0)
+[![Version](https://img.shields.io/badge/Version-v2.2.1-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.1)
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.2.0 (Archiv)
+**Docker & Ansible Build-Infrastruktur**
+- **Version:** v2.2.0 (13. März 2026)
+- Siehe [Archiv-Release](releases/v2.2.0/) für Details oder CHANGELOG.md
 
 ### v2.1.1 (Archiv)
 **Graceful Shutdown & Detect-and-Record Mode**
@@ -130,14 +132,21 @@ Das System läuft als **Docker-Container auf dem Raspberry Pi** und wird vollst�
 
 ### Architektur-Überblick
 
-```
-Browser  →  https://<pi-host>:8443/  (HTTPS, JWT + TOTP 2FA)
-                    ↓
-        pi_daemon_secure.py  (Flask, Docker-Container)
-                    ↓
-  unified-camera-monitor-detect-only.py  (Subprocess, Detection+Recording)
-                    ↓
-    rpicam-vid + arecord  →  H264+WAV  →  MP4-Merge  →  SSH-Sync
+```mermaid
+flowchart TD
+    B["💻 Browser\nhttps://pi-host:8443/"] -->|"HTTPS · Bearer JWT"| D
+    subgraph Container["🐳 Docker-Container auf dem Raspberry Pi 5"]
+        D["pi_daemon_secure.py\nFlask · JWT · TOTP 2FA"]
+        M["unified-camera-monitor-detect-only.py\nDetection + Recording"]
+        D -->|"startet / stoppt"| M
+    end
+    subgraph Pipeline["📹 Aufnahme-Pipeline"]
+        R["rpicam-vid + arecord\nH264 + WAV"]
+        F["FFmpeg\nH264+WAV → MP4"]
+        S["SSH-Sync\nzu Zielsystemen"]
+        R --> F --> S
+    end
+    M -->|"rpicam-vid · arecord"| R
 ```
 
 ### Web-GUI Features
@@ -150,6 +159,16 @@ Browser  →  https://<pi-host>:8443/  (HTTPS, JWT + TOTP 2FA)
 | **Transfer** | SSH-Sync zu konfigurierten Zielsystemen |
 | **Download** | Direkte Browser-Downloads von Aufnahmen |
 | **Löschen** | Verwaltung der Aufnahmen im Container |
+
+### Screenshots
+
+| Login | Status-Übersicht |
+|-------|-----------------|
+| ![Web-GUI Login](assets/WebGUI-Login.png) | ![Web-GUI Status](assets/WebGUI-Status.png) |
+
+| Manuelles Video | Online-Hilfe |
+|----------------|-------------|
+| ![Web-GUI Manuelles Video](assets/WebGUI-Manuelles-Video.png) | ![Web-GUI Online-Hilfe](assets/WebGUI-OnlineHilfe.png) |
 
 ### Deployment
 
@@ -274,81 +293,73 @@ nano ansible/.env     # PI_HOST, PI_USER, PI_SSH_KEY, VAULT_PASS_FILE eintragen
 
 ## 📂 Projektstruktur
 
+```mermaid
+mindmap
+  root((🐦 vogel-kamera-linux))
+    🚀 ansible
+      build_and_deploy.sh
+      .env / .env.example
+      ansible.cfg
+      inventory/hosts.yml
+      group_vars/all/vars.yml
+      group_vars/all/vault.yml
+      playbooks/deploy.yml
+      playbooks/update.yml
+      roles/pi-daemon
+      roles/ssl
+      roles/docker
+      roles/firewall
+      roles/build-host
+    🐳 unified-monitor-client
+      pi_daemon_secure.py ⭐
+      web/index.html
+      web/logo.png
+      requirements_daemon.txt
+      README.md
+    🍓 raspberry-pi-scripts
+      unified-camera-monitor-detect-only.py ⭐
+      requirements-pi.txt
+      HAILO-README.md
+    📚 docs
+      ARCHITEKTUR.md
+      SECURITY.md
+      AI-MODELLE-VOGELARTEN.md
+      ANLEITUNG-EIGENES-AI-MODELL.md
+      VERSIONIERUNG.md
+      i18n DE / EN / JA
+    🔧 scripts
+      version.py
+      release_workflow.py
+      update_version.py
+    📋 releases
+      README.md
+      v2.2.1 aktuell
+      ältere Versionen
+    📸 assets
+      WebGUI-Login.png
+      WebGUI-Status.png
+      WebGUI-Manuelles-Video.png
+      WebGUI-OnlineHilfe.png
+      Vogelhaus-Fotos
+    🤖 ai-training-tools
+      train_bird_model.py
+      extract_frames.py
+      vogel-model-trainer
+    🐍 python-toolbox
+      vogel-video-analyzer
+    🐍 python-skripte
+      check_ai_models.py
+      remote_system_monitor.py
+    🔐 git-automation
+      git_automation.py
+    🔧 3d-konstruktion
+    📦 legacy
+      archiviert bis v2.1.x
+    📚 wiki-sync
+    🎤 veranstaltungen
 ```
-vogel-kamera-linux/
-├── README.md                                                     # Hauptdokumentation
-├── LICENSE                                                       # MIT Lizenz
-├── .gitignore                                                    # Git-Ignore-Regeln
-├── ansible/                                                      # 🚀 Deployment & Konfiguration
-│   ├── .env.example                                             # Vorlage für persönliche Konfiguration
-│   ├── build_and_deploy.sh                                      # Build + Deploy Skript
-│   ├── ansible.cfg                                              # Ansible-Konfiguration
-│   ├── inventory/hosts.yml                                      # Pi-Inventar (ohne persönliche Daten)
-│   └── group_vars/all/vars.yml                                  # Variablen (liest PI_HOST, PI_USER, PI_SSH_KEY aus .env)
-├── unified-monitor-client/                                       # 🐳 Docker-Container  
-│   ├── pi_daemon_secure.py                                      # ⭐ HAUPT-SYSTEM: Flask HTTPS-Daemon (JWT + TOTP)
-│   ├── web/                                                     # Web-GUI (HTML/CSS/JS)
-│   ├── requirements_daemon.txt                                  # Python-Dependencies im Container
-│   ├── README.md                                                # Container-Dokumentation
-│   ├── SETUP_GUIDE.md                                           # Deployment-Anleitung
-│   └── DETECT_AND_RECORD.md                                     # Detect-and-Record Dokumentation
-├── raspberry-pi-scripts/                                        # 🍓 Aktive Pi-Skripte (im Container)
-│   ├── unified-camera-monitor-detect-only.py                   # ⭐ Detection-Skript (wird in Docker kopiert)
-│   ├── UNIFIED-MONITOR-README.md                                # Unified Monitor Dokumentation
-│   ├── HAILO-README.md                                          # Hailo-Accelerator Dokumentation
-│   └── requirements-pi.txt                                      # Python-Dependencies für Raspberry Pi
-├── docs/                                                         # 📚 Dokumentation
-│   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur Docker+Web API
-│   ├── SECURITY.md                                              # Sicherheitsrichtlinien
-│   ├── DOKUMENTATION-UEBERSICHT.md                              # Dokumentations-Index
-│   ├── AI-MODELLE-VOGELARTEN.md                                 # AI-Modell-Dokumentation
-│   ├── ANLEITUNG-EIGENES-AI-MODELL.md                          # AI-Training-Anleitung
-│   ├── VERSIONIERUNG.md                                         # Versionierungsrichtlinien
-│   └── i18n/                                                    # 🌐 Mehrsprachige Dokumentation
-│       ├── README.md                                            # 🇬🇧 English Documentation
-│       ├── README.de.md                                         # 🇩🇪 Deutsche Dokumentation
-│       └── README.ja.md                                         # 🇯🇵 日本語ドキュメント
-├── scripts/                                                      # 🔧 Build/Deploy-Skripte
-│   ├── version.py                                               # Zentrale Versionsverwaltung
-│   ├── release_workflow.py                                      # Release-Automatisierung
-│   └── update_version.py                                        # Versions-Update-Skript
-├── python-toolbox/                                             # 🐍 Python Packages & Tools
-│   ├── vogel-video-analyzer/                                   # Video-Analyse-Tool (Git Submodule)
-│   ├── requirements.txt                                         # Python-Dependencies
-│   └── README.md                                                # Python-Toolbox Dokumentation
-├── ai-training-tools/                                           # 🤖 KI-Trainings-Tools
-│   ├── train_bird_model.py                                      # Modell-Training
-│   ├── extract_frames.py                                        # Frame-Extraktion
-│   └── README.md                                                # Training-Dokumentation
-├── python-skripte/                                             # 🐍 Diagnose-Hilfsskripte
-│   ├── check_ai_models.py                                       # 🔍 AI-Modell-Validierung
-│   ├── quick_system_check.py                                    # ⚡ Schnelle System-Checks
-│   └── remote_system_monitor.py                                 # 📊 Umfassendes System-Monitoring
-├── releases/                                                     # 📋 Release-Dokumentation
-│   ├── README.md                                                # Release-Übersicht
-│   └── vX.X.X/                                                  # Versionierte Release-Archive
-├── assets/                                                       # 📸 QR-Codes & Medien
-│   ├── generate_qr_codes.py                                     # QR-Code Generator
-│   └── QR-CODE-ANLEITUNG.md                                     # QR-Code Dokumentation
-├── git-automation/                                              # 🔐 Git-Automatisierung
-│   ├── git_automation.py                                        # Sichere Git-Operationen mit AES-256
-│   └── README.md                                                # Git-Automation Dokumentation
-├── wiki-sync/                                                   # 📚 Wiki-Synchronisation
-│   └── README.md                                                # Wiki-Sync Dokumentation
-├── legacy/                                                      # 📦 Archivierte Skripte & Docs *(< v2.2)*
-│   ├── README.md                                                # Legacy Migration Guide
-│   ├── docs/                                                    # Veraltete Dokumentation
-│   ├── config/                                                  # Alte Konfigurationsdateien
-│   ├── unified-monitor-client/                                  # Alter SSH-basierter Python-Client
-│   ├── raspberry-pi-scripts/                                    # Alte Pi-Skripte (Hailo, benchmark, etc.)
-│   ├── python-skripte/                                          # Veraltete Python-Modulversionen
-│   ├── kamera-auto-trigger/                                     # Auto-Trigger System (v1.x, obsolet)
-│   └── network-tools/                                           # Netzwerk-Diagnose (v1.x, obsolet)
-├── 3d-konstruktion/                                            # 🔧 3D-Konstruktions-Dateien
-│   └── README.md                                                # 3D-Konstruktions-Dokumentation
-└── veranstaltungen/                                             # 🎤 Event-Management
-    └── README.md                                                # Event-Übersicht
-```
+
+> ⭐ = Hauptsystem-Einstiegspunkte
 
 ## 🚀 Schnellstart: 3 Schritte
 
@@ -401,10 +412,11 @@ VAULT_PASS_FILE=~/.pi-vault-pass # Ansible Vault Passwort-Datei
 ## 📁 Dateiorganisation
 
 Videos werden automatisch organisiert:
-```
-~/Videos/Vogelhaus/
-├── AI-HAD/        # Hauptaufnahmen mit AI
-└── Zeitlupe/      # Slow-Motion Videos
+
+```mermaid
+graph LR
+    V["📁 ~/Videos/Vogelhaus/"] --> A["🤖 AI-HAD/\nHauptaufnahmen mit AI"]
+    V --> Z["🎬 Zeitlupe/\nSlow-Motion Videos"]
 ```
 
 ## 🔧 Troubleshooting

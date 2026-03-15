@@ -24,9 +24,14 @@ import bcrypt
 import jwt
 import pyotp
 import psutil
-from flask import Flask, request, jsonify, send_file, abort
+from flask import Flask, request, jsonify, send_file, send_from_directory, abort
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+
+# ---------------------------------------------------------------------------
+# App-Version
+# ---------------------------------------------------------------------------
+APP_VERSION = '2.2.1'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -39,17 +44,89 @@ TOTP_SECRET       = os.environ.get('PI_DAEMON_TOTP_SECRET', '')
 PASSWORD_HASH     = os.environ.get('PI_DAEMON_PASSWORD_HASH', '')
 TOKEN_EXPIRY_H    = int(os.environ.get('PI_DAEMON_TOKEN_EXPIRY_HOURS', 8))
 VIDEO_BASE_DIR    = os.environ.get('PI_DAEMON_VIDEO_DIR', '/videos/Vogelhaus/AI-HAD')
-# Sync-Ziel nach Konvertierung (optional): z.B. 'user@raspi-collector:/videos/'
-# Wird beim Start aus /config/sync-config.json überschrieben wenn vorhanden
 SYNC_DEST         = os.environ.get('PI_DAEMON_SYNC_DEST', '')
 SYNC_SSH_KEY      = os.environ.get('PI_DAEMON_SYNC_SSH_KEY', '/certs/id_rsa_sync')
-# Persistente Einstellungen (ausserhalb des Containers in /etc/pi-daemon/)
 SETTINGS_FILE     = '/config/sync-config.json'
 SYNC_KEY_FILE     = '/config/sync_rsa'
 DETECTION_SCRIPT  = os.environ.get(
     'PI_DAEMON_DETECTION_SCRIPT',
     '/home/roimme/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor-detect-only.py',
 )
+
+# ---------------------------------------------------------------------------
+# Aufnahme-Profile  (gelten für BEIDE Modi: manuell UND Detection-getriggert)
+# Jedes Profil: duration(s), resolution, fps, bitrate(kbps), slowmotion
+# ---------------------------------------------------------------------------
+RECORDING_PROFILES = {
+    # ── Standard-Profile ────────────────────────────────────────────────────
+    'normal_hd': {
+        'label':      'Normal HD (1080p 30fps)',
+        'resolution': '1080p',   # 1920×1080
+        'fps':        30,
+        'bitrate':    8000,      # kbps
+        'slowmotion': False,
+    },
+    'normal_2k': {
+        'label':      'Normal 2K (2560×1440 30fps)',
+        'resolution': '2k',
+        'fps':        30,
+        'bitrate':    12000,
+        'slowmotion': False,
+    },
+    'normal_4k': {
+        'label':      'Normal 4K (4096×2160 25fps – max)',
+        'resolution': '4k',
+        'fps':        25,
+        'bitrate':    25000,
+        'slowmotion': False,
+    },
+    # ── Zeitlupe-Profile (High-FPS Aufnahme, Wiedergabe bei 30fps = Zeitlupe) ─
+    'slowmo_720p': {
+        'label':      'Zeitlupe 720p (120fps → 4× langsamer)',
+        'resolution': 'slowmo_720p',  # 1280×720 @ 120fps
+        'fps':        120,
+        'bitrate':    12000,
+        'slowmotion': True,
+    },
+    'slowmo_1080p': {
+        'label':      'Zeitlupe 1080p (60fps → 2× langsamer)',
+        'resolution': 'slowmo_1080p',  # 1920×1080 @ 60fps
+        'fps':        60,
+        'bitrate':    16000,
+        'slowmotion': True,
+    },
+}
+
+# Auflösungs-Map erweitert um Zeitlupe-Auflösungen
+_RESOLUTION_MAP = {
+    '480p':        ( 854,   480),
+    '720p':        (1280,   720),
+    '1080p':       (1920,  1080),
+    '2k':          (2560,  1440),
+    '4k':          (4096,  2160),
+    'slowmo_720p': (1280,   720),   # 1280×720 @ 120fps
+    'slowmo_1080p':(1920,  1080),   # 1920×1080 @ 60fps
+}
+
+# Persistente Aufnahme-Einstellungen (werden via API gesetzt)
+REC_SETTINGS_FILE = '/config/rec-settings.json'
+
+def _load_rec_settings() -> dict:
+    """Lädt persistente Aufnahme-Einstellungen. Fallback auf profile 'normal_hd'."""
+    try:
+        data = json.loads(Path(REC_SETTINGS_FILE).read_text())
+        if data.get('profile') in RECORDING_PROFILES:
+            return data
+    except Exception:
+        pass
+    return {'profile': 'normal_hd', 'duration': 15}
+
+def _save_rec_settings(data: dict) -> None:
+    try:
+        Path(REC_SETTINGS_FILE).parent.mkdir(parents=True, exist_ok=True)
+        Path(REC_SETTINGS_FILE).write_text(json.dumps(data, indent=2))
+    except Exception as exc:
+        logger.error('Aufnahme-Einstellungen konnten nicht gespeichert werden: %s', exc)
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -83,13 +160,21 @@ _lock = threading.RLock()   # Reentrant – gleicher Thread darf mehrfach acquir
 
 
 class DaemonState:
-    detection_running:  bool = False
-    recording_running:  bool = False
-    detection_process:  subprocess.Popen = None
-    recording_process:  subprocess.Popen = None
-    last_error:         str  = None
-    recording_file:     dict = None
-    started_at:         str  = datetime.now(timezone.utc).isoformat()
+    detection_running:     bool  = False
+    detection_mode:        bool  = False   # True = Detection-Modus aktiv (blockiert manuelle Aufnahme)
+    recording_running:     bool  = False
+    recording_started_at:  float = 0.0     # time.monotonic() beim Start der Aufnahme
+    recording_duration_s:  int   = 0       # geplante Aufnahmedauer in Sekunden
+    audio_running:         bool  = False   # True = reine Audio-Aufnahme läuft
+    audio_started_at:      float = 0.0
+    audio_duration_s:      int   = 0
+    detection_process:     subprocess.Popen = None
+    recording_process:     subprocess.Popen = None
+    last_error:            str  = None
+    recording_file:        dict = None
+    birds_recorded:        int  = 0        # Zähler Vogel-getriggerte Aufnahmen in dieser Session
+    started_at:            str  = datetime.now(timezone.utc).isoformat()
+    camera_hw_error:       bool  = False   # True = IMX708-Sensor hardware-stuck, Neustart nötig
 
 
 state = DaemonState()
@@ -110,111 +195,288 @@ def _kill_process_group(proc: subprocess.Popen, timeout: int = 5) -> None:
             pass
 
 
+def _camera_reset() -> bool:
+    """Setzt den IMX708-Kamera-Sensor per sysfs unbind/bind zurück.
+    Gibt True zurück wenn der Reset erfolgreich war (Sensor antwortet wieder).
+    """
+    SYSFS        = '/sys/bus/i2c/drivers/imx708'
+    DEVICE       = '11-001a'
+    DRIVER_LINK  = f'/sys/bus/i2c/devices/{DEVICE}/driver'  # Symlink existiert wenn Treiber gebunden
+    try:
+        unbind = Path(SYSFS) / 'unbind'
+        bind   = Path(SYSFS) / 'bind'
+        if not unbind.exists():
+            logger.warning('Kamera-Reset: sysfs-Pfad nicht gefunden (%s) – Hardware nicht RPi-Kamera?', SYSFS)
+            return False
+
+        # Nur unbinden wenn Sensor aktuell gebunden ist (sonst ENODEV → direkt bind)
+        if Path(DRIVER_LINK).exists():
+            logger.info('Kamera-Reset: imx708 unbind …')
+            unbind.write_text(DEVICE)
+            time.sleep(15)  # Sensor braucht Zeit zum Zurücksetzen (Voltage stabilisierung)
+        else:
+            logger.info('Kamera-Reset: imx708 bereits ungebunden – warte auf Sensor-Recovery …')
+            time.sleep(10)
+
+        logger.info('Kamera-Reset: imx708 bind …')
+        bind.write_text(DEVICE)
+        time.sleep(5)   # Warte auf asynchronen Probe-Vorgang
+        # Prüfe ob Bind erfolgreich: driver-Symlink existiert wenn der Sensor antwortet
+        if Path(DRIVER_LINK).exists():
+            logger.info('Kamera-Reset erfolgreich – imx708 wieder gebunden')
+            with _lock:
+                state.camera_hw_error = False
+            return True
+        else:
+            logger.warning('Kamera-Reset: Sensor antwortet nicht – Hardware-Neustart (Pi-Reboot) erforderlich')
+            with _lock:
+                state.camera_hw_error = True
+                state.last_error = 'Kamera-Hardware-Fehler: IMX708-Sensor antwortet nicht. Pi-Neustart erforderlich.'
+            return False
+    except PermissionError:
+        logger.warning('Kamera-Reset: keine Schreibrechte für sysfs – Daemon läuft nicht als root')
+        return False
+    except Exception as exc:
+        logger.warning('Kamera-Reset fehlgeschlagen: %s', exc)
+        return False
+
+
 class CameraManager:
+
+    # Umgebungsvariablen für den Detection-Subprozess (python3-trixie = Host-Python 3.13):
+    # - KEIN LD_LIBRARY_PATH: würde bookworm /bin/sh des Wrappers mit Trixie-libc crashen.
+    #   Bibliotheken werden via ld-linux.so.1 --library-path gesetzt (propagiert an dlopen).
+    _DETECTION_ENV: dict = {
+        **os.environ,
+        'PYTHONPATH': '/usr/lib/python3/dist-packages:/opt/host-site-packages',
+        'HOME': '/tmp',   # picamera2 braucht ein beschreibbares Home-Verzeichnis
+    }
+    _MODEL_PATH = '/home/roimme/vogel-kamera-linux/raspberry-pi-scripts/yolov8n.pt'
+
+    # ── Detection-Prozess-Management ─────────────────────────────────────────
+
+    @staticmethod
+    def _launch_detection_process() -> 'subprocess.Popen | None':
+        """Startet den Detection-Subprozess. Gibt Popen zurück oder None bei Fehler."""
+        try:
+            proc = subprocess.Popen(
+                ['python3-trixie', DETECTION_SCRIPT, '--model', CameraManager._MODEL_PATH],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                preexec_fn=os.setpgrp,
+                env=CameraManager._DETECTION_ENV,
+            )
+            logger.info('Detection-Prozess gestartet PID=%d', proc.pid)
+            return proc
+        except Exception as exc:
+            logger.error('Detection-Start fehlgeschlagen: %s', exc)
+            state.last_error = str(exc)
+            return None
 
     @staticmethod
     def start_detection() -> bool:
+        """Startet Detection ohne Detection-Modus (Watchdog-Nutzung, kein Auto-Record)."""
         with _lock:
             if state.detection_running:
                 return True
-            try:
-                proc = subprocess.Popen(
-                    ['python3', DETECTION_SCRIPT, '--use-hailo'],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    preexec_fn=os.setpgrp,
-                )
+            proc = CameraManager._launch_detection_process()
+            if proc:
                 state.detection_process = proc
                 state.detection_running = True
-                logger.info('Detection gestartet PID=%d', proc.pid)
                 return True
-            except Exception as exc:
-                logger.error('Detection-Start fehlgeschlagen: %s', exc)
-                state.last_error = str(exc)
+            return False
+
+    @staticmethod
+    def start_detection_mode() -> bool:
+        """Aktiviert den Detection-Modus: blockiert manuelle Aufnahme,
+        startet Detection-Loop mit Auto-Record bei Vogelerkennung."""
+        with _lock:
+            if state.detection_mode:
+                return True   # schon aktiv
+            if state.recording_running:
+                return False  # manuelle Aufnahme läuft noch
+            proc = CameraManager._launch_detection_process()
+            if not proc:
                 return False
+            state.detection_process = proc
+            state.detection_running = True
+            state.detection_mode    = True
+            state.birds_recorded    = 0
+            logger.info('Detection-Modus aktiviert')
+            return True
+
+    @staticmethod
+    def stop_detection_mode() -> bool:
+        """Beendet den Detection-Modus sauber."""
+        with _lock:
+            if not state.detection_mode:
+                return True
+            state.detection_mode = False
+            if state.detection_running and state.detection_process:
+                _kill_process_group(state.detection_process)
+                state.detection_running  = False
+                state.detection_process  = None
+            logger.info('Detection-Modus beendet (Vögel aufgenommen: %d)', state.birds_recorded)
+            return True
 
     @staticmethod
     def stop_detection() -> bool:
+        """Stoppt den Detection-Prozess (und deaktiviert ggf. Detection-Modus)."""
         with _lock:
+            state.detection_mode = False
             if not state.detection_running:
                 return True
             try:
                 _kill_process_group(state.detection_process)
                 state.detection_running = False
+                state.detection_process = None
                 logger.info('Detection gestoppt')
                 return True
             except Exception as exc:
                 logger.error('Detection-Stop fehlgeschlagen: %s', exc)
                 state.detection_running = False
+                state.detection_process = None
                 state.last_error = str(exc)
                 return False
 
     @staticmethod
     def _stop_detection_for_recording() -> None:
-        """Stoppt Detection und wartet auf libcamera-Freigabe.
+        """Stoppt Detection-Prozess und wartet auf libcamera-Freigabe.
         Muss MIT gehaltener _lock aufgerufen werden."""
         if state.detection_running and state.detection_process:
             _kill_process_group(state.detection_process)
             state.detection_running = False
-            logger.info('Detection für Recording gestoppt')
+            state.detection_process = None
+            logger.info('Detection-Prozess für Aufnahme gestoppt')
         time.sleep(1)   # libcamera braucht Zeit zum Freigeben
 
+    # ── Aufnahme ─────────────────────────────────────────────────────────────
+
     @staticmethod
-    def record(duration: int = 10, resolution: str = '2k', fps: int = 30, bitrate: int = 6000):
-        """Startet Recording. Blockiert bis Abschluss (in Background-Thread aufrufen)."""
+    def record(duration: int = 15, resolution: str = '1080p', fps: int = 30,
+               bitrate: int = 8000, slowmotion: bool = False,
+               triggered_by: str = 'manual'):
+        """Startet Recording. Blockiert bis Abschluss (in Background-Thread aufrufen).
+        triggered_by: 'manual' oder 'detection'"""
 
         # ── Zustand prüfen und belegen ──────────────────────────────────────
         with _lock:
             if state.recording_running:
                 return False, 'Recording läuft bereits'
+            # Manuelle Aufnahme nur erlaubt wenn kein Detection-Modus
+            if triggered_by == 'manual' and state.detection_mode:
+                return False, 'Im Detection-Modus gesperrt'
             CameraManager._stop_detection_for_recording()
-            state.recording_running = True
+            state.recording_running    = True
+            state.recording_started_at = time.monotonic()
+            state.recording_duration_s = duration
 
         # ── Aufnahme (Lock freigegeben) ─────────────────────────────────────
         try:
-            res_map = {
-                '480p':  (854,  480),
-                '720p':  (1280, 720),
-                '1080p': (1920, 1080),
-                '2k':    (2560, 1440),
-                '4k':    (4096, 2160),
-            }
-            w, h = res_map.get(resolution, (2560, 1440))
+            w, h = _RESOLUTION_MAP.get(resolution, (1920, 1080))
 
             recording_dir = Path(VIDEO_BASE_DIR)
             recording_dir.mkdir(parents=True, exist_ok=True)
 
-            ts          = datetime.now().strftime('%Y%m%d_%H%M%S')
-            video_file  = recording_dir / f'recording_{ts}.h264'
-            audio_file  = recording_dir / f'recording_{ts}.wav'
+            # Format: Jahr_KW_Tag_Uhrzeit_Aufloesung_fps  (z.B. 2026_11_14_190045_1920x1080_30fps)
+            ts         = datetime.now().strftime('%Y_%V_%d_%H%M%S')
+            video_file = recording_dir / f'{ts}_{w}x{h}_{fps}fps.h264'
+            audio_file = recording_dir / f'{ts}_{w}x{h}_{fps}fps.wav'
 
             video_cmd = [
                 'rpicam-vid',
-                '-t', str(duration * 1000),
-                '-w', str(w), '-h', str(h),
+                '--width', str(w), '--height', str(h),
                 '--framerate', str(fps),
                 '--bitrate', str(bitrate * 1000),
                 '-o', str(video_file),
                 '--inline',
+                '--rotation', '0',
+                # Autofokus deaktivieren: verhindert Fokus-Hunting bei hohen Auflösungen
+                '--autofocus-mode', 'manual',
+                # EXAKT wie altes Skript: --timeout in Millisekunden → rpicam-vid beendet sich selbst
+                # Kein -t 0 + Kill mehr – das führte bei 4K zu vorzeitigem Abbruch
+                '--timeout', str(duration * 1000),
             ]
+
             audio_cmd = [
                 'arecord', '-f', 'S16_LE', '-r', '44100',
                 '-c', '1', '-t', 'wav',
-                '-d', str(duration), str(audio_file),
+                # EXAKT wie altes Skript: -d in Sekunden → arecord beendet sich selbst
+                '-d', str(duration),
+                str(audio_file),
             ]
 
-            logger.info('Recording %ds %s → %s', duration, resolution, video_file.name)
+            logger.info('Recording [%s] %ds %s %dfps → %s | Load: %.2f %.2f %.2f',
+                        triggered_by, duration, resolution, fps, video_file.name,
+                        *os.getloadavg())
 
-            video_proc = subprocess.Popen(video_cmd,
-                                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            audio_proc = subprocess.Popen(audio_cmd,
-                                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # Mic-Eingangspegel sicherstellen (USB-Audio-Karte setzt ihn manchmal auf 0%)
+            try:
+                subprocess.run(
+                    ['amixer', '-c', '0', 'sset', 'Mic', '50%'],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=3
+                )
+            except Exception:
+                pass
+
+            if slowmotion:
+                # Zeitlupe: nur Video, kein Audio
+                video_proc = subprocess.Popen(video_cmd,
+                                              stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            else:
+                # ── Zeitsynchroner Start: beide Popen-Aufrufe direkt nacheinander ──
+                # Exakt wie altes Skript: audio_thread.start() gleich nach video_thread.start()
+                # Kein Barrier nötig – der Overhead zwischen beiden Popen-Aufrufen ist <1ms
+                video_proc = subprocess.Popen(video_cmd,
+                                              stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+                audio_proc = subprocess.Popen(audio_cmd,
+                                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            audio_proc = audio_proc if not slowmotion else None
 
             with _lock:
                 state.recording_process = video_proc
 
-            video_proc.wait()
-            audio_proc.wait()
+            # ── Warten bis beide Prozesse sich selbst beenden ───────────────
+            # Exakt wie altes Skript: rpicam-vid --timeout und arecord -d beenden
+            # sich nach exakter Dauer selbst. Python wartet nur mit join/wait.
+            # Kill nur als Fallback wenn Prozess hängt (timeout + 10s Puffer).
+            fallback_timeout = duration + 10
+            deadline = time.monotonic() + fallback_timeout
+            while time.monotonic() < deadline:
+                # Beide Prozesse fertig?
+                v_done = video_proc.poll() is not None
+                a_done = audio_proc is None or audio_proc.poll() is not None
+                if v_done and a_done:
+                    break
+                time.sleep(0.5)
+
+            # ── Fallback-Kill falls Prozess hängt ───────────────────────────
+            _stop_pairs = [(video_proc, 'rpicam-vid')]
+            if audio_proc is not None:
+                _stop_pairs.append((audio_proc, 'arecord'))
+            for proc, name in _stop_pairs:
+                if proc.poll() is None:
+                    try:
+                        _kill_process_group(proc, timeout=5)
+                        logger.warning('%s musste per Kill beendet werden', name)
+                    except Exception as e:
+                        logger.warning('%s Kill fehlgeschlagen: %s', name, e)
+
+            with _lock:
+                state.recording_process = None
+
+            # stderr von rpicam-vid auslesen (nicht-blockierend nach Kill)
+            try:
+                stderr_out = video_proc.stderr.read().decode('utf-8', errors='replace').strip()
+            except Exception:
+                stderr_out = ''
+            if stderr_out:
+                for line in stderr_out.splitlines():
+                    if 'ERROR' in line or 'error' in line.lower():
+                        logger.error('rpicam-vid: %s', line)
+                    else:
+                        logger.debug('rpicam-vid: %s', line)
 
             # Kurze Pause: Dateisystem-Flush sicherstellen (wie in alten Skripten +1s)
             time.sleep(2)
@@ -227,22 +489,30 @@ class CameraManager:
                 }
                 with _lock:
                     state.recording_file = rec_info
-                logger.info('Recording abgeschlossen: %s', video_file.name)
+                logger.info('Recording abgeschlossen: %s | Load: %.2f %.2f %.2f',
+                            video_file.name, *os.getloadavg())
 
                 # Auto-Konvertierung direkt auf die gerade aufgenommene h264
-                ok, result = CameraManager._convert_one(video_file)
+                ok, results = CameraManager._convert_one(video_file, recording_fps=fps, slowmotion=slowmotion)
                 if ok:
-                    logger.info('Auto-Konvertierung nach Recording: %s', Path(result).name)
-                    CameraManager.transfer_all(result)
+                    logger.info('Auto-Konvertierung nach Recording: %d Datei(en)', len(results))
+                    for mp4 in results:
+                        CameraManager.transfer_all(mp4)
                 else:
-                    logger.warning('Auto-Konvertierung fehlgeschlagen: %s', result)
+                    logger.warning('Auto-Konvertierung fehlgeschlagen: %s', results[0] if results else '?')
                     with _lock:
-                        state.last_error = f'Konvertierung: {result}'
+                        state.last_error = f'Konvertierung: {results[0] if results else "Fehler"}'
 
                 return True, rec_info
 
             logger.error('Video-Datei nicht erstellt: %s', video_file)
-            return False, 'Video-Datei nicht erstellt'
+            err_msg = f'Video-Datei nicht erstellt ({video_file.name})'
+            if stderr_out:
+                first_error = next((l for l in stderr_out.splitlines() if 'ERROR' in l), stderr_out.splitlines()[-1] if stderr_out else '')
+                err_msg = first_error.strip() or err_msg
+            with _lock:
+                state.last_error = err_msg
+            return False, err_msg
 
         except Exception as exc:
             logger.error('Recording fehlgeschlagen: %s', exc)
@@ -252,9 +522,125 @@ class CameraManager:
 
         finally:
             with _lock:
-                state.recording_running = False
+                state.recording_running    = False
+                state.recording_process    = None
+                state.recording_started_at = 0.0
+                state.recording_duration_s = 0
+                if triggered_by == 'detection':
+                    state.birds_recorded += 1
+                _det_mode = state.detection_mode
+            # Detection immer neu starten (egal ob manuell oder detection-getriggert)
+            if _det_mode:
+                CameraManager.start_detection()
+            else:
+                CameraManager.start_detection()
+
+    @staticmethod
+    def record_audio(duration: int = 60):
+        """Startet eine reine Audio-Aufnahme (kein Video) mit arecord.
+        Orientiert an Legacy-Skript ai-had-audio-remote-param-vogel-libcamera-single.py.
+        Gibt (ok, wav_path_or_error) zurück."""
+        with _lock:
+            if state.recording_running:
+                return False, 'Video-Recording läuft bereits'
+            if state.audio_running:
+                return False, 'Audio-Aufnahme läuft bereits'
+            state.audio_running    = True
+            state.audio_started_at = time.monotonic()
+            state.audio_duration_s = duration
+
+        try:
+            recording_dir = Path(VIDEO_BASE_DIR)
+            recording_dir.mkdir(parents=True, exist_ok=True)
+
+            # Dateiname: Jahr_KW_Tag_Uhrzeit_audio_Xmin.wav
+            ts  = datetime.now().strftime('%Y_%V_%d_%H%M%S')
+            dur_min = max(1, round(duration / 60))
+            wav = recording_dir / f'{ts}_audio_{dur_min}min.wav'
+
+            # arecord: 44.1 kHz, Mono, 16-bit signed LE, WAV-Format
+            # Kein -D: nutzt ALSA-Default (erstes verfügbares Mikrofon)
+            # Kein -d Flag: Dauer via Python-Sleep + Kill (analog Video)
+            audio_cmd = [
+                'arecord', '-f', 'S16_LE', '-r', '44100', '-c', '1', '-t', 'wav',
+                str(wav),
+            ]
+
+            # Mic-Eingangspegel sicherstellen
+            try:
+                subprocess.run(
+                    ['amixer', '-c', '0', 'sset', 'Mic', '50%'],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=3
+                )
+            except Exception:
+                pass
+
+            logger.info('Audio-Only-Recording gestartet: %ds → %s', duration, wav.name)
+            audio_proc = subprocess.Popen(
+                audio_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+
+            with _lock:
+                state.recording_process = audio_proc
+
+            # Dauer abwarten (1s-Schritte für sofortigen Kill-Response)
+            deadline = time.monotonic() + duration
+            while time.monotonic() < deadline:
+                if audio_proc.poll() is not None:
+                    logger.warning('arecord vorzeitig beendet (rc=%d)', audio_proc.returncode)
+                    break
+                time.sleep(1)
+
+            # Prozess explizit stoppen
+            if audio_proc.poll() is None:
+                try:
+                    _kill_process_group(audio_proc, timeout=5)
+                except Exception as e:
+                    logger.warning('arecord Kill fehlgeschlagen: %s', e)
+
+            with _lock:
                 state.recording_process = None
-            CameraManager.start_detection()
+
+            # stderr auswerten
+            try:
+                stderr_out = audio_proc.stderr.read().decode('utf-8', errors='replace').strip()
+            except Exception:
+                stderr_out = ''
+            if stderr_out:
+                for line in stderr_out.splitlines():
+                    if 'error' in line.lower():
+                        logger.error('arecord: %s', line)
+                    else:
+                        logger.debug('arecord: %s', line)
+
+            time.sleep(1)  # Dateisystem-Flush
+
+            if wav.exists() and wav.stat().st_size > 4096:
+                logger.info('Audio-Aufnahme abgeschlossen: %s (%.1f MB)',
+                            wav.name, wav.stat().st_size / 1048576)
+                CameraManager.transfer_all(str(wav))
+                return True, str(wav)
+
+            err = f'WAV-Datei nicht erstellt oder leer ({wav.name})'
+            if stderr_out:
+                err = next((l for l in stderr_out.splitlines() if 'error' in l.lower()),
+                           stderr_out.splitlines()[-1] if stderr_out else err)
+            logger.error(err)
+            with _lock:
+                state.last_error = err
+            return False, err
+
+        except Exception as exc:
+            logger.error('Audio-Aufnahme fehlgeschlagen: %s', exc)
+            with _lock:
+                state.last_error = str(exc)
+            return False, str(exc)
+
+        finally:
+            with _lock:
+                state.audio_running    = False
+                state.audio_started_at = 0.0
+                state.audio_duration_s = 0
+                state.recording_process = None
 
     @staticmethod
     def _find_latest_h264() -> 'Path | None':
@@ -266,34 +652,85 @@ class CameraManager:
         return files[0] if files else None
 
     @staticmethod
-    def _convert_one(h264: 'Path') -> tuple:
-        """Konvertiert eine einzelne h264 → mp4. Gibt (ok, mp4_path_or_error) zurück.
-        Nutzt -c:v copy + -fflags +genpts (schnell, kein Re-Encoding, kein Qualitätsverlust)."""
+    def _run_ffmpeg_convert(h264: 'Path', mp4: 'Path', input_fps: int,
+                            wav: 'Path | None' = None) -> 'tuple[bool, str]':
+        """Hilfsfunktion: Konvertiert h264 → mp4 mit angegebener Input-fps.
+        Gibt (ok, mp4_path_or_error) zurück."""
+        audio_valid = wav is not None and wav.exists() and wav.stat().st_size > 4096
+        # -f h264 erzwingt den Raw-H264-Demuxer; -r überschreibt VUI-Framerate
+        # (rpicam-vid/libcamera auf Pi5 kodiert VUI manchmal mit doppelter fps)
+        cmd = ['ffmpeg', '-y', '-fflags', '+genpts',
+               '-f', 'h264', '-r', str(input_fps), '-i', str(h264)]
+        if audio_valid:
+            # EXAKT wie altes Skript:
+            # - KEIN -shortest (würde bei WAV-Header-Ungenauigkeit Video abschneiden!)
+            # - KEIN -ignore_length (arecord mit -d schreibt korrekten Header)
+            # - Audio-Filter: 2x Boost + Normalisierung
+            cmd += ['-i', str(wav),
+                    '-c:v', 'copy', '-c:a', 'aac',
+                    '-af', 'volume=2.0,loudnorm=I=-23',
+                    '-movflags', '+faststart']
+        else:
+            cmd += ['-c:v', 'copy', '-movflags', '+faststart']
+        cmd.append(str(mp4))
+        result = subprocess.run(cmd, capture_output=True, timeout=600)
+        if result.returncode == 0 and mp4.exists():
+            return True, str(mp4)
+        err = result.stderr.decode(errors='replace')[:500]
+        return False, err
+
+    @staticmethod
+    def _convert_one(h264: 'Path', recording_fps: int = 30, slowmotion: bool = False) -> tuple:
+        """Konvertiert eine einzelne h264 → mp4. Gibt (ok, [mp4_paths] | [error_str]) zurück.
+        Nutzt -c:v copy + -fflags +genpts (schnell, kein Re-Encoding, kein Qualitätsverlust).
+        recording_fps: tatsächliche Aufnahme-Framerate (für Zeitstempel-Berechnung)
+        slowmotion:    True → mehrere MP4-Versionen mit verschiedenen Playback-fps erstellen
+                              Namensschema: {stem}_pb{playback}fps.mp4 und {stem}.mp4 (Original)
+        """
         try:
-            mp4 = h264.with_suffix('.mp4')
             wav = h264.with_suffix('.wav')
-            audio_valid = wav.exists() and wav.stat().st_size > 4096  # mind. 4KB
 
-            cmd = ['ffmpeg', '-y', '-fflags', '+genpts', '-r', '30', '-i', str(h264)]
-            if audio_valid:
-                cmd += ['-i', str(wav), '-c:v', 'copy', '-c:a', 'aac', '-shortest']
+            if slowmotion:
+                # ── Zeitlupe: mehrere Playback-Versionen (kein Audio) ───────
+                # Playback-fps-Stufen: 10, 20, 30 + Original-Geschwindigkeit
+                # Beispiel 120fps aufgenommen → _pb10fps = 12x langsamer, _pb30fps = 4x
+                playback_fps_list = [10, 20, 30, recording_fps]
+                logger.info('Slowmo-Konvertierung: %s → %d Playback-Versionen %s',
+                            h264.name, len(playback_fps_list), playback_fps_list)
+                created = []
+                errors  = []
+                for pb_fps in playback_fps_list:
+                    if pb_fps == recording_fps:
+                        # Original-Geschwindigkeit → Standard-Name (kein _pb-Suffix)
+                        mp4 = h264.with_suffix('.mp4')
+                    else:
+                        mp4 = h264.with_name(f'{h264.stem}_pb{pb_fps}fps.mp4')
+                    ok, res = CameraManager._run_ffmpeg_convert(h264, mp4, pb_fps, wav=None)
+                    if ok:
+                        logger.info('  ✓ %s (%.1f MB)', mp4.name, mp4.stat().st_size / 1048576)
+                        created.append(res)
+                    else:
+                        logger.error('  ✗ Fehler bei pb%dfps: %s', pb_fps, res[:200])
+                        errors.append(res)
+                if created:
+                    return True, created
+                return False, [errors[0] if errors else 'Alle Konvertierungen fehlgeschlagen']
             else:
-                cmd += ['-c:v', 'copy']
-            cmd.append(str(mp4))
-
-            logger.info('Konvertierung: %s%s → %s',
-                        h264.name, ' (+Audio)' if audio_valid else '', mp4.name)
-            result = subprocess.run(cmd, capture_output=True, timeout=600)
-            if result.returncode == 0 and mp4.exists():
-                logger.info('Konvertierung abgeschlossen: %s (%.1f MB)',
-                            mp4.name, mp4.stat().st_size / 1048576)
-                return True, str(mp4)
-            err = result.stderr.decode(errors='replace')[:500]
-            logger.error('ffmpeg Fehler: %s', err)
-            return False, err
+                # ── Normal: einzelne MP4, fps bereits im h264-Dateinamen ───
+                mp4 = h264.with_suffix('.mp4')
+                logger.info('Konvertierung: %s%s → %s',
+                            h264.name, ' (+Audio)' if wav.exists() else '', mp4.name)
+                ok, res = CameraManager._run_ffmpeg_convert(
+                    h264, mp4, recording_fps, wav=wav)
+                if ok:
+                    logger.info('Konvertierung abgeschlossen: %s (%.1f MB)',
+                                mp4.name, Path(mp4).stat().st_size / 1048576)
+                    return True, [res]
+                logger.error('ffmpeg Fehler: %s', res)
+                return False, [res]
         except Exception as exc:
             logger.error('Konvertierung fehlgeschlagen: %s', exc)
-            return False, str(exc)
+            return False, [str(exc)]
 
     @staticmethod
     def convert_all_pending() -> tuple:
@@ -307,12 +744,13 @@ class CameraManager:
         converted = 0
         errors = []
         for h264 in pending:
-            ok, result = CameraManager._convert_one(h264)
+            ok, results = CameraManager._convert_one(h264)
             if ok:
                 converted += 1
-                CameraManager.transfer_all(result)
+                for mp4 in results:
+                    CameraManager.transfer_all(mp4)
             else:
-                errors.append(f'{h264.name}: {result}')
+                errors.append(f'{h264.name}: {results[0] if results else "Fehler"}')
         return converted, errors
 
     # Legacy-kompatibler Wrapper
@@ -330,12 +768,12 @@ class CameraManager:
             if count:
                 return True, f'{count} Dateien konvertiert'
             return False, errs[0] if errs else 'Keine h264-Dateien vorhanden'
-        ok, result = CameraManager._convert_one(h264)
+        ok, results = CameraManager._convert_one(h264)
         if ok:
             with _lock:
                 if state.recording_file:
-                    state.recording_file['mp4'] = result
-        return ok, result
+                    state.recording_file['mp4'] = results[0]
+        return ok, results[0] if results else ''
 
     @staticmethod
     def transfer_all(mp4_path: str) -> list:
@@ -348,10 +786,10 @@ class CameraManager:
         for t in targets:
             dest = f"{t['user']}@{t['host']}:{t['path']}"
             key_file = f"/config/sync_key_{t['id']}"
-            ssh_opts = 'StrictHostKeyChecking=no,LogLevel=ERROR,ConnectTimeout=10'
-            if Path(key_file).exists():
-                ssh_opts += f',IdentityFile={key_file}'
-            cmd = ['rsync', '-az', '-e', f'ssh -o {ssh_opts}', mp4_path, dest]
+            ssh_cmd = ('ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+                       ' -o LogLevel=ERROR -o ConnectTimeout=10'
+                       + (f' -i {key_file}' if Path(key_file).exists() else ''))
+            cmd = ['rsync', '-az', '-e', ssh_cmd, mp4_path, dest]
             logger.info('Transfer [%s]: %s → %s', t['name'], Path(mp4_path).name, dest)
             try:
                 r = subprocess.run(cmd, capture_output=True, timeout=600)
@@ -373,23 +811,32 @@ class CameraManager:
         base = Path(VIDEO_BASE_DIR)
         if not base.exists():
             return []
-        # rglob: auch Unterverzeichnisse durchsuchen
-        files = sorted(base.rglob('*.mp4'), key=lambda f: f.stat().st_mtime, reverse=True)
-        result = []
-        for f in files[:100]:
-            try:
-                rel = str(f.relative_to(base))
-            except ValueError:
-                rel = f.name
-            mtime = f.stat().st_mtime
-            result.append({
-                'name':     f.name,
-                'rel_path': rel,
-                'size_mb':  round(f.stat().st_size / 1_048_576, 1),
-                'created':  datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S'),
-                'date':     datetime.fromtimestamp(mtime).strftime('%Y-%m-%d'),
-            })
-        return result
+        all_files = []
+        for pattern, ftype in [('*.mp4', 'video'), ('*.wav', 'audio')]:
+            for f in base.rglob(pattern):
+                # WAV: nur manuell aufgenommene Audio-Dateien zeigen (_audio im Namen)
+                # Begleit-WAVs von Video-Aufnahmen (z.B. 1920x1080_30fps.wav) werden ausgeblendet
+                # Passt auf: _audio.wav (alt) und _audio_1min.wav (neu)
+                if ftype == 'audio' and '_audio' not in f.name:
+                    continue
+                try:
+                    rel = str(f.relative_to(base))
+                except ValueError:
+                    rel = f.name
+                mtime = f.stat().st_mtime
+                all_files.append({
+                    'name':     f.name,
+                    'rel_path': rel,
+                    'size_mb':  round(f.stat().st_size / 1_048_576, 1),
+                    'created':  datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S'),
+                    'date':     datetime.fromtimestamp(mtime).strftime('%Y-%m-%d'),
+                    'type':     ftype,
+                    '_mtime':   mtime,
+                })
+        all_files.sort(key=lambda x: x['_mtime'], reverse=True)
+        for entry in all_files:
+            del entry['_mtime']
+        return all_files[:100]
 
 
 # ---------------------------------------------------------------------------
@@ -462,8 +909,17 @@ def api_status():
         cpu  = psutil.cpu_percent(interval=0.3)
         mem  = psutil.virtual_memory()
         disk = psutil.disk_usage(VIDEO_BASE_DIR if Path(VIDEO_BASE_DIR).exists() else '/')
+        load = os.getloadavg()
+        try:
+            cpu_temp = round(int(Path('/sys/class/thermal/thermal_zone0/temp').read_text().strip()) / 1000.0, 1)
+        except Exception:
+            cpu_temp = None
         system = {
             'cpu_percent':  cpu,
+            'cpu_temp':     cpu_temp,
+            'load_1min':    round(load[0], 2),
+            'load_5min':    round(load[1], 2),
+            'load_15min':   round(load[2], 2),
             'mem_used_mb':  round(mem.used   / 1_048_576),
             'mem_total_mb': round(mem.total  / 1_048_576),
             'disk_free_gb': round(disk.free  / 1_073_741_824, 1),
@@ -472,13 +928,50 @@ def api_status():
     except Exception:
         system = {}
 
+    with _lock:
+        rec_running  = state.recording_running
+        rec_start    = state.recording_started_at
+        rec_dur      = state.recording_duration_s
+        aud_running  = state.audio_running
+        aud_start    = state.audio_started_at
+        aud_dur      = state.audio_duration_s
+
+    # Fortschritt berechnen (0–100), None wenn keine Aufnahme läuft
+    if rec_running and rec_dur > 0:
+        elapsed  = time.monotonic() - rec_start
+        progress = min(100, round(elapsed / rec_dur * 100))
+        rec_remaining = max(0, rec_dur - int(elapsed))
+    else:
+        progress      = None
+        rec_remaining = None
+
+    # Fortschritt Audio-Only
+    if aud_running and aud_dur > 0:
+        elapsed_a     = time.monotonic() - aud_start
+        aud_progress  = min(100, round(elapsed_a / aud_dur * 100))
+        aud_remaining = max(0, aud_dur - int(elapsed_a))
+    else:
+        aud_progress  = None
+        aud_remaining = None
+
     return jsonify({
-        'detection_running': state.detection_running,
-        'recording_running': state.recording_running,
-        'last_error':        state.last_error,
-        'recording_file':    state.recording_file,
-        'started_at':        state.started_at,
-        'system':            system,
+        'detection_running':    state.detection_running,
+        'detection_mode':       state.detection_mode,
+        'birds_recorded':       state.birds_recorded,
+        'recording_running':    rec_running,
+        'recording_progress':   progress,       # 0–100 oder null
+        'recording_remaining':  rec_remaining,  # Sekunden verbleibend oder null
+        'recording_duration':   rec_dur if rec_running else None,
+        'audio_running':        aud_running,
+        'audio_progress':       aud_progress,
+        'audio_remaining':      aud_remaining,
+        'audio_duration':       aud_dur if aud_running else None,
+        'camera_hw_error':      state.camera_hw_error,
+        'last_error':           state.last_error,
+        'recording_file':       state.recording_file,
+        'started_at':           state.started_at,
+        'system':               system,
+        'version':              APP_VERSION,
     })
 
 
@@ -487,6 +980,7 @@ def api_status():
 @app.route('/api/detection/start', methods=['POST'])
 @require_auth
 def api_detection_start():
+    """Startet Detection ohne Detection-Modus (einfache Einzelerkennung)."""
     ok = CameraManager.start_detection()
     return jsonify({'success': ok})
 
@@ -498,28 +992,128 @@ def api_detection_stop():
     return jsonify({'success': ok})
 
 
+@app.route('/api/detection/mode/start', methods=['POST'])
+@require_auth
+def api_detection_mode_start():
+    """Aktiviert Detection-Modus: bei Vogelerkennung automatisch aufnehmen + weiter."""
+    ok = CameraManager.start_detection_mode()
+    if not ok:
+        with _lock:
+            msg = 'Aufnahme läuft gerade' if state.recording_running else 'Unbekannter Fehler'
+        return jsonify({'success': False, 'error': msg}), 409
+    return jsonify({'success': True, 'detection_mode': True})
+
+
+@app.route('/api/detection/mode/stop', methods=['POST'])
+@require_auth
+def api_detection_mode_stop():
+    """Beendet Detection-Modus und stoppt die Detection."""
+    ok = CameraManager.stop_detection_mode()
+    return jsonify({'success': ok, 'detection_mode': False, 'birds_recorded': state.birds_recorded})
+
+
+# ── Aufnahme-Profile ──────────────────────────────────────────────────────────
+
+@app.route('/api/profiles')
+@require_auth
+def api_profiles():
+    """Gibt die verfügbaren Aufnahme-Profile zurück."""
+    return jsonify(RECORDING_PROFILES)
+
+
+@app.route('/api/rec-settings', methods=['GET', 'POST'])
+@require_auth
+def api_rec_settings():
+    """Liest oder speichert persistente Aufnahme-Einstellungen (Profil + Dauer)."""
+    if request.method == 'GET':
+        return jsonify(_load_rec_settings())
+    data = request.get_json(silent=True) or {}
+    profile  = data.get('profile', 'normal_hd')
+    duration = min(max(int(data.get('duration', 15)), 3), 300)
+    if profile not in RECORDING_PROFILES:
+        return jsonify({'error': f'Unbekanntes Profil: {profile}'}), 400
+    _save_rec_settings({'profile': profile, 'duration': duration})
+    return jsonify({'success': True, 'profile': profile, 'duration': duration})
+
+
 # ── Recording ────────────────────────────────────────────────────────────────
 
 @app.route('/api/record', methods=['POST'])
 @require_auth
 def api_record():
     with _lock:
+        if state.detection_mode:
+            return jsonify({'error': 'Im Detection-Modus gesperrt – manuelle Aufnahme nicht möglich'}), 409
         if state.recording_running:
             return jsonify({'error': 'Recording läuft bereits'}), 409
 
-    data       = request.get_json(silent=True) or {}
-    duration   = min(max(int(data.get('duration',   10)),    3), 300)
-    resolution = data.get('resolution', '2k')
-    fps        = min(max(int(data.get('fps',        30)),    1), 60)
-    bitrate    = min(max(int(data.get('bitrate', 6000)), 1000), 25000)
+    data         = request.get_json(silent=True) or {}
+    profile_name = data.get('profile')      # optionaler Profilname
+    duration     = min(max(int(data.get('duration', 15)), 3), 300)
+
+    if profile_name and profile_name in RECORDING_PROFILES:
+        profile    = RECORDING_PROFILES[profile_name]
+        resolution = profile['resolution']
+        fps        = profile['fps']
+        bitrate    = profile['bitrate']
+        slowmotion = profile['slowmotion']
+    else:
+        # Fallback: direkte Parameter (Legacy-Kompatibilität)
+        resolution = data.get('resolution', '1080p')
+        fps        = min(max(int(data.get('fps',     30)),    1), 120)
+        bitrate    = min(max(int(data.get('bitrate', 8000)), 1000), 25000)
+        slowmotion = bool(data.get('slowmotion', False))
 
     threading.Thread(
         target=CameraManager.record,
-        args=(duration, resolution, fps, bitrate),
+        kwargs={
+            'duration':    duration,
+            'resolution':  resolution,
+            'fps':         fps,
+            'bitrate':     bitrate,
+            'slowmotion':  slowmotion,
+            'triggered_by': 'manual',
+        },
         daemon=True,
     ).start()
 
-    return jsonify({'success': True, 'message': f'Recording gestartet ({duration}s)'})
+    label = RECORDING_PROFILES[profile_name]['label'] if profile_name in (RECORDING_PROFILES if profile_name else {}) else resolution
+    return jsonify({'success': True, 'message': f'Recording gestartet ({duration}s – {label})'})
+
+
+@app.route('/api/record/audio', methods=['POST'])
+@require_auth
+def api_record_audio():
+    """Startet eine reine Audio-Aufnahme (kein Video). Dauer max. 3600s."""
+    with _lock:
+        if state.recording_running:
+            return jsonify({'error': 'Video-Aufnahme läuft bereits'}), 409
+        if state.audio_running:
+            return jsonify({'error': 'Audio-Aufnahme läuft bereits'}), 409
+
+    data     = request.get_json(silent=True) or {}
+    duration = min(max(int(data.get('duration', 60)), 3), 3600)
+
+    threading.Thread(
+        target=CameraManager.record_audio,
+        kwargs={'duration': duration},
+        daemon=True,
+    ).start()
+    return jsonify({'success': True, 'message': f'Audio-Aufnahme gestartet ({duration}s)'})
+
+
+@app.route('/api/record/kill', methods=['POST'])
+@require_auth
+def api_record_kill():
+    """Beendet einen hängenden Aufnahme- oder Audio-Prozess sofort (SIGTERM → SIGKILL)."""
+    with _lock:
+        proc = state.recording_process
+        if not proc:
+            return jsonify({'error': 'Kein Aufnahmeprozess aktiv'}), 409
+
+    logger.warning('Kill-Aufnahme angefordert (PID %d)', proc.pid)
+    _kill_process_group(proc, timeout=3)
+    return jsonify({'success': True, 'message': 'Aufnahmeprozess beendet'})
 
 
 @app.route('/api/convert', methods=['POST'])
@@ -531,12 +1125,13 @@ def api_convert():
             # nichts ausstehend → neueste h264 (auch bereits konvertierte) nochmal probieren
             h264 = CameraManager._find_latest_h264()
             if h264:
-                ok, result = CameraManager._convert_one(h264)
+                ok, results = CameraManager._convert_one(h264)
                 if ok:
-                    CameraManager.transfer_all(result)
+                    for mp4 in results:
+                        CameraManager.transfer_all(mp4)
                 else:
                     with _lock:
-                        state.last_error = result
+                        state.last_error = results[0] if results else 'Konvertierungsfehler'
             else:
                 with _lock:
                     state.last_error = 'Keine h264-Dateien gefunden'
@@ -577,8 +1172,16 @@ def api_recordings():
 # ── Download ──────────────────────────────────────────────────────────────────
 
 @app.route('/api/download')
-@require_auth
 def api_download():
+    # Token entweder als Bearer-Header ODER als ?token= Query-Parameter (für <a href> Downloads)
+    auth = request.headers.get('Authorization', '')
+    token_val = auth[7:] if auth.startswith('Bearer ') else request.args.get('token', '')
+    if not token_val:
+        abort(401)
+    try:
+        jwt.decode(token_val, JWT_SECRET, algorithms=['HS256'])
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        abort(401)
     rel = request.args.get('p', '')
     if not rel:
         return jsonify({'error': 'Parameter p fehlt'}), 400
@@ -609,11 +1212,12 @@ def api_delete():
         return jsonify({'error': 'Datei nicht gefunden'}), 404
     deleted = [str(target.name)]
     target.unlink()
-    # Optionale Bereinigung: zugehörige H264-Quelldatei
-    h264 = target.with_suffix('.h264')
-    if h264.exists():
-        h264.unlink()
-        deleted.append(h264.name)
+    # Zugehörige Dateien mitbereinigen (H264-Quelle + WAV bei Video-Aufnahmen)
+    for ext in ('.h264', '.wav'):
+        companion = target.with_suffix(ext)
+        if companion.exists():
+            companion.unlink()
+            deleted.append(companion.name)
     logger.info('Gelöscht: %s', deleted)
     return jsonify({'success': True, 'deleted': deleted})
 
@@ -765,14 +1369,23 @@ def api_settings_test():
     host = t['host']
     user = t['user']
     key_file = f"/config/sync_key_{t['id']}"
-    key_opts = ['-i', key_file] if Path(key_file).exists() else []
-    cmd = ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'ConnectTimeout=8',
-           '-o', 'BatchMode=yes'] + key_opts + [f'{user}@{host}', 'echo VERBINDUNG_OK']
+    key_exists = Path(key_file).exists()
+    key_opts = ['-i', key_file] if key_exists else []
+    cmd = ['ssh',
+           '-o', 'StrictHostKeyChecking=no',
+           '-o', 'UserKnownHostsFile=/dev/null',
+           '-o', 'ConnectTimeout=8',
+           '-o', 'BatchMode=yes',
+           ] + key_opts + [f'{user}@{host}', 'echo VERBINDUNG_OK']
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=12, text=True)
         if result.returncode == 0 and 'VERBINDUNG_OK' in result.stdout:
             return jsonify({'success': True, 'message': f'✅ Verbindung zu {user}@{host} erfolgreich'})
-        err = (result.stderr or result.stdout)[:300]
+        err = (result.stderr or result.stdout).strip()[:400]
+        if not key_exists:
+            err = f'Kein SSH-Key gespeichert für dieses Ziel. Bitte Key eingeben und "Alle speichern" klicken. | {err}'
+        elif 'Permission denied' in err:
+            err = f'Permission denied – Public Key von {user}@{host} nicht autorisiert? Bitte ~/.ssh/authorized_keys prüfen. | {err}'
         return jsonify({'success': False, 'error': err or f'SSH Return-Code {result.returncode}'})
     except subprocess.TimeoutExpired:
         return jsonify({'success': False, 'error': 'Timeout (8s) – Host nicht erreichbar?'})
@@ -790,6 +1403,30 @@ def api_pending():
     return jsonify({'pending': len(pending)})
 
 
+# ── Live-Stream (MJPEG) ──────────────────────────────────────────────────────
+
+_STREAM_FRAME = Path('/tmp/det_latest_frame.jpg')
+
+
+@app.route('/api/snapshot')
+def api_snapshot():
+    """Einzelnes JPEG-Frame der Detection-Kamera (für JS-Polling).
+    Token via ?token= Query-Parameter oder Bearer-Header."""
+    auth = request.headers.get('Authorization', '')
+    token_val = auth[7:] if auth.startswith('Bearer ') else request.args.get('token', '')
+    if not token_val:
+        abort(401)
+    try:
+        jwt.decode(token_val, JWT_SECRET, algorithms=['HS256'])
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        abort(401)
+    if not _STREAM_FRAME.exists():
+        abort(503)   # Noch kein Frame verfügbar
+    resp = send_file(str(_STREAM_FRAME), mimetype='image/jpeg')
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return resp
+
+
 # ── Web-GUI ───────────────────────────────────────────────────────────────────
 
 WEB_DIR = Path(__file__).parent / 'web'
@@ -802,6 +1439,24 @@ def serve_index():
     if f.exists():
         return send_file(str(f))
     return '<!doctype html><h1>Web-GUI nicht gefunden</h1><p>web/index.html fehlt.</p>', 404
+
+
+@app.route('/web/<path:filename>')
+def serve_static(filename):
+    """Statische Dateien aus dem web/-Verzeichnis (z. B. logo.png)."""
+    return send_from_directory(str(WEB_DIR), filename)
+
+
+@app.route('/cert.pem')
+def serve_cert():
+    """Self-signed Zertifikat zum Download (kein Auth noetig).
+    Browser-Import: Einstellungen Zertifikate Behoerden Importieren."""
+    cert = Path(CERT_FILE)
+    if not cert.exists():
+        return jsonify({'error': 'Zertifikat nicht gefunden'}), 404
+    return send_file(str(cert), mimetype='application/x-pem-file',
+                     as_attachment=True, download_name='vogel-kamera.pem')
+
 
 
 # ── Error-Handler ─────────────────────────────────────────────────────────────
@@ -828,6 +1483,70 @@ if __name__ == '__main__':
     _check_config()
 
     CameraManager.start_detection()
+
+    def _detection_watchdog():
+        """Überwacht Detection-Prozess. Bei Detection-Modus + Vogel (rc=0): Aufnahme starten."""
+        time.sleep(10)
+        consecutive_failures = 0   # Zählt aufeinander folgende rc=1 Exits (V4L2-Fehler)
+        while True:
+            time.sleep(5)
+            with _lock:
+                if not state.detection_running or state.detection_process is None:
+                    continue
+                proc = state.detection_process
+                rc = proc.poll()
+                if rc is None:
+                    continue  # Prozess läuft noch
+                logger.warning('Detection-Prozess beendet (rc=%d)', rc)
+                state.detection_running = False
+                state.detection_process = None
+                should_record = state.detection_mode and rc == 0
+                should_restart = not state.recording_running and (not should_record)
+
+            if rc == 0:
+                consecutive_failures = 0   # Sauber beendet (Vogel erkannt)
+            else:
+                consecutive_failures += 1
+
+            if should_record:
+                consecutive_failures = 0
+                # Vogel erkannt im Detection-Modus → Aufnahme aus gespeicherten Einstellungen starten
+                settings = _load_rec_settings()
+                profile_name = settings.get('profile', 'normal_hd')
+                duration     = settings.get('duration', 15)
+                profile      = RECORDING_PROFILES.get(profile_name, RECORDING_PROFILES['normal_hd'])
+                logger.info('Detection-Modus: Vogel erkannt – starte Aufnahme (Profil: %s)', profile_name)
+                threading.Thread(
+                    target=CameraManager.record,
+                    kwargs={
+                        'duration':    duration,
+                        'resolution':  profile['resolution'],
+                        'fps':         profile['fps'],
+                        'bitrate':     profile['bitrate'],
+                        'slowmotion':  profile['slowmotion'],
+                        'triggered_by': 'detection',
+                    },
+                    daemon=True,
+                    name='det-rec',
+                ).start()
+            elif should_restart:
+                if consecutive_failures >= 3:
+                    # Kamera wahrscheinlich in schlechtem Zustand (V4L2-Fehler) → Hardware-Reset
+                    logger.warning('Kamera-Reset nach %d aufeinander folgenden Fehlern …', consecutive_failures)
+                    reset_ok = _camera_reset()
+                    consecutive_failures = 0
+                    if not reset_ok:
+                        # Sensor antwortet nicht – langsamer Retry (alle 5 Minuten statt 37s)
+                        logger.warning('Kamera-Hardware-Fehler: Retry in 5 Minuten …')
+                        time.sleep(300)
+                    else:
+                        time.sleep(3)
+                else:
+                    time.sleep(2)
+                CameraManager.start_detection()
+
+    watchdog = threading.Thread(target=_detection_watchdog, daemon=True, name='detection-watchdog')
+    watchdog.start()
 
     ssl_ctx = (CERT_FILE, KEY_FILE) if Path(CERT_FILE).exists() and Path(KEY_FILE).exists() else None
     if ssl_ctx is None:

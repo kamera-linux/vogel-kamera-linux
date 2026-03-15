@@ -1,5 +1,42 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.2.1] - 15. März 2026 🖥️ **Web-GUI Verbesserungen & HTTPS-Komfort**
+
+### ✨ Features
+- **Versions-Badge in der Topbar**
+  - `APP_VERSION = '2.2.1'` Konstante in `pi_daemon_secure.py`
+  - `/api/status` liefert jetzt `"version"` Feld
+  - JS-Badge `<small id="gui-version">` wird beim ersten Status-Poll befüllt
+
+- **Projekt-Logo in der Web-GUI**
+  - Login-Bildschirm: Logo 220 px zentriert über dem Formular
+  - Topbar: Logo 32 px (ersetzt 🐦-Emoji)
+  - Neue Route `GET /web/<filename>` via `send_from_directory`
+
+- **HTTPS-Zertifikat: Download & Chrome-Importanleitung**
+  - Neue Route `GET /cert.pem` (keine Auth) — liefert Zertifikat als Download
+  - Login-Seite: direkter Download-Link + schrittweise Chrome-Anleitung
+  - SSL SAN erweitert: `DNS:localhost`, Pi-IP, `IP:127.0.0.1`, CN dynamisch
+
+- **Hilfe-Modal vervollständigt**
+  - `🎤 Audio-Only Aufnahme` Sektion hinzugefügt
+  - `📷 Live-Vorschau` Sektion hinzugefügt
+
+### 🐛 Bugfixes
+- **E2E-Test:** Profilname `"FHD"` → `"normal_hd"` in `build_and_deploy.sh` (HTTP 400 Fix)
+- **Dockerfile:** `--platform` aus `FROM`-Zeile entfernt (Warnung `RedundantTargetPlatform`)
+
+### 📁 Files Changed
+- `unified-monitor-client/pi_daemon_secure.py` → APP_VERSION, version-API, /web/, /cert.pem
+- `unified-monitor-client/web/index.html` → Logo, Version-Badge, Cert-Hinweis, Hilfe-Modal
+- `unified-monitor-client/web/logo.png` → Neu: Projekt-Logo
+- `ansible/build_and_deploy.sh` → E2E-Profil Fix
+- `ansible/roles/ssl/tasks/main.yml` → erweiterter SAN
+- `docker/Dockerfile` → `FROM python:3.13-slim-bookworm` (kein --platform)
+- `VERSION` → 2.2.1
+
+---
+
 ## [2.2.0] - 13. März 2026 🐳 **Docker & Ansible Build-Infrastruktur**
 
 ### 🐳 Major Features
