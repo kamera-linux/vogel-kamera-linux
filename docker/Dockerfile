@@ -29,6 +29,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN printf '#!/bin/sh\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib:/host/usr/lib/pulseaudio /opt/rpicam-vid "$@"\n' \
     > /usr/local/bin/rpicam-vid && chmod +x /usr/local/bin/rpicam-vid
 
+# Wrapper für rpicam-hello (Hailo-NPU Detection via Post-Processing-JSON)
+RUN printf '#!/bin/sh\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib:/host/usr/lib/pulseaudio /opt/rpicam-hello "$@"\n' \
+    > /usr/local/bin/rpicam-hello && chmod +x /usr/local/bin/rpicam-hello
+
+# Wrapper für rpicam-still (Snapshot-Aufnahme)
+RUN printf '#!/bin/sh\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib /opt/rpicam-still "$@"\n' \
+    > /usr/local/bin/rpicam-still && chmod +x /usr/local/bin/rpicam-still
+
 # Entrypoint: Einfaches Startskript (kein devicetree-Remount nötig – privileged: true im Container)
 RUN printf '#!/bin/bash\nexec python3 /app/pi_daemon_secure.py\n' \
     > /entrypoint.sh && chmod +x /entrypoint.sh
@@ -51,7 +59,9 @@ COPY unified-monitor-client/web/               ./web/
 # ── Raspberry-Pi-Skripte (werden vom Daemon als Subprocess gestartet) ──────
 COPY raspberry-pi-scripts/unified-camera-monitor-detect-only.py \
      /home/roimme/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor-detect-only.py
-
+# Hailo-NPU Detection-Script (Standard ab v2.3.0 – ersetzt CPU-YOLO)
+COPY raspberry-pi-scripts/unified-camera-monitor-hailo.py \
+     /home/roimme/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor-hailo.py
 # Nicht-root User anlegen (wird nicht aktiviert: dedizierte, privilegierte Kamera
 # benötigt root für sysfs-Kamera-Reset /sys/bus/i2c/drivers/imx708/unbind)
 RUN groupadd -r appuser \

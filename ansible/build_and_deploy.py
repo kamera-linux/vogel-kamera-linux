@@ -1,0 +1,455 @@
+#!/usr/bin/env python3
+# Abhängigkeiten: pip install python-dotenv ansible  (z.B. in ~/ansible-venv)
+"""build_and_deploy.py – Docker-Image bauen und auf Pi deployen
+
+Verwendung (aus dem ansible/-Ordner oder Repo-Root):
+  ./ansible/build_and_deploy.py --install      # Vollständiges Erstdeployment
+  ./ansible/build_and_deploy.py --update       # Nur Image aktualisieren (schnell)
+  ./ansible/build_and_deploy.py --build        # Nur bauen, nicht deployen
+  ./ansible/build_and_deploy.py --setup-host   # Gentoo Build-Host einrichten (Docker, QEMU, buildx)
+
+Voraussetzungen (einmalig):
+  1. docker buildx create --use --name pi-builder  (oder: --setup-host)
+  2. ansible-vault encrypt ansible/group_vars/all/vault.yml
+  3. echo 'VaultPasswort' > ~/.pi-daemon-vault-pass && chmod 600 ~/.pi-daemon-vault-pass
+"""
+
+import argparse
+import json
+import os
+import shutil
+import ssl
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+try:
+    from dotenv import dotenv_values
+except ImportError:
+    print("❌ python-dotenv nicht installiert: pip install python-dotenv", file=sys.stderr)
+    sys.exit(1)
+
+# ── ANSI-Farben ──────────────────────────────────────────────────────────────
+BOLD   = "\033[1m"
+GREEN  = "\033[32m"
+YELLOW = "\033[33m"
+RED    = "\033[31m"
+RESET  = "\033[0m"
+
+def bold(s: str)   -> str: return f"{BOLD}{s}{RESET}"
+def green(s: str)  -> str: return f"{GREEN}{s}{RESET}"
+def yellow(s: str) -> str: return f"{YELLOW}{s}{RESET}"
+def red(s: str)    -> str: return f"{RED}{s}{RESET}"
+
+# ── Pfade ────────────────────────────────────────────────────────────────────
+SCRIPT_DIR  = Path(__file__).resolve().parent
+REPO_ROOT   = SCRIPT_DIR.parent
+ANSIBLE_DIR = SCRIPT_DIR
+DOCKERFILE  = REPO_ROOT / "docker" / "Dockerfile"
+IMAGE_NAME  = "vogel-pi"
+IMAGE_TAG   = "latest"
+ARCHIVE     = Path("/tmp/vogel-pi.tar.gz")
+
+# ── SSL-Kontext (self-signed) ─────────────────────────────────────────────────
+_SSL_CTX = ssl.create_default_context()
+_SSL_CTX.check_hostname = False
+_SSL_CTX.verify_mode    = ssl.CERT_NONE
+
+
+# ── Argumente ─────────────────────────────────────────────────────────────────
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog=Path(__file__).name,
+        description="Vogel-Kamera – Build & Deploy",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    grp = parser.add_mutually_exclusive_group()
+    grp.add_argument("--install",    dest="mode", action="store_const", const="deploy",
+                     help="Vollständiges Erstdeployment (Docker, SSL, Firewall, systemd)")
+    grp.add_argument("--update",     dest="mode", action="store_const", const="update",
+                     help="Nur Image + .env aktualisieren (schnell)")
+    grp.add_argument("--build",      dest="mode", action="store_const", const="build",
+                     help="Nur Docker-Image bauen, kein Deploy")
+    grp.add_argument("--setup-host", dest="mode", action="store_const", const="setup-host",
+                     help="Gentoo Build-Host einrichten (Docker, QEMU aarch64, buildx)")
+    parser.add_argument("--no-cache", action="store_true",
+                        help="Docker Build-Cache ignorieren (sauberer Rebuild)")
+    parser.add_argument("--e2e",      action="store_true",
+                        help="E2E-Test nach Deploy (oder solo: nur testen, kein Build)")
+    args = parser.parse_args()
+    # Mode ableiten: nur --e2e → "e2e", kein Flag → "deploy"
+    if args.mode is None:
+        args.mode = "e2e" if args.e2e else "deploy"
+    return args
+
+
+# ── .env laden ────────────────────────────────────────────────────────────────
+def load_env() -> dict:
+    env_file = ANSIBLE_DIR / ".env"
+    if not env_file.exists():
+        print(red(f"❌ Keine .env gefunden: {env_file}"), file=sys.stderr)
+        print( "   Einmalig anlegen:", file=sys.stderr)
+        print(r"   cp ansible/.env.example ansible/.env && ${EDITOR:-nano} ansible/.env", file=sys.stderr)
+        sys.exit(1)
+    env = dict(dotenv_values(env_file))
+    for key in ("PI_HOST", "PI_USER", "PI_SSH_KEY"):
+        if not env.get(key):
+            print(red(f"❌ {key} nicht in .env gesetzt"), file=sys.stderr)
+            sys.exit(1)
+    env["PI_SSH_KEY"] = str(Path(env["PI_SSH_KEY"]).expanduser())
+    # Ansible liest PI_HOST/PI_USER/PI_SSH_KEY per lookup('env', ...) aus der
+    # Prozessumgebung – daher alle .env-Werte exportieren (wie bash: set -a; source .env)
+    os.environ.update(env)
+    return env
+
+
+# ── Tool-Lookups ─────────────────────────────────────────────────────────────
+def find_tool(name: str) -> str | None:
+    """Sucht Tool im PATH, danach in bekannten Venv-Verzeichnissen."""
+    if path := shutil.which(name):
+        return path
+    for d in (
+        REPO_ROOT / ".venv" / "bin",
+        Path.home() / "ansible-venv" / "bin",
+        Path.home() / ".local" / "bin",
+    ):
+        candidate = d / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return None
+
+
+def require_tool(name: str) -> str:
+    if path := find_tool(name):
+        return path
+    print(red(f"❌ '{name}' nicht gefunden."), file=sys.stderr)
+    if name == "ansible-playbook":
+        print("   python3 -m venv ~/ansible-venv && ~/ansible-venv/bin/pip install ansible",
+              file=sys.stderr)
+    sys.exit(1)
+
+
+# ── subprocess-Helfer ─────────────────────────────────────────────────────────
+def run(cmd: list, **kwargs) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, check=True, **kwargs)
+
+
+def run_capture(cmd: list) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True)
+
+
+# ── HTTP-Helfer (urllib, kein requests nötig) ─────────────────────────────────
+def http_get(url: str, headers: dict | None = None) -> tuple[int, dict]:
+    req = urllib.request.Request(url, headers=headers or {})
+    try:
+        with urllib.request.urlopen(req, context=_SSL_CTX, timeout=5) as r:
+            return r.status, json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        try:    return e.code, json.loads(e.read())
+        except Exception: return e.code, {}
+    except Exception:
+        return 0, {}
+
+
+def http_post(url: str, payload: dict, headers: dict | None = None) -> tuple[int, dict]:
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode(),
+        method="POST",
+        headers={"Content-Type": "application/json", **(headers or {})},
+    )
+    try:
+        with urllib.request.urlopen(req, context=_SSL_CTX, timeout=5) as r:
+            return r.status, json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        try:    return e.code, json.loads(e.read())
+        except Exception: return e.code, {}
+    except Exception:
+        return 0, {}
+
+
+# ── SSH-Verbindungscheck ──────────────────────────────────────────────────────
+def check_ssh(env: dict) -> None:
+    print("🔗 SSH-Verbindung zum Pi... ", end="", flush=True)
+    r = run_capture([
+        "ssh", "-i", env["PI_SSH_KEY"],
+        "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+        f"{env['PI_USER']}@{env['PI_HOST']}", "echo", "ok",
+    ])
+    if r.returncode != 0:
+        print(red("FEHLER"))
+        print(f"   Kann {env['PI_USER']}@{env['PI_HOST']} nicht erreichen.", file=sys.stderr)
+        sys.exit(1)
+    print(green("OK"))
+
+
+# ── Setup-Host ────────────────────────────────────────────────────────────────
+def setup_host() -> None:
+    ansible = require_tool("ansible-playbook")
+    print(bold("🔧 Gentoo Build-Host einrichten (Docker, QEMU, buildx)..."))
+    print("   Benötigt sudo/become – bitte Passwort eingeben.\n")
+    run([ansible, str(ANSIBLE_DIR / "playbooks" / "setup-build-host.yml"), "--ask-become-pass"])
+    print(f"\n{green(bold('✅ Build-Host eingerichtet.'))}")
+    print("   Bitte neu einloggen oder 'newgrp docker' ausführen.")
+    print("   Danach: ./ansible/build_and_deploy.py --install")
+
+
+# ── Docker Build ──────────────────────────────────────────────────────────────
+def docker_build(no_cache: bool) -> None:
+    if run_capture(["docker", "buildx", "inspect", "pi-builder"]).returncode != 0:
+        print(yellow("⚙ Erstelle docker buildx Kontext 'pi-builder'..."))
+        run(["docker", "buildx", "create", "--name", "pi-builder", "--use"])
+        run(["docker", "buildx", "inspect", "--bootstrap"])
+    run(["docker", "buildx", "use", "pi-builder"])
+
+    print(f"\n{bold('📦 Baue Docker-Image für linux/arm64...')}")
+    print(f"   Dockerfile: {DOCKERFILE}")
+    print(f"   Build-Kontext: {REPO_ROOT}\n")
+    if no_cache:
+        print(yellow("⚠ --no-cache: Build-Cache wird ignoriert"))
+
+    cmd = [
+        "docker", "buildx", "build",
+        "--platform", "linux/arm64",
+        "--file", str(DOCKERFILE),
+        "--tag", f"{IMAGE_NAME}:{IMAGE_TAG}",
+        "--load",
+        str(REPO_ROOT),
+    ]
+    if no_cache:
+        cmd.append("--no-cache")
+    run(cmd)
+    print(green(f"✅ Image gebaut: {IMAGE_NAME}:{IMAGE_TAG}"))
+
+
+# ── Image-Transfer ────────────────────────────────────────────────────────────
+def transfer_image(env: dict) -> None:
+    print(f"\n{bold('📤 Image komprimieren und auf Pi kopieren...')}")
+    with open(ARCHIVE, "wb") as f:
+        save_proc = subprocess.Popen(
+            ["docker", "save", f"{IMAGE_NAME}:{IMAGE_TAG}"],
+            stdout=subprocess.PIPE,
+        )
+        gzip_proc = subprocess.Popen(["gzip"], stdin=save_proc.stdout, stdout=f)
+        save_proc.stdout.close()
+        gzip_rc = gzip_proc.wait()
+        save_rc = save_proc.wait()
+    if save_rc != 0 or gzip_rc != 0:
+        raise subprocess.CalledProcessError(save_rc or gzip_rc, "docker save | gzip")
+
+    size = subprocess.check_output(["du", "-sh", str(ARCHIVE)]).decode().split()[0]
+    print(f"   Archiv: {ARCHIVE} ({size})")
+    run(["scp", "-i", env["PI_SSH_KEY"],
+         str(ARCHIVE), f"{env['PI_USER']}@{env['PI_HOST']}:/tmp/vogel-pi.tar.gz"])
+    ARCHIVE.unlink(missing_ok=True)
+    print(green("✅ Image übertragen"))
+
+
+# ── Ansible Deploy / Update ───────────────────────────────────────────────────
+def ansible_deploy(env: dict, mode: str, ansible: str) -> None:
+    vault_pass_file = Path(
+        env.get("VAULT_PASS_FILE") or Path.home() / ".pi-daemon-vault-pass"
+    ).expanduser()
+
+    if vault_pass_file.exists():
+        vault_opts = ["--vault-password-file", str(vault_pass_file)]
+        print(f"🔐 Vault-Passwort: aus {vault_pass_file}")
+    else:
+        vault_opts = ["--ask-vault-pass"]
+        print(yellow("🔐 Vault-Passwort wird interaktiv abgefragt."))
+        print(f"   Tipp: echo 'Passwort' > {vault_pass_file} && chmod 600 {vault_pass_file}")
+
+    print()
+    os.chdir(ANSIBLE_DIR)
+    if mode == "deploy":
+        print(bold("🚀 Ansible – Voll-Deployment (Erstinstall)..."))
+        run([ansible, "playbooks/deploy.yml", *vault_opts])
+    else:
+        print(bold("🔄 Ansible – Image-Update..."))
+        run([ansible, "playbooks/update.yml", *vault_opts])
+
+
+# ── TOTP-Generierung ──────────────────────────────────────────────────────────
+def _generate_totp(secret: str) -> str:
+    if oathtool := shutil.which("oathtool"):
+        r = run_capture([oathtool, "--base32", "--totp", secret])
+        if r.returncode == 0:
+            return r.stdout.decode().strip()
+    try:
+        import pyotp
+        return pyotp.TOTP(secret).now()
+    except ImportError:
+        return ""
+
+
+# ── E2E-Test ──────────────────────────────────────────────────────────────────
+def run_e2e(env: dict) -> None:
+    pi_host  = env["PI_HOST"]
+    pi_user  = env["PI_USER"]
+    pi_key   = env["PI_SSH_KEY"]
+    base_url = f"https://{pi_host}:8443"
+    errors   = 0
+
+    print(f"\n{bold(f'🧪 E2E-Test gegen {base_url}/ ...')}")
+    print("────────────────────────────────────────────────")
+
+    # [1] Container läuft?
+    print("   [1] Container 'pi-daemon' läuft... ", end="", flush=True)
+    r = run_capture([
+        "ssh", "-i", pi_key, "-o", "BatchMode=yes",
+        f"{pi_user}@{pi_host}",
+        'docker ps --filter name=pi-daemon --filter status=running --format "{{.Names}}"',
+    ])
+    if r.returncode == 0 and b"pi-daemon" in r.stdout:
+        print(green("OK"))
+    else:
+        print(red("FEHLER – Container läuft nicht!"))
+        errors += 1
+
+    # [2] HTTPS erreichbar (401 = läuft, Auth fehlt)
+    print("   [2] HTTPS Port 8443 erreichbar... ", end="", flush=True)
+    code, _ = http_get(f"{base_url}/api/status")
+    if code in (200, 401):
+        print(green(f"OK (HTTP {code})"))
+    else:
+        print(red(f"FEHLER – HTTP {code} (erwartet 401)"))
+        errors += 1
+
+    # [3-5] Volltest mit Credentials
+    e2e_pass    = env.get("E2E_PASSWORD", "")
+    totp_secret = env.get("E2E_TOTP_SECRET", "")
+    if not e2e_pass or not totp_secret:
+        print(yellow("   ⚠ E2E_PASSWORD / E2E_TOTP_SECRET nicht in .env → Volltest übersprungen"))
+        print(  "     Tipp: Beide Variablen in ansible/.env eintragen für vollständigen Test.")
+    else:
+        totp = _generate_totp(totp_secret)
+        if not totp:
+            print(yellow("   ⚠ TOTP konnte nicht generiert werden."))
+            print(  "     Bitte 'oathtool' (oath-toolkit) oder pyotp installieren.")
+        else:
+            # [3] Login → JWT
+            print("   [3] Login (JWT-Token)... ", end="", flush=True)
+            _, body = http_post(f"{base_url}/api/login",
+                                {"password": e2e_pass, "totp": totp})
+            token = body.get("token", "")
+            if token:
+                print(green("OK"))
+            else:
+                print(red("FEHLER – Login fehlgeschlagen (Passwort/TOTP prüfen)"))
+                errors += 1
+
+            if token:
+                auth = {"Authorization": f"Bearer {token}"}
+
+                # [4] Status
+                print("   [4] /api/status (kein Recording aktiv)... ", end="", flush=True)
+                _, body = http_get(f"{base_url}/api/status", headers=auth)
+                rec = str(body.get("recording_running", "?"))
+                if rec.lower() == "false":
+                    print(green("OK"))
+                else:
+                    print(yellow(f"WARNUNG – recording_running={rec}"))
+
+                # [5] 10s-Testaufnahme
+                print("   [5] 10s-Testaufnahme starten (HD)... ", end="", flush=True)
+                _, body = http_post(f"{base_url}/api/record",
+                                    {"duration": 10, "profile": "normal_hd"},
+                                    headers=auth)
+                if body.get("success"):
+                    print(green("gestartet – warte auf Abschluss (max 60s)..."))
+                    waited, final = 0, "True"
+                    while waited < 60:
+                        time.sleep(3)
+                        waited += 3
+                        _, body = http_get(f"{base_url}/api/status", headers=auth)
+                        final = str(body.get("recording_running", "?"))
+                        if final.lower() == "false":
+                            break
+                        print(".", end="", flush=True)
+                    print()
+                    if final.lower() == "false":
+                        print(f"        {green(f'✅ Aufnahme abgeschlossen (nach {waited}s)')}")
+                    else:
+                        print(f"        {red(f'✗ Timeout – Aufnahme nach 60s nicht fertig (recording_running={final})')}")
+                        errors += 1
+                else:
+                    print(red("FEHLER – Aufnahme konnte nicht gestartet werden"))
+                    errors += 1
+
+    print()
+    if errors == 0:
+        print(green(bold("✅ E2E-Test bestanden!")))
+    else:
+        print(red(bold(f"❌ E2E-Test fehlgeschlagen ({errors} Fehler)")))
+        sys.exit(1)
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+def main() -> None:
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    os.environ.setdefault("PYTHONUTF8", "1")
+    os.environ.setdefault("LANG", "de_DE.UTF-8")
+
+    args = parse_args()
+    mode = args.mode
+
+    print(bold(f"🐦 Vogel-Kamera – Build & Deploy ({mode})"))
+    print("────────────────────────────────────────────────")
+
+    env = load_env()
+
+    if mode == "setup-host":
+        setup_host()
+        return
+
+    require_tool("docker")
+    require_tool("ssh")
+    require_tool("scp")
+
+    ansible_bin: str | None = None
+    if mode not in ("build", "e2e"):
+        ansible_bin = find_tool("ansible-playbook")
+        if not ansible_bin:
+            print(red("❌ 'ansible-playbook' nicht gefunden."), file=sys.stderr)
+            print("   python3 -m venv ~/ansible-venv && ~/ansible-venv/bin/pip install ansible",
+                  file=sys.stderr)
+            sys.exit(1)
+        if not shutil.which("ansible-playbook"):
+            print(yellow(f"ℹ ansible-playbook aus: {Path(ansible_bin).parent}"))
+
+    check_ssh(env)
+
+    if mode == "e2e":
+        run_e2e(env)
+        return
+
+    docker_build(args.no_cache)
+
+    if mode == "build":
+        print("Build-Only Modus – Deploy übersprungen.")
+        return
+
+    transfer_image(env)
+    ansible_deploy(env, mode, ansible_bin)
+
+    print(f"\n{green(bold('✅ Fertig!'))}")
+    print(f"   Web-GUI: https://{env['PI_HOST']}:8443/")
+    print("   Beim ersten Aufruf Browser-Zertifikat-Ausnahme bestätigen (self-signed).")
+
+    if args.e2e:
+        run_e2e(env)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except subprocess.CalledProcessError as e:
+        print(red(f"❌ Befehl fehlgeschlagen (Exit {e.returncode}): {' '.join(str(x) for x in e.cmd)}"),
+              file=sys.stderr)
+        sys.exit(e.returncode)
+    except KeyboardInterrupt:
+        print("\n⚠ Abgebrochen.", file=sys.stderr)
+        sys.exit(130)

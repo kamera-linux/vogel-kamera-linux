@@ -31,7 +31,7 @@ from flask_limiter.util import get_remote_address
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.2.1'
+APP_VERSION = '2.2.2'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -48,10 +48,39 @@ SYNC_DEST         = os.environ.get('PI_DAEMON_SYNC_DEST', '')
 SYNC_SSH_KEY      = os.environ.get('PI_DAEMON_SYNC_SSH_KEY', '/certs/id_rsa_sync')
 SETTINGS_FILE     = '/config/sync-config.json'
 SYNC_KEY_FILE     = '/config/sync_rsa'
-DETECTION_SCRIPT  = os.environ.get(
-    'PI_DAEMON_DETECTION_SCRIPT',
-    '/home/roimme/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor-detect-only.py',
-)
+# Verfügbare Detection-Engines (key → Dateipfad im Container)
+_SCRIPT_BASE = '/home/roimme/vogel-kamera-linux/raspberry-pi-scripts'
+DETECTION_ENGINES: dict = {
+    'hailo':    {'label': '🔬 Hailo NPU (AI HAD+, 25fps, <5% CPU)',  'script': f'{_SCRIPT_BASE}/unified-camera-monitor-hailo.py'},
+    'cpu_yolo': {'label': '🖥 CPU-YOLO (kein HAT nötig, ~80% CPU)', 'script': f'{_SCRIPT_BASE}/unified-camera-monitor-detect-only.py'},
+}
+DETECTION_ENGINE_FILE = '/config/detection-engine.json'
+
+def _load_active_engine() -> str:
+    """Gibt den aktiven Engine-Key zurück. Fallback: env-Variable, dann 'hailo'."""
+    try:
+        data = json.loads(Path(DETECTION_ENGINE_FILE).read_text())
+        if data.get('engine') in DETECTION_ENGINES:
+            return data['engine']
+    except Exception:
+        pass
+    # Fallback: aus Env-Variable den Dateinamen ableiten
+    env_script = os.environ.get('PI_DAEMON_DETECTION_SCRIPT', '')
+    for key, info in DETECTION_ENGINES.items():
+        if info['script'] == env_script:
+            return key
+    return 'hailo'
+
+def _save_active_engine(engine: str) -> None:
+    try:
+        Path(DETECTION_ENGINE_FILE).parent.mkdir(parents=True, exist_ok=True)
+        Path(DETECTION_ENGINE_FILE).write_text(json.dumps({'engine': engine}, indent=2))
+    except Exception as exc:
+        logger.error('Detection-Engine-Einstellung konnte nicht gespeichert werden: %s', exc)
+
+# Aktive Engine – wird beim Start geladen und kann zur Laufzeit gewechselt werden
+_active_engine: str = _load_active_engine()
+DETECTION_SCRIPT: str = DETECTION_ENGINES[_active_engine]['script']
 
 # ---------------------------------------------------------------------------
 # Aufnahme-Profile  (gelten für BEIDE Modi: manuell UND Detection-getriggert)
@@ -243,24 +272,23 @@ def _camera_reset() -> bool:
 
 class CameraManager:
 
-    # Umgebungsvariablen für den Detection-Subprozess (python3-trixie = Host-Python 3.13):
-    # - KEIN LD_LIBRARY_PATH: würde bookworm /bin/sh des Wrappers mit Trixie-libc crashen.
-    #   Bibliotheken werden via ld-linux.so.1 --library-path gesetzt (propagiert an dlopen).
+    # Umgebungsvariablen für den Detection-Subprozess:
+    # Hailo-Script braucht keine Host-Python-Libs (kein picamera2/ultralytics) –
+    # Container-Python 3.13 ist ausreichend, da nur subprocess + re genutzt werden.
     _DETECTION_ENV: dict = {
         **os.environ,
-        'PYTHONPATH': '/usr/lib/python3/dist-packages:/opt/host-site-packages',
-        'HOME': '/tmp',   # picamera2 braucht ein beschreibbares Home-Verzeichnis
+        'HOME': '/tmp',
     }
-    _MODEL_PATH = '/home/roimme/vogel-kamera-linux/raspberry-pi-scripts/yolov8n.pt'
 
     # ── Detection-Prozess-Management ─────────────────────────────────────────
 
     @staticmethod
     def _launch_detection_process() -> 'subprocess.Popen | None':
-        """Startet den Detection-Subprozess. Gibt Popen zurück oder None bei Fehler."""
+        """Startet den Hailo-Detection-Subprozess. Gibt Popen zurück oder None bei Fehler."""
         try:
             proc = subprocess.Popen(
-                ['python3-trixie', DETECTION_SCRIPT, '--model', CameraManager._MODEL_PATH],
+                # Container-Python reicht: Hailo-Script importiert nur stdlib
+                ['python3', DETECTION_SCRIPT],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 preexec_fn=os.setpgrp,
@@ -380,35 +408,12 @@ class CameraManager:
 
             # Format: Jahr_KW_Tag_Uhrzeit_Aufloesung_fps  (z.B. 2026_11_14_190045_1920x1080_30fps)
             ts         = datetime.now().strftime('%Y_%V_%d_%H%M%S')
-            video_file = recording_dir / f'{ts}_{w}x{h}_{fps}fps.h264'
-            audio_file = recording_dir / f'{ts}_{w}x{h}_{fps}fps.wav'
-
-            video_cmd = [
-                'rpicam-vid',
-                '--width', str(w), '--height', str(h),
-                '--framerate', str(fps),
-                '--bitrate', str(bitrate * 1000),
-                '-o', str(video_file),
-                '--inline',
-                '--rotation', '0',
-                # Autofokus deaktivieren: verhindert Fokus-Hunting bei hohen Auflösungen
-                '--autofocus-mode', 'manual',
-                # EXAKT wie altes Skript: --timeout in Millisekunden → rpicam-vid beendet sich selbst
-                # Kein -t 0 + Kill mehr – das führte bei 4K zu vorzeitigem Abbruch
-                '--timeout', str(duration * 1000),
-            ]
-
-            audio_cmd = [
-                'arecord', '-f', 'S16_LE', '-r', '44100',
-                '-c', '1', '-t', 'wav',
-                # EXAKT wie altes Skript: -d in Sekunden → arecord beendet sich selbst
-                '-d', str(duration),
-                str(audio_file),
-            ]
-
-            logger.info('Recording [%s] %ds %s %dfps → %s | Load: %.2f %.2f %.2f',
-                        triggered_by, duration, resolution, fps, video_file.name,
-                        *os.getloadavg())
+            # Zeitlupe → rohes h264 (mehrere Playback-Versionen per ffmpeg)
+            # Normal  → libav-MP4 direkt (Audio+Video im gleichen Prozess, perfekt synchron)
+            if slowmotion:
+                video_file = recording_dir / f'{ts}_{w}x{h}_{fps}fps.h264'
+            else:
+                video_file = recording_dir / f'{ts}_{w}x{h}_{fps}fps.mp4'
 
             # Mic-Eingangspegel sicherstellen (USB-Audio-Karte setzt ihn manchmal auf 0%)
             try:
@@ -420,48 +425,68 @@ class CameraManager:
                 pass
 
             if slowmotion:
-                # Zeitlupe: nur Video, kein Audio
+                # Zeitlupe: rohes h264, kein Audio, mehrere Playback-Versionen per ffmpeg
+                video_cmd = [
+                    'rpicam-vid',
+                    '--width', str(w), '--height', str(h),
+                    '--framerate', str(fps),
+                    '--bitrate', str(bitrate * 1000),
+                    '-o', str(video_file),
+                    '--inline',
+                    '--rotation', '0',
+                    '--autofocus-mode', 'manual',
+                    '--timeout', str(duration * 1000),
+                ]
                 video_proc = subprocess.Popen(video_cmd,
                                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+                audio_proc = None
             else:
-                # ── Zeitsynchroner Start: beide Popen-Aufrufe direkt nacheinander ──
-                # Exakt wie altes Skript: audio_thread.start() gleich nach video_thread.start()
-                # Kein Barrier nötig – der Overhead zwischen beiden Popen-Aufrufen ist <1ms
+                # ── Normal: rpicam-vid --codec libav mit eingebautem Audio ──
+                # Ein einziger Prozess muxed Video+Audio in die gleiche Timeline.
+                # Kein Sync-Offset, kein ffmpeg-Merge, kein TXT-Sidecar nötig.
+                video_cmd = [
+                    'rpicam-vid', '-n',
+                    '--width', str(w), '--height', str(h),
+                    '--framerate', str(fps),
+                    '--rotation', '0',
+                    '--autofocus-mode', 'manual',
+                    '--codec', 'libav',
+                    '--libav-format', 'mp4',
+                    '--libav-audio',
+                    '--audio-codec', 'aac',
+                    '--audio-samplerate', '48000',
+                    '--audio-source', 'alsa',
+                    '--audio-device', 'plughw:0,0',
+                    '--timeout', str(duration * 1000),
+                    '-o', str(video_file),
+                ]
                 video_proc = subprocess.Popen(video_cmd,
                                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-                audio_proc = subprocess.Popen(audio_cmd,
-                                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                audio_proc = None
 
-            audio_proc = audio_proc if not slowmotion else None
+            logger.info('Recording [%s] %ds %s %dfps → %s | Load: %.2f %.2f %.2f',
+                        triggered_by, duration, resolution, fps, video_file.name,
+                        *os.getloadavg())
 
             with _lock:
                 state.recording_process = video_proc
 
-            # ── Warten bis beide Prozesse sich selbst beenden ───────────────
-            # Exakt wie altes Skript: rpicam-vid --timeout und arecord -d beenden
-            # sich nach exakter Dauer selbst. Python wartet nur mit join/wait.
+            # ── Warten bis rpicam-vid sich nach --timeout selbst beendet ──
             # Kill nur als Fallback wenn Prozess hängt (timeout + 10s Puffer).
             fallback_timeout = duration + 10
             deadline = time.monotonic() + fallback_timeout
             while time.monotonic() < deadline:
-                # Beide Prozesse fertig?
-                v_done = video_proc.poll() is not None
-                a_done = audio_proc is None or audio_proc.poll() is not None
-                if v_done and a_done:
+                if video_proc.poll() is not None:
                     break
                 time.sleep(0.5)
 
             # ── Fallback-Kill falls Prozess hängt ───────────────────────────
-            _stop_pairs = [(video_proc, 'rpicam-vid')]
-            if audio_proc is not None:
-                _stop_pairs.append((audio_proc, 'arecord'))
-            for proc, name in _stop_pairs:
-                if proc.poll() is None:
-                    try:
-                        _kill_process_group(proc, timeout=5)
-                        logger.warning('%s musste per Kill beendet werden', name)
-                    except Exception as e:
-                        logger.warning('%s Kill fehlgeschlagen: %s', name, e)
+            if video_proc.poll() is None:
+                try:
+                    _kill_process_group(video_proc, timeout=5)
+                    logger.warning('rpicam-vid musste per Kill beendet werden')
+                except Exception as e:
+                    logger.warning('rpicam-vid Kill fehlgeschlagen: %s', e)
 
             with _lock:
                 state.recording_process = None
@@ -484,7 +509,7 @@ class CameraManager:
             if video_file.exists():
                 rec_info = {
                     'video':     str(video_file),
-                    'audio':     str(audio_file) if audio_file.exists() else None,
+                    'audio':     None,  # Bei libav-MP4 bereits eingebettet
                     'timestamp': ts,
                 }
                 with _lock:
@@ -492,16 +517,20 @@ class CameraManager:
                 logger.info('Recording abgeschlossen: %s | Load: %.2f %.2f %.2f',
                             video_file.name, *os.getloadavg())
 
-                # Auto-Konvertierung direkt auf die gerade aufgenommene h264
-                ok, results = CameraManager._convert_one(video_file, recording_fps=fps, slowmotion=slowmotion)
-                if ok:
-                    logger.info('Auto-Konvertierung nach Recording: %d Datei(en)', len(results))
-                    for mp4 in results:
-                        CameraManager.transfer_all(mp4)
+                if slowmotion:
+                    # Zeitlupe h264 → mehrere MP4-Playback-Versionen per ffmpeg
+                    ok, results = CameraManager._convert_one(video_file, recording_fps=fps, slowmotion=True)
+                    if ok:
+                        logger.info('Slowmo-Konvertierung: %d Datei(en)', len(results))
+                        for mp4 in results:
+                            CameraManager.transfer_all(mp4)
+                    else:
+                        logger.warning('Konvertierung fehlgeschlagen: %s', results[0] if results else '?')
+                        with _lock:
+                            state.last_error = f'Konvertierung: {results[0] if results else "Fehler"}'
                 else:
-                    logger.warning('Auto-Konvertierung fehlgeschlagen: %s', results[0] if results else '?')
-                    with _lock:
-                        state.last_error = f'Konvertierung: {results[0] if results else "Fehler"}'
+                    # Normal: libav-MP4 ist fertig, direkt transferieren
+                    CameraManager.transfer_all(str(video_file))
 
                 return True, rec_info
 
@@ -653,8 +682,12 @@ class CameraManager:
 
     @staticmethod
     def _run_ffmpeg_convert(h264: 'Path', mp4: 'Path', input_fps: int,
-                            wav: 'Path | None' = None) -> 'tuple[bool, str]':
+                            wav: 'Path | None' = None,
+                            audio_delay_s: float = 0.0) -> 'tuple[bool, str]':
         """Hilfsfunktion: Konvertiert h264 → mp4 mit angegebener Input-fps.
+        audio_delay_s: Kamera-Init-Offset in Sekunden (aus TXT-Sidecar).
+                       Positiver Wert → Audio um diesen Betrag nach hinten schieben
+                       (arecord lief vor dem ersten Video-Frame).
         Gibt (ok, mp4_path_or_error) zurück."""
         audio_valid = wav is not None and wav.exists() and wav.stat().st_size > 4096
         # -f h264 erzwingt den Raw-H264-Demuxer; -r überschreibt VUI-Framerate
@@ -662,13 +695,16 @@ class CameraManager:
         cmd = ['ffmpeg', '-y', '-fflags', '+genpts',
                '-f', 'h264', '-r', str(input_fps), '-i', str(h264)]
         if audio_valid:
-            # EXAKT wie altes Skript:
-            # - KEIN -shortest (würde bei WAV-Header-Ungenauigkeit Video abschneiden!)
-            # - KEIN -ignore_length (arecord mit -d schreibt korrekten Header)
-            # - Audio-Filter: 2x Boost + Normalisierung
+            # -itsoffset VOR -i audio: verschiebt Audio-Stream um audio_delay_s
+            # nach hinten → kompensiert Kamera-Init-Zeit
+            # Nur setzen wenn messbarer Offset vorhanden (>10ms)
+            if audio_delay_s > 0.01:
+                cmd += ['-itsoffset', f'{audio_delay_s:.3f}']
             cmd += ['-i', str(wav),
                     '-c:v', 'copy', '-c:a', 'aac',
-                    '-af', 'volume=2.0,loudnorm=I=-23',
+                    # dynaudnorm statt loudnorm: kein interner Lookahead-Delay
+                    # f=150: Rahmengröße 150 Frames, g=15: Gauss-Glättung
+                    '-af', 'volume=2.0,dynaudnorm=f=150:g=15',
                     '-movflags', '+faststart']
         else:
             cmd += ['-c:v', 'copy', '-movflags', '+faststart']
@@ -690,6 +726,33 @@ class CameraManager:
         try:
             wav = h264.with_suffix('.wav')
 
+            # TXT-Sidecar lesen (fps + audio_delay_s)
+            _txt = h264.with_suffix('.txt')
+            _sidecar_fps: int | None = None
+            _audio_delay_s: float = 0.0
+            if _txt.exists():
+                try:
+                    _sidecar = dict(
+                        line.split('=', 1)
+                        for line in _txt.read_text().splitlines()
+                        if '=' in line
+                    )
+                    _sidecar_fps   = int(_sidecar.get('fps', recording_fps))
+                    _audio_delay_s = float(_sidecar.get('audio_delay_s', 0.0))
+                    _sm            = _sidecar.get('slowmotion', str(slowmotion)).strip().lower()
+                    slowmotion     = _sm in ('true', '1')
+                except Exception:
+                    pass
+            # Sidecar-fps hat Vorrang vor übergebenem recording_fps
+            if _sidecar_fps is not None:
+                recording_fps = _sidecar_fps
+            else:
+                # Fallback: fps aus Dateiname parsen (z.B. ...25fps.h264)
+                import re as _re
+                _m = _re.search(r'_(\d+)fps\.h264$', h264.name)
+                if _m:
+                    recording_fps = int(_m.group(1))
+
             if slowmotion:
                 # ── Zeitlupe: mehrere Playback-Versionen (kein Audio) ───────
                 # Playback-fps-Stufen: 10, 20, 30 + Original-Geschwindigkeit
@@ -705,7 +768,7 @@ class CameraManager:
                         mp4 = h264.with_suffix('.mp4')
                     else:
                         mp4 = h264.with_name(f'{h264.stem}_pb{pb_fps}fps.mp4')
-                    ok, res = CameraManager._run_ffmpeg_convert(h264, mp4, pb_fps, wav=None)
+                    ok, res = CameraManager._run_ffmpeg_convert(h264, mp4, pb_fps, wav=None, audio_delay_s=0.0)
                     if ok:
                         logger.info('  ✓ %s (%.1f MB)', mp4.name, mp4.stat().st_size / 1048576)
                         created.append(res)
@@ -721,7 +784,7 @@ class CameraManager:
                 logger.info('Konvertierung: %s%s → %s',
                             h264.name, ' (+Audio)' if wav.exists() else '', mp4.name)
                 ok, res = CameraManager._run_ffmpeg_convert(
-                    h264, mp4, recording_fps, wav=wav)
+                    h264, mp4, recording_fps, wav=wav, audio_delay_s=_audio_delay_s)
                 if ok:
                     logger.info('Konvertierung abgeschlossen: %s (%.1f MB)',
                                 mp4.name, Path(mp4).stat().st_size / 1048576)
@@ -972,6 +1035,7 @@ def api_status():
         'started_at':           state.started_at,
         'system':               system,
         'version':              APP_VERSION,
+        'active_engine':        _active_engine,
     })
 
 
@@ -1019,6 +1083,42 @@ def api_detection_mode_stop():
 def api_profiles():
     """Gibt die verfügbaren Aufnahme-Profile zurück."""
     return jsonify(RECORDING_PROFILES)
+
+
+@app.route('/api/detection-engine', methods=['GET', 'POST'])
+@require_auth
+def api_detection_engine():
+    """Liest oder wechselt die aktive Detection-Engine.
+    POST { "engine": "hailo" | "cpu_yolo" }
+    Stoppt laufende Detection und startet sie mit der neuen Engine neu.
+    """
+    global DETECTION_SCRIPT, _active_engine
+    if request.method == 'GET':
+        return jsonify({
+            'active':  _active_engine,
+            'engines': DETECTION_ENGINES,
+        })
+    data   = request.get_json(silent=True) or {}
+    engine = data.get('engine', '')
+    if engine not in DETECTION_ENGINES:
+        return jsonify({'error': f'Unbekannte Engine: {engine}'}), 400
+    if engine == _active_engine:
+        return jsonify({'success': True, 'active': _active_engine, 'changed': False})
+    with _lock:
+        was_running = state.detection_running
+        was_mode    = state.detection_mode
+        if was_running:
+            CameraManager.stop_detection()
+        _active_engine   = engine
+        DETECTION_SCRIPT = DETECTION_ENGINES[engine]['script']
+    _save_active_engine(engine)
+    logger.info('Detection-Engine gewechselt auf: %s (%s)', engine, DETECTION_SCRIPT)
+    if was_running:
+        if was_mode:
+            CameraManager.start_detection_mode()
+        else:
+            CameraManager.start_detection()
+    return jsonify({'success': True, 'active': _active_engine, 'changed': True})
 
 
 @app.route('/api/rec-settings', methods=['GET', 'POST'])
@@ -1531,16 +1631,21 @@ if __name__ == '__main__':
                 ).start()
             elif should_restart:
                 if consecutive_failures >= 3:
-                    # Kamera wahrscheinlich in schlechtem Zustand (V4L2-Fehler) → Hardware-Reset
-                    logger.warning('Kamera-Reset nach %d aufeinander folgenden Fehlern …', consecutive_failures)
-                    reset_ok = _camera_reset()
                     consecutive_failures = 0
-                    if not reset_ok:
-                        # Sensor antwortet nicht – langsamer Retry (alle 5 Minuten statt 37s)
-                        logger.warning('Kamera-Hardware-Fehler: Retry in 5 Minuten …')
-                        time.sleep(300)
+                    # imx708-Reset nur wenn KEIN Hailo-Script (rpicam-hello braucht keinen
+                    # sysfs-Reset – Fehler dort = npicam-init-Problem, kein Sensor-Stuck).
+                    if _active_engine == 'hailo':
+                        logger.warning(
+                            'Hailo rpicam-hello Startfehler × 3 – warte 15s vor erneutem Versuch')
+                        time.sleep(15)
                     else:
-                        time.sleep(3)
+                        logger.warning('Kamera-Reset nach 3 aufeinander folgenden Fehlern …')
+                        reset_ok = _camera_reset()
+                        if not reset_ok:
+                            logger.warning('Kamera-Hardware-Fehler: Retry in 5 Minuten …')
+                            time.sleep(300)
+                        else:
+                            time.sleep(3)
                 else:
                     time.sleep(2)
                 CameraManager.start_detection()

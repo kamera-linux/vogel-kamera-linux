@@ -1,5 +1,42 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.2.2] - 16. März 2026 🔬 **Hailo-NPU Detection & Engine-Switcher**
+
+### ✨ Features
+- **Hailo-8 NPU Detection via `rpicam-hello`**
+  - Neues Script `unified-camera-monitor-hailo.py` für Hailo-NPU-Betrieb
+  - YOLOv8 HEF-Inferenz direkt auf der Hailo-8 NPU (26 TOPS), 25 fps, < 5 % CPU
+  - `rpicam-hello --post-process-file hailo_yolov8_inference.json` als Subprocess
+  - 3 Startversuche mit 2 s Pause, 5 s Wartezeit zwischen den Durchläufen
+  - Watchdog ist Hailo-bewusst: kein imx708-Reset bei rpicam-hello-Fehlern
+
+- **Detection-Engine-Switcher**
+  - `DETECTION_ENGINES`-Registry in `pi_daemon_secure.py` (`hailo`, `cpu_yolo`)
+  - Persistenz: aktive Engine wird in `/config/detection-engine.json` gespeichert
+  - Laufzeit-Umschaltung via `POST /api/detection-engine` ohne Daemon-Neustart
+  - `/api/status` liefert neues Feld `active_engine`
+  - Web-GUI: Dropdown „Detection Engine" im Detection-Panel
+  - `cpu_yolo` in der GUI als `disabled` markiert (kein `picamera2` im Container)
+
+- **Live-Vorschau UX bei Hailo-Detection**
+  - Bei HTTP 503 + laufender Detection: sofortige Meldung „🔬 Hailo-NPU Detection läuft – kein Live-Frame verfügbar"
+  - Kein irreführendes „Kein Bild" nach 40 Polling-Versuchen mehr
+  - `_detectionRunning`-Variable im JS wird aus `fetchStatus()` synchronisiert
+
+### 🐛 Bugfixes
+- **Watchdog-String-Check:** `'hailo' in DETECTION_SCRIPT` → `_active_engine == 'hailo'`
+- **Ansible:** `pi_detection_script` in `group_vars/all/vars.yml` auf `unified-camera-monitor-hailo.py` (war: `detect-only.py`) — verhindert `.env`-Überschreibung beim `--update`
+
+### 📁 Files Changed
+- `unified-monitor-client/pi_daemon_secure.py` → APP_VERSION, DETECTION_ENGINES, Engine-API, Watchdog-Fix
+- `unified-monitor-client/web/index.html` → `_detectionRunning`, Hailo-UX-Meldung, Engine-Dropdown
+- `ansible/group_vars/all/vars.yml` → `pi_detection_script` → hailo
+- `raspberry-pi-scripts/unified-camera-monitor-hailo.py` → Neues Hailo-Detection-Script
+- `VERSION`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/VERSION` → 2.2.2
+- `scripts/__version__.py` → 2.2.2
+
+---
+
 ## [2.2.1] - 15. März 2026 🖥️ **Web-GUI Verbesserungen & HTTPS-Komfort**
 
 ### ✨ Features

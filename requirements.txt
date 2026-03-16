@@ -12,6 +12,8 @@ paramiko>=3.0.0
 scp>=0.14.0
 python-dotenv>=1.0.0
 tqdm>=4.65.0
+ansible>=9.0.0
+pyotp>=2.9.0
 
 # Optional: Video-Verarbeitung und AI
 # (nur für Auto-Trigger-System mit Preview-Stream)

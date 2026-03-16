@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.0.2"
-__version_info__ = (2, 0, 2)
+__version__ = "2.2.2"
+__version_info__ = (2, 2, 2)
 
 # Release Information
-RELEASE_NAME = "YOLO26 & Monitoring Improvements"
-RELEASE_DATE = "2026-03-06"
+RELEASE_NAME = "Hailo-NPU Detection & Engine-Switcher"
+RELEASE_DATE = "2026-03-16"
 RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20260306-1"
-GIT_TAG = "v2.0.2"
+BUILD_NUMBER = "20260316-1"
+GIT_TAG = "v2.2.2"
 
 # Feature Flags
 FEATURES = {

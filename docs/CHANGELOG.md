@@ -5,6 +5,22 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.2.2] - 2026-03-16 🔬 Hailo-NPU Detection & Engine-Switcher
+
+### ✨ Hinzugefügt
+- **Hailo-8 NPU Detection** via `rpicam-hello` + YOLOv8 HEF (26 TOPS, 25 fps, < 5 % CPU)
+- **Detection-Engine-Switcher** (`hailo` / `cpu_yolo`), persistent in `/config/detection-engine.json`
+- `POST /api/detection-engine` – Laufzeit-Umschaltung ohne Daemon-Neustart
+- `active_engine` in `/api/status` Response
+- Web-GUI Engine-Dropdown im Detection-Panel
+- Live-Vorschau UX: Hailo-Statusmeldung statt „Kein Bild"
+
+### 🐛 Behoben
+- Watchdog-String-Check: `'hailo' in DETECTION_SCRIPT` → `_active_engine == 'hailo'`
+- Ansible: `pi_detection_script` auf `unified-camera-monitor-hailo.py` korrigiert
+
+---
+
 ## [2.0.2] - 2026-03-06 🤖 YOLO26 & Monitoring Improvements
 
 ### ✨ Hinzugefügt

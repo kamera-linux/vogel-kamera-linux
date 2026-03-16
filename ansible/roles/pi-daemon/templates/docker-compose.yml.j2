@@ -25,6 +25,9 @@ services:
       - /sys/bus/i2c:/sys/bus/i2c      # Kamera-Reset via imx708 sysfs (unbind/bind)
       # rpicam-apps: Binary + Libraries vom Pi-Host einbinden (kein apt-Install nötig)
       - /usr/bin/rpicam-vid:/opt/rpicam-vid:ro              # Binary (Wrapper in /usr/local/bin/rpicam-vid)
+      - /usr/bin/rpicam-hello:/opt/rpicam-hello:ro          # rpicam-hello für Hailo-NPU Detection
+      - /usr/bin/rpicam-still:/opt/rpicam-still:ro          # rpicam-still für Snapshot-Aufnahmen
+      - /usr/share/rpi-camera-assets:/usr/share/rpi-camera-assets:ro  # Hailo HEF-JSON-Modelle (hailo_yolov8_inference.json etc.)
       - /lib/aarch64-linux-gnu:/host/lib:ro                  # Pi-spezifische Trixie-Libs (libcamera, libpisp ...)
       - /usr/lib/aarch64-linux-gnu:/host/usr/lib:ro            # Weitere Trixie-Libs (libav/ffmpeg H.264-Codec etc.)
       - /usr/lib/aarch64-linux-gnu/rpicam-apps-encoder:/usr/lib/aarch64-linux-gnu/rpicam-apps-encoder:ro  # H.264-Encoder-Plugin

@@ -4,15 +4,15 @@
 
 ![Vogel-Kamera-Linux Banner](../pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
 
-## Release v2.0.1 — Kurzüberblick
+## Release v2.2.2 — Hailo-NPU Detection & Engine-Switcher 🔬
 
-- Version: v2.0.1
-- Wesentliche Neuerungen: Cinema 4K (4096x2160 @ 25fps), AI-HAD Audio-Modus, neue CLI-Modi (`normal`, `slowmo`, `4k`, `ai-had`), verbesserte SSH-Resilienz und sofortige Video-Synchronisation nach Konvertierung.
-- Bugfixes: ISO-Kalenderwoche (%V), korrekte Pfad-Extraktion, automatische SSH-Wiederverbindung, Vermeidung von Skript-Abbruch durch `pipefail`.
+- Version: v2.2.2
+- Wesentliche Neuerungen: Hailo-8 NPU Detection via `rpicam-hello` + YOLOv8 HEF (26 TOPS, 25 fps, < 5 % CPU), Detection-Engine-Switcher (GUI-Dropdown + `/api/detection-engine`), Watchdog-Fix, Hailo-bewusste Live-Vorschau-UX.
+- Bugfixes: Watchdog String-Check (`_active_engine == 'hailo'`), Ansible `pi_detection_script` auf hailo korrigiert.
 
-Weitere Details und vollständige Release-Notes: [`releases/RELEASE_NOTES_v2.0.1.md`](../../releases/RELEASE_NOTES_v2.0.1.md)
+Weitere Details und vollständige Release-Notes: [`releases/v2.2.2/RELEASE_NOTES_v2.2.2.md`](../../releases/v2.2.2/RELEASE_NOTES_v2.2.2.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.0.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.0.0)
+[![Version](https://img.shields.io/badge/Version-v2.2.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.2)
 [![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](../TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)

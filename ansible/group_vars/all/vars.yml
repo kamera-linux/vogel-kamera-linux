@@ -27,7 +27,7 @@ pi_daemon_port:      8443
 pi_token_expiry_h:   8
 
 # Detection-Skript innerhalb des Containers
-pi_detection_script: "{{ pi_home }}/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor-detect-only.py"
+pi_detection_script: "{{ pi_home }}/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor-hailo.py"
 
 # Keepalive SSH (verhindert Timeout)
 ansible_ssh_common_args: "-o ServerAliveInterval=30"
