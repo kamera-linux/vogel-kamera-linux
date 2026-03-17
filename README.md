@@ -4,17 +4,17 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu.png)
 
-## Release v2.2.2 — Hailo-NPU Detection & Engine-Switcher 🔬
+## Release v2.2.3 — Aufnahmedauer-Fix & Dashboard-Korrekturen 🎯
 
-- **Version:** v2.2.2 (März 2026)
-- **🚀 Neue Features:**
-  - **Hailo-8 NPU Detection** via `rpicam-hello` + YOLOv8 HEF (26 TOPS, 25 fps, < 5 % CPU)
-  - **Detection-Engine-Switcher:** Laufzeit-Umschaltung zwischen `hailo` / `cpu_yolo` via GUI-Dropdown und `/api/detection-engine` API
-  - **Live-Vorschau UX:** Sofortige Hailo-Statusmeldung statt irreführendem „Kein Bild"
-  - `/api/status` liefert neues Feld `active_engine`
+- **Version:** v2.2.3 (März 2026)
 - **🐛 Bugfixes:**
-  - Watchdog: `_active_engine == 'hailo'` statt fehlerhaftem String-Check
-  - Ansible `pi_detection_script` auf `unified-camera-monitor-hailo.py` korrigiert
+  - **Aufnahmedauer im Detection-Modus:** Slider-`change`-Event fehlte → Dauer wurde nie gespeichert → Watchdog ignorierte eingestellte Dauer und nutzte Default (15 s)
+  - **Backend-Limit:** `min(..., 300)` kappte Aufnahmen bei 5 min statt erlaubter 10 min — auf 600 s erhöht
+  - **Dashboard HTML-Strukturfehler:** „Hailo NPU"-Kachel verlor ihre `<div class="card">`-Wrapper
+- **✨ Neue Features:**
+  - Erkennungsziele: **Hund, Katze, Alle 4** zusätzlich zu Vogel + Mensch
+  - Neue Dashboard-Kacheln: „Hailo NPU", „Objekt erkannt", „Erkennungsziel"
+  - Detection-Modus startet nach Aufnahme automatisch neu (Watchdog-Fix)
 
 - **🔧 Technical Stack:**
   - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
@@ -25,21 +25,21 @@
 
 **Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.2.2/`](releases/v2.2.2/RELEASE_NOTES_v2.2.2.md)
+**Release Notes:** [`releases/v2.2.3/`](releases/v2.2.3/RELEASE_NOTES_v2.2.3.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.2.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.2)
+[![Version](https://img.shields.io/badge/Version-v2.2.3-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.3)
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.2.2 (Archiv)
+**Hailo-NPU Detection & Engine-Switcher**
+- **Version:** v2.2.2 (16. März 2026)
+- Siehe [Archiv-Release](releases/v2.2.2/) für Details oder CHANGELOG.md
 
 ### v2.2.1 (Archiv)
 **Web-GUI Verbesserungen & HTTPS-Komfort**
 - **Version:** v2.2.1 (15. März 2026)
 - Siehe [Archiv-Release](releases/v2.2.1/) für Details oder CHANGELOG.md
-
-### v2.2.0 (Archiv)
-**Docker & Ansible Build-Infrastruktur**
-- **Version:** v2.2.0 (13. März 2026)
-- Siehe [Archiv-Release](releases/v2.2.0/) für Details oder CHANGELOG.md
 
 > ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
 > 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)  
@@ -325,8 +325,8 @@ vogel-kamera-linux/
 │   └── ANLEITUNG-EIGENES-AI-MODELL.md
 │
 ├── releases/                         # 📋 Release-Archiv
-│   ├── v2.2.2/                       #    ← aktuelle Version
-│   ├── v2.2.1/ … v1.1.1/            #    ältere Versionen
+│   ├── v2.2.3/                       #    ← aktuelle Version
+│   ├── v2.2.2/ … v1.1.1/            #    ältere Versionen
 │   └── README.md
 │
 ├── assets/                           # 📸 Bilder & Screenshots
@@ -358,7 +358,7 @@ vogel-kamera-linux/
 ├── veranstaltungen/                  # 🎤 Event-Management
 │
 ├── CHANGELOG.md
-├── VERSION                           # 2.2.2
+├── VERSION                           # 2.2.3
 └── README.md
 ```
 
@@ -453,5 +453,5 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ---
 
-**Version:** v2.2.2 (März 2026) | **Status:** Produktionsreif ✅  
+**Version:** v2.2.3 (März 2026) | **Status:** Produktionsreif ✅  
 **Raspberry Pi 5 AI HAD+ · Hailo-8 NPU · Debian Trixie (13) | Docker Web-API | JWT + TOTP 2FA**

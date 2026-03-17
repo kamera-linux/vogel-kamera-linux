@@ -5,6 +5,21 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt befolgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.2.3] - 2026-03-17 🎯 Aufnahmedauer-Fix & Dashboard-Korrekturen
+
+### 🐛 Behoben
+- **Aufnahmedauer im Detection-Modus ignoriert:** Slider-`change`-Event fehlte → Dauer wurde nie an `/api/rec-settings` übergeben → Watchdog nutzte stets Default-Dauer (15 s)
+- **Backend-Limit zu niedrig:** `min(..., 300)` kappte bei 5 min statt erlaubter 10 min — auf 600 s erhöht (beide Endpunkte `/api/rec-settings` und `/api/record`)
+- **Broken HTML der Dashboard-Kacheln:** `<div class="card">` + `<div class="label">` Wrapper für „Hailo NPU"-Kachel fehlten nach Multi-Replace
+
+### ✨ Hinzugefügt
+- Erkennungsziele `dog`, `cat`, `all4` in Hailo-Script + Backend-Whitelist + GUI-Radios
+- Dashboard-Kacheln: „Hailo NPU" (Aktiv/Inaktiv), „Objekt erkannt" (letzte Erkennung), „Erkennungsziel" (konfiguriertes Ziel + Konfidenzschwelle)
+- `/tmp/last-detection.json` — Hailo-Script schreibt Treffer, Daemon liest per `_read_last_detection()`
+- Detection-Modus-Neustart nach Aufnahme: Guard-Bedingung `detection_mode AND detection_running`
+
+---
+
 ## [2.2.2] - 2026-03-16 🔬 Hailo-NPU Detection & Engine-Switcher
 
 ### ✨ Hinzugefügt

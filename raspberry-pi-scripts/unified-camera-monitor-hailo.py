@@ -27,13 +27,17 @@ Performance (AI HAD+ mit Hailo-8):
 """
 
 import argparse
+import json
 import logging
 import re
 import signal
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
+
+LAST_DETECTION_FILE = '/tmp/last-detection.json'
 
 # ---------------------------------------------------------------------------
 # Logging  (FileHandler = selbe Log-Datei wie CPU-YOLO-Script → nahtloser Tausch)
@@ -54,14 +58,20 @@ logger = logging.getLogger(__name__)
 HAILO_JSON   = '/usr/share/rpi-camera-assets/hailo_yolov8_inference.json'
 RPICAM_HELLO = '/usr/local/bin/rpicam-hello'   # Container-Wrapper (→ Host-Binary)
 
-# COCO-Klassennamen für Vogel – rpicam-hello gibt sie lowercase aus
-BIRD_CLASSES = {'bird'}
+# COCO-Klassen je Detection-Ziel (rpicam-hello gibt sie lowercase aus)
+TARGET_CLASSES: dict = {
+    'bird':   {'bird'},
+    'person': {'person'},
+    'dog':    {'dog'},
+    'cat':    {'cat'},
+    'all4':   {'bird', 'person', 'dog', 'cat'},
+}
 
 # Format der Erkennungszeilen von rpicam-hello -v 2:
-#   "bird : 0.923 (123, 456, 789, 234)"
-# Die regex sucht überall in der Zeile (finditer) um Logging-Präfixe zu ignorieren.
+#   "Object: person[1] (0.91) @ 334,382 699x913"
+# Zeilen mit COCO-Klassen in eckigen Klammern, Confidence in runden Klammern.
 _DETECTION_RE = re.compile(
-    r'(\w+)\s*:\s*([\d.]+)\s*\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)'
+    r'^Object:\s+([\w ]+)\[(\d+)\]\s+\(([\d.]+)\)'
 )
 
 # ---------------------------------------------------------------------------
@@ -113,16 +123,22 @@ def _terminate(proc: subprocess.Popen) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Hailo NPU Bird Detector')
-    parser.add_argument('--threshold',  type=float, default=0.45,
+    parser = argparse.ArgumentParser(description='Hailo NPU Detector')
+    parser.add_argument('--threshold',    type=float, default=0.45,
                         help='Confidence-Schwelle (Standard 0.45)')
-    parser.add_argument('--cooldown',   type=int,   default=15,
+    parser.add_argument('--target-class', type=str,   default='bird',
+                        choices=list(TARGET_CLASSES.keys()),
+                        help='Zu erkennende COCO-Klasse (Standard bird)')
+    parser.add_argument('--cooldown',     type=int,   default=15,
                         help='Mindestabstand zwischen Triggern in Sekunden (Standard 15)')
-    parser.add_argument('--fps',        type=int,   default=25,
+    parser.add_argument('--fps',          type=int,   default=25,
                         help='Ziel-FPS (Standard 25)')
-    parser.add_argument('--resolution', type=str,   default='1920x1080',
+    parser.add_argument('--resolution',   type=str,   default='1920x1080',
                         help='Kamera-Auflösung WxH (Standard 1920x1080)')
     args = parser.parse_args()
+    active_classes = TARGET_CLASSES[args.target_class]
+    _icons = {'bird': '\ud83d\udc26', 'person': '\ud83e\uddd0', 'dog': '\ud83d\udc15', 'cat': '\ud83d\udc08', 'all4': '\ud83d\udc26\ud83e\uddd0\ud83d\udc15\ud83d\udc08'}
+    target_icon    = _icons.get(args.target_class, '\ud83c\udfaf')
 
     # ── Voraussetzungen prüfen ────────────────────────────────────────────
     if not Path(HAILO_JSON).exists():
@@ -137,8 +153,8 @@ def main() -> None:
         sys.exit(1)
 
     cmd = _build_cmd(args.fps, args.resolution)
-    logger.info('Hailo NPU Detector gestartet (threshold=%.2f, fps=%d, res=%s)',
-                args.threshold, args.fps, args.resolution)
+    logger.info('Hailo NPU Detector gestartet (target=%s, threshold=%.2f, fps=%d, res=%s)',
+                args.target_class, args.threshold, args.fps, args.resolution)
     logger.info('Starte: %s', ' '.join(cmd))
 
     # ── rpicam-hello starten (mit Startup-Retry) ──────────────────────────
@@ -176,7 +192,7 @@ def main() -> None:
         sys.exit(1)
 
     # ── Detection-Loop: stderr zeilenweise einlesen ───────────────────────
-    bird_found = False
+    target_found = False
     try:
         for line in proc.stderr:
             if _stopped_by_signal:
@@ -186,19 +202,20 @@ def main() -> None:
             if not line:
                 continue
 
-            for m in _DETECTION_RE.finditer(line):
-                class_name = m.group(1).lower().strip()
-                confidence = float(m.group(2))
+            m = _DETECTION_RE.match(line)
+            if m:
+                class_name = m.group(1).strip().lower()
+                confidence = float(m.group(3))
 
-                if class_name in BIRD_CLASSES and confidence >= args.threshold:
+                if class_name in active_classes and confidence >= args.threshold:
                     logger.info(
-                        '🐦 Vogel erkannt! class=%s conf=%.3f (Hailo NPU) – beende für Aufnahme',
-                        class_name, confidence,
+                        '%s Erkannt! class=%s conf=%.3f (Hailo NPU) – beende für Aufnahme',
+                        target_icon, class_name, confidence,
                     )
-                    bird_found = True
+                    target_found = True
                     break
 
-            if bird_found:
+            if target_found:
                 break
 
     except (IOError, OSError):
@@ -212,7 +229,18 @@ def main() -> None:
         logger.info('Hailo Detector gestoppt durch Signal (kein Vogel-Trigger)')
         sys.exit(2)
 
-    if bird_found:
+    if target_found:
+        # Erkennung persistieren  →  Daemon liest /tmp/last-detection.json für Status-API
+        try:
+            Path(LAST_DETECTION_FILE).write_text(
+                json.dumps({
+                    'class': class_name,
+                    'conf':  round(confidence, 3),
+                    'time':  datetime.now().strftime('%H:%M:%S'),
+                })
+            )
+        except OSError:
+            pass
         # rc=0 → pi_daemon_secure.py Watchdog triggert Aufnahme (wenn detection_mode=True)
         sys.exit(0)
 

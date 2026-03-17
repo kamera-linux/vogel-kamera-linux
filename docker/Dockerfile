@@ -30,7 +30,10 @@ RUN printf '#!/bin/sh\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host
     > /usr/local/bin/rpicam-vid && chmod +x /usr/local/bin/rpicam-vid
 
 # Wrapper für rpicam-hello (Hailo-NPU Detection via Post-Processing-JSON)
-RUN printf '#!/bin/sh\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib:/host/usr/lib/pulseaudio /opt/rpicam-hello "$@"\n' \
+# LD_LIBRARY_PATH nötig: --library-path von ld-linux gilt nur für den initialen Binär-Load,
+# interne dlopen()-Aufrufe (hailo-postproc.so + Abhängigkeiten) suchen erst in LD_LIBRARY_PATH.
+# /host/usr/lib2 = Pi-Host /usr/lib (libhailort.so), /host/lib = /lib/aarch64-linux-gnu (libopencv etc.)
+RUN printf '#!/bin/sh\nexport LD_LIBRARY_PATH=/host/lib:/host/usr/lib:/host/usr/lib2:/host/usr/lib/pulseaudio\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib:/host/usr/lib2:/host/usr/lib/pulseaudio /opt/rpicam-hello "$@"\n' \
     > /usr/local/bin/rpicam-hello && chmod +x /usr/local/bin/rpicam-hello
 
 # Wrapper für rpicam-still (Snapshot-Aufnahme)

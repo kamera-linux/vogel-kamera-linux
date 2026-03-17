@@ -4,15 +4,15 @@
 
 ![Vogel-Kamera-Linux Banner](../pictures/Vogelhaus-Raspberry-Pi-Backround.jpg)
 
-## Release v2.2.2 — Hailo-NPU Detection & Engine-Switcher 🔬
+## Release v2.2.3 — Aufnahmedauer-Fix & Dashboard-Korrekturen 🎯
 
-- Version: v2.2.2
-- Wesentliche Neuerungen: Hailo-8 NPU Detection via `rpicam-hello` + YOLOv8 HEF (26 TOPS, 25 fps, < 5 % CPU), Detection-Engine-Switcher (GUI-Dropdown + `/api/detection-engine`), Watchdog-Fix, Hailo-bewusste Live-Vorschau-UX.
-- Bugfixes: Watchdog String-Check (`_active_engine == 'hailo'`), Ansible `pi_detection_script` auf hailo korrigiert.
+- Version: v2.2.3
+- Wesentliche Neuerungen: Aufnahmedauer-Bug im Detection-Modus behoben (Slider-`change`-Event fehlte → Dauer wurde nie gespeichert), Backend-Limit auf 600 s erhöht, Dashboard-HTML-Strukturfehler korrigiert, neue Erkennungsziele (Hund, Katze, Alle 4), neue Status-Kacheln (Hailo NPU, Objekt erkannt, Erkennungsziel), Detection-Modus-Neustart nach Aufnahme.
+- Bugfixes: Slider `change`-Event für persistente Dauer-Speicherung, `min(...,300)→600`, Card-Wrapper für Hailo-NPU-Kachel wiederhergestellt.
 
-Weitere Details und vollständige Release-Notes: [`releases/v2.2.2/RELEASE_NOTES_v2.2.2.md`](../../releases/v2.2.2/RELEASE_NOTES_v2.2.2.md)
+Weitere Details und vollständige Release-Notes: [`releases/v2.2.3/RELEASE_NOTES_v2.2.3.md`](../../releases/v2.2.3/RELEASE_NOTES_v2.2.3.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.2.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.2)
+[![Version](https://img.shields.io/badge/Version-v2.2.3-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.3)
 [![Trixie Support](https://img.shields.io/badge/Debian-Trixie%20(13)-blue)](../TRIXIE-MIGRATION.md)
 [![GitHub Issues](https://img.shields.io/github/issues/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/issues)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/kamera-linux/vogel-kamera-linux)](https://github.com/kamera-linux/vogel-kamera-linux/pulls)

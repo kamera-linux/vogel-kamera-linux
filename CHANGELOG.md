@@ -1,5 +1,48 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.2.3] - 17. März 2026 🎯 **Aufnahmedauer-Fix & Dashboard-Korrekturen**
+
+### 🐛 Bugfixes
+- **Aufnahmedauer wird im Detection-Modus nicht gespeichert**
+  - `rec-dur`-Slider feuerte kein `change`-Event zum persistenten Speichern
+  - Beim Schieben auf z. B. 3 min wurde `/api/rec-settings` nicht aufgerufen
+  - Folge: Watchdog startete Aufnahme immer mit alter / Default-Dauer (15 s)
+  - Fix: `durEl.addEventListener('change', saveRecSettings)` ergänzt — Speichern bei Slider-Release
+
+- **Backend-Maximalwert für Aufnahmedauer zu niedrig**
+  - `min(..., 300)` kappte Aufnahmen bei 5 Minuten, Slider zeigte aber bis 10 min
+  - Fix: Limit auf 600 s (10 min) erhöht — in `/api/rec-settings` und `/api/record`
+
+- **Broken HTML-Struktur der Dashboard-Kacheln**
+  - Nach Einführung der „Erkennungsziel"-Kachel fehlten `<div class="card">` und `<div class="label">` Wrapper der „Hailo NPU"-Kachel
+  - Fix: Korrekte Card-Struktur wiederhergestellt
+
+### ✨ Features (aus 2.2.2-Session, jetzt als eigenständige Version gebündelt)
+- **Neue Erkennungsziele: Hund, Katze, Alle 4**
+  - `TARGET_CLASSES` in `unified-camera-monitor-hailo.py` um `dog`, `cat`, `all4` erweitert
+  - Backend-Whitelist in `pi_daemon_secure.py` entsprechend erweitert
+  - GUI: 5 Radio-Buttons `🐦 Vogel | 🧍 Mensch | 🐕 Hund | 🐈 Katze | 🐦🧍🐕🐈 Alle 4`
+
+- **Neue Status-Kacheln im Dashboard**
+  - „Hailo NPU" — Aktiv/Inaktiv-Pill je nach laufendem Prozess
+  - „Objekt erkannt" — letzte erkannte Klasse + Konfidenz + Uhrzeit
+  - „Erkennungsziel" — aktuell konfiguriertes Ziel mit Icon und Konfidenzschwelle
+  - Hailo-Script schreibt `/tmp/last-detection.json`, Daemon liest es via `_read_last_detection()`
+
+- **Detection-Modus-Lebenszyklus-Fixes**
+  - Detection-Prozess startet nach Aufnahme automatisch neu (Watchdog-Fix)
+  - `start_detection_mode()` early-return-Guard: `detection_mode AND detection_running` statt nur `detection_mode`
+  - `birds_recorded` wird nur beim ersten Aktivieren der Session zurückgesetzt
+
+### 📁 Files Changed
+- `unified-monitor-client/web/index.html` → Slider-change-Event, neue Kacheln, Hund/Katze/Alle-4-Radios, HTML-Strukturfix
+- `unified-monitor-client/pi_daemon_secure.py` → Aufnahmedauer-Caps 300→600 s, Whitelist dog/cat/all4, `_read_last_detection()`, Detection-Modus-Fixes
+- `raspberry-pi-scripts/unified-camera-monitor-hailo.py` → dog/cat/all4 TARGET_CLASSES, `/tmp/last-detection.json`
+- `VERSION`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/VERSION` → 2.2.3
+- `scripts/__version__.py`, `scripts/version.py` → 2.2.3
+
+---
+
 ## [2.2.2] - 16. März 2026 🔬 **Hailo-NPU Detection & Engine-Switcher**
 
 ### ✨ Features

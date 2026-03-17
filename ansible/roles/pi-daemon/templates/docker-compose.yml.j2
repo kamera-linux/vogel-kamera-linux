@@ -30,6 +30,10 @@ services:
       - /usr/share/rpi-camera-assets:/usr/share/rpi-camera-assets:ro  # Hailo HEF-JSON-Modelle (hailo_yolov8_inference.json etc.)
       - /lib/aarch64-linux-gnu:/host/lib:ro                  # Pi-spezifische Trixie-Libs (libcamera, libpisp ...)
       - /usr/lib/aarch64-linux-gnu:/host/usr/lib:ro            # Weitere Trixie-Libs (libav/ffmpeg H.264-Codec etc.)
+      - /usr/lib/aarch64-linux-gnu/rpicam-apps-postproc:/usr/lib/aarch64-linux-gnu/rpicam-apps-postproc:ro  # Hailo/OpenCV Post-Processing-Plugins (hardcodierter Pfad in librpicam_app.so)
+      - /usr/lib/libhailort.so:/usr/lib/libhailort.so:ro                                    # Hailo Runtime Library (hardcodiert in hailo-postproc.so als /usr/lib/libhailort.so)
+      - /usr/lib/aarch64-linux-gnu/hailo:/usr/lib/aarch64-linux-gnu/hailo:ro                # Hailo Tappas Post-Process-Libs (libyolo_hailortpp_post.so etc.)
+      - /usr/share/hailo-models:/usr/share/hailo-models:ro                                  # Hailo HEF-Modell-Dateien (yolov8s_h8.hef etc.)
       - /usr/lib/aarch64-linux-gnu/rpicam-apps-encoder:/usr/lib/aarch64-linux-gnu/rpicam-apps-encoder:ro  # H.264-Encoder-Plugin
       - /usr/lib/aarch64-linux-gnu/pulseaudio:/host/usr/lib/pulseaudio:ro  # libpulsecommon für libav-encoder
       - /usr/lib/aarch64-linux-gnu/libcamera:/usr/lib/aarch64-linux-gnu/libcamera:ro  # libcamera IPA-Module

@@ -337,12 +337,24 @@
         <div class="value" id="s-det-mode">–</div>
       </div>
       <div class="card">
-        <div class="label">Vögel aufgenommen</div>
+        <div class="label">Objekte aufgenommen</div>
         <div class="value" id="s-birds">–</div>
       </div>
       <div class="card">
         <div class="label">Recording</div>
         <div class="value" id="s-rec">–</div>
+      </div>
+      <div class="card">
+        <div class="label">🎯 Erkennungsziel</div>
+        <div class="value" id="s-target" style="font-size:0.95rem">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Hailo NPU</div>
+        <div class="value" id="s-hailo">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Objekt erkannt</div>
+        <div class="value" id="s-last-det" style="font-size:0.95rem">–</div>
       </div>
       <div class="card">
         <div class="label">CPU</div>
@@ -373,22 +385,51 @@
         <button class="btn btn-success" id="det-start-btn" onclick="detectionModeStart()">&#9654; Detection-Modus starten</button>
         <button class="btn btn-danger"  id="det-stop-btn"  onclick="detectionModeStop()">&#9632; Detection-Modus stoppen</button>
       </div>
-      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-        <label for="engine-select" style="font-size:0.85rem;color:var(--muted);">Engine:</label>
-        <select id="engine-select" onchange="switchEngine(this.value)"
-                style="font-size:0.85rem;padding:0.25rem 0.5rem;border-radius:6px;background:var(--bg2);color:var(--fg);border:1px solid var(--border);">
-          <option value="hailo">&#128302; Hailo NPU (AI HAD+, 25fps, &lt;5% CPU)</option>
-          <option value="cpu_yolo" disabled title="Nicht verf&#xFC;gbar: ultralytics nicht im Container installiert">&#128421; CPU-YOLO (nur direkt auf Pi, nicht im Container)</option>
+      <!-- Engine-Switcher ausgeblendet – aktuell nur Hailo NPU -->
+      <div style="display:none">
+        <label for="engine-select">Engine:</label>
+        <select id="engine-select" onchange="switchEngine(this.value)">
+          <option value="hailo">Hailo NPU</option>
+          <option value="cpu_yolo" disabled>CPU-YOLO</option>
         </select>
-        <span id="engine-status" style="font-size:0.8rem;color:var(--muted);"></span>
+        <span id="engine-status"></span>
+      </div>
+      <!-- Detection-Zielklasse + Threshold -->
+      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <span style="font-size:0.85rem;color:var(--muted);">Erkennen:</span>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="bird"   id="det-target-bird"   onchange="applyDetectionSettings()"> &#128038; Vogel
+        </label>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="person" id="det-target-person" onchange="applyDetectionSettings()"> &#129485; Mensch
+        </label>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="dog"    id="det-target-dog"    onchange="applyDetectionSettings()"> &#128021; Hund
+        </label>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="cat"    id="det-target-cat"    onchange="applyDetectionSettings()"> &#128008; Katze
+        </label>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="all4"   id="det-target-all4"   onchange="applyDetectionSettings()"> &#128038;&#129485;&#128021;&#128008; Alle 4
+        </label>
+      </div>
+      <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <label for="det-threshold" style="font-size:0.85rem;color:var(--muted);">Confidence:</label>
+        <input type="range" id="det-threshold" min="0.10" max="0.95" step="0.05" value="0.45"
+               style="width:140px;accent-color:var(--accent,#2563eb);"
+               oninput="document.getElementById('det-threshold-val').textContent=parseFloat(this.value).toFixed(2);"
+               onchange="applyDetectionSettings()">
+        <span id="det-threshold-val" style="font-size:0.85rem;min-width:2.5rem;">0.45</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(0.10–0.95)</span>
+        <span id="det-settings-status" style="font-size:0.8rem;color:var(--muted);"></span>
       </div>
       <div id="det-mode-info" style="display:none;margin-top:0.6rem;padding:0.5rem 0.75rem;background:var(--accent,#2563eb);color:#fff;border-radius:6px;font-size:0.9rem;">
-        &#129302; <strong>Detection-Modus aktiv</strong> &#8211; bei Vogelerkennung wird automatisch aufgenommen.
+        &#129302; <strong>Detection-Modus aktiv</strong> &#8211; bei Erkennung wird automatisch aufgenommen.
         Manuelle Aufnahme gesperrt. <span id="det-birds-inline"></span>
       </div>
     </div>
-    <!-- Live-Preview -->
-    <div class="panel" id="preview-panel">
+    <!-- Live-Preview ausgeblendet (Hailo belegt ISP exklusiv) -->
+    <div class="panel" id="preview-panel" style="display:none">
       <h2>&#128247; Live-Vorschau</h2>
       <div class="preview-placeholder" id="preview-placeholder">&#128247; Vorschau wird geladen…</div>
       <img id="preview-img" style="display:none; transform:rotate(180deg)" alt="Live-Vorschau">
@@ -488,18 +529,36 @@
 
     <hr>
     <h3>🤖 Detection-Modus (Automatik)</h3>
-    <p>Im Detection-Modus überwacht die KI (YOLO / Hailo) kontinuierlich das Kamerabild.
-       Erkennt sie einen Vogel, startet automatisch eine Aufnahme mit dem gewählten Profil.</p>
+    <p>Im Detection-Modus überwacht der <strong>Hailo-8 NPU</strong> kontinuierlich das Kamerabild
+       via <code>rpicam-hello</code> + YOLOv8 HEF-Modell (&lt; 5 % CPU-Last, 25 fps).
+       Wird das konfigurierte Erkennungsziel gefunden, startet automatisch eine Aufnahme
+       mit dem gewählten Profil.</p>
     <ul>
       <li><span class="help-badge">▶ Detection-Modus starten</span> – aktiviert die
-          automatische Vogelüberwachung</li>
+          automatische Überwachung</li>
       <li><span class="help-badge">■ Detection-Modus stoppen</span> – beendet die
           Überwachung; laufende Aufnahmen werden abgeschlossen</li>
       <li>Während der Modus aktiv ist, sind <strong>manuelle Aufnahmen gesperrt</strong>
           (lila Hinweis erscheint)</li>
-      <li>Der Zähler <strong>Vogel-Aufnahmen</strong> zeigt, wie viele automatische
+      <li>Der Zähler <strong>Objekte aufgenommen</strong> zeigt, wie viele automatische
           Aufnahmen in dieser Session entstanden sind</li>
+      <li>Nach jeder automatischen Aufnahme startet die Detection
+          <strong>automatisch neu</strong> – keine manuelle Aktion nötig</li>
     </ul>
+
+    <hr>
+    <h3>🎯 Erkennungsziel &amp; Confidence</h3>
+    <p>Legt fest, <em>was</em> erkannt werden soll und wie sicher die KI sein muss:</p>
+    <ul>
+      <li><strong>🐦 Vogel</strong> – erkennt COCO-Klasse <code>bird</code> (Standard)</li>
+      <li><strong>🧍 Mensch</strong> – erkennt COCO-Klasse <code>person</code></li>
+      <li><strong>Confidence-Slider</strong> – Wert zwischen 0,10 und 0,95 (Standard 0,45).
+          Höher = weniger Fehlalarme, aber auch weniger Treffer</li>
+      <li>Einstellungen werden sofort gespeichert und beim nächsten Detectionsstart
+          automatisch übernommen. Eine laufende Detection wird kurz neu gestartet.</li>
+    </ul>
+    <p><strong>Hintergrund:</strong> Das YOLOv8-Modell kennt 80 COCO-Klassen.
+       Nur die gewählte Klasse löst eine Aufnahme aus &ndash; alle anderen werden ignoriert.</p>
 
     <hr>
     <h3>⏺ Manuelle Aufnahme</h3>
@@ -535,17 +594,9 @@
 
     <hr>
     <h3>📷 Live-Vorschau</h3>
-    <p>Zeigt ein Live-Bild der Kamera (MJPEG-Stream via Detection). Setzt voraus, dass
-       der <strong>Detection-Modus aktiv ist</strong>, da die Kamera sonst nicht
-       initialisiert ist.</p>
-    <ul>
-      <li>Mit <span class="help-badge">📷 Vorschau starten</span> aktivieren –
-          aktualisiert sich automatisch alle 250 ms</li>
-      <li>Mit <span class="help-badge">⏹ Vorschau stoppen</span> wieder beenden (spart
-          Bandbreite und CPU)</li>
-      <li>Erscheint <em>„Warte auf Detection…"</em>, ist der Detection-Modus noch nicht
-          gestartet</li>
-    </ul>
+    <p>Aktuell ausgeblendet: Der Hailo-Prozess (<code>rpicam-hello</code>) belegt den
+       Kamera-ISP exklusiv &ndash; während der Detection ist kein MJPEG-Snapshot möglich.
+       Die Vorschau-Funktion bleibt im Code erhalten und kann später wieder aktiviert werden.</p>
 
     <hr>
     <h3>⛔ Aufnahme abbrechen (Kill)</h3>
@@ -604,12 +655,17 @@
     <hr>
     <h3>📊 System-Status</h3>
     <ul>
-      <li><strong>CPU</strong> – aktuelle CPU-Auslastung in Prozent</li>
-      <li><strong>RAM</strong> – belegter / gesamter Arbeitsspeicher in MB</li>
-      <li><strong>Disk</strong> – freier Speicher auf dem Video-Volume</li>
       <li><strong>Detection</strong> – ob die KI-Erkennung gerade läuft</li>
       <li><strong>Modus</strong> – Automatik (Detection-Modus) oder Manuell</li>
-      <li><strong>Aufnahme</strong> – ob gerade aufgezeichnet wird</li>
+      <li><strong>Objekte aufgenommen</strong> – Zähler automatisch getriggerter Aufnahmen dieser Session</li>
+      <li><strong>Recording</strong> – ob gerade aufgezeichnet wird</li>
+      <li><strong>Hailo NPU</strong> – <span style="color:var(--green,#3fb950)">Aktiv</span> wenn Hailo-Detection läuft, sonst Inaktiv</li>
+      <li><strong>Objekt erkannt</strong> – letztes erkanntes Objekt mit Klasse, Konfidenz und Uhrzeit
+          (wird nach jedem Erkennungs-Trigger aktualisiert)</li>
+      <li><strong>CPU</strong> – aktuelle CPU-Auslastung in Prozent (&lt;&nbsp;5&nbsp;% typisch bei Hailo-NPU)</li>
+      <li><strong>Temperatur</strong> – CPU-Temperatur in °C</li>
+      <li><strong>RAM</strong> – belegter Arbeitsspeicher</li>
+      <li><strong>Disk</strong> – freier Speicher auf dem Video-Volume</li>
     </ul>
 
     <hr>
@@ -724,12 +780,44 @@
     _detectionRunning = !!data.detection_running;
     setText('s-detect',   pill(data.detection_running, 'Aktiv', 'Gestoppt'));
     setText('s-det-mode', pill(data.detection_mode,    '\uD83E\uDD16 Automatik', 'Manuell'));
+    const hailoActive = data.detection_running && data.active_engine === 'hailo';
+    setText('s-hailo', pill(hailoActive, '\uD83D\uDD2C Aktiv', 'Inaktiv'));
+    if (data.last_detection) {
+      const d = data.last_detection;
+      const cls = d.class ? d.class.charAt(0).toUpperCase() + d.class.slice(1) : '?';
+      const conf = d.conf != null ? (d.conf * 100).toFixed(0) + '\u202F%' : '';
+      const t = d.time || '';
+      setText('s-last-det', `${cls}\u00A0${conf}<br><small style="color:var(--muted)">${t}</small>`);
+    } else {
+      setText('s-last-det', '\u2013');
+    }
     setText('s-birds',    data.birds_recorded != null ? String(data.birds_recorded) : '\u2013');
     setText('s-rec',      pill(data.recording_running, 'L\u00E4uft', 'Bereit'));
+    if (data.detection_target != null) {
+      const icons = { bird: '\uD83D\uDC26', person: '\uD83E\uDDD0', dog: '\uD83D\uDC15', cat: '\uD83D\uDC08', all4: '\uD83D\uDC26\uD83E\uDDD0\uD83D\uDC15\uD83D\uDC08' };
+      const names = { bird: 'Vogel', person: 'Person', dog: 'Hund', cat: 'Katze', all4: 'Alle 4' };
+      const icon = icons[data.detection_target] || '\uD83C\uDFAF';
+      const name = names[data.detection_target] || data.detection_target;
+      const thr  = data.detection_threshold != null ? (data.detection_threshold * 100).toFixed(0) + '\u202F%' : '';
+      setText('s-target', `${icon}\u00A0${name}<br><small style="color:var(--muted)">${thr} Konfidenz</small>`);
+    }
     // Engine-Dropdown synchron halten
     if (data.active_engine) {
       const sel = document.getElementById('engine-select');
       if (sel && sel.value !== data.active_engine) sel.value = data.active_engine;
+    }
+    // Detection-Zielklasse und Threshold synchron halten
+    if (data.detection_target) {
+      const rb = document.getElementById('det-target-' + data.detection_target);
+      if (rb && !rb.checked) rb.checked = true;
+    }
+    if (data.detection_threshold != null) {
+      const sl = document.getElementById('det-threshold');
+      const vl = document.getElementById('det-threshold-val');
+      if (sl && parseFloat(sl.value) !== data.detection_threshold) {
+        sl.value = data.detection_threshold;
+        if (vl) vl.textContent = data.detection_threshold.toFixed(2);
+      }
     }
     const blocked = data.detection_mode;
     const anyRunning = data.recording_running || data.audio_running;
@@ -768,7 +856,7 @@
     }
     document.getElementById('det-mode-info').style.display = blocked ? 'block' : 'none';
     const birdsEl = document.getElementById('det-birds-inline');
-    if (birdsEl) birdsEl.textContent = data.birds_recorded ? `(${data.birds_recorded} Vogel-Aufnahme${data.birds_recorded!==1?'n':''})` : '';
+    if (birdsEl) birdsEl.textContent = data.birds_recorded ? `(${data.birds_recorded} Aufnahme${data.birds_recorded!==1?'n':''})` : '';
     const sys = data.system || {};
     setText('s-cpu',  sys.cpu_percent != null ? sys.cpu_percent.toFixed(0) + ' %' : '–');
     if (sys.cpu_temp != null) {
@@ -799,8 +887,11 @@
 
   // ── Detection ──────────────────────────────────────────────────────────
   async function detectionModeStart() {
+    const rb = document.querySelector('input[name="det-target"]:checked');
+    const target = rb ? rb.value : 'bird';
+    const targetLabel = { bird: 'Vogelerkennung', person: 'Menscherkennung', dog: 'Hundeerkennung', cat: 'Katzenerkennung', all4: 'Alle-4-Erkennung' }[target] || (target + '-Erkennung');
     const d = await apiFetch('/api/detection/mode/start', 'POST');
-    if (d?.success) toast('\u2705 Detection-Modus gestartet \u2013 Aufnahme bei Vogelerkennung', 'ok');
+    if (d?.success) toast(`\u2705 Detection-Modus gestartet \u2013 Aufnahme bei ${targetLabel}`, 'ok');
     else toast('\u274C ' + (d?.error || 'Fehler beim Starten'), 'error');
     fetchStatus();
   }
@@ -822,6 +913,22 @@
       if (statusEl) statusEl.textContent = '';
     } else {
       toast('\u274C ' + (d?.error || 'Engine-Wechsel fehlgeschlagen'), 'error');
+      if (statusEl) statusEl.textContent = '\u26A0 Fehler';
+    }
+    fetchStatus();
+  }
+  async function applyDetectionSettings() {
+    const rb = document.querySelector('input[name="det-target"]:checked');
+    const target    = rb ? rb.value : 'bird';
+    const threshold = parseFloat(document.getElementById('det-threshold').value);
+    const statusEl  = document.getElementById('det-settings-status');
+    if (statusEl) statusEl.textContent = '\u23F3 Speichere\u2026';
+    const d = await apiFetch('/api/detection-settings', 'POST', { target_class: target, threshold });
+    if (d?.success) {
+      if (statusEl) statusEl.textContent = '\u2714 Gespeichert';
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2500);
+    } else {
+      toast('\u274C ' + (d?.error || 'Einstellung konnte nicht gespeichert werden'), 'error');
       if (statusEl) statusEl.textContent = '\u26A0 Fehler';
     }
     fetchStatus();
@@ -882,13 +989,16 @@
     }
   }
 
-  // Profil-Änderung persistent speichern
+  // Profil- & Dauer-Änderung persistent speichern
   document.addEventListener('DOMContentLoaded', () => {
     const sel = document.getElementById('rec-profile');
-    if (sel) sel.addEventListener('change', () => {
-      const dur = document.getElementById('rec-dur')?.value || 1;
-      apiFetch('/api/rec-settings', 'POST', { profile: sel.value, duration: parseInt(dur) * 60 });
-    });
+    const durEl = document.getElementById('rec-dur');
+    function saveRecSettings() {
+      if (!sel || !durEl) return;
+      apiFetch('/api/rec-settings', 'POST', { profile: sel.value, duration: parseInt(durEl.value) * 60 });
+    }
+    if (sel)   sel.addEventListener('change', saveRecSettings);
+    if (durEl) durEl.addEventListener('change', saveRecSettings);  // fires on mouseup/touchend
   });
 
   async function startConvert() {

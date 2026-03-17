@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.2.2"
+__version__ = "2.2.3"
 __version_info__ = (2, 2, 2)
 
 # Release Information
-RELEASE_NAME = "Hailo-NPU Detection & Engine-Switcher"
+RELEASE_NAME = "Aufnahmedauer-Fix & Dashboard-Korrekturen"
 RELEASE_DATE = "2026-03-16"
 RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
 BUILD_NUMBER = "20260316-1"
-GIT_TAG = "v2.2.2"
+GIT_TAG = "v2.2.3"
 
 # Feature Flags
 FEATURES = {

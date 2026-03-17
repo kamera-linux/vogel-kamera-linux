@@ -31,7 +31,7 @@ from flask_limiter.util import get_remote_address
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.2.2'
+APP_VERSION = '2.2.3'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -81,6 +81,46 @@ def _save_active_engine(engine: str) -> None:
 # Aktive Engine – wird beim Start geladen und kann zur Laufzeit gewechselt werden
 _active_engine: str = _load_active_engine()
 DETECTION_SCRIPT: str = DETECTION_ENGINES[_active_engine]['script']
+
+# Detection-Settings: Erkennungsziel und Confidence-Schwelle
+DETECTION_SETTINGS_FILE = '/config/detection-settings.json'
+
+def _read_last_detection() -> dict:
+    """Letzte Erkennung aus /tmp/last-detection.json lesen (geschrieben vom Hailo-Script)."""
+    try:
+        p = Path('/tmp/last-detection.json')
+        if p.exists():
+            return json.loads(p.read_text())
+    except Exception:
+        pass
+    return None
+
+
+def _load_detection_settings() -> dict:
+    """Lädt target_class und threshold. Fallback: Vogel + 0.45."""
+    try:
+        data = json.loads(Path(DETECTION_SETTINGS_FILE).read_text())
+        target = data.get('target_class', 'bird')
+        if target not in ('bird', 'person'):
+            target = 'bird'
+        threshold = float(data.get('threshold', 0.45))
+        threshold = max(0.1, min(0.95, threshold))
+        return {'target_class': target, 'threshold': threshold}
+    except Exception:
+        return {'target_class': 'bird', 'threshold': 0.45}
+
+def _save_detection_settings(target_class: str, threshold: float) -> None:
+    try:
+        Path(DETECTION_SETTINGS_FILE).parent.mkdir(parents=True, exist_ok=True)
+        Path(DETECTION_SETTINGS_FILE).write_text(
+            json.dumps({'target_class': target_class, 'threshold': threshold}, indent=2)
+        )
+    except Exception as exc:
+        logger.error('Detection-Settings konnten nicht gespeichert werden: %s', exc)
+
+_det_settings    = _load_detection_settings()
+_detection_target: str   = _det_settings['target_class']
+_detection_threshold: float = _det_settings['threshold']
 
 # ---------------------------------------------------------------------------
 # Aufnahme-Profile  (gelten für BEIDE Modi: manuell UND Detection-getriggert)
@@ -288,7 +328,11 @@ class CameraManager:
         try:
             proc = subprocess.Popen(
                 # Container-Python reicht: Hailo-Script importiert nur stdlib
-                ['python3', DETECTION_SCRIPT],
+                [
+                    'python3', DETECTION_SCRIPT,
+                    '--target-class', _detection_target,
+                    '--threshold',    str(_detection_threshold),
+                ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 preexec_fn=os.setpgrp,
@@ -319,8 +363,8 @@ class CameraManager:
         """Aktiviert den Detection-Modus: blockiert manuelle Aufnahme,
         startet Detection-Loop mit Auto-Record bei Vogelerkennung."""
         with _lock:
-            if state.detection_mode:
-                return True   # schon aktiv
+            if state.detection_mode and state.detection_running:
+                return True   # schon aktiv und Prozess läuft
             if state.recording_running:
                 return False  # manuelle Aufnahme läuft noch
             proc = CameraManager._launch_detection_process()
@@ -328,9 +372,12 @@ class CameraManager:
                 return False
             state.detection_process = proc
             state.detection_running = True
-            state.detection_mode    = True
-            state.birds_recorded    = 0
-            logger.info('Detection-Modus aktiviert')
+            if not state.detection_mode:
+                state.detection_mode   = True
+                state.birds_recorded   = 0
+                logger.info('Detection-Modus aktiviert')
+            else:
+                logger.info('Detection-Modus: Prozess neu gestartet')
             return True
 
     @staticmethod
@@ -558,9 +605,9 @@ class CameraManager:
                 if triggered_by == 'detection':
                     state.birds_recorded += 1
                 _det_mode = state.detection_mode
-            # Detection immer neu starten (egal ob manuell oder detection-getriggert)
+            # Detection neu starten – detection_mode wiederherstellen falls aktiv
             if _det_mode:
-                CameraManager.start_detection()
+                CameraManager.start_detection_mode()
             else:
                 CameraManager.start_detection()
 
@@ -1036,6 +1083,9 @@ def api_status():
         'system':               system,
         'version':              APP_VERSION,
         'active_engine':        _active_engine,
+        'detection_target':     _detection_target,
+        'detection_threshold':  _detection_threshold,
+        'last_detection':       _read_last_detection(),
     })
 
 
@@ -1121,6 +1171,43 @@ def api_detection_engine():
     return jsonify({'success': True, 'active': _active_engine, 'changed': True})
 
 
+@app.route('/api/detection-settings', methods=['GET', 'POST'])
+@require_auth
+def api_detection_settings():
+    """Liest oder setzt Detection-Zielklasse und Confidence-Schwelle.
+    GET  → { "target_class": "bird"|"person"|"dog"|"cat"|"all4", "threshold": 0.45 }
+    POST { "target_class": "bird"|"person"|"dog"|"cat"|"all4", "threshold": 0.45 }
+    Bei laufender Detection wird diese neu gestartet, damit die neuen Werte wirken.
+    """
+    global _detection_target, _detection_threshold
+    if request.method == 'GET':
+        return jsonify({'target_class': _detection_target, 'threshold': _detection_threshold})
+    data = request.get_json(silent=True) or {}
+    target = data.get('target_class', _detection_target)
+    if target not in ('bird', 'person', 'dog', 'cat', 'all4'):
+        return jsonify({'error': f'Ungültige Zielklasse: {target}. Erlaubt: bird, person, dog, cat, all4'}), 400
+    try:
+        threshold = float(data.get('threshold', _detection_threshold))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'threshold muss eine Zahl zwischen 0.1 und 0.95 sein'}), 400
+    threshold = max(0.1, min(0.95, threshold))
+    with _lock:
+        was_running = state.detection_running
+        was_mode    = state.detection_mode
+        if was_running:
+            CameraManager.stop_detection()
+        _detection_target    = target
+        _detection_threshold = threshold
+    _save_detection_settings(target, threshold)
+    logger.info('Detection-Settings geändert: target=%s threshold=%.2f', target, threshold)
+    if was_running:
+        if was_mode:
+            CameraManager.start_detection_mode()
+        else:
+            CameraManager.start_detection()
+    return jsonify({'success': True, 'target_class': _detection_target, 'threshold': _detection_threshold})
+
+
 @app.route('/api/rec-settings', methods=['GET', 'POST'])
 @require_auth
 def api_rec_settings():
@@ -1129,7 +1216,7 @@ def api_rec_settings():
         return jsonify(_load_rec_settings())
     data = request.get_json(silent=True) or {}
     profile  = data.get('profile', 'normal_hd')
-    duration = min(max(int(data.get('duration', 15)), 3), 300)
+    duration = min(max(int(data.get('duration', 15)), 3), 600)   # max 10 min = 600 s
     if profile not in RECORDING_PROFILES:
         return jsonify({'error': f'Unbekanntes Profil: {profile}'}), 400
     _save_rec_settings({'profile': profile, 'duration': duration})
@@ -1149,7 +1236,7 @@ def api_record():
 
     data         = request.get_json(silent=True) or {}
     profile_name = data.get('profile')      # optionaler Profilname
-    duration     = min(max(int(data.get('duration', 15)), 3), 300)
+    duration     = min(max(int(data.get('duration', 15)), 3), 600)   # max 10 min = 600 s
 
     if profile_name and profile_name in RECORDING_PROFILES:
         profile    = RECORDING_PROFILES[profile_name]
@@ -1582,7 +1669,7 @@ def err_429(_):
 if __name__ == '__main__':
     _check_config()
 
-    CameraManager.start_detection()
+    CameraManager.start_detection_mode()
 
     def _detection_watchdog():
         """Überwacht Detection-Prozess. Bei Detection-Modus + Vogel (rc=0): Aufnahme starten."""
