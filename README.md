@@ -103,7 +103,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**Vogelhaus mit Blaumeisen, Rotkehlchen, Kernbeißer ...**](https://www.youtube.com/watch?v=6-OFxA__GL8) | 10.04.2025 | 5:06 | 113 | 7 | 0 |
 | [**Vogelhaus mit Kernbeißer, Blaumeise, Rotkehlchen, ...**](https://www.youtube.com/watch?v=MKb3yUKS_ww) | 09.04.2025 | 4:28 | 87 | 7 | 0 |
 
-*Automatisch aktualisiert: 17.03.2026 07:16 Uhr (Winterzeit (MEZ))*
+*Automatisch aktualisiert: 18.03.2026 07:17 Uhr (Winterzeit (MEZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## ✨ Features
