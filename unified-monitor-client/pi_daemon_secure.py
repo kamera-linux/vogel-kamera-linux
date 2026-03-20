@@ -118,9 +118,31 @@ def _save_detection_settings(target_class: str, threshold: float) -> None:
     except Exception as exc:
         logger.error('Detection-Settings konnten nicht gespeichert werden: %s', exc)
 
+CAMERA_SETTINGS_FILE = '/config/camera-settings.json'
+
+def _load_camera_settings() -> dict:
+    """Lädt Kamera-Einstellungen. Fallback: lens_position=3.0 (≈ 33 cm)."""
+    try:
+        data = json.loads(Path(CAMERA_SETTINGS_FILE).read_text())
+        lp = float(data.get('lens_position', 3.0))
+        lp = max(0.0, min(10.0, lp))
+        return {'lens_position': lp}
+    except Exception:
+        return {'lens_position': 3.0}
+
+def _save_camera_settings(data: dict) -> None:
+    try:
+        Path(CAMERA_SETTINGS_FILE).parent.mkdir(parents=True, exist_ok=True)
+        Path(CAMERA_SETTINGS_FILE).write_text(json.dumps(data, indent=2))
+    except Exception as exc:
+        logger.error('Kamera-Einstellungen konnten nicht gespeichert werden: %s', exc)
+
 _det_settings    = _load_detection_settings()
 _detection_target: str   = _det_settings['target_class']
 _detection_threshold: float = _det_settings['threshold']
+
+_cam_settings  = _load_camera_settings()
+_lens_position: float = _cam_settings['lens_position']
 
 # ---------------------------------------------------------------------------
 # Aufnahme-Profile  (gelten für BEIDE Modi: manuell UND Detection-getriggert)
@@ -482,6 +504,7 @@ class CameraManager:
                     '--inline',
                     '--rotation', '0',
                     '--autofocus-mode', 'manual',
+                    '--lens-position', str(_lens_position),
                     '--timeout', str(duration * 1000),
                 ]
                 video_proc = subprocess.Popen(video_cmd,
@@ -497,6 +520,7 @@ class CameraManager:
                     '--framerate', str(fps),
                     '--rotation', '0',
                     '--autofocus-mode', 'manual',
+                    '--lens-position', str(_lens_position),
                     '--codec', 'libav',
                     '--libav-format', 'mp4',
                     '--libav-audio',
@@ -1086,6 +1110,7 @@ def api_status():
         'detection_target':     _detection_target,
         'detection_threshold':  _detection_threshold,
         'last_detection':       _read_last_detection(),
+        'lens_position':        _lens_position,
     })
 
 
@@ -1206,6 +1231,29 @@ def api_detection_settings():
         else:
             CameraManager.start_detection()
     return jsonify({'success': True, 'target_class': _detection_target, 'threshold': _detection_threshold})
+
+
+@app.route('/api/camera-settings', methods=['GET', 'POST'])
+@require_auth
+def api_camera_settings():
+    """Liest oder setzt Kamera-Einstellungen (aktuell: lens_position).
+    GET  → { "lens_position": 3.0 }
+    POST { "lens_position": 3.0 }
+    """
+    global _lens_position
+    if request.method == 'GET':
+        return jsonify({'lens_position': _lens_position})
+    data = request.get_json(silent=True) or {}
+    try:
+        lp = float(data.get('lens_position', _lens_position))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'lens_position muss eine Zahl zwischen 0.0 und 10.0 sein'}), 400
+    lp = max(0.0, min(10.0, lp))
+    with _lock:
+        _lens_position = lp
+    _save_camera_settings({'lens_position': lp})
+    logger.info('Kamera-Einstellungen geändert: lens_position=%.1f (≈ %.0f cm)', lp, (100/lp) if lp > 0 else 0)
+    return jsonify({'success': True, 'lens_position': _lens_position})
 
 
 @app.route('/api/rec-settings', methods=['GET', 'POST'])
