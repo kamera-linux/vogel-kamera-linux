@@ -460,6 +460,17 @@
         </div>
         <div id="aud-progress-time" style="font-size:0.8rem;color:var(--muted,#6b7280);margin-top:0.2rem;"></div>
       </div>
+      <!-- Fokus-Einstellung -->
+      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <label for="lens-pos" style="font-size:0.85rem;color:var(--muted);">&#128247; Fokus:</label>
+        <input type="range" id="lens-pos" min="0.5" max="10.0" step="0.5" value="3.0"
+               style="width:160px;accent-color:var(--accent,#2563eb);"
+               oninput="updateLensLabel(this.value)"
+               onchange="saveLensPosition(this.value)">
+        <span id="lens-pos-val" style="font-size:0.85rem;min-width:5.5rem;">3.0 (≈ 33 cm)</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(0.5=2m … 10=10cm)</span>
+        <span id="lens-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
       <div class="action-row">
         <span class="slider-group">
           <label for="rec-dur">Dauer</label>
@@ -752,7 +763,8 @@
   function showDashboard() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
-    loadProfiles();   // Profile-Dropdown einmal befüllen
+    loadProfiles();       // Profile-Dropdown einmal befüllen
+    loadLensPosition();   // Fokus-Einstellung laden
     refreshAll();
     refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL);
   }
@@ -867,6 +879,14 @@
     if (sys.load_1min != null) setText('s-load', sys.load_1min + ' / ' + sys.load_5min + ' / ' + sys.load_15min);
     if (sys.mem_used_mb && sys.mem_total_mb) setText('s-mem', sys.mem_used_mb + ' / ' + sys.mem_total_mb + ' MB');
     if (sys.disk_free_gb != null) setText('s-disk', sys.disk_free_gb + ' GB frei');
+    // Fokus-Slider synchron halten (nur wenn Slider gerade nicht angefasst wird)
+    if (data.lens_position != null) {
+      const sl = document.getElementById('lens-pos');
+      if (sl && !sl.matches(':active') && parseFloat(sl.value) !== data.lens_position) {
+        sl.value = data.lens_position;
+        updateLensLabel(data.lens_position);
+      }
+    }
     document.getElementById('last-update').textContent = 'Update: ' + new Date().toLocaleTimeString('de-DE');
     const verEl = document.getElementById('gui-version');
     if (verEl && data.version && !verEl.textContent) verEl.textContent = 'v' + data.version;
@@ -968,6 +988,38 @@
   }
 
   // Profile-Labels nachladen und Dropdown befüllen
+  // ── Fokus (Linsenposition) ──────────────────────────────────────────────
+  function updateLensLabel(val) {
+    const lp = parseFloat(val);
+    const dist = lp > 0 ? Math.round(100 / lp) : '∞';
+    document.getElementById('lens-pos-val').textContent = lp.toFixed(1) + ' (≈ ' + dist + ' cm)';
+  }
+
+  async function loadLensPosition() {
+    const data = await apiFetch('/api/camera-settings');
+    if (!data || data.lens_position == null) return;
+    const sl = document.getElementById('lens-pos');
+    if (sl) {
+      sl.value = data.lens_position;
+      updateLensLabel(data.lens_position);
+    }
+  }
+
+  async function saveLensPosition(val) {
+    const lp = parseFloat(val);
+    const statusEl = document.getElementById('lens-status');
+    if (statusEl) statusEl.textContent = '…';
+    const res = await apiFetch('/api/camera-settings', 'POST', { lens_position: lp });
+    if (statusEl) {
+      if (res?.success) {
+        statusEl.textContent = '✓ gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } else {
+        statusEl.textContent = '✗ Fehler';
+      }
+    }
+  }
+
   async function loadProfiles() {
     const profiles = await apiFetch('/api/profiles');
     if (!profiles) return;

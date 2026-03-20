@@ -1,5 +1,39 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.2.4] - 20. März 2026 🔭 **Manueller Fokus-Slider**
+
+### ✨ Features
+- **Manueller Fokus-Slider im Web-GUI**
+  - Neuer Schieberegler „🔭 Fokus" im Aufnahme-Bereich (Bereich: 0.5 – 10.0)
+  - Echtzeit-Abstandsanzeige: `lens_position` wird in Zentimeter umgerechnet (z. B. `3.0 (≈ 33 cm)`)
+  - Hilfslabel `(0.5=2m … 10=10cm)` für Orientierung
+  - Onchange-Handler speichert sofort via `POST /api/camera-settings`
+  - Status-Anzeige: `…` → `✓ gespeichert` (2,5 s) oder `✗ Fehler`
+  - Slider wird beim Login automatisch mit dem gespeicherten Wert befüllt (`loadLensPosition()`)
+  - Polling-Schleife hält Slider synchron (nur wenn Slider nicht aktiv angefasst wird)
+
+- **Backend: `/api/camera-settings` Endpunkt**
+  - `GET /api/camera-settings` → `{ "lens_position": 3.0 }`
+  - `POST /api/camera-settings` `{ "lens_position": <0.0–10.0> }` → setzt `_lens_position`, persistiert in `/config/camera-settings.json`
+  - Validierung: `max(0.0, min(10.0, lp))`, Fehler-Response bei ungültigem Typ
+
+- **`--lens-position` in Aufnahme-Kommandos**
+  - Alle `rpicam-vid`-Aufrufe (H.264 und libav/MP4) erhalten `--autofocus-mode manual --lens-position <wert>`
+  - Fokus bleibt damit über Aufnahmen hinweg reproduzierbar statt autofocus-drift
+
+- **Persistenz: `/config/camera-settings.json`**
+  - `_load_camera_settings()` / `_save_camera_settings()` analog zu Detection-Settings
+  - Fallback: `lens_position = 3.0` (≈ 33 cm) wenn Datei fehlt oder unlesbar
+  - `/api/status` liefert `lens_position` im Response-Body mit
+
+### 📁 Files Changed
+- `unified-monitor-client/web/index.html` → Fokus-Slider-UI, `updateLensLabel()`, `loadLensPosition()`, `saveLensPosition()`, Polling-Sync
+- `unified-monitor-client/pi_daemon_secure.py` → `_load/save_camera_settings()`, `_lens_position`, `--lens-position` in rpicam-vid, `/api/camera-settings`, `/api/status`-Erweiterung
+- `VERSION`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/VERSION` → 2.2.4
+- `scripts/__version__.py`, `scripts/version.py` → 2.2.4
+
+---
+
 ## [2.2.3] - 17. März 2026 🎯 **Aufnahmedauer-Fix & Dashboard-Korrekturen**
 
 ### 🐛 Bugfixes
