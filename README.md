@@ -50,7 +50,7 @@
 > 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)  
 > 📖 **Migration-Guide:** [legacy/docs/TRIXIE-MIGRATION.md](legacy/docs/TRIXIE-MIGRATION.md)
 
-![Komplettes Vogel-Kamera System](assets/vogelhaus-kamera-komplett.png)
+![Komplettes Vogel-Kamera System](assets/WebGUI-neu-Start.png)
 
 **🐦 Professionelles Vogel-Beobachtungssystem mit KI-gestützter Objekterkennung**
 
@@ -192,7 +192,7 @@ nano ansible/.env          # PI_HOST, PI_USER, PI_SSH_KEY eintragen
 ## 📸 Hardware-Galerie
 
 **Modulare Kamera-Lösung:**
-![Vogelhaus Modell 2025-01](assets/vogelhaus-kamera-solo.png)  
+![Vogelhaus Modell 2025-01](assets/vogelhaus-kamera-komplett.png)  
 
 *Flexible Platzierung für optimale Aufnahmen*
 
