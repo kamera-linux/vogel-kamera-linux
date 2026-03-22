@@ -4,17 +4,21 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu.png)
 
-## Release v2.2.3 — Aufnahmedauer-Fix & Dashboard-Korrekturen 🎯
+## Release v2.2.5 — EV & AWB Sliders ☀️
 
-- **Version:** v2.2.3 (März 2026)
-- **🐛 Bugfixes:**
-  - **Aufnahmedauer im Detection-Modus:** Slider-`change`-Event fehlte → Dauer wurde nie gespeichert → Watchdog ignorierte eingestellte Dauer und nutzte Default (15 s)
-  - **Backend-Limit:** `min(..., 300)` kappte Aufnahmen bei 5 min statt erlaubter 10 min — auf 600 s erhöht
-  - **Dashboard HTML-Strukturfehler:** „Hailo NPU"-Kachel verlor ihre `<div class="card">`-Wrapper
+- **Version:** v2.2.5 (21. März 2026)
 - **✨ Neue Features:**
-  - Erkennungsziele: **Hund, Katze, Alle 4** zusätzlich zu Vogel + Mensch
-  - Neue Dashboard-Kacheln: „Hailo NPU", „Objekt erkannt", „Erkennungsziel"
-  - Detection-Modus startet nach Aufnahme automatisch neu (Watchdog-Fix)
+  - **☀️ EV-Slider (Exposure Value):** Manuelle Belichtungsregelung (-2.0 bis +2.0) für verschiedene Lichtsituationen
+  - **💡 AWB-Selector (Auto White Balance):** 6 voreingestellte Weißabgleich-Modi (Auto, Tageslicht, Bewölkt, Glühbirne, Leuchtstoffröhre, Innen)
+  - **🎨 Bildqualität-Regler (NEU):** 5 neue Schieberegler für erweiterte Kontrolle:
+    - 🌞 **Brightness** (-1.0 bis +1.0): gezieltes Abdunkeln/Aufhellen
+    - ⚪ **Contrast** (0.5 bis 2.0): Kontrolle über Kontrastverhältnis
+    - 🌈 **Saturation** (0.0 bis 2.0): Farbintensität (0.0 = Graustufenbild)
+    - ✨ **Sharpness** (0.0 bis 2.0): digitales Sharpening / Weichzeichnen
+    - 🔆 **Gain** (1.0 bis 8.0): digitale Verstärkung für Lowlight-Szenarien
+  - Erweiterte `POST /api/camera-settings` mit flexiblen Parameterkombinationen
+  - Online-Hilfe mit detaillierten Anwendungsbeispielen für **alle 10 Kamera-Einstellungen**
+  - ✅ Alle 5 neuen Parameter remote getestet und produktionsreif
 
 - **🔧 Technical Stack:**
   - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
@@ -25,21 +29,22 @@
 
 **Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.2.3/`](releases/v2.2.3/RELEASE_NOTES_v2.2.3.md)
+**Release Notes:** [`releases/v2.2.5/`](releases/v2.2.5/RELEASE_NOTES_v2.2.5.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.2.3-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.3)
+[![Version](https://img.shields.io/badge/Version-v2.2.5-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.5)
+[![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
 
-### v2.2.2 (Archiv)
-**Hailo-NPU Detection & Engine-Switcher**
-- **Version:** v2.2.2 (16. März 2026)
-- Siehe [Archiv-Release](releases/v2.2.2/) für Details oder CHANGELOG.md
+### v2.2.4 (Archiv)
+**Manueller Fokus-Slider**
+- **Version:** v2.2.4 (20. März 2026)
+- Siehe [Archiv-Release](releases/v2.2.4/) für Details oder CHANGELOG.md
 
-### v2.2.1 (Archiv)
-**Web-GUI Verbesserungen & HTTPS-Komfort**
-- **Version:** v2.2.1 (15. März 2026)
-- Siehe [Archiv-Release](releases/v2.2.1/) für Details oder CHANGELOG.md
+### v2.2.3 (Archiv)
+**Aufnahmedauer-Fix & Dashboard-Korrektionen**
+- **Version:** v2.2.3 (März 2026)
+- Siehe [Archiv-Release](releases/v2.2.3/) für Details oder CHANGELOG.md
 
 > ⚠️ **Raspberry Pi OS Trixie (Debian 13):** Diese Version ist für **Trixie** optimiert.  
 > 📘 **Für Bookworm (Debian 12):** Verwenden Sie den [bookworm-legacy-Branch (v1.2.x)](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)  

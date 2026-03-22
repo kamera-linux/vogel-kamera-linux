@@ -1,5 +1,79 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.2.5] - 21. März 2026 ☀️ **EV, AWB & Bildqualität-Sliders**
+
+### ✨ Features
+- **EV-Slider (Exposure Value / Belichtung) im Web-GUI**
+  - Neuer Schieberegler „☀️ Belichtung (EV)" im Aufnahme-Bereich (Bereich: -2.0 bis +2.0)
+  - Standard: **0.0** (normale Belichtung)
+  - Negative Werte abdunkeln das Bild, positive Werte hellen auf
+  - Live-Anzeige während des Ziehens, Speicherung via `POST /api/camera-settings`
+  - Status-Anzeige: `…` → `✓ gespeichert` (2,5 s) oder `✗ Fehler`
+  - Slider wird beim Login automatisch mit dem gespeicherten Wert befüllt (`loadEVSetting()`)
+  - Polling-Schleife hält Slider synchron (nur wenn Slider nicht aktiv angefasst wird)
+
+- **AWB-Selector (Auto White Balance / Weißabgleich)**
+  - Neue Selectbox „💡 Weißabgleich (AWB)" mit 6 vordefinierten Modi:
+    - `Auto` (Standard) – automatischer Weißabgleich, vielseitig einsetzbar
+    - `Daylight` – optimiert für Sonnenlicht außen
+    - `Cloudy` – für bewölkten Himmel
+    - `Tungsten` – für warme Glühbirnenbeleuchtung
+    - `Fluorescent` – für LED/Neon-Beleuchtung
+    - `Indoor` – allgemeine Innenbeleuchtung
+  - OnChange-Handler speichert sofort via `POST /api/camera-settings`
+  - Status-Anzeige für Benutzerfeedback
+  - Selectbox wird beim Login automatisch mit dem gespeicherten Wert befüllt (`loadAWBSetting()`)
+  - Polling-Schleife hält Selectbox synchron
+
+- **🎨 Bildqualität-Regler (Brightness, Contrast, Saturation, Sharpness, Gain)**
+  - Neue 5 Schieberegler im Web-GUI für erweiterte Bildqualität-Kontrolle:
+    - **🌞 Brightness** (-1.0 bis +1.0, Standard: 0.0) – gezieltes Abdunkeln/Aufhellen
+    - **⚪ Contrast** (0.5 bis 2.0, Standard: 1.0) – Kontrolle über Kontrastverhältnis
+    - **🌈 Saturation** (0.0 bis 2.0, Standard: 1.0) – Farbintensität (0.0 = Graustufenbild)
+    - **✨ Sharpness** (0.0 bis 2.0, Standard: 1.0) – digitales Sharpening / Weichzeichnen
+    - **🔆 Gain** (1.0 bis 8.0, Standard: 1.0) – digitale Verstärkung für Lowlight (ISO-äquivalent)
+  - Alle Parameter folgen EV/AWB-Pattern: Live-Label, Status-Anzeige, persistente Speicherung
+  - Globale Variablen: `_brightness`, `_contrast`, `_saturation`, `_sharpness`, `_gain`
+  - ✅ Remote-Tests bestätigt alle 5 Parameter sind funktional und produktionsreif:
+    - ✅ brightness -0.5 (verdunkelung bei Gegenlicht)
+    - ✅ contrast 1.5 (erhöhte Kontraste für bessere Definition)
+    - ✅ saturation 0.8 (natürlichere Farben)
+    - ✅ sharpness 1.2 (digitales Sharpening für mehr Details)
+    - ✅ gain 2.0 (digitale Verstärkung für Lowlight-Szenarien)
+
+- **Backend: Erweiterte `/api/camera-settings` Endpunkte**
+  - `GET /api/camera-settings` → `{ "lens_position": 3.0, "ev": 0.0, "awb": "auto", "brightness": 0.0, "contrast": 1.0, "saturation": 1.0, "sharpness": 1.0, "gain": 1.0 }`
+  - `POST /api/camera-settings` mit beliebiger Kombination aller 8 Parameter möglich
+  - Validierung: float-Ranges mit min/max-Clamping (brightness -1.0..+1.0, contrast 0.5..2.0, saturation 0.0..2.0, sharpness 0.0..2.0, gain 1.0..8.0)
+  - Fehler-Response `400 Bad Request` bei ungültigen Werten
+
+- **rpicam-vid Parameters für alle 8 Kamera-Einstellungen**
+  - `--lens-position`, `--ev`, `--awb`, `--brightness`, `--contrast`, `--saturation`, `--sharpness`, `--gain`
+  - Beide Aufnahme-Modi (H.264 Slowmo + libav/MP4 Normal) erhalten alle Parameter
+  - Parameter werden sofort auf alle neuen Aufnahmen angewendet
+
+- **Persistenz: `/config/camera-settings.json` erweitert**
+  - `_load_camera_settings()` / `_save_camera_settings()` unterstützen alle 8 Parameter
+  - Fallback-Defaults: brightness=0.0, contrast=1.0, saturation=1.0, sharpness=1.0, gain=1.0
+  - `/api/status` liefert alle 8 Parameter im Response-Body mit
+
+- **Online-Hilfe erweitert**
+  - Abschnitt „📷 Kamera-Einstellungen" mit allen 3 Grundparametern (Fokus, EV, AWB)
+  - **NEUER Abschnitt:** „🎨 Bildqualität-Einstellungen" mit detaillierten Erklärungen aller 5 neuen Parameter
+  - Kombinationstipps für verschiedene Aufnahmeszenarien:
+    - Bright outdoor daylight
+    - Overexposed (Gegenlicht)
+    - Shady bird feeder
+    - Very dark (Lowlight)
+    - High contrast scenes
+
+### 📁 Files Changed
+- `unified-monitor-client/web/index.html` → 5 neue Bildqualität-Slider (brightness, contrast, saturation, sharpness, gain), 25 neue JavaScript-Funktionen, Online-Hilfe erweitert um neuen Abschnitt
+- `unified-monitor-client/pi_daemon_secure.py` → `_load_camera_settings()` erweitert um 5 Parameter, Globale Variablen `_brightness`, `_contrast`, `_saturation`, `_sharpness`, `_gain`, `api_camera_settings()` erweitert, rpicam-vid Parameter für beide Aufnahme-Pfade, `/api/status` um 5 Parameter erweitert
+- `VERSION`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/VERSION` → 2.2.5 (nicht verändert, da bereits v2.2.5)
+
+---
+
 ## [2.2.4] - 20. März 2026 🔭 **Manueller Fokus-Slider**
 
 ### ✨ Features

@@ -31,7 +31,7 @@ from flask_limiter.util import get_remote_address
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.2.3'
+APP_VERSION = '2.2.5'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -121,14 +121,47 @@ def _save_detection_settings(target_class: str, threshold: float) -> None:
 CAMERA_SETTINGS_FILE = '/config/camera-settings.json'
 
 def _load_camera_settings() -> dict:
-    """Lädt Kamera-Einstellungen. Fallback: lens_position=3.0 (≈ 33 cm)."""
+    """Lädt Kamera-Einstellungen. Fallback: lens_position=3.0, ev=0.0, awb='auto', brightness=0.0, contrast=1.0, saturation=1.0, sharpness=1.0, gain=1.0."""
     try:
         data = json.loads(Path(CAMERA_SETTINGS_FILE).read_text())
         lp = float(data.get('lens_position', 3.0))
         lp = max(0.0, min(10.0, lp))
-        return {'lens_position': lp}
+        ev = float(data.get('ev', 0.0))
+        ev = max(-2.0, min(2.0, ev))
+        awb = str(data.get('awb', 'auto')).lower()
+        if awb not in ['auto', 'daylight', 'cloudy', 'tungsten', 'fluorescent', 'indoor']:
+            awb = 'auto'
+        brightness = float(data.get('brightness', 0.0))
+        brightness = max(-1.0, min(1.0, brightness))
+        contrast = float(data.get('contrast', 1.0))
+        contrast = max(0.5, min(2.0, contrast))
+        saturation = float(data.get('saturation', 1.0))
+        saturation = max(0.0, min(2.0, saturation))
+        sharpness = float(data.get('sharpness', 1.0))
+        sharpness = max(0.0, min(2.0, sharpness))
+        gain = float(data.get('gain', 1.0))
+        gain = max(1.0, min(8.0, gain))
+        return {
+            'lens_position': lp,
+            'ev': ev,
+            'awb': awb,
+            'brightness': brightness,
+            'contrast': contrast,
+            'saturation': saturation,
+            'sharpness': sharpness,
+            'gain': gain
+        }
     except Exception:
-        return {'lens_position': 3.0}
+        return {
+            'lens_position': 3.0,
+            'ev': 0.0,
+            'awb': 'auto',
+            'brightness': 0.0,
+            'contrast': 1.0,
+            'saturation': 1.0,
+            'sharpness': 1.0,
+            'gain': 1.0
+        }
 
 def _save_camera_settings(data: dict) -> None:
     try:
@@ -143,6 +176,13 @@ _detection_threshold: float = _det_settings['threshold']
 
 _cam_settings  = _load_camera_settings()
 _lens_position: float = _cam_settings['lens_position']
+_ev: float = _cam_settings['ev']
+_awb: str = _cam_settings['awb']
+_brightness: float = _cam_settings['brightness']
+_contrast: float = _cam_settings['contrast']
+_saturation: float = _cam_settings['saturation']
+_sharpness: float = _cam_settings['sharpness']
+_gain: float = _cam_settings['gain']
 
 # ---------------------------------------------------------------------------
 # Aufnahme-Profile  (gelten für BEIDE Modi: manuell UND Detection-getriggert)
@@ -505,6 +545,13 @@ class CameraManager:
                     '--rotation', '0',
                     '--autofocus-mode', 'manual',
                     '--lens-position', str(_lens_position),
+                    '--ev', str(_ev),
+                    '--awb', _awb,
+                    '--brightness', str(_brightness),
+                    '--contrast', str(_contrast),
+                    '--saturation', str(_saturation),
+                    '--sharpness', str(_sharpness),
+                    '--gain', str(_gain),
                     '--timeout', str(duration * 1000),
                 ]
                 video_proc = subprocess.Popen(video_cmd,
@@ -521,6 +568,13 @@ class CameraManager:
                     '--rotation', '0',
                     '--autofocus-mode', 'manual',
                     '--lens-position', str(_lens_position),
+                    '--ev', str(_ev),
+                    '--awb', _awb,
+                    '--brightness', str(_brightness),
+                    '--contrast', str(_contrast),
+                    '--saturation', str(_saturation),
+                    '--sharpness', str(_sharpness),
+                    '--gain', str(_gain),
                     '--codec', 'libav',
                     '--libav-format', 'mp4',
                     '--libav-audio',
@@ -1111,6 +1165,13 @@ def api_status():
         'detection_threshold':  _detection_threshold,
         'last_detection':       _read_last_detection(),
         'lens_position':        _lens_position,
+        'ev':                   _ev,
+        'awb':                  _awb,
+        'brightness':           _brightness,
+        'contrast':             _contrast,
+        'saturation':           _saturation,
+        'sharpness':            _sharpness,
+        'gain':                 _gain,
     })
 
 
@@ -1236,24 +1297,93 @@ def api_detection_settings():
 @app.route('/api/camera-settings', methods=['GET', 'POST'])
 @require_auth
 def api_camera_settings():
-    """Liest oder setzt Kamera-Einstellungen (aktuell: lens_position).
-    GET  → { "lens_position": 3.0 }
-    POST { "lens_position": 3.0 }
+    """Liest oder setzt Kamera-Einstellungen (lens_position, ev, awb, brightness, contrast, saturation, sharpness, gain).
+    GET  → { "lens_position": 3.0, "ev": 0.0, "awb": "auto", "brightness": 0.0, "contrast": 1.0, "saturation": 1.0, "sharpness": 1.0, "gain": 1.0 }
+    POST { "brightness": 0.5 } oder beliebige Kombination der Parameter
     """
-    global _lens_position
+    global _lens_position, _ev, _awb, _brightness, _contrast, _saturation, _sharpness, _gain
     if request.method == 'GET':
-        return jsonify({'lens_position': _lens_position})
+        return jsonify({'lens_position': _lens_position, 'ev': _ev, 'awb': _awb, 'brightness': _brightness, 'contrast': _contrast, 'saturation': _saturation, 'sharpness': _sharpness, 'gain': _gain})
+    
     data = request.get_json(silent=True) or {}
-    try:
-        lp = float(data.get('lens_position', _lens_position))
-    except (TypeError, ValueError):
-        return jsonify({'error': 'lens_position muss eine Zahl zwischen 0.0 und 10.0 sein'}), 400
-    lp = max(0.0, min(10.0, lp))
+    lp, ev, awb = _lens_position, _ev, _awb
+    brightness, contrast, saturation, sharpness, gain = _brightness, _contrast, _saturation, _sharpness, _gain
+    
+    # lens_position validieren und updaten
+    if 'lens_position' in data:
+        try:
+            lp = float(data['lens_position'])
+            lp = max(0.0, min(10.0, lp))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'lens_position muss eine Zahl zwischen 0.0 und 10.0 sein'}), 400
+    
+    # ev validieren und updaten
+    if 'ev' in data:
+        try:
+            ev = float(data['ev'])
+            ev = max(-2.0, min(2.0, ev))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'ev muss eine Zahl zwischen -2.0 und 2.0 sein'}), 400
+    
+    # awb validieren und updaten
+    if 'awb' in data:
+        awb = str(data['awb']).lower()
+        if awb not in ['auto', 'daylight', 'cloudy', 'tungsten', 'fluorescent', 'indoor']:
+            return jsonify({'error': 'awb muss einer der folgenden Werte sein: auto, daylight, cloudy, tungsten, fluorescent, indoor'}), 400
+    
+    # brightness validieren und updaten
+    if 'brightness' in data:
+        try:
+            brightness = float(data['brightness'])
+            brightness = max(-1.0, min(1.0, brightness))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'brightness muss eine Zahl zwischen -1.0 und 1.0 sein'}), 400
+    
+    # contrast validieren und updaten
+    if 'contrast' in data:
+        try:
+            contrast = float(data['contrast'])
+            contrast = max(0.5, min(2.0, contrast))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'contrast muss eine Zahl zwischen 0.5 und 2.0 sein'}), 400
+    
+    # saturation validieren und updaten
+    if 'saturation' in data:
+        try:
+            saturation = float(data['saturation'])
+            saturation = max(0.0, min(2.0, saturation))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'saturation muss eine Zahl zwischen 0.0 und 2.0 sein'}), 400
+    
+    # sharpness validieren und updaten
+    if 'sharpness' in data:
+        try:
+            sharpness = float(data['sharpness'])
+            sharpness = max(0.0, min(2.0, sharpness))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'sharpness muss eine Zahl zwischen 0.0 und 2.0 sein'}), 400
+    
+    # gain validieren und updaten
+    if 'gain' in data:
+        try:
+            gain = float(data['gain'])
+            gain = max(1.0, min(8.0, gain))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'gain muss eine Zahl zwischen 1.0 und 8.0 sein'}), 400
+    
     with _lock:
         _lens_position = lp
-    _save_camera_settings({'lens_position': lp})
-    logger.info('Kamera-Einstellungen geändert: lens_position=%.1f (≈ %.0f cm)', lp, (100/lp) if lp > 0 else 0)
-    return jsonify({'success': True, 'lens_position': _lens_position})
+        _ev = ev
+        _awb = awb
+        _brightness = brightness
+        _contrast = contrast
+        _saturation = saturation
+        _sharpness = sharpness
+        _gain = gain
+    
+    _save_camera_settings({'lens_position': lp, 'ev': ev, 'awb': awb, 'brightness': brightness, 'contrast': contrast, 'saturation': saturation, 'sharpness': sharpness, 'gain': gain})
+    logger.info('Kamera-Einstellungen geändert: lens_position=%.1f, ev=%.1f, awb=%s, brightness=%.1f, contrast=%.1f, saturation=%.1f, sharpness=%.1f, gain=%.1f', lp, ev, awb, brightness, contrast, saturation, sharpness, gain)
+    return jsonify({'success': True, 'lens_position': _lens_position, 'ev': _ev, 'awb': _awb, 'brightness': _brightness, 'contrast': _contrast, 'saturation': _saturation, 'sharpness': _sharpness, 'gain': _gain})
 
 
 @app.route('/api/rec-settings', methods=['GET', 'POST'])

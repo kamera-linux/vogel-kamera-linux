@@ -471,6 +471,86 @@
         <span style="font-size:0.75rem;color:var(--muted);">(0.5=2m … 10=10cm)</span>
         <span id="lens-status" style="font-size:0.8rem;color:var(--muted);"></span>
       </div>
+      <!-- EV-Slider (Exposure Value) -->
+      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <label for="ev-slider" style="font-size:0.85rem;color:var(--muted);">☀️ Belichtung (EV):</label>
+        <input type="range" id="ev-slider" min="-2.0" max="2.0" step="0.5" value="0.0"
+               style="width:160px;accent-color:var(--accent,#2563eb);"
+               oninput="updateEVLabel(this.value)"
+               onchange="saveEVSetting(this.value)">
+        <span id="ev-val" style="font-size:0.85rem;min-width:3rem;">0.0</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(-2=dunkel … +2=hell)</span>
+        <span id="ev-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+      <!-- AWB-Einstellung (Auto White Balance) -->
+      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <label for="awb-select" style="font-size:0.85rem;color:var(--muted);">💡 Weißabgleich (AWB):</label>
+        <select id="awb-select" style="height:32px;padding:0.25rem 0.4rem;background:var(--bg,#1e1e1e);border:1px solid var(--border,#333);border-radius:4px;color:var(--text,#e0e0e0);font-size:0.85rem;"
+                onchange="saveAWBSetting(this.value)">
+          <option value="auto">Auto</option>
+          <option value="daylight">Tageslicht</option>
+          <option value="cloudy">Bewölkt</option>
+          <option value="tungsten">Glühbirne</option>
+          <option value="fluorescent">Leuchtstoffröhre</option>
+          <option value="indoor">Innen</option>
+        </select>
+        <span id="awb-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+      <!-- Brightness (Helligkeit) -->
+      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <label for="brightness-slider" style="font-size:0.85rem;color:var(--muted);">☀️ Helligkeit:</label>
+        <input type="range" id="brightness-slider" min="-1" max="1" step="0.1" value="0"
+               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
+               oninput="updateBrightnessLabel(this.value)"
+               onchange="saveBrightnessSetting(this.value)">
+        <span id="brightness-val" style="font-size:0.85rem;min-width:3rem;">0.0</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(-1=dunkel … +1=hell)</span>
+        <span id="brightness-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+      <!-- Contrast (Kontrast) -->
+      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <label for="contrast-slider" style="font-size:0.85rem;color:var(--muted);">🎨 Kontrast:</label>
+        <input type="range" id="contrast-slider" min="0.5" max="2" step="0.1" value="1"
+               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
+               oninput="updateContrastLabel(this.value)"
+               onchange="saveContrastSetting(this.value)">
+        <span id="contrast-val" style="font-size:0.85rem;min-width:3rem;">1.0</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(0.5=flach … 1=normal … 2=knackig)</span>
+        <span id="contrast-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+      <!-- Saturation (Sättigung) -->
+      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <label for="saturation-slider" style="font-size:0.85rem;color:var(--muted);">🌈 Sättigung:</label>
+        <input type="range" id="saturation-slider" min="0" max="2" step="0.1" value="1"
+               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
+               oninput="updateSaturationLabel(this.value)"
+               onchange="saveSaturationSetting(this.value)">
+        <span id="saturation-val" style="font-size:0.85rem;min-width:3rem;">1.0</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(0=graustufen … 1=normal … 2=+)</span>
+        <span id="saturation-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+      <!-- Sharpness (Schärfe) -->
+      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <label for="sharpness-slider" style="font-size:0.85rem;color:var(--muted);">✨ Schärfe:</label>
+        <input type="range" id="sharpness-slider" min="0" max="2" step="0.1" value="1"
+               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
+               oninput="updateSharpnessLabel(this.value)"
+               onchange="saveSharpnessSetting(this.value)">
+        <span id="sharpness-val" style="font-size:0.85rem;min-width:3rem;">1.0</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(0=keine … 1=normal … 2=extra)</span>
+        <span id="sharpness-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+      <!-- Gain (ISO/Ausreißer bei Lowlight) -->
+      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <label for="gain-slider" style="font-size:0.85rem;color:var(--muted);">📈 Gain (ISO):</label>
+        <input type="range" id="gain-slider" min="1" max="8" step="0.5" value="1"
+               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
+               oninput="updateGainLabel(this.value)"
+               onchange="saveGainSetting(this.value)">
+        <span id="gain-val" style="font-size:0.85rem;min-width:3rem;">1.0</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(1=normal … 8=max, nur bei Lowlight)</span>
+        <span id="gain-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
       <div class="action-row">
         <span class="slider-group">
           <label for="rec-dur">Dauer</label>
@@ -601,6 +681,99 @@
           kann direkt heruntergeladen werden</li>
       <li>Während eine Audio-Aufnahme läuft, sind Video-Aufnahmen gesperrt (und
           umgekehrt)</li>
+    </ul>
+
+    <hr>
+    <h3>📷 Kamera-Einstellungen (Fokus, Belichtung, Weißabgleich)</h3>
+    <p>Manuelle Kontrolle über die wichtigsten Bildparamter – alle Werte werden persistent
+       gespeichert und sofort auf alle neue Aufnahmen angewendet:</p>
+    <ul>
+      <li><strong>🔭 Fokus-Slider</strong> (0.5 – 10.0 Dioptrien)
+        <ul style="margin-top:.3rem">
+          <li>Standard: <strong>3.0</strong> (≈ 33 cm) – optimiert für Vogelhäuschen</li>
+          <li><strong>Kleinere Werte</strong> (z.&nbsp;B. 0.5–1.0) für weiteren Abstand (2–1 m)</li>
+          <li><strong>Höhere Werte</strong> (z.&nbsp;B. 5.0–10.0) für nähere Objekte (20–10 cm)</li>
+          <li>Die Anzeige zeigt die ungefähre Fokus-Entfernung in Zentimetern</li>
+        </ul>
+      </li>
+      <li><strong>☀️ Belichtung / EV-Slider</strong> (-2.0 – +2.0)
+        <ul style="margin-top:.3rem">
+          <li>Standard: <strong>0.0</strong> (normale Belichtung)</li>
+          <li><strong>Negative Werte</strong> (z.&nbsp;B. -1.5) abdunkeln das Bild (z.&nbsp;B. bei Gegenlicht)</li>
+          <li><strong>Positive Werte</strong> (z.&nbsp;B. +1.5) hellen das Bild auf (z.&nbsp;B. nachts oder Schatten)</li>
+          <li>In 0.5er-Schritten justierbar</li>
+        </ul>
+      </li>
+      <li><strong>💡 Weißabgleich / AWB-Modus</strong>
+        <ul style="margin-top:.3rem">
+          <li><code>Auto</code> – automatischer Weißabgleich (Standard, vielseitig)</li>
+          <li><code>Tageslicht</code> – optimiert für Sonnenlicht außen</li>
+          <li><code>Bewölkt</code> – für grauer, bewölkter Himmel</li>
+          <li><code>Glühbirne</code> – für warme (gelbe) Innenbeleuchtung</li>
+          <li><code>Leuchtstoffröhre</code> – für LED/Neon-Beleuchtung</li>
+          <li><code>Innen</code> – allgemeine Innenbeleuchtung</li>
+        </ul>
+      </li>
+    </ul>
+    <p style="margin-top:.5rem"><strong>Tipp:</strong> Bei der ersten Nutzung die Standard-Werte
+       (Fokus 3.0, EV 0.0, AWB Auto) testen. Dann je nach Lichtsituation nachjustieren.</p>
+
+    <hr>
+    <h3>🎨 Bildqualität-Einstellungen (Brightness, Contrast, Saturation, Sharpness, Gain)</h3>
+    <p>Feinausstattung der Bildqualität für verschiedene Aufnahmeszenarien – alle Werte werden persistent
+       gespeichert und sofort auf alle neuen Aufnahmen angewendet:</p>
+    <ul>
+      <li><strong>🌞 Brightness (Helligkeit)</strong> (-1.0 – +1.0)
+        <ul style="margin-top:.3rem">
+          <li>Standard: <strong>0.0</strong> (normale Helligkeit)</li>
+          <li><strong>Negative Werte</strong> (z.&nbsp;B. -0.5) dunkeln das Bild ab – bei zu hellen Aufnahmen hilfreich</li>
+          <li><strong>Positive Werte</strong> (z.&nbsp;B. +0.5) hellen das Bild auf – z.&nbsp;B. bei Silhouetten gegen helles Licht</li>
+          <li>Besser als EV für gezieltes Abdunkeln/Aufhellen einzelner Bereiche</li>
+        </ul>
+      </li>
+      <li><strong>⚪ Contrast (Kontrast)</strong> (0.5 – 2.0)
+        <ul style="margin-top:.3rem">
+          <li>Standard: <strong>1.0</strong> (normaler Kontrast)</li>
+          <li><strong>Werte unter 1.0</strong> (z.&nbsp;B. 0.7) reduzieren den Kontrast – weicheres Bild, weniger Schatten</li>
+          <li><strong>Werte über 1.0</strong> (z.&nbsp;B. 1.5) erhöhen den Kontrast – schärfere Unterschiede, dramatischere Aufnahmen</li>
+          <li><strong>0.5:</strong> sehr weiches Bild &nbsp; | &nbsp; <strong>2.0:</strong> sehr hoher Kontrast mit ausgeprägten Schatten</li>
+        </ul>
+      </li>
+      <li><strong>🌈 Saturation (Sättigung)</strong> (0.0 – 2.0)
+        <ul style="margin-top:.3rem">
+          <li>Standard: <strong>1.0</strong> (normale Farben)</li>
+          <li><strong>0.0:</strong> komplett entsättigt (Schwarzweiß-Effekt, Graustufenbild)</li>
+          <li><strong>Werte unter 1.0</strong> (z.&nbsp;B. 0.8) reduzieren die Farbintensität – natürlichere, gedämpfte Farben</li>
+          <li><strong>Werte über 1.0</strong> (z.&nbsp;B. 1.5) erhöhen die Farbintensität – kräftige, lebendige Farben (z.&nbsp;B. für Vogelplumage)</li>
+        </ul>
+      </li>
+      <li><strong>✨ Sharpness (Schärfe)</strong> (0.0 – 2.0)
+        <ul style="margin-top:.3rem">
+          <li>Standard: <strong>1.0</strong> (normale Schärfe mit standard Unschärfe-Reduktion)</li>
+          <li><strong>0.0:</strong> extrem weiches Bild (kein Sharpening)</li>
+          <li><strong>Werte unter 1.0</strong> (z.&nbsp;B. 0.8) reduzieren digitales Sharpening – weicheres, natürlicheres Bild</li>
+          <li><strong>Werte über 1.0</strong> (z.&nbsp;B. 1.2) verstärken digitales Sharpening – schärfere Kanten, mehr Details (aber auch mehr Rauschen)</li>
+          <li><strong>Tipp:</strong> Bei hohen ISOs oder Lowlight lieber unter 1.0 halten zur Rauschreduktion</li>
+        </ul>
+      </li>
+      <li><strong>🔆 Gain (Verstärkung / ISO-äquivalent)</strong> (1.0 – 8.0)
+        <ul style="margin-top:.3rem">
+          <li>Standard: <strong>1.0</strong> (keine digitale Verstärkung)</li>
+          <li><strong>1.0–2.0:</strong> normales Tageslicht, gute Belichtung</li>
+          <li><strong>2.0–4.0:</strong> Lowlight-Szenarien, dunkle Räume, früh morgens / spät abends</li>
+          <li><strong>4.0–8.0:</strong> sehr dunkle Umgebungen (z.&nbsp;B. Vogelhäuschen in schattigen Bereichen ohne direkte Sonne)</li>
+          <li><strong>Hinweis:</strong> Höhere Gains verstärken auch das Rauschen. Lieber Kombination mit erhöhtem EV/Brightness verwenden</li>
+          <li><strong>Interaktion:</strong> EV -&gt; Sensor-Belichtungsregelung &nbsp; | &nbsp; Gain -&gt; digitale Verstärkung nach dem Sensor</li>
+        </ul>
+      </li>
+    </ul>
+    <p style="margin-top:.5rem"><strong>Kombinationstipps:</strong></p>
+    <ul style="margin-top:.3rem">
+      <li><strong>Bright outdoor daylight:</strong> brightness 0.0, contrast 1.0–1.2, saturation 1.0–1.2, sharpness 1.0–1.2, gain 1.0</li>
+      <li><strong>Overexposed (Gegenlicht):</strong> brightness -0.5, contrast 1.5, saturation 1.0, sharpness 1.0–1.2, gain 1.0</li>
+      <li><strong>Shady bird feeder (Vogelhäuschen im Schatten):</strong> brightness +0.3, contrast 1.2, saturation 1.0, sharpness 0.9, gain 2.0–4.0</li>
+      <li><strong>Very dark (Lowlight/Interior):</strong> brightness +0.5, contrast 0.8, saturation 1.0–1.2, sharpness 0.8, gain 4.0–6.0</li>
+      <li><strong>High contrast scene (z.B. Vogel gegen hellen Himmel):</strong> brightness 0.0, contrast 1.8–2.0, saturation 1.2, sharpness 1.2, gain 1.0</li>
     </ul>
 
     <hr>
@@ -763,8 +936,15 @@
   function showDashboard() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
-    loadProfiles();       // Profile-Dropdown einmal befüllen
-    loadLensPosition();   // Fokus-Einstellung laden
+    loadProfiles();              // Profile-Dropdown einmal befüllen
+    loadLensPosition();          // Fokus-Einstellung laden
+    loadEVSetting();             // EV-Einstellung laden
+    loadAWBSetting();            // AWB-Einstellung laden
+    loadBrightnessSetting();     // Brightness-Einstellung laden
+    loadContrastSetting();       // Contrast-Einstellung laden
+    loadSaturationSetting();     // Saturation-Einstellung laden
+    loadSharpnessSetting();      // Sharpness-Einstellung laden
+    loadGainSetting();           // Gain-Einstellung laden
     refreshAll();
     refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL);
   }
@@ -885,6 +1065,21 @@
       if (sl && !sl.matches(':active') && parseFloat(sl.value) !== data.lens_position) {
         sl.value = data.lens_position;
         updateLensLabel(data.lens_position);
+      }
+    }
+    // EV-Slider synchron halten
+    if (data.ev != null) {
+      const evEl = document.getElementById('ev-slider');
+      if (evEl && !evEl.matches(':active') && parseFloat(evEl.value) !== data.ev) {
+        evEl.value = data.ev;
+        updateEVLabel(data.ev);
+      }
+    }
+    // AWB-Selectbox synchron halten
+    if (data.awb != null) {
+      const awbEl = document.getElementById('awb-select');
+      if (awbEl && awbEl.value !== data.awb) {
+        awbEl.value = data.awb;
       }
     }
     document.getElementById('last-update').textContent = 'Update: ' + new Date().toLocaleTimeString('de-DE');
@@ -1010,6 +1205,216 @@
     const statusEl = document.getElementById('lens-status');
     if (statusEl) statusEl.textContent = '…';
     const res = await apiFetch('/api/camera-settings', 'POST', { lens_position: lp });
+    if (statusEl) {
+      if (res?.success) {
+        statusEl.textContent = '✓ gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } else {
+        statusEl.textContent = '✗ Fehler';
+      }
+    }
+  }
+
+  // ── EV (Exposure Value / Belichtung) ────────────────────────────────────
+  function updateEVLabel(val) {
+    const ev = parseFloat(val);
+    document.getElementById('ev-val').textContent = ev.toFixed(1);
+  }
+
+  async function loadEVSetting() {
+    const data = await apiFetch('/api/camera-settings');
+    if (!data || data.ev == null) return;
+    const sl = document.getElementById('ev-slider');
+    if (sl) {
+      sl.value = data.ev;
+      updateEVLabel(data.ev);
+    }
+  }
+
+  async function saveEVSetting(val) {
+    const ev = parseFloat(val);
+    const statusEl = document.getElementById('ev-status');
+    if (statusEl) statusEl.textContent = '…';
+    const res = await apiFetch('/api/camera-settings', 'POST', { ev: ev });
+    if (statusEl) {
+      if (res?.success) {
+        statusEl.textContent = '✓ gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } else {
+        statusEl.textContent = '✗ Fehler';
+      }
+    }
+  }
+
+  // ── AWB (Auto White Balance / Weißabgleich) ────────────────────────────
+  async function loadAWBSetting() {
+    const data = await apiFetch('/api/camera-settings');
+    if (!data || data.awb == null) return;
+    const sel = document.getElementById('awb-select');
+    if (sel) {
+      sel.value = data.awb;
+    }
+  }
+
+  async function saveAWBSetting(val) {
+    const statusEl = document.getElementById('awb-status');
+    if (statusEl) statusEl.textContent = '…';
+    const res = await apiFetch('/api/camera-settings', 'POST', { awb: val });
+    if (statusEl) {
+      if (res?.success) {
+        statusEl.textContent = '✓ gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } else {
+        statusEl.textContent = '✗ Fehler';
+      }
+    }
+  }
+
+  // ── Brightness (Helligkeit) ────────────────────────────
+  function updateBrightnessLabel(val) {
+    const brightness = parseFloat(val);
+    document.getElementById('brightness-val').textContent = brightness.toFixed(1);
+  }
+
+  async function loadBrightnessSetting() {
+    const data = await apiFetch('/api/camera-settings');
+    if (!data || data.brightness == null) return;
+    const sl = document.getElementById('brightness-slider');
+    if (sl) {
+      sl.value = data.brightness;
+      updateBrightnessLabel(data.brightness);
+    }
+  }
+
+  async function saveBrightnessSetting(val) {
+    const brightness = parseFloat(val);
+    const statusEl = document.getElementById('brightness-status');
+    if (statusEl) statusEl.textContent = '…';
+    const res = await apiFetch('/api/camera-settings', 'POST', { brightness: brightness });
+    if (statusEl) {
+      if (res?.success) {
+        statusEl.textContent = '✓ gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } else {
+        statusEl.textContent = '✗ Fehler';
+      }
+    }
+  }
+
+  // ── Contrast (Kontrast) ────────────────────────────
+  function updateContrastLabel(val) {
+    const contrast = parseFloat(val);
+    document.getElementById('contrast-val').textContent = contrast.toFixed(1);
+  }
+
+  async function loadContrastSetting() {
+    const data = await apiFetch('/api/camera-settings');
+    if (!data || data.contrast == null) return;
+    const sl = document.getElementById('contrast-slider');
+    if (sl) {
+      sl.value = data.contrast;
+      updateContrastLabel(data.contrast);
+    }
+  }
+
+  async function saveContrastSetting(val) {
+    const contrast = parseFloat(val);
+    const statusEl = document.getElementById('contrast-status');
+    if (statusEl) statusEl.textContent = '…';
+    const res = await apiFetch('/api/camera-settings', 'POST', { contrast: contrast });
+    if (statusEl) {
+      if (res?.success) {
+        statusEl.textContent = '✓ gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } else {
+        statusEl.textContent = '✗ Fehler';
+      }
+    }
+  }
+
+  // ── Saturation (Sättigung) ────────────────────────────
+  function updateSaturationLabel(val) {
+    const saturation = parseFloat(val);
+    document.getElementById('saturation-val').textContent = saturation.toFixed(1);
+  }
+
+  async function loadSaturationSetting() {
+    const data = await apiFetch('/api/camera-settings');
+    if (!data || data.saturation == null) return;
+    const sl = document.getElementById('saturation-slider');
+    if (sl) {
+      sl.value = data.saturation;
+      updateSaturationLabel(data.saturation);
+    }
+  }
+
+  async function saveSaturationSetting(val) {
+    const saturation = parseFloat(val);
+    const statusEl = document.getElementById('saturation-status');
+    if (statusEl) statusEl.textContent = '…';
+    const res = await apiFetch('/api/camera-settings', 'POST', { saturation: saturation });
+    if (statusEl) {
+      if (res?.success) {
+        statusEl.textContent = '✓ gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } else {
+        statusEl.textContent = '✗ Fehler';
+      }
+    }
+  }
+
+  // ── Sharpness (Schärfe) ────────────────────────────
+  function updateSharpnessLabel(val) {
+    const sharpness = parseFloat(val);
+    document.getElementById('sharpness-val').textContent = sharpness.toFixed(1);
+  }
+
+  async function loadSharpnessSetting() {
+    const data = await apiFetch('/api/camera-settings');
+    if (!data || data.sharpness == null) return;
+    const sl = document.getElementById('sharpness-slider');
+    if (sl) {
+      sl.value = data.sharpness;
+      updateSharpnessLabel(data.sharpness);
+    }
+  }
+
+  async function saveSharpnessSetting(val) {
+    const sharpness = parseFloat(val);
+    const statusEl = document.getElementById('sharpness-status');
+    if (statusEl) statusEl.textContent = '…';
+    const res = await apiFetch('/api/camera-settings', 'POST', { sharpness: sharpness });
+    if (statusEl) {
+      if (res?.success) {
+        statusEl.textContent = '✓ gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } else {
+        statusEl.textContent = '✗ Fehler';
+      }
+    }
+  }
+
+  // ── Gain (ISO-Verstärkung) ────────────────────────────
+  function updateGainLabel(val) {
+    const gain = parseFloat(val);
+    document.getElementById('gain-val').textContent = gain.toFixed(1);
+  }
+
+  async function loadGainSetting() {
+    const data = await apiFetch('/api/camera-settings');
+    if (!data || data.gain == null) return;
+    const sl = document.getElementById('gain-slider');
+    if (sl) {
+      sl.value = data.gain;
+      updateGainLabel(data.gain);
+    }
+  }
+
+  async function saveGainSetting(val) {
+    const gain = parseFloat(val);
+    const statusEl = document.getElementById('gain-status');
+    if (statusEl) statusEl.textContent = '…';
+    const res = await apiFetch('/api/camera-settings', 'POST', { gain: gain });
     if (statusEl) {
       if (res?.success) {
         statusEl.textContent = '✓ gespeichert';
