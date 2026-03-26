@@ -2,7 +2,7 @@
 
 > 🌐 **Multi-Language Documentation:** This README is available in multiple languages!  
 
-![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu.png)
+![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
 ## Release v2.2.5 — EV & AWB Sliders ☀️
 
@@ -201,7 +201,7 @@ nano ansible/.env          # PI_HOST, PI_USER, PI_SSH_KEY eintragen
 *Neue Version vom Vogelhaus mit Kamera*
 
 **Live-Aufnahmen & Community:**
-![YouTube Kanal Impression](assets/Youtube-Kanal.png) 
+![YouTube Kanal Impression](assets/Kohlmeise.png) 
 
 *Echte Vogelbeobachtungen auf YouTube*
 
