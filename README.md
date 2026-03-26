@@ -196,7 +196,7 @@ nano ansible/.env          # PI_HOST, PI_USER, PI_SSH_KEY eintragen
 
 *Flexible Platzierung für optimale Aufnahmen*
 
-![Vogelhaus Modell 2026-01](assets/vogelhaus-kamera-solo-neu-2.png)  
+![Vogelhaus Modell 2026-01](assets/vogelhaus-kamera-solo-neu-4.png)  
 
 *Neue Version vom Vogelhaus mit Kamera*
 
