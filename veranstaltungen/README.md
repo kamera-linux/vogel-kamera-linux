@@ -8,6 +8,17 @@ Dieser Ordner enthält Dokumentation und Materialien zu Vorträgen und Präsenta
 
 ## 📋 Vergangene Veranstaltungen
 
+### [4. April 2026 - Chemnitzer Linux-Tage](./2026-04-04-chemnitzer-linux-tage/) ✅
+**Vogel-Kamera zur KI**
+
+- 📍 **Veranstaltung**: [Chemnitzer Linux-Tage 2026](https://chemnitzer.linux-tage.de/2026/de) - Chemnitz, Deutschland
+- 📅 **Datum**: 28. und 29. März 2026
+- 📍 **Ort**: Hörsaalgebäude an der Reichenhainer Straße 90
+- 🎤 **Vortrag**: [Vogel-Kamera zur KI](https://chemnitzer.linux-tage.de/2026/de/programm/beitrag/122)
+- 🏪 **Stand**: Vogel-Kamera Linux Projekt Stand
+- 📂 **Materialien**: [Ordner anzeigen](./2026-04-04-chemnitzer-linux-tage/)
+- 🎯 **Status**: Erfolgreich durchgeführt
+
 ### [27. September 2025 - LinuxDay.at Dornbirn](./2025-09-27-linuxday-at/) ✅
 **Automatisierte Vogelbeobachtung mit Raspberry Pi, Python und KI**
 
@@ -42,4 +53,4 @@ Interessiert an einem Vortrag über das Projekt?
 
 ---
 
-*Letztes Update: 28. September 2025*
+*Letztes Update: 30. März 2026*
