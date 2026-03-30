@@ -39,7 +39,7 @@ Der Vortrag behandelt die Entwicklung und den praktischen Einsatz einer automati
 
 ## 🛠 Technischer Stack
 
-- Raspberry Pi (empfohlen: Pi 4 oder Pi 5)
+- Raspberry Pi (empfohlen: Pi 5)
 - Python 3.12+
 - OpenCV für Bildverarbeitung
 - TensorFlow/PyTorch für KI-Modelle
