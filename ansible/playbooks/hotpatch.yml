@@ -1,0 +1,79 @@
+---
+# Kopiert pi_daemon_secure.py direkt in den laufenden Container und startet ihn neu.
+# Kein Image-Rebuild nötig – ideal für schnelle Bugfixes.
+#
+# Aufruf (Passwort aus Datei, kein manuelles Eingeben):
+#   cd ansible
+#   set -a; source .env; set +a
+#   ansible-playbook playbooks/hotpatch.yml --vault-password-file ~/.pi-daemon-vault-pass
+#
+# Oder via build_and_deploy.py (nutzt ~/.pi-daemon-vault-pass automatisch):
+#   python3 ansible/build_and_deploy.py hotpatch
+#
+# Einmalig Vault-Passwort-Datei anlegen (falls noch nicht vorhanden):
+#   echo 'MeinVaultPasswort' > ~/.pi-daemon-vault-pass && chmod 600 ~/.pi-daemon-vault-pass
+
+- name: Pi-Daemon Hotpatch (pi_daemon_secure.py)
+  hosts: all
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all/vars.yml
+    - ../group_vars/all/vault.yml
+
+  vars:
+    local_script: "{{ playbook_dir }}/../../unified-monitor-client/pi_daemon_secure.py"
+    local_html:   "{{ playbook_dir }}/../../unified-monitor-client/web/index.html"
+    remote_tmp_py:   /tmp/pi_daemon_secure.py
+    remote_tmp_html: /tmp/pi_daemon_index.html
+
+  tasks:
+    - name: Python-Skript auf den Pi übertragen
+      ansible.builtin.copy:
+        src:   "{{ local_script }}"
+        dest:  "{{ remote_tmp_py }}"
+        mode:  "0644"
+
+    - name: index.html auf den Pi übertragen
+      ansible.builtin.copy:
+        src:   "{{ local_html }}"
+        dest:  "{{ remote_tmp_html }}"
+        mode:  "0644"
+
+    - name: Container-ID ermitteln
+      ansible.builtin.command:
+        cmd: docker ps -q --filter name=pi-daemon
+      register: container_id
+      changed_when: false
+
+    - name: Abbruch wenn kein Container läuft
+      ansible.builtin.fail:
+        msg: "Kein laufender pi-daemon Container gefunden."
+      when: container_id.stdout == ""
+
+    - name: Python-Skript in Container kopieren
+      ansible.builtin.command:
+        cmd: "docker cp {{ remote_tmp_py }} {{ container_id.stdout }}:/app/pi_daemon_secure.py"
+
+    - name: index.html in Container kopieren
+      ansible.builtin.command:
+        cmd: "docker cp {{ remote_tmp_html }} {{ container_id.stdout }}:/app/web/index.html"
+
+    - name: Temporäre Dateien aufräumen
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ remote_tmp_py }}"
+        - "{{ remote_tmp_html }}"
+
+    - name: Container neu starten
+      ansible.builtin.command:
+        cmd: "docker restart {{ container_id.stdout }}"
+
+    - name: Warte bis Daemon wieder erreichbar
+      ansible.builtin.wait_for:
+        port:    "{{ pi_daemon_port }}"
+        host:    "{{ ansible_host }}"
+        delay:   8
+        timeout: 60

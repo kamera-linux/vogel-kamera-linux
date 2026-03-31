@@ -31,7 +31,7 @@ from flask_limiter.util import get_remote_address
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.2.5'
+APP_VERSION = '2.2.6'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -84,6 +84,22 @@ DETECTION_SCRIPT: str = DETECTION_ENGINES[_active_engine]['script']
 
 # Detection-Settings: Erkennungsziel und Confidence-Schwelle
 DETECTION_SETTINGS_FILE = '/config/detection-settings.json'
+
+def _count_today_recordings() -> int:
+    """Zählt Video-Aufnahmen im VIDEO_BASE_DIR die heute erstellt wurden."""
+    today = datetime.now().strftime('%Y-%m-%d')
+    base = Path(VIDEO_BASE_DIR)
+    if not base.exists():
+        return 0
+    count = 0
+    for f in base.rglob('*.mp4'):
+        try:
+            if datetime.fromtimestamp(f.stat().st_mtime).strftime('%Y-%m-%d') == today:
+                count += 1
+        except OSError:
+            pass
+    return count
+
 
 def _read_last_detection() -> dict:
     """Letzte Erkennung aus /tmp/last-detection.json lesen (geschrieben vom Hailo-Script)."""
@@ -429,6 +445,14 @@ class CameraManager:
                 return True   # schon aktiv und Prozess läuft
             if state.recording_running:
                 return False  # manuelle Aufnahme läuft noch
+            # Vorhandenen Detection-Prozess explizit beenden (kann noch laufen, z.B.
+            # nach manueller Aufnahme, die ihn via start_detection() neu gestartet hat).
+            # Ohne diesen Kill würde ein zweiter Prozess die Kamera blockieren → rc=1.
+            if state.detection_running and state.detection_process:
+                _kill_process_group(state.detection_process)
+                state.detection_running = False
+                state.detection_process = None
+                time.sleep(1)   # libcamera-Freigabe abwarten
             proc = CameraManager._launch_detection_process()
             if not proc:
                 return False
@@ -1146,6 +1170,7 @@ def api_status():
         'detection_running':    state.detection_running,
         'detection_mode':       state.detection_mode,
         'birds_recorded':       state.birds_recorded,
+        'today_recordings':     _count_today_recordings(),
         'recording_running':    rec_running,
         'recording_progress':   progress,       # 0–100 oder null
         'recording_remaining':  rec_remaining,  # Sekunden verbleibend oder null

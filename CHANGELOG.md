@@ -1,5 +1,35 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.2.6] - 31. März 2026 🐛 **Bugfix: Detection-Prozess & Aufnahmen-Tageszähler**
+
+### 🐛 Bugfixes
+- **Detection-Prozess-Race-Condition behoben** (`pi_daemon_secure.py`)
+  - Sequenz: Stop Detection → manuelle Aufnahme → Detection-Mode aktivieren startete zwei `rpicam-hello`-Prozesse gleichzeitig
+  - Beide konkurrierten um die Kamera und crashten mit `rc=1`
+  - Fix: Explizites Killen des vorhandenen Detection-Prozesses + 1s Wartezeit für libcamera-Freigabe in `start_detection_mode()`
+
+### ✨ Features
+- **Aufnahmen-Tageszähler im Web-Dashboard** (`pi_daemon_secure.py`, `web/index.html`)
+  - Neue Funktion `_count_today_recordings()` zählt `.mp4`-Dateien mit heutigem mtime in `VIDEO_BASE_DIR`
+  - Neues API-Feld `today_recordings` in `/api/status`
+  - Dashboard-Karte umbenannt von „Objekte aufgenommen" zu „Aufnahmen heute"
+  - Datum wird neben der Anzahl angezeigt (flexbox, baseline-aligned)
+  - Persistent nach Container-Neustart (basiert auf Dateisystem, nicht Session)
+- **Ansible Hotpatch-Infrastruktur** (`ansible/playbooks/hotpatch.yml`, `build_and_deploy.py`)
+  - Neues Playbook `hotpatch.yml`: Kopiert geänderte Dateien direkt in laufenden Container
+  - `python3 build_and_deploy.py --hotpatch` ohne Docker-Build/Transfer
+  - Ansible `README.md` mit Hotpatch-Dokumentation erweitert
+
+### 🔧 Geänderte Dateien
+- `unified-monitor-client/pi_daemon_secure.py` → Bugfix + `_count_today_recordings()` + `today_recordings` im API
+- `unified-monitor-client/web/index.html` → „Aufnahmen heute"-Karte mit Datum
+- `ansible/playbooks/hotpatch.yml` → **NEU**
+- `ansible/build_and_deploy.py` → `--hotpatch`-Argument
+- `ansible/README.md` → Hotpatch-Dokumentation
+- `VERSION`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/VERSION`, `scripts/__version__.py`, `scripts/version.py` → 2.2.6
+
+---
+
 ## [2.2.5] - 21. März 2026 ☀️ **EV, AWB & Bildqualität-Sliders**
 
 ### ✨ Features

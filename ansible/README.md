@@ -73,6 +73,7 @@ cd ansible && bash build_and_deploy.sh --update
 |--------|-------------|-------------|
 | `--install` | Vollständiges Erstdeployment: Docker CE, SSL-Zertifikat, Firewall, systemd-Service | Erstmalige Einrichtung |
 | `--update` | Image neu bauen → gzippen → SCP → `docker load` → Daemon neu starten | Jedes Code-Update |
+| `--hotpatch` | `pi_daemon_secure.py` + `web/index.html` direkt in laufenden Container kopieren + Neustart | Schneller Bugfix ohne Image-Rebuild |
 | `--build` | Nur ARM64-Image bauen, kein Transfer und kein Deploy | Lokaler Test |
 | `--setup-host` | Gentoo-Build-Rechner einrichten: Docker, QEMU aarch64, buildx, binfmt | Einmalig auf dem Build-Host |
 | `--no-cache` | Kombinierbar mit obigen: Docker-Cache ignorieren | Nach Dependency-Updates |
@@ -237,6 +238,26 @@ Schnelles Update ohne System-Änderungen:
 4. `systemctl restart pi-daemon`
 5. Warten bis Port 8443 antwortet (`ansible_host`, max. 180 s)
 
+### `hotpatch.yml` – Schneller Datei-Fix
+
+Kopiert einzelne Dateien direkt in den laufenden Container und startet ihn neu.
+Kein Image-Rebuild, kein SCP-Transfer des gesamten Images – deutlich schneller als `--update`.
+
+```bash
+# Aufruf (Vault-Passwort aus Datei, keine manuelle Eingabe nötig)
+python3 build_and_deploy.py --hotpatch
+```
+
+**Ablauf:**
+1. `pi_daemon_secure.py` + `web/index.html` per SCP auf den Pi übertragen
+2. Container-ID via `docker ps --filter name=pi-daemon` ermitteln
+3. Beide Dateien per `docker cp` in den Container kopieren
+4. `docker restart <container-id>`
+5. Warten bis Port 8443 antwortet (max. 60 s)
+
+> **Wichtig:** Änderungen per `--hotpatch` überleben keinen kompletten Image-Rebuild (`--update`).
+> Nach dem nächsten `--update` müssen die Änderungen im Quellcode bereits eingeflossen sein.
+
 ### `setup-build-host.yml` – Lokaler Build-Rechner
 
 Bereitet den Gentoo-Rechner für ARM64-Cross-Builds vor:
@@ -271,6 +292,7 @@ ansible/
 ├── playbooks/
 │   ├── deploy.yml              ← Erstdeployment (alle 4 Rollen)
 │   ├── update.yml              ← Image-Update (schnell)
+│   ├── hotpatch.yml            ← Einzelne Dateien direkt in Container (kein Image-Rebuild)
 │   └── setup-build-host.yml   ← Gentoo Build-Rechner einrichten
 └── roles/
     ├── build-host/             ← Lokaler Gentoo-Rechner: Docker, QEMU, buildx

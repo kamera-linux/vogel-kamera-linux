@@ -75,6 +75,8 @@ def parse_args() -> argparse.Namespace:
                      help="Nur Docker-Image bauen, kein Deploy")
     grp.add_argument("--setup-host", dest="mode", action="store_const", const="setup-host",
                      help="Gentoo Build-Host einrichten (Docker, QEMU aarch64, buildx)")
+    grp.add_argument("--hotpatch",   dest="mode", action="store_const", const="hotpatch",
+                     help="pi_daemon_secure.py direkt in Container kopieren + Neustart (kein Image-Rebuild)")
     parser.add_argument("--no-cache", action="store_true",
                         help="Docker Build-Cache ignorieren (sauberer Rebuild)")
     parser.add_argument("--e2e",      action="store_true",
@@ -267,6 +269,9 @@ def ansible_deploy(env: dict, mode: str, ansible: str) -> None:
     if mode == "deploy":
         print(bold("🚀 Ansible – Voll-Deployment (Erstinstall)..."))
         run([ansible, "playbooks/deploy.yml", *vault_opts])
+    elif mode == "hotpatch":
+        print(bold("🩹 Ansible – Hotpatch (pi_daemon_secure.py)..."))
+        run([ansible, "playbooks/hotpatch.yml", *vault_opts])
     else:
         print(bold("🔄 Ansible – Image-Update..."))
         run([ansible, "playbooks/update.yml", *vault_opts])
@@ -410,7 +415,7 @@ def main() -> None:
     require_tool("scp")
 
     ansible_bin: str | None = None
-    if mode not in ("build", "e2e"):
+    if mode not in ("build", "e2e", "setup-host"):
         ansible_bin = find_tool("ansible-playbook")
         if not ansible_bin:
             print(red("❌ 'ansible-playbook' nicht gefunden."), file=sys.stderr)
@@ -424,6 +429,12 @@ def main() -> None:
 
     if mode == "e2e":
         run_e2e(env)
+        return
+
+    if mode == "hotpatch":
+        ansible_deploy(env, mode, ansible_bin)
+        print(f"\n{green(bold('✅ Hotpatch eingespielt!'))}")
+        print(f"   Web-GUI: https://{env['PI_HOST']}:8443/")
         return
 
     docker_build(args.no_cache)

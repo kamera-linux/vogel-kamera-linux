@@ -4,21 +4,14 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.2.5 — EV & AWB Sliders ☀️
+## Release v2.2.6 — Bugfix: Detection-Prozess & Aufnahmen-Tageszähler 🐛
 
-- **Version:** v2.2.5 (21. März 2026)
+- **Version:** v2.2.6 (31. März 2026)
+- **🐛 Bugfixes:**
+  - **Detection-Race-Condition behoben:** Stop Detection → manuelle Aufnahme → Detection-Mode führte zu zwei konkurrierenden `rpicam-hello`-Prozessen → fix: explizites Killen des vorhandenen Prozesses vor Neustart
 - **✨ Neue Features:**
-  - **☀️ EV-Slider (Exposure Value):** Manuelle Belichtungsregelung (-2.0 bis +2.0) für verschiedene Lichtsituationen
-  - **💡 AWB-Selector (Auto White Balance):** 6 voreingestellte Weißabgleich-Modi (Auto, Tageslicht, Bewölkt, Glühbirne, Leuchtstoffröhre, Innen)
-  - **🎨 Bildqualität-Regler (NEU):** 5 neue Schieberegler für erweiterte Kontrolle:
-    - 🌞 **Brightness** (-1.0 bis +1.0): gezieltes Abdunkeln/Aufhellen
-    - ⚪ **Contrast** (0.5 bis 2.0): Kontrolle über Kontrastverhältnis
-    - 🌈 **Saturation** (0.0 bis 2.0): Farbintensität (0.0 = Graustufenbild)
-    - ✨ **Sharpness** (0.0 bis 2.0): digitales Sharpening / Weichzeichnen
-    - 🔆 **Gain** (1.0 bis 8.0): digitale Verstärkung für Lowlight-Szenarien
-  - Erweiterte `POST /api/camera-settings` mit flexiblen Parameterkombinationen
-  - Online-Hilfe mit detaillierten Anwendungsbeispielen für **alle 10 Kamera-Einstellungen**
-  - ✅ Alle 5 neuen Parameter remote getestet und produktionsreif
+  - **📅 Aufnahmen-Tageszähler:** Dashboard-Karte „Aufnahmen heute" zeigt persistente Tagesanzahl der `.mp4`-Aufnahmen + Datum
+  - **🚀 Ansible Hotpatch:** Neues `hotpatch.yml` Playbook für schnellen Datei-Deployment ohne Image-Rebuild
 
 - **🔧 Technical Stack:**
   - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
@@ -29,12 +22,17 @@
 
 **Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.2.5/`](releases/v2.2.5/RELEASE_NOTES_v2.2.5.md)
+**Release Notes:** [`releases/v2.2.6/`](releases/v2.2.6/RELEASE_NOTES_v2.2.6.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.2.5-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.5)
+[![Version](https://img.shields.io/badge/Version-v2.2.6-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.6)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.2.5 (Archiv)
+**EV & AWB Sliders**
+- **Version:** v2.2.5 (21. März 2026)
+- Siehe [Archiv-Release](releases/v2.2.5/) für Details oder CHANGELOG.md
 
 ### v2.2.4 (Archiv)
 **Manueller Fokus-Slider**
@@ -110,6 +108,71 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 *Automatisch aktualisiert: 31.03.2026 08:22 Uhr (Sommerzeit (MESZ))*
 <!-- YOUTUBE_VIDEOS_END -->
+
+## 🔩 Hardware-Stückliste
+
+> *Automatisch ausgelesen vom laufenden System `raspberrypi-5-ai-had` am 31. März 2026.*
+
+### 🖥️ Einplatinencomputer
+
+| Komponente | Details |
+|---|---|
+| **Board** | Raspberry Pi 5 Model B Rev 1.1 |
+| **SoC** | Broadcom BCM2712 (Cortex-A76, 4 Kerne, 1,8 GHz) |
+| **RAM** | 8 GB LPDDR4X *(dieses System)* · alternativ: 4 GB oder 2 GB erhältlich |
+| **Netzwerk** | WLAN (Broadcom brcmfmac, 2.4/5 GHz) · Ethernet RP1 PCIe (integriert) |
+
+### 🤖 KI-Beschleuniger (AI HAD+)
+
+| Komponente | Details |
+|---|---|
+| **KI-HAT** | Raspberry Pi AI HAT+ |
+| **NPU** | Hailo-8 AI Processor (PCIe Rev 01, 26 TOPS) |
+| **Treiber** | `hailo_pci` (Kernel-Modul) |
+| **HailoRT** | 4.23.0 (Laufzeitbibliothek + PCIe-Treiber) |
+| **TAPPAS Core** | 5.1.0 |
+| **Metapaket** | `hailo-all` 5.1.1 |
+| **Post-Processing** | `rpicam-apps-hailo-postprocess` 1.11.1-1 |
+
+### 📷 Kamera
+
+| Komponente | Details |
+|---|---|
+| **Sensor** | Sony IMX708 Wide (integriert in Raspberry Pi High Quality Camera) |
+| **Schnittstelle** | CSI-2 (integrierter Anschluss) |
+| **Autofokus** | DW9807 VCM (Voice Coil Motor) |
+| **Auflösung** | bis 4K · Zeitlupe 120 fps (1080p) |
+
+### 💾 Speicher
+
+| Komponente | Details |
+|---|---|
+| **Karte** | MicroSD 256 GB (238,2 GB Partition, ~31% belegt) |
+| **SWAP** | zram0 2 GB (komprimierter RAM-Swap) |
+
+### 🎙️ Audio
+
+| Komponente | Details |
+|---|---|
+| **USB-Mikrofon/Soundkarte** | Texas Instruments PCM2902 Audio Codec (USB) |
+| **Ausgabe** | 2× HDMI Audio (vc4-hdmi-0, vc4-hdmi-1) |
+
+### 💿 Betriebssystem & Kernel
+
+| Komponente | Details |
+|---|---|
+| **OS** | Debian GNU/Linux 13 (Trixie) |
+| **Kernel** | 6.12.75+rpt-rpi-2712 (Raspberry Pi optimiert) |
+| **Docker** | läuft als `pi-daemon` Container |
+
+### 🔋 Stromversorgung
+
+| Komponente | Details |
+|---|---|
+| **Powerbank** | Anker 737 Power Bank (PowerCore 26K) · 140 W USB-C · 25.600 mAh |
+| **Ausgang** | 140 W USB-C PD (kompatibel mit Raspberry Pi 5 Netzteil-Anforderung 27 W) |
+
+---
 
 ## ✨ Features
 

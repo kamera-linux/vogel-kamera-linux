@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.2.5"
-__version_info__ = (2, 2, 5)
+__version__ = "2.2.6"
+__version_info__ = (2, 2, 6)
 
 # Release Information
-RELEASE_NAME = "EV & AWB Sliders"
-RELEASE_DATE = "2026-03-21"
-RELEASE_TYPE = "minor"  # major, minor, patch
+RELEASE_NAME = "Bugfix: Detection-Prozess & Aufnahmen-Tageszähler"
+RELEASE_DATE = "2026-03-31"
+RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20260321-1"
-GIT_TAG = "v2.2.5"
+BUILD_NUMBER = "20260331-1"
+GIT_TAG = "v2.2.6"
 
 # Feature Flags
 FEATURES = {

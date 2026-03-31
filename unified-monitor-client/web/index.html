@@ -337,8 +337,11 @@
         <div class="value" id="s-det-mode">–</div>
       </div>
       <div class="card">
-        <div class="label">Objekte aufgenommen</div>
-        <div class="value" id="s-birds">–</div>
+        <div class="label">Aufnahmen heute</div>
+        <div style="display:flex;align-items:baseline;gap:0.5rem">
+          <div class="value" id="s-birds">–</div>
+          <div style="font-size:0.75rem;color:var(--muted)" id="s-birds-date"></div>
+        </div>
       </div>
       <div class="card">
         <div class="label">Recording</div>
@@ -631,8 +634,8 @@
           Überwachung; laufende Aufnahmen werden abgeschlossen</li>
       <li>Während der Modus aktiv ist, sind <strong>manuelle Aufnahmen gesperrt</strong>
           (lila Hinweis erscheint)</li>
-      <li>Der Zähler <strong>Objekte aufgenommen</strong> zeigt, wie viele automatische
-          Aufnahmen in dieser Session entstanden sind</li>
+      <li>Der Zähler <strong>Aufnahmen heute</strong> zeigt alle Aufnahmen des aktuellen Tages
+          (auch nach Neustart persistent, da direkt aus dem Dateisystem gezählt)</li>
       <li>Nach jeder automatischen Aufnahme startet die Detection
           <strong>automatisch neu</strong> – keine manuelle Aktion nötig</li>
     </ul>
@@ -841,7 +844,7 @@
     <ul>
       <li><strong>Detection</strong> – ob die KI-Erkennung gerade läuft</li>
       <li><strong>Modus</strong> – Automatik (Detection-Modus) oder Manuell</li>
-      <li><strong>Objekte aufgenommen</strong> – Zähler automatisch getriggerter Aufnahmen dieser Session</li>
+      <li><strong>Aufnahmen heute</strong> – Anzahl aller Aufnahmen des aktuellen Tages (persistenter Tages-Zähler)</li>
       <li><strong>Recording</strong> – ob gerade aufgezeichnet wird</li>
       <li><strong>Hailo NPU</strong> – <span style="color:var(--green,#3fb950)">Aktiv</span> wenn Hailo-Detection läuft, sonst Inaktiv</li>
       <li><strong>Objekt erkannt</strong> – letztes erkanntes Objekt mit Klasse, Konfidenz und Uhrzeit
@@ -983,7 +986,12 @@
     } else {
       setText('s-last-det', '\u2013');
     }
-    setText('s-birds',    data.birds_recorded != null ? String(data.birds_recorded) : '\u2013');
+    const todayRec = data.today_recordings != null ? data.today_recordings : (data.birds_recorded != null ? data.birds_recorded : null);
+    setText('s-birds', todayRec != null ? String(todayRec) : '\u2013');
+    const now = new Date();
+    const _wd = now.toLocaleDateString('de-DE', {weekday:'short'}).replace('.', '');
+    const _dt = now.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
+    document.getElementById('s-birds-date').textContent = _wd + ' ' + _dt;
     setText('s-rec',      pill(data.recording_running, 'L\u00E4uft', 'Bereit'));
     if (data.detection_target != null) {
       const icons = { bird: '\uD83D\uDC26', person: '\uD83E\uDDD0', dog: '\uD83D\uDC15', cat: '\uD83D\uDC08', all4: '\uD83D\uDC26\uD83E\uDDD0\uD83D\uDC15\uD83D\uDC08' };
