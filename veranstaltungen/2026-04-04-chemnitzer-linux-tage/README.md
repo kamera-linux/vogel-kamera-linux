@@ -19,11 +19,36 @@
 
 ### Vortrag Details
 - **URL**: https://chemnitzer.linux-tage.de/2026/de/programm/beitrag/122
-- **Titel**: Vogel-Kamera zur KI
+- **Titel**: Von der Vogel-Kamera zum eigenen KI-Modell
+- **Sprecher**: Roland Imme, Adrian Imme
+- **Datum**: 29. März 2026 (Tag 2), Raum V7
+- **Dauer**: 54 Minuten
 - **Beschreibung**: Automatisierte Vogelbeobachtung mit Raspberry Pi, KI und Open-Source-Tools
 - **QR-Code**:
   
 ![Vogel-Kamera zur KI Vortrag](resources/qr-vortrag-vogel-kamera.png)
+
+### 🎥 Aufzeichnung (media.ccc.de)
+
+Das Video vom Vortrag ist jetzt verfügbar:
+
+- **Seite**: https://media.ccc.de/v/clt26-122-von-der-vogel-kamera-zum-eigenen-ki-modell
+- **Lizenz**: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0)
+
+#### Downloads
+| Format | Auflösung | Größe | Link |
+|--------|-----------|-------|------|
+| MP4 | 1080p (HD) | 252 MB | [Download](https://cdn.media.ccc.de/events/clt/2026/h264-hd/clt26-52-deu-Von_der_Vogel-Kamera_zum_eigenen_KI-Modell_hd.mp4) |
+| MP4 | 576p (SD) | 109 MB | [Download](https://cdn.media.ccc.de/events/clt/2026/h264-sd/clt26-52-deu-Von_der_Vogel-Kamera_zum_eigenen_KI-Modell_sd.mp4) |
+| MP3 | Audio | 49 MB | [Download](https://cdn.media.ccc.de/events/clt/2026/mp3/clt26-52-deu-Von_der_Vogel-Kamera_zum_eigenen_KI-Modell_mp3.mp3) |
+| Opus | Audio | 32 MB | [Download](https://cdn.media.ccc.de/events/clt/2026/opus/clt26-52-deu-Von_der_Vogel-Kamera_zum_eigenen_KI-Modell_opus.opus) |
+
+#### Einbetten
+```html
+<iframe width="1024" height="576"
+  src="https://media.ccc.de/v/clt26-122-von-der-vogel-kamera-zum-eigenen-ki-modell/oembed"
+  frameborder="0" allowfullscreen></iframe>
+```
 
 ## 📋 Vortragsinhalte
 
