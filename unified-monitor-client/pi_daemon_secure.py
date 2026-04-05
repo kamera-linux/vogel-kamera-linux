@@ -31,7 +31,7 @@ from flask_limiter.util import get_remote_address
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.2.6'
+APP_VERSION = '2.3.0'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -110,6 +110,131 @@ def _read_last_detection() -> dict:
     except Exception:
         pass
     return None
+
+
+# ---------------------------------------------------------------------------
+# Hailo Hardware-Info (gecacht, getrennte TTLs für statische/dynamische Daten)
+# ---------------------------------------------------------------------------
+_hailo_hw_cache: dict = {}
+_hailo_hw_cache_time: float = 0.0     # letzte Aktualisierung statischer Info
+_hailo_temp_cache_time: float = 0.0   # letzte Temperatur/Clock-Messung
+_HAILO_HW_CACHE_TTL: float = 60.0    # Sekunden – Board/FW/Treiber (ändert sich selten)
+_HAILO_TEMP_TTL: float = 30.0        # Sekunden – Temperatur + NN-Clock (dynamisch)
+
+# Python-Snippet für hailo_platform (läuft als Subprocess im Container).
+# /usr/lib/python3/dist-packages ist per Bind-Mount eingebunden (hailo_platform v4.23.0).
+# System-Python fragt Treiber über /dev/hailo0 → privileged Container erforderlich.
+_HAILO_TEMP_SCRIPT = (
+    'import sys; sys.path.insert(0, "/usr/lib/python3/dist-packages");'
+    'from hailo_platform import Device;'
+    'd=Device();'
+    't=d.control.get_chip_temperature();'
+    'ext=d.control.get_extended_device_information();'
+    'h=d.control._get_health_information();'
+    'print(f"{(t.ts0_temperature+t.ts1_temperature)/2:.2f},{int(ext.neural_network_core_clock_rate//1_000_000)},{int(h.temperature_throttling_active)},{int(h.current_temperature_zone)},{int(h.current_temperature_throttling_level)}");'
+    'd.release()'
+)
+
+_net_io_prev: tuple = None   # (monotonic_time, bytes_recv, bytes_sent) für Netzwerk-Rate
+
+
+def _get_hailo_hw_info() -> dict:
+    """Liest Hailo-Hardware-Informationen aus sysfs, hailortcli und hailo_platform.
+
+    Statische Daten (Board, FW, Treiber): 60 s TTL.
+    Dynamische Daten (Temperatur, NN-Clock): 30 s TTL via hailo_platform Python-API.
+    Gecacht in _hailo_hw_cache (shared, nicht Thread-safe – aber Worst Case: doppelter
+    subprocess-Aufruf bei Race Condition, kein Datenverlust).
+    """
+    global _hailo_hw_cache, _hailo_hw_cache_time, _hailo_temp_cache_time
+    now = time.monotonic()
+
+    # ── Statische Info (60 s TTL) ────────────────────────────────────────
+    if now - _hailo_hw_cache_time >= _HAILO_HW_CACHE_TTL:
+        info: dict = {}
+
+        # Schnell-Check: Gerät vorhanden?
+        if not Path('/dev/hailo0').exists():
+            _hailo_hw_cache = info
+            _hailo_hw_cache_time = now
+            return info
+
+        info['device_present'] = True
+
+        def _sysfs(path: str) -> str:
+            try:
+                return Path(path).read_text().strip()
+            except Exception:
+                return ''
+
+        # Treiberversion aus sysfs
+        drv = _sysfs('/sys/module/hailo_pci/version')
+        if drv:
+            info['driver_version'] = drv
+
+        # Board-Typ aus accelerator_type
+        acc = _sysfs('/sys/class/hailo_chardev/hailo0/accelerator_type')
+        _ACCEL_NAMES = {'0': 'Hailo-8', '1': 'Hailo-8L', '2': 'Hailo-10H'}
+        if acc in _ACCEL_NAMES:
+            info['board_name'] = _ACCEL_NAMES[acc]
+        elif acc:
+            info['board_name'] = f'Hailo (type {acc})'
+
+        # PCIe-Slot-Adresse
+        loc = _sysfs('/sys/class/hailo_chardev/hailo0/board_location')
+        if loc:
+            info['board_location'] = loc
+
+        # FW-Version via hailortcli (Trixie-Base: gleiche glibc wie Host)
+        try:
+            result = subprocess.run(
+                ['/usr/bin/hailortcli', 'fw-control', 'identify'],
+                capture_output=True, text=True, timeout=5
+            )
+            for line in result.stdout.splitlines():
+                line = line.strip()
+                if line.startswith('Firmware Version:'):
+                    fw = line.split(':', 1)[1].strip()
+                    info['fw_version'] = fw.split()[0] if fw else fw
+                elif line.startswith('Board Name:') and 'board_name' not in info:
+                    info['board_name'] = line.split(':', 1)[1].strip()
+        except Exception:
+            pass
+
+        # Bestehende Temperatur/Clock-Werte übernehmen (werden separat aktualisiert)
+        for key in ('npu_temp_c', 'nn_clock_mhz', 'throttle_level'):
+            if key in _hailo_hw_cache:
+                info[key] = _hailo_hw_cache[key]
+
+        _hailo_hw_cache = info
+        _hailo_hw_cache_time = now
+
+    # ── Dynamische Info: Temperatur + NN-Clock (30 s TTL) ───────────────
+    if (
+        _hailo_hw_cache.get('device_present')
+        and now - _hailo_temp_cache_time >= _HAILO_TEMP_TTL
+    ):
+        try:
+            res = subprocess.run(
+                ['python3', '-c', _HAILO_TEMP_SCRIPT],
+                capture_output=True, text=True, timeout=10,
+                env={**os.environ, 'LD_LIBRARY_PATH': '/usr/lib:/usr/local/lib'},
+            )
+            if res.returncode == 0 and ',' in res.stdout:
+                parts = res.stdout.strip().split(',')
+                if len(parts) >= 2:
+                    _hailo_hw_cache['npu_temp_c'] = round(float(parts[0]), 1)
+                    _hailo_hw_cache['nn_clock_mhz'] = int(parts[1])
+                if len(parts) >= 4:
+                    _hailo_hw_cache['throttle_active'] = bool(int(parts[2]))
+                    _hailo_hw_cache['throttle_zone'] = int(parts[3])
+                if len(parts) >= 5:
+                    _hailo_hw_cache['throttle_level'] = int(parts[4])
+        except Exception:
+            pass
+        _hailo_temp_cache_time = now
+
+    return _hailo_hw_cache
 
 
 def _load_detection_settings() -> dict:
@@ -1126,6 +1251,9 @@ def api_status():
             cpu_temp = round(int(Path('/sys/class/thermal/thermal_zone0/temp').read_text().strip()) / 1000.0, 1)
         except Exception:
             cpu_temp = None
+        uptime_s = int(time.time() - psutil.boot_time())
+        _ud, _ur = divmod(uptime_s, 86400)
+        _uh, _um = divmod(_ur, 3600)
         system = {
             'cpu_percent':  cpu,
             'cpu_temp':     cpu_temp,
@@ -1136,7 +1264,27 @@ def api_status():
             'mem_total_mb': round(mem.total  / 1_048_576),
             'disk_free_gb': round(disk.free  / 1_073_741_824, 1),
             'disk_total_gb': round(disk.total / 1_073_741_824, 1),
+            'uptime_days':  _ud,
+            'uptime_hours': _uh,
+            'uptime_minutes': _um // 60,
         }
+        try:
+            system['container_ram_mb'] = round(psutil.Process().memory_info().rss / 1_048_576)
+        except Exception:
+            pass
+        try:
+            global _net_io_prev
+            _nc = psutil.net_io_counters()
+            _nt = time.monotonic()
+            if _net_io_prev is not None:
+                _pt, _pr, _ps = _net_io_prev
+                _dt = _nt - _pt
+                if _dt > 0.1:
+                    system['net_rx_kbs'] = round((_nc.bytes_recv - _pr) / _dt / 1024, 1)
+                    system['net_tx_kbs'] = round((_nc.bytes_sent - _ps) / _dt / 1024, 1)
+            _net_io_prev = (_nt, _nc.bytes_recv, _nc.bytes_sent)
+        except Exception:
+            pass
     except Exception:
         system = {}
 
@@ -1189,6 +1337,7 @@ def api_status():
         'detection_target':     _detection_target,
         'detection_threshold':  _detection_threshold,
         'last_detection':       _read_last_detection(),
+        'hailo_hw':             _get_hailo_hw_info(),
         'lens_position':        _lens_position,
         'ev':                   _ev,
         'awb':                  _awb,

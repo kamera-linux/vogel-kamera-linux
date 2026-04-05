@@ -140,7 +140,151 @@ def run(cmd: list, **kwargs) -> subprocess.CompletedProcess:
 
 
 def run_capture(cmd: list) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, capture_output=True)
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
+# ── Uptime-Statistik aus journalctl seeden ────────────────────────────────────
+def seed_uptime_stats(env: dict) -> None:
+    """Liest journalctl --list-boots vom Pi-Host per SSH und schreibt uptime_stats.json."""
+    import re, json as _json, tempfile, os
+    from datetime import datetime as _dt, timedelta as _td
+
+    pi_user = env["PI_USER"]
+    pi_host = env["PI_HOST"]
+    pi_key  = env["PI_SSH_KEY"]
+
+    print("   📊 Laufzeitstatistik aus journalctl laden... ", end="", flush=True)
+    r = run_capture([
+        "ssh", "-i", pi_key, "-o", "BatchMode=yes",
+        f"{pi_user}@{pi_host}",
+        "journalctl --list-boots --no-pager -q 2>/dev/null",
+    ])
+    if r.returncode != 0 or not r.stdout.strip():
+        print(yellow("⚠ journalctl --list-boots nicht verfügbar, übersprungen."))
+        return
+
+    # Flexibles Regex – unterstützt beide Formate:
+    # Mit Boot-ID:  " -3 c67176... Fri 2026-04-03 18:56:26 CEST  Sat 2026-04-04 17:57:44 CEST"
+    # Ohne Boot-ID: " -3  Fri 2026-04-03 18:56:26 → Sat 2026-04-04 17:57:44"
+    # Laufend:      "  0  Sun 2026-04-05 18:09:40 → laufend" (kein End-Datum → ignoriert)
+    pat = re.compile(
+        r'^\s*[-\d]+\s+'
+        r'(?:[0-9a-f]{20,}\s+)?'          # Boot-ID: optional (20+ Hex-Zeichen)
+        r'(?:\w{3}\s+)?(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})(?:\s+\S+)?'
+        r'\s+(?:→\s+)?'                    # Trenner: whitespace + optional "→ "
+        r'(?:\w{3}\s+)?(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})',
+        re.MULTILINE,
+    )
+
+    daily: dict[str, float] = {}
+    total_s: float = 0.0
+
+    for m in pat.finditer(r.stdout):
+        start_date, start_time, end_date, end_time = m.groups()
+        try:
+            start = _dt.fromisoformat(f"{start_date}T{start_time}")
+            end   = _dt.fromisoformat(f"{end_date}T{end_time}")
+            if end <= start:
+                continue
+            # Boot über Mitternacht aufteilen
+            cur = start
+            while cur < end:
+                day_key  = cur.strftime('%Y-%m-%d')
+                day_end  = _dt.fromisoformat(f"{day_key}T23:59:59") + _td(seconds=1)
+                seg_end  = min(end, day_end)
+                seg_s    = (seg_end - cur).total_seconds()
+                daily[day_key] = daily.get(day_key, 0.0) + seg_s
+                total_s += seg_s
+                cur = seg_end
+        except Exception:
+            continue
+
+    if not daily:
+        print(yellow("⚠ Keine Boot-Einträge geparst."))
+        return
+
+    # Bestehende Datei auf dem Pi lesen (nicht überschreiben falls neuer)
+    existing_raw = run_capture([
+        "ssh", "-i", pi_key, "-o", "BatchMode=yes",
+        f"{pi_user}@{pi_host}",
+        "cat /etc/pi-daemon/uptime_stats.json 2>/dev/null || echo '{}'",
+    ])
+    existing: dict = {}
+    try:
+        existing = _json.loads(existing_raw.stdout)
+    except Exception:
+        pass
+
+    existing_total = float(existing.get("total_seconds", 0))
+    existing_daily: dict = existing.get("daily", {})
+
+    # journalctl-Werte gewinnen (sind präziser als akkumulierte), per Tag mergen
+    merged_daily = dict(existing_daily)
+    for day, secs in daily.items():
+        # Journalctl-Wert übernehmen wenn größer (= realer Wert)
+        merged_daily[day] = max(merged_daily.get(day, 0.0), secs)
+
+    merged_total = max(existing_total, total_s)
+
+    # Einträge >90 Tage entfernen
+    from datetime import date as _date
+    cutoff = (_date.today() - _td(days=90)).isoformat()
+    merged_daily = {k: v for k, v in merged_daily.items() if k >= cutoff}
+
+    stats_json = _json.dumps({
+        "total_seconds": int(merged_total),
+        "daily": {k: int(v) for k, v in sorted(merged_daily.items())},
+    }, indent=2)
+
+    # Datei per SCP nach /tmp/ schreiben, dann per docker cp in den Container
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            f.write(stats_json)
+            tmp_local = f.name
+
+        scp_r = run_capture([
+            "scp", "-i", pi_key,
+            tmp_local,
+            f"{pi_user}@{pi_host}:/tmp/uptime_stats_seed.json",
+        ])
+        os.unlink(tmp_local)
+
+        if scp_r.returncode != 0:
+            print(yellow("⚠ SCP nach /tmp/ fehlgeschlagen."))
+            return
+
+        # Container-ID ermitteln (laufender pi-daemon)
+        cid_r = run_capture([
+            "ssh", "-i", pi_key, "-o", "BatchMode=yes",
+            f"{pi_user}@{pi_host}",
+            "docker ps --filter name=pi-daemon --format '{{.ID}}' | head -1",
+        ])
+        cid = cid_r.stdout.strip()
+        if cid:
+            cp_r = run_capture([
+                "ssh", "-i", pi_key, "-o", "BatchMode=yes",
+                f"{pi_user}@{pi_host}",
+                f"docker cp /tmp/uptime_stats_seed.json {cid}:/config/uptime_stats.json"
+                f" && rm /tmp/uptime_stats_seed.json",
+            ])
+            ok = cp_r.returncode == 0
+        else:
+            # Fallback: sudo mv direkt nach /etc/pi-daemon/
+            mv_r = run_capture([
+                "ssh", "-i", pi_key, "-o", "BatchMode=yes",
+                f"{pi_user}@{pi_host}",
+                "sudo mv /tmp/uptime_stats_seed.json /etc/pi-daemon/uptime_stats.json",
+            ])
+            ok = mv_r.returncode == 0
+
+        if ok:
+            days_str = ', '.join(f"{k}: {int(v)//3600}h{(int(v)%3600)//60:02d}m"
+                                 for k, v in sorted(merged_daily.items())[-3:])
+            print(green(f"✅  ({days_str})"))
+        else:
+            print(yellow("⚠ Schreiben in Container fehlgeschlagen."))
+    except Exception as exc:
+        print(yellow(f"⚠ Fehler: {exc}"))
 
 
 # ── HTTP-Helfer (urllib, kein requests nötig) ─────────────────────────────────
@@ -225,6 +369,16 @@ def docker_build(no_cache: bool) -> None:
         cmd.append("--no-cache")
     run(cmd)
     print(green(f"✅ Image gebaut: {IMAGE_NAME}:{IMAGE_TAG}"))
+
+    # ── Lokales Cleanup: dangling images entfernen ────────────────────────
+    try:
+        prune = run_capture(["docker", "image", "prune", "-f"])
+        stdout = prune.stdout or ""
+        reclaimed = next((l for l in stdout.splitlines() if "reclaimed" in l.lower()), "")
+        if reclaimed and "0B" not in reclaimed:
+            print(f"   🧹 Lokale dangling images entfernt – {reclaimed.strip()}")
+    except Exception:
+        pass  # Prune-Fehler darf den Build-Ablauf nicht unterbrechen
 
 
 # ── Image-Transfer ────────────────────────────────────────────────────────────
@@ -432,6 +586,7 @@ def main() -> None:
         return
 
     if mode == "hotpatch":
+
         ansible_deploy(env, mode, ansible_bin)
         print(f"\n{green(bold('✅ Hotpatch eingespielt!'))}")
         print(f"   Web-GUI: https://{env['PI_HOST']}:8443/")

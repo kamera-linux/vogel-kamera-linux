@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vogel-Kamera Steuerung</title>
+  <link rel="icon" type="image/png" href="/web/logo.png">
+  <link rel="apple-touch-icon" href="/web/logo.png">
   <style>
     :root {
       --bg:      #0d1117;
@@ -90,6 +92,13 @@
     .pill-green  { background: rgba(63,185,80,.15);  color: var(--green); }
     .pill-red    { background: rgba(248,81,73,.15);  color: var(--red); }
     .pill-yellow { background: rgba(210,153,34,.15); color: var(--yellow); }
+
+    /* Kachel-Gruppenüberschrift */
+    .card-group-label {
+      font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: .08em; margin: 0.75rem 0 0.4rem;
+      border-bottom: 1px solid var(--border); padding-bottom: 0.25rem;
+    }
 
     /* Action panel */
     .panel {
@@ -327,6 +336,9 @@
     </div>
 
     <!-- Status-Karten -->
+
+    <!-- Gruppe: Kamera & Erkennung -->
+    <h3 class="card-group-label">Kamera &amp; Erkennung</h3>
     <div class="cards">
       <div class="card">
         <div class="label">Detection</div>
@@ -335,6 +347,19 @@
       <div class="card">
         <div class="label">Modus</div>
         <div class="value" id="s-det-mode">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Hailo-8 NPU</div>
+        <div class="value" id="s-hailo">–</div>
+        <div id="s-hailo-hw" style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem;display:none"></div>
+      </div>
+      <div class="card">
+        <div class="label">🎯 Erkennungsziel</div>
+        <div class="value" id="s-target" style="font-size:0.95rem">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Objekt erkannt</div>
+        <div class="value" id="s-last-det" style="font-size:0.95rem">–</div>
       </div>
       <div class="card">
         <div class="label">Aufnahmen heute</div>
@@ -347,37 +372,68 @@
         <div class="label">Recording</div>
         <div class="value" id="s-rec">–</div>
       </div>
+    </div>
+
+    <!-- Gruppe: NPU -->
+    <h3 class="card-group-label">NPU</h3>
+    <div class="cards">
       <div class="card">
-        <div class="label">🎯 Erkennungsziel</div>
-        <div class="value" id="s-target" style="font-size:0.95rem">–</div>
+        <div class="label">Temperatur NPU</div>
+        <div class="value" id="s-npu-temp">–</div>
       </div>
       <div class="card">
-        <div class="label">Hailo NPU</div>
-        <div class="value" id="s-hailo">–</div>
+        <div class="label">Takt NPU</div>
+        <div class="value" id="s-npu-clock">–</div>
       </div>
       <div class="card">
-        <div class="label">Objekt erkannt</div>
-        <div class="value" id="s-last-det" style="font-size:0.95rem">–</div>
+        <div class="label">Throttle-Level</div>
+        <div class="value" id="s-throttle" style="font-size:1.1rem">–</div>
       </div>
+    </div>
+
+    <!-- Gruppe: System -->
+    <h3 class="card-group-label">System</h3>
+    <div class="cards">
       <div class="card">
         <div class="label">CPU</div>
         <div class="value" id="s-cpu">–</div>
       </div>
       <div class="card">
-        <div class="label">Temperatur</div>
+        <div class="label">Temperatur CPU</div>
         <div class="value" id="s-temp">–</div>
       </div>
       <div class="card">
         <div class="label">Load Avg</div>
-        <div class="value" id="s-load" style="font-size:0.95rem">–</div>
+        <div class="value" id="s-load" style="font-size:1.2rem;white-space:nowrap">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Uptime (seit Reboot)</div>
+        <div class="value" id="s-uptime" style="font-size:1.2rem;white-space:nowrap">–</div>
       </div>
       <div class="card">
         <div class="label">RAM genutzt</div>
         <div class="value" id="s-mem">–</div>
       </div>
       <div class="card">
+        <div class="label">Container RAM</div>
+        <div class="value" id="s-docker-ram">–</div>
+      </div>
+      <div class="card">
         <div class="label">Freier Speicher</div>
         <div class="value" id="s-disk">–</div>
+      </div>
+    </div>
+
+    <!-- Gruppe: Netzwerk -->
+    <h3 class="card-group-label">Netzwerk</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="label">Empfangen</div>
+        <div class="value" id="s-net-rx">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Gesendet</div>
+        <div class="value" id="s-net-tx">–</div>
       </div>
     </div>
 
@@ -841,18 +897,51 @@
 
     <hr>
     <h3>📊 System-Status</h3>
+    <p>Das Dashboard ist in vier Gruppen gegliedert:</p>
+
+    <h3>🎯 Kamera &amp; Erkennung</h3>
     <ul>
       <li><strong>Detection</strong> – ob die KI-Erkennung gerade läuft</li>
       <li><strong>Modus</strong> – Automatik (Detection-Modus) oder Manuell</li>
-      <li><strong>Aufnahmen heute</strong> – Anzahl aller Aufnahmen des aktuellen Tages (persistenter Tages-Zähler)</li>
+      <li><strong>Hailo-8 NPU</strong> – <span style="color:var(--green,#3fb950)">Aktiv</span> wenn Hailo-Detection läuft, sonst Inaktiv.
+          Darunter werden Board-Name und Firmware-Version angezeigt (60&nbsp;s Aktualisierung)</li>
+      <li><strong>Erkennungsziel</strong> – aktuell konfigurierte Klasse + Konfidenzschwelle</li>
+      <li><strong>Objekt erkannt</strong> – letztes erkanntes Objekt mit Klasse, Konfidenz und Uhrzeit</li>
+      <li><strong>Aufnahmen heute</strong> – persistenter Tageszähler der MP4-Aufnahmen</li>
       <li><strong>Recording</strong> – ob gerade aufgezeichnet wird</li>
-      <li><strong>Hailo NPU</strong> – <span style="color:var(--green,#3fb950)">Aktiv</span> wenn Hailo-Detection läuft, sonst Inaktiv</li>
-      <li><strong>Objekt erkannt</strong> – letztes erkanntes Objekt mit Klasse, Konfidenz und Uhrzeit
-          (wird nach jedem Erkennungs-Trigger aktualisiert)</li>
+    </ul>
+
+    <h3>🔬 NPU</h3>
+    <ul>
+      <li><strong>Temperatur NPU</strong> – Chip-Temperatur des Hailo-8 in °C (Durchschnitt TS0/TS1, 30&nbsp;s Aktualisierung).
+          Grün &lt;&nbsp;65&nbsp;°C · Orange &lt;&nbsp;80&nbsp;°C · Rot ≥&nbsp;80&nbsp;°C</li>
+      <li><strong>Takt NPU</strong> – aktueller NN-Core-Takt in MHz. Im Normalbetrieb 400&nbsp;MHz</li>
+      <li><strong>Throttle-Level</strong> – Temperaturdrosselung des Hailo-8:
+        <ul>
+          <li><span style="color:#22c55e;font-weight:600">– Normal</span> – kein Throttling (level&nbsp;−1), voller 400&nbsp;MHz-Takt</li>
+          <li><span style="color:#f97316;font-weight:600">L0 350&nbsp;MHz</span> – erste Stufe ab ~104&nbsp;°C</li>
+          <li><span style="color:#ef4444;font-weight:600">L1 300&nbsp;MHz</span> – zweite Stufe ab ~108&nbsp;°C</li>
+          <li><span style="color:#ef4444;font-weight:600">L2 250&nbsp;MHz</span> – dritte Stufe ab ~112&nbsp;°C</li>
+          <li><span style="color:#ef4444;font-weight:600">L3 200&nbsp;MHz</span> – vierte Stufe ab ~116&nbsp;°C</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>🖥️ System</h3>
+    <ul>
       <li><strong>CPU</strong> – aktuelle CPU-Auslastung in Prozent (&lt;&nbsp;5&nbsp;% typisch bei Hailo-NPU)</li>
-      <li><strong>Temperatur</strong> – CPU-Temperatur in °C</li>
-      <li><strong>RAM</strong> – belegter Arbeitsspeicher</li>
-      <li><strong>Disk</strong> – freier Speicher auf dem Video-Volume</li>
+      <li><strong>Temperatur CPU</strong> – CPU-Temperatur des Raspberry Pi in °C</li>
+      <li><strong>Load Avg</strong> – Systemlast (1&nbsp;min / 5&nbsp;min / 15&nbsp;min)</li>
+      <li><strong>Uptime (seit Reboot)</strong> – Laufzeit seit dem letzten Systemstart</li>
+      <li><strong>RAM genutzt</strong> – belegter Arbeitsspeicher des Gesamtsystems</li>
+      <li><strong>Container RAM</strong> – RAM-Verbrauch des laufenden Docker-Containers</li>
+      <li><strong>Freier Speicher</strong> – freier Speicherplatz auf dem Video-Volume</li>
+    </ul>
+
+    <h3>🌐 Netzwerk</h3>
+    <ul>
+      <li><strong>Empfangen</strong> – aktuelle Netzwerk-Empfangsrate (kB/s oder MB/s)</li>
+      <li><strong>Gesendet</strong> – aktuelle Netzwerk-Senderate (kB/s oder MB/s)</li>
     </ul>
 
     <hr>
@@ -977,6 +1066,49 @@
     setText('s-det-mode', pill(data.detection_mode,    '\uD83E\uDD16 Automatik', 'Manuell'));
     const hailoActive = data.detection_running && data.active_engine === 'hailo';
     setText('s-hailo', pill(hailoActive, '\uD83D\uDD2C Aktiv', 'Inaktiv'));
+    // Hailo Hardware: Treiber · FW unter dem Status-Pill
+    const hailoHwEl = document.getElementById('s-hailo-hw');
+    if (hailoHwEl) {
+      const hw = data.hailo_hw || {};
+      if (hw.device_present) {
+        const parts = [];
+        if (hw.driver_version) parts.push('Treiber\u00A0' + hw.driver_version);
+        if (hw.fw_version)     parts.push('FW\u00A0' + hw.fw_version);
+        hailoHwEl.textContent = parts.join(' \u00B7 ');
+        hailoHwEl.style.display = 'block';
+      } else {
+        hailoHwEl.style.display = 'none';
+      }
+    }
+    // NPU-Temperatur-Kachel
+    const hw = data.hailo_hw || {};
+    if (hw.npu_temp_c != null) {
+      const tn = hw.npu_temp_c;
+      const cn = tn >= 80 ? '#ef4444' : tn >= 65 ? '#f97316' : '#22c55e';
+      setText('s-npu-temp', `<span style="color:${cn};font-weight:600">${tn.toFixed(1)} \u00B0C</span>`);
+    } else { setText('s-npu-temp', '\u2013'); }
+    // NPU-Takt-Kachel
+    if (hw.nn_clock_mhz != null) {
+      setText('s-npu-clock', hw.nn_clock_mhz + '\u00A0MHz');
+    } else { setText('s-npu-clock', '\u2013'); }
+    // Throttle-Level
+    if (hw.throttle_level != null) {
+      const _lvl = hw.throttle_level;
+      if (_lvl < 0) {
+        setText('s-throttle', '<span style="color:#22c55e;font-weight:600">\u2013\u00A0Normal</span>');
+      } else {
+        const _lc = _lvl === 0 ? '#f97316' : '#ef4444';
+        const _mhz = hw.nn_clock_mhz != null ? '\u00A0' + hw.nn_clock_mhz + '\u00A0MHz' : '';
+        setText('s-throttle', `<span style="color:${_lc};font-weight:600">L${_lvl}${_mhz}</span>`);
+      }
+    } else if (hw.throttle_zone != null) {
+      const _zones = ['\u2705\u00A0Normal', '\u26A0\uFE0F\u00A0Warm', '\uD83D\uDD34\u00A0Kritisch'];
+      const _zcols = ['#22c55e', '#f97316', '#ef4444'];
+      const _z = hw.throttle_zone;
+      const _zn = _zones[_z] || 'Zone\u00A0' + _z;
+      const _zc = _zcols[_z] || '#ef4444';
+      setText('s-throttle', `<span style="color:${_zc};font-weight:600">${_zn}</span>`);
+    } else { setText('s-throttle', '\u2013'); }
     if (data.last_detection) {
       const d = data.last_detection;
       const cls = d.class ? d.class.charAt(0).toUpperCase() + d.class.slice(1) : '?';
@@ -1067,6 +1199,16 @@
     if (sys.load_1min != null) setText('s-load', sys.load_1min + ' / ' + sys.load_5min + ' / ' + sys.load_15min);
     if (sys.mem_used_mb && sys.mem_total_mb) setText('s-mem', sys.mem_used_mb + ' / ' + sys.mem_total_mb + ' MB');
     if (sys.disk_free_gb != null) setText('s-disk', sys.disk_free_gb + ' GB frei');
+    if (sys.container_ram_mb != null) setText('s-docker-ram', sys.container_ram_mb + '\u00A0MB');
+    if (sys.net_rx_kbs != null) setText('s-net-rx', sys.net_rx_kbs + '\u00A0KB/s');
+    if (sys.net_tx_kbs != null) setText('s-net-tx', sys.net_tx_kbs + '\u00A0KB/s');
+    if (sys.uptime_days != null) {
+      const _d = sys.uptime_days, _h = sys.uptime_hours, _m = sys.uptime_minutes;
+      let _us = '';
+      if (_d > 0) _us += _d + 'T\u00A0';
+      _us += String(_h).padStart(2, '0') + 'h\u00A0' + String(_m).padStart(2, '0') + 'm';
+      setText('s-uptime', _us);
+    }
     // Fokus-Slider synchron halten (nur wenn Slider gerade nicht angefasst wird)
     if (data.lens_position != null) {
       const sl = document.getElementById('lens-pos');

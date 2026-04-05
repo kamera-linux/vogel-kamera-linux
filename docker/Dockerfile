@@ -5,7 +5,7 @@
 #
 # Build-Kontext = Repo-Root (nicht docker/)
 
-FROM python:3.13-slim-bookworm
+FROM python:3.13-slim-trixie
 
 # ── System-Pakete ──────────────────────────────────────────────────────────
 # rpicam-apps wird NICHT im Container installiert –
@@ -23,21 +23,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Wrapper-Script: ruft rpicam-vid über den trixie Dynamic Linker auf,
-# damit die trixie libc (aus /host/lib + /host/usr/lib) korrekt geladen wird ohne
-# den bookworm-Python zu beeinflussen.
-RUN printf '#!/bin/sh\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib:/host/usr/lib/pulseaudio /opt/rpicam-vid "$@"\n' \
+# Wrapper-Scripts: Trixie-Base teilt dieselbe glibc wie der Pi-Host (Trixie).
+# Kein ld-linux.so.1-Trick mehr nötig – einfaches LD_LIBRARY_PATH reicht.
+
+# rpicam-vid: Host-Binary mit Host-Libs (libcamera, libpisp etc.)
+RUN printf '#!/bin/sh\nexport LD_LIBRARY_PATH=/host/lib:/host/usr/lib:/host/usr/lib/pulseaudio\nexec /opt/rpicam-vid "$@"\n' \
     > /usr/local/bin/rpicam-vid && chmod +x /usr/local/bin/rpicam-vid
 
-# Wrapper für rpicam-hello (Hailo-NPU Detection via Post-Processing-JSON)
-# LD_LIBRARY_PATH nötig: --library-path von ld-linux gilt nur für den initialen Binär-Load,
-# interne dlopen()-Aufrufe (hailo-postproc.so + Abhängigkeiten) suchen erst in LD_LIBRARY_PATH.
-# /host/usr/lib2 = Pi-Host /usr/lib (libhailort.so), /host/lib = /lib/aarch64-linux-gnu (libopencv etc.)
-RUN printf '#!/bin/sh\nexport LD_LIBRARY_PATH=/host/lib:/host/usr/lib:/host/usr/lib2:/host/usr/lib/pulseaudio\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib:/host/usr/lib2:/host/usr/lib/pulseaudio /opt/rpicam-hello "$@"\n' \
+# rpicam-hello: Hailo-NPU Detection; dlopen() findet hailo-postproc.so über LD_LIBRARY_PATH
+RUN printf '#!/bin/sh\nexport LD_LIBRARY_PATH=/host/lib:/host/usr/lib:/host/usr/lib2:/host/usr/lib/pulseaudio\nexec /opt/rpicam-hello "$@"\n' \
     > /usr/local/bin/rpicam-hello && chmod +x /usr/local/bin/rpicam-hello
 
-# Wrapper für rpicam-still (Snapshot-Aufnahme)
-RUN printf '#!/bin/sh\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib /opt/rpicam-still "$@"\n' \
+# rpicam-still: Snapshot-Aufnahme
+RUN printf '#!/bin/sh\nexport LD_LIBRARY_PATH=/host/lib:/host/usr/lib\nexec /opt/rpicam-still "$@"\n' \
     > /usr/local/bin/rpicam-still && chmod +x /usr/local/bin/rpicam-still
 
 # Entrypoint: Einfaches Startskript (kein devicetree-Remount nötig – privileged: true im Container)
@@ -49,10 +47,9 @@ WORKDIR /app
 COPY unified-monitor-client/requirements_daemon.txt .
 RUN pip install --no-cache-dir -r requirements_daemon.txt
 
-# Wrapper-Script: ruft das HOST-Python 3.13 (Trixie) via host ld-linux auf.
-# host libs + host Python → gleiche glibc → kein GLIBC_PRIVATE Fehler.
-# /host/usr/lib2 = Host /usr/lib (enthält z.B. libarmadillo.so.14 für picamera2)
-RUN printf '#!/bin/sh\nexec /host/lib/ld-linux-aarch64.so.1 --library-path /host/lib:/host/usr/lib:/host/usr/lib2 /opt/python3-host "$@"\n' \
+# Wrapper-Script: Host-Python 3.13 (Trixie) mit Host-Libs (picamera2, libcamera, ultralytics).
+# Trixie-Base teilt dieselbe glibc wie der Host → kein ld-linux.so.1-Trick nötig.
+RUN printf '#!/bin/sh\nexport LD_LIBRARY_PATH=/host/lib:/host/usr/lib:/host/usr/lib2\nexec /opt/python3-host "$@"\n' \
     > /usr/local/bin/python3-trixie && chmod +x /usr/local/bin/python3-trixie
 
 # ── App-Code ───────────────────────────────────────────────────────────────

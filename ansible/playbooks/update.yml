@@ -18,6 +18,12 @@
         path: /tmp/vogel-pi.tar.gz
       register: image_archive
 
+    - name: Altes Image als Fallback taggen (vogel-pi:previous)
+      ansible.builtin.command:
+        cmd: docker tag vogel-pi:latest vogel-pi:previous
+      become: true
+      ignore_errors: true   # kein Fehler wenn noch kein latest vorhanden
+
     - name: Docker-Image laden
       ansible.builtin.command:
         cmd: docker load -i /tmp/vogel-pi.tar.gz
@@ -29,6 +35,13 @@
         path: /tmp/vogel-pi.tar.gz
         state: absent
       when: image_archive.stat.exists
+
+    - name: Verwaiste Images (dangling) auf dem Pi entfernen
+      ansible.builtin.command:
+        cmd: docker image prune -f
+      become: true
+      register: remote_prune
+      changed_when: "'Total reclaimed space: 0B' not in remote_prune.stdout"
 
     - name: .env aktualisieren (Secrets)
       ansible.builtin.template:

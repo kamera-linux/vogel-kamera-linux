@@ -1,5 +1,41 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.3.0] - 5. April 2026 🚀 **NPU Throttle-Level · Dashboard Stats · Favicon**
+
+### ✨ Features
+
+#### 🔬 NPU Throttle-Level Anzeige (Dashboard)
+- **Throttle-Level statt Zone:** Dashboard-Kachel zeigt nun `– Normal` (grün) oder `L0–L3` mit aktueller Taktfrequenz in MHz (orange/rot) statt einer abstrakten Zone-Nummer
+- **Farbkodierung:** Normal = grün, L0 = orange (104 °C Schwelle), L1–L3 = rot (108/112/116 °C)
+- **Hailo-8 Throttle-Tabelle:**
+  - L0: 104 °C → 350 MHz | L1: 108 °C → 300 MHz | L2: 112 °C → 250 MHz | L3: 116 °C → 200 MHz
+- **Backend:** `_HAILO_TEMP_SCRIPT` liefert jetzt 5 CSV-Felder (neu: `current_temperature_throttling_level`)
+- **Label:** „Throttle-Zone" → „Throttle-Level"
+
+#### 📊 Dashboard-Erweiterungen (System & Netzwerk)
+- **Uptime seit Neustart:** Neue Kachel „Uptime" zeigt laufende Betriebszeit des Pi (z. B. `2 Tage 14:32`)
+- **Container RAM:** neue Kachel zeigt RSS-Speicherverbrauch des `pi-daemon`-Prozesses (`psutil`)
+- **Netzwerk I/O:** zwei Kacheln „Empfangen" und „Gesendet" (kumulativer Netzwerkdurchsatz seit Boot, `eth0`/`wlan0`)
+- **4 semantische Gruppen** im Dashboard: 🎯 Kamera & Erkennung · 🔬 NPU · 🖥️ System · 🌐 Netzwerk
+
+#### ❓ Online-Hilfe vollständig überarbeitet
+- Hilfe-Modal spiegelt jetzt die 4 Dashboard-Gruppen 1:1 wider
+- **NPU-Abschnitt** mit detaillierter Throttle-Level-Erklärung (Temperaturgrenzen + MHz je Stufe)
+- **System-Abschnitt** mit Load Avg, Uptime, Container RAM und Netzwerk I/O
+- Veraltete Einträge entfernt
+
+#### 🌐 Browser Favicon / Tray-Icon
+- Vorhandenes `logo.png` wird nun als Browser-Tab-Icon eingebunden (`<link rel="icon">`)
+- `<link rel="apple-touch-icon">` für iOS-Homescreen-Icon (Seite zum Homescreen hinzufügen)
+- Kein separates `.ico`-File nötig
+
+### 🔧 Geänderte Dateien
+- `unified-monitor-client/pi_daemon_secure.py` → `_HAILO_TEMP_SCRIPT` (5 Felder), `throttle_level`-Cache, Uptime, Container RAM, Netz-I/O
+- `unified-monitor-client/web/index.html` → Throttle-Level-JS, 4 Gruppen, neue Kacheln, Favicon-Links, überarbeitetes Hilfe-Modal
+- `VERSION`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/VERSION`, `scripts/__version__.py`, `scripts/version.py` → 2.3.0
+
+---
+
 ## [2.2.6] - 31. März 2026 🐛 **Bugfix: Detection-Prozess & Aufnahmen-Tageszähler**
 
 ### 🐛 Bugfixes

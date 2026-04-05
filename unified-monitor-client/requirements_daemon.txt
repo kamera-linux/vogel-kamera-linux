@@ -8,4 +8,8 @@ pillow>=10.0.0
 psutil>=5.9.0
 opencv-python-headless>=4.8.0
 numpy>=1.26.0
+# torch CPU-only: ARM64/Hailo-Pi braucht kein NVIDIA CUDA (spart ~4 GB)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
 ultralytics>=8.0.0

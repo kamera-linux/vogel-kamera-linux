@@ -3,11 +3,11 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.2.6"
-__version_info__ = (2, 2, 6)
+__version__ = "2.3.0"
+__version_info__ = (2, 3, 0)
 
 # Release Information
-RELEASE_NAME = "Bugfix: Detection-Prozess & Aufnahmen-Tageszähler"
+RELEASE_NAME = "NPU Throttle-Level · Dashboard Stats · Favicon"
 RELEASE_DATE = "2026-03-31"
 RELEASE_TYPE = "patch"  # major, minor, patch
 

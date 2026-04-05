@@ -4,14 +4,15 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.2.6 — Bugfix: Detection-Prozess & Aufnahmen-Tageszähler 🐛
+## Release v2.3.0 — NPU Throttle-Level · Dashboard Stats · Favicon 🚀
 
-- **Version:** v2.2.6 (31. März 2026)
-- **🐛 Bugfixes:**
-  - **Detection-Race-Condition behoben:** Stop Detection → manuelle Aufnahme → Detection-Mode führte zu zwei konkurrierenden `rpicam-hello`-Prozessen → fix: explizites Killen des vorhandenen Prozesses vor Neustart
+- **Version:** v2.3.0 (5. April 2026)
 - **✨ Neue Features:**
-  - **📅 Aufnahmen-Tageszähler:** Dashboard-Karte „Aufnahmen heute" zeigt persistente Tagesanzahl der `.mp4`-Aufnahmen + Datum
-  - **🚀 Ansible Hotpatch:** Neues `hotpatch.yml` Playbook für schnellen Datei-Deployment ohne Image-Rebuild
+  - **🔬 NPU Throttle-Level:** Dashboard zeigt `– Normal` / `L0–L3` mit aktueller Taktfrequenz (350–200 MHz) statt abstrakter Zone-Nummer; farbkodiert (grün → orange → rot)
+  - **📊 Dashboard-Erweiterungen:** Neue Kacheln „Uptime" (Betriebszeit seit Neustart), „Container RAM" (RSS des pi-daemon-Prozesses), „Empfangen / Gesendet" (Netzwerk-I/O)
+  - **4 semantische Gruppen** im Dashboard: 🎯 Kamera & Erkennung · 🔬 NPU · 🖥️ System · 🌐 Netzwerk
+  - **❓ Online-Hilfe überarbeitet:** Hilfe-Modal spiegelt die 4 Gruppen mit vollständiger Throttle-Level-Erklärung wider
+  - **🌐 Browser Favicon / Tray-Icon:** `logo.png` als Tab-Icon und iOS-Homescreen-Icon
 
 - **🔧 Technical Stack:**
   - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
@@ -22,12 +23,17 @@
 
 **Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.2.6/`](releases/v2.2.6/RELEASE_NOTES_v2.2.6.md)
+**Release Notes:** [`releases/v2.3.0/`](releases/v2.3.0/RELEASE_NOTES_v2.3.0.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.2.6-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.2.6)
+[![Version](https://img.shields.io/badge/Version-v2.3.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.0)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.2.6 (Archiv)
+**Bugfix: Detection-Prozess & Aufnahmen-Tageszähler**
+- **Version:** v2.2.6 (31. März 2026)
+- Siehe [Archiv-Release](releases/v2.2.6/) für Details oder CHANGELOG.md
 
 ### v2.2.5 (Archiv)
 **EV & AWB Sliders**
@@ -383,7 +389,7 @@ vogel-kamera-linux/
 │   ├── requirements-pi.txt
 │   └── HAILO-README.md
 │
-├── docker/                           # 🐳 Dockerfile (ARM64, python:3.13-slim-bookworm)
+├── docker/                           # 🐳 Dockerfile (ARM64, python:3.13-slim-trixie)
 │
 ├── docs/                             # 📚 Dokumentation
 │   ├── i18n/                         #    README.de.md · README.md · README.ja.md
@@ -521,5 +527,5 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ---
 
-**Version:** v2.2.3 (März 2026) | **Status:** Produktionsreif ✅  
+**Version:** v2.3.0 (5. April 2026) | **Status:** Produktionsreif ✅  
 **Raspberry Pi 5 AI HAD+ · Hailo-8 NPU · Debian Trixie (13) | Docker Web-API | JWT + TOTP 2FA**

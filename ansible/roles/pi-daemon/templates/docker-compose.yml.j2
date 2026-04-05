@@ -27,11 +27,13 @@ services:
       - /usr/bin/rpicam-vid:/opt/rpicam-vid:ro              # Binary (Wrapper in /usr/local/bin/rpicam-vid)
       - /usr/bin/rpicam-hello:/opt/rpicam-hello:ro          # rpicam-hello für Hailo-NPU Detection
       - /usr/bin/rpicam-still:/opt/rpicam-still:ro          # rpicam-still für Snapshot-Aufnahmen
+      - /usr/bin/hailortcli:/usr/bin/hailortcli:ro          # Hailo CLI für NPU-Status (fw-version)
+      - /usr/lib/libhailort.so.4.23.0:/usr/lib/libhailort.so.4.23.0:ro  # Hailo Runtime Library (versionierte .so, Trixie-kompatibel)
       - /usr/share/rpi-camera-assets:/usr/share/rpi-camera-assets:ro  # Hailo HEF-JSON-Modelle (hailo_yolov8_inference.json etc.)
       - /lib/aarch64-linux-gnu:/host/lib:ro                  # Pi-spezifische Trixie-Libs (libcamera, libpisp ...)
       - /usr/lib/aarch64-linux-gnu:/host/usr/lib:ro            # Weitere Trixie-Libs (libav/ffmpeg H.264-Codec etc.)
       - /usr/lib/aarch64-linux-gnu/rpicam-apps-postproc:/usr/lib/aarch64-linux-gnu/rpicam-apps-postproc:ro  # Hailo/OpenCV Post-Processing-Plugins (hardcodierter Pfad in librpicam_app.so)
-      - /usr/lib/libhailort.so:/usr/lib/libhailort.so:ro                                    # Hailo Runtime Library (hardcodiert in hailo-postproc.so als /usr/lib/libhailort.so)
+      - /usr/lib/libhailort.so:/usr/lib/libhailort.so:ro                                    # Hailo Runtime Library Symlink (→ libhailort.so.4.23.0)
       - /usr/lib/aarch64-linux-gnu/hailo:/usr/lib/aarch64-linux-gnu/hailo:ro                # Hailo Tappas Post-Process-Libs (libyolo_hailortpp_post.so etc.)
       - /usr/share/hailo-models:/usr/share/hailo-models:ro                                  # Hailo HEF-Modell-Dateien (yolov8s_h8.hef etc.)
       - /usr/lib/aarch64-linux-gnu/rpicam-apps-encoder:/usr/lib/aarch64-linux-gnu/rpicam-apps-encoder:ro  # H.264-Encoder-Plugin

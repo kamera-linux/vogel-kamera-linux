@@ -17,7 +17,7 @@ Cross-Compilation des `pi-daemon`-Images (`linux/arm64`) auf einem **Gentoo x86_
 ```mermaid
 graph TD
     subgraph Image["🐳 vogel-pi:latest (linux/arm64)"]
-        BASE["python:3.13-slim-bookworm\n(ARM64 Basis)"]
+        BASE["python:3.13-slim-trixie\n(ARM64 Basis)"]
         PKG["System-Pakete\nffmpeg · alsa-utils · curl · libgl1"]
         PY["Python-Abhängigkeiten\n(requirements_daemon.txt)\nFlask · pyotp · bcrypt · psutil · ..."]
         APP["App-Code\npi_daemon_secure.py\nweb/ (HTML/CSS/JS)"]
