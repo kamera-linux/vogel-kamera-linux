@@ -422,6 +422,10 @@
         <div class="label">Freier Speicher</div>
         <div class="value" id="s-disk">–</div>
       </div>
+      <div class="card">
+        <div class="label">Container Status</div>
+        <div class="value" id="s-health">–</div>
+      </div>
     </div>
 
     <!-- Gruppe: Netzwerk -->
@@ -986,9 +990,13 @@
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
     };
     if (body) opts.body = JSON.stringify(body);
-    const res = await fetch(API_BASE + path, opts);
-    if (res.status === 401) { doLogout(); return null; }
-    return res.json().catch(() => ({}));
+    try {
+      const res = await fetch(API_BASE + path, opts);
+      if (res.status === 401) { doLogout(); return null; }
+      return res.json().catch(() => ({}));
+    } catch (_) {
+      return null;
+    }
   }
 
   function escHtml(s) {
@@ -1056,7 +1064,11 @@
 
   async function fetchStatus() {
     const data = await apiFetch('/api/status');
-    if (!data) return;
+    if (!data) {
+      setText('s-health', '<span style="color:#ef4444;font-weight:600">&#x2717; Unhealthy</span>');
+      return;
+    }
+    setText('s-health', '<span style="color:#22c55e;font-weight:600">&#x2713; Healthy</span>');
     const errBox = document.getElementById('error-box');
     if (data.last_error) { errBox.textContent = '⚠ Letzter Fehler: ' + data.last_error; errBox.style.display = 'block'; }
     else errBox.style.display = 'none';

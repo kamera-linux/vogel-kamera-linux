@@ -4,15 +4,13 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.3.0 — NPU Throttle-Level · Dashboard Stats · Favicon 🚀
+## Release v2.3.1 — Hailo-Deadlock-Fix · Container-Status-Kachel 🐛
 
-- **Version:** v2.3.0 (5. April 2026)
-- **✨ Neue Features:**
-  - **🔬 NPU Throttle-Level:** Dashboard zeigt `– Normal` / `L0–L3` mit aktueller Taktfrequenz (350–200 MHz) statt abstrakter Zone-Nummer; farbkodiert (grün → orange → rot)
-  - **📊 Dashboard-Erweiterungen:** Neue Kacheln „Uptime" (Betriebszeit seit Neustart), „Container RAM" (RSS des pi-daemon-Prozesses), „Empfangen / Gesendet" (Netzwerk-I/O)
-  - **4 semantische Gruppen** im Dashboard: 🎯 Kamera & Erkennung · 🔬 NPU · 🖥️ System · 🌐 Netzwerk
-  - **❓ Online-Hilfe überarbeitet:** Hilfe-Modal spiegelt die 4 Gruppen mit vollständiger Throttle-Level-Erklärung wider
-  - **🌐 Browser Favicon / Tray-Icon:** `logo.png` als Tab-Icon und iOS-Homescreen-Icon
+- **Version:** v2.3.1 (6. April 2026)
+- **🐛 Bugfix:**
+  - **Hailo-Temp Deadlock behoben:** Wenn `rpicam-hello` `/dev/hailo0` hielt, fror der Web-Server komplett ein (D-State, SIGKILL wirkungslos, 20+ hängende Prozesse). Fix: Hailo-Temp-Fetching in Background-Daemon-Thread ausgelagert — HTTP-Handler nie mehr blockierend.
+- **✨ Neues Feature:**
+  - **Container-Status-Kachel:** Dashboard zeigt `✓ Healthy` (grün) / `✗ Unhealthy` (rot) basierend auf API-Erreichbarkeit
 
 - **🔧 Technical Stack:**
   - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
@@ -23,12 +21,17 @@
 
 **Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.3.0/`](releases/v2.3.0/RELEASE_NOTES_v2.3.0.md)
+**Release Notes:** [`releases/v2.3.1/`](releases/v2.3.1/RELEASE_NOTES_v2.3.1.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.3.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.0)
+[![Version](https://img.shields.io/badge/Version-v2.3.1-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.1)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.3.0 (Archiv)
+**NPU Throttle-Level · Dashboard Stats · Favicon**
+- **Version:** v2.3.0 (5. April 2026)
+- Siehe [Archiv-Release](releases/v2.3.0/RELEASE_NOTES_v2.3.0.md) für Details oder CHANGELOG.md
 
 ### v2.2.6 (Archiv)
 **Bugfix: Detection-Prozess & Aufnahmen-Tageszähler**

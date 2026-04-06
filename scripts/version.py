@@ -3,16 +3,16 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.3.0"
-__version_info__ = (2, 3, 0)
+__version__ = "2.3.1"
+__version_info__ = (2, 3, 1)
 
 # Release Information
-RELEASE_NAME = "NPU Throttle-Level · Dashboard Stats · Favicon"
-RELEASE_DATE = "2026-03-31"
+RELEASE_NAME = "Hailo-Deadlock-Fix · Container-Status-Kachel"
+RELEASE_DATE = "2026-04-06"
 RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20260331-1"
+BUILD_NUMBER = "20260406-1"
 GIT_TAG = "v2.2.6"
 
 # Feature Flags

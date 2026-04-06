@@ -31,7 +31,7 @@ from flask_limiter.util import get_remote_address
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.3.0'
+APP_VERSION = '2.3.1'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -117,11 +117,9 @@ def _read_last_detection() -> dict:
 # ---------------------------------------------------------------------------
 _hailo_hw_cache: dict = {}
 _hailo_hw_cache_time: float = 0.0     # letzte Aktualisierung statischer Info
-_hailo_temp_cache_time: float = 0.0   # letzte Temperatur/Clock-Messung
 _HAILO_HW_CACHE_TTL: float = 60.0    # Sekunden – Board/FW/Treiber (ändert sich selten)
-_HAILO_TEMP_TTL: float = 30.0        # Sekunden – Temperatur + NN-Clock (dynamisch)
 
-# Python-Snippet für hailo_platform (läuft als Subprocess im Container).
+# Python-Snippet für hailo_platform.
 # /usr/lib/python3/dist-packages ist per Bind-Mount eingebunden (hailo_platform v4.23.0).
 # System-Python fragt Treiber über /dev/hailo0 → privileged Container erforderlich.
 _HAILO_TEMP_SCRIPT = (
@@ -135,18 +133,80 @@ _HAILO_TEMP_SCRIPT = (
     'd.release()'
 )
 
+# ── Hailo-Temp-Cache (wird ausschließlich vom Background-Thread beschrieben) ─
+# HTTP-Handler liest nur noch diesen Cache → kein subprocess im Request-Thread →
+# kein Deadlock wenn Device() auf /dev/hailo0 blockiert (D-State nach SIGKILL).
+_hailo_temp_bg: dict = {}                # npu_temp_c, nn_clock_mhz, throttle_*
+_hailo_temp_bg_lock = threading.Lock()   # schützt _hailo_temp_bg
+_HAILO_TEMP_INTERVAL: float = 30.0      # Sekunden zwischen Messungen
+
+
+def _hailo_temp_updater() -> None:
+    """Daemon-Thread: aktualisiert Hailo-Temperatur/Clock/Throttle im Hintergrund.
+
+    Läuft unabhängig vom HTTP-Request-Handler. Wenn Device() auf /dev/hailo0
+    blockiert (Subprocess in D-State), hängt nur dieser Thread – niemals der
+    Web-Server. Nach SIGKILL des Subprozesses via Prozessgruppen-Kill wird
+    comm() NICHT abgewartet, um Blocking auf D-State-Proz. zu vermeiden.
+    """
+    while True:
+        time.sleep(_HAILO_TEMP_INTERVAL)
+        if not Path('/dev/hailo0').exists():
+            continue
+        proc = None
+        try:
+            proc = subprocess.Popen(
+                ['python3', '-c', _HAILO_TEMP_SCRIPT],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                env={**os.environ, 'LD_LIBRARY_PATH': '/usr/lib:/usr/local/lib'},
+                start_new_session=True,   # eigene Prozessgruppe → killpg möglich
+            )
+            try:
+                stdout, _ = proc.communicate(timeout=12)
+                line = stdout.decode('utf-8', errors='replace').strip()
+                if line and ',' in line:
+                    parts = line.split(',')
+                    new: dict = {}
+                    if len(parts) >= 2:
+                        new['npu_temp_c']   = round(float(parts[0]), 1)
+                        new['nn_clock_mhz'] = int(parts[1])
+                    if len(parts) >= 4:
+                        new['throttle_active'] = bool(int(parts[2]))
+                        new['throttle_zone']   = int(parts[3])
+                    if len(parts) >= 5:
+                        new['throttle_level']  = int(parts[4])
+                    with _hailo_temp_bg_lock:
+                        _hailo_temp_bg.update(new)
+            except subprocess.TimeoutExpired:
+                # Subprocess blockiert (Device() wartet auf /dev/hailo0).
+                # Prozessgruppe per SIGKILL beenden – KEIN zweites communicate()
+                # da der Prozess im D-State sein kann und nicht sofort stirbt.
+                try:
+                    os.killpg(proc.pid, 9)
+                except Exception:
+                    pass
+                logger.warning('Hailo-Temp-Script Timeout (Gerät vermutlich belegt)')
+        except Exception as exc:
+            logger.debug('Hailo-Temp-Updater-Fehler: %s', exc)
+            if proc is not None:
+                try:
+                    os.killpg(proc.pid, 9)
+                except Exception:
+                    pass
+
+
 _net_io_prev: tuple = None   # (monotonic_time, bytes_recv, bytes_sent) für Netzwerk-Rate
 
 
 def _get_hailo_hw_info() -> dict:
-    """Liest Hailo-Hardware-Informationen aus sysfs, hailortcli und hailo_platform.
+    """Liest Hailo-Hardware-Informationen (statisch aus sysfs/hailortcli + dynamisch aus Cache).
 
-    Statische Daten (Board, FW, Treiber): 60 s TTL.
-    Dynamische Daten (Temperatur, NN-Clock): 30 s TTL via hailo_platform Python-API.
-    Gecacht in _hailo_hw_cache (shared, nicht Thread-safe – aber Worst Case: doppelter
-    subprocess-Aufruf bei Race Condition, kein Datenverlust).
+    Statische Daten (Board, FW, Treiber): 60 s TTL, kurze subprocess-Calls (hailortcli).
+    Dynamische Daten (Temperatur, NN-Clock, Throttle): aus _hailo_temp_bg, der vom
+    Background-Thread _hailo_temp_updater() befüllt wird – nie blockierend im HTTP-Thread.
     """
-    global _hailo_hw_cache, _hailo_hw_cache_time, _hailo_temp_cache_time
+    global _hailo_hw_cache, _hailo_hw_cache_time
     now = time.monotonic()
 
     # ── Statische Info (60 s TTL) ────────────────────────────────────────
@@ -201,38 +261,15 @@ def _get_hailo_hw_info() -> dict:
         except Exception:
             pass
 
-        # Bestehende Temperatur/Clock-Werte übernehmen (werden separat aktualisiert)
-        for key in ('npu_temp_c', 'nn_clock_mhz', 'throttle_level'):
-            if key in _hailo_hw_cache:
-                info[key] = _hailo_hw_cache[key]
-
         _hailo_hw_cache = info
         _hailo_hw_cache_time = now
 
-    # ── Dynamische Info: Temperatur + NN-Clock (30 s TTL) ───────────────
-    if (
-        _hailo_hw_cache.get('device_present')
-        and now - _hailo_temp_cache_time >= _HAILO_TEMP_TTL
-    ):
-        try:
-            res = subprocess.run(
-                ['python3', '-c', _HAILO_TEMP_SCRIPT],
-                capture_output=True, text=True, timeout=10,
-                env={**os.environ, 'LD_LIBRARY_PATH': '/usr/lib:/usr/local/lib'},
-            )
-            if res.returncode == 0 and ',' in res.stdout:
-                parts = res.stdout.strip().split(',')
-                if len(parts) >= 2:
-                    _hailo_hw_cache['npu_temp_c'] = round(float(parts[0]), 1)
-                    _hailo_hw_cache['nn_clock_mhz'] = int(parts[1])
-                if len(parts) >= 4:
-                    _hailo_hw_cache['throttle_active'] = bool(int(parts[2]))
-                    _hailo_hw_cache['throttle_zone'] = int(parts[3])
-                if len(parts) >= 5:
-                    _hailo_hw_cache['throttle_level'] = int(parts[4])
-        except Exception:
-            pass
-        _hailo_temp_cache_time = now
+    # ── Dynamische Info: aus Background-Thread-Cache (nie blockierend) ──
+    if _hailo_hw_cache.get('device_present'):
+        with _hailo_temp_bg_lock:
+            for key in ('npu_temp_c', 'nn_clock_mhz', 'throttle_active', 'throttle_zone', 'throttle_level'):
+                if key in _hailo_temp_bg:
+                    _hailo_hw_cache[key] = _hailo_temp_bg[key]
 
     return _hailo_hw_cache
 
@@ -2091,6 +2128,8 @@ if __name__ == '__main__':
 
     watchdog = threading.Thread(target=_detection_watchdog, daemon=True, name='detection-watchdog')
     watchdog.start()
+
+    threading.Thread(target=_hailo_temp_updater, daemon=True, name='hailo-temp').start()
 
     ssl_ctx = (CERT_FILE, KEY_FILE) if Path(CERT_FILE).exists() and Path(KEY_FILE).exists() else None
     if ssl_ctx is None:

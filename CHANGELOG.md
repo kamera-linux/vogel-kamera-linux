@@ -1,5 +1,30 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.3.1] - 6. April 2026 🐛 **Hailo-Deadlock-Fix · Container-Status-Kachel**
+
+### 🐛 Bugfixes
+- **Hailo-Temp Deadlock behoben** (`pi_daemon_secure.py`) — kritischer Fix
+  - Wenn `rpicam-hello` `/dev/hailo0` hielt, ging `Device()` in D-State (Uninterruptible Sleep)
+  - SIGKILL nach Timeout half nicht (D-State-Prozesse ignorieren Signale)
+  - `communicate()` blockierte im HTTP-Request-Thread → Web-Server fror komplett ein
+  - 20+ hängende `python3`-Prozesse akkumulierten sich, Container wurde `unhealthy`
+  - **Fix:** Hailo-Temp-Fetching aus HTTP-Thread ausgelagert → Background-Daemon-Thread
+  - `subprocess.Popen` + `start_new_session=True` + `os.killpg` ohne zweites `communicate()`
+  - HTTP-Handler liest nur noch aus `_hailo_temp_bg`-Dict (nie blockierend)
+
+### ✨ Features
+- **Container-Status-Kachel im Dashboard** (`pi_daemon_secure.py`, `web/index.html`)
+  - Neue Kachel „Container Status" im System-Bereich
+  - `✓ Healthy` (grün) wenn API antwortet, `✗ Unhealthy` (rot) bei Verbindungsabbruch
+  - `apiFetch()` um `try/catch` erweitert: gibt `null` bei Netzwerkfehler zurück (kein unbehandelter Promise-Rejection-Fehler)
+
+### 🔧 Geänderte Dateien
+- `unified-monitor-client/pi_daemon_secure.py` → Background-Thread `_hailo_temp_updater()` + `APP_VERSION` 2.3.1
+- `unified-monitor-client/web/index.html` → Container-Status-Kachel + `apiFetch()` try/catch
+- `VERSION`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/VERSION`, `scripts/__version__.py`, `scripts/version.py` → 2.3.1
+
+---
+
 ## [2.3.0] - 5. April 2026 🚀 **NPU Throttle-Level · Dashboard Stats · Favicon**
 
 ### ✨ Features
