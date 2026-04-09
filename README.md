@@ -94,8 +94,8 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**🐦Kohlmeise am Futterhaus - Zeitlupen-Aufnahmen**](https://www.youtube.com/watch?v=-9orWyLCK3A) | 07.04.2026 | 2:23 | 8 | 2 | 0 |
-| [**Haussperling und Grünling am Futterhaus - Zeitlupe...**](https://www.youtube.com/watch?v=NXworCxUw8Q) | 24.03.2026 | 2:40 | 53 | 3 | 0 |
+| [**🐦Kohlmeise am Futterhaus - Zeitlupen-Aufnahmen**](https://www.youtube.com/watch?v=-9orWyLCK3A) | 07.04.2026 | 2:23 | 14 | 4 | 0 |
+| [**Haussperling und Grünling am Futterhaus - Zeitlupe...**](https://www.youtube.com/watch?v=NXworCxUw8Q) | 24.03.2026 | 2:40 | 54 | 3 | 0 |
 | [**🐦 Vogel-Beobachtung mit neuem Futterhaus**](https://www.youtube.com/watch?v=Y3KsGb4NkbU) | 23.03.2026 | 0:55 | 32 | 5 | 0 |
 | [**🐦 Vogel-Beobachtung von einem Star am Futterhaus**](https://www.youtube.com/watch?v=0bNoF5cutnc) | 06.03.2026 | 2:33 | 58 | 6 | 0 |
 | [**🐦 Vogel-Beobachtung mit KI: Meisen, Rotkehlchen un...**](https://www.youtube.com/watch?v=1Mrq4oIzckI) | 30.11.2025 | 2:38 | 174 | 1 | 2 |
@@ -115,7 +115,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**Vogelhaus mit Blaumeise, Kernbeißer und Kohlmeise ...**](https://www.youtube.com/watch?v=kElfd64dWrY) | 21.04.2025 | 4:16 | 111 | 7 | 0 |
 | [**Vogelhaus mit Blaumeise, Haussperling und Kohlmeis...**](https://www.youtube.com/watch?v=hjrYji0A9Hs) | 18.04.2025 | 3:04 | 68 | 6 | 0 |
 
-*Automatisch aktualisiert: 08.04.2026 08:25 Uhr (Sommerzeit (MESZ))*
+*Automatisch aktualisiert: 09.04.2026 08:26 Uhr (Sommerzeit (MESZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## 🔩 Hardware-Stückliste
