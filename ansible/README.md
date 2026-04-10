@@ -51,6 +51,9 @@ graph LR
 ## Schnellstart
 
 ```bash
+# Einmalig: Ansible-venv anlegen (wird von build_and_deploy.sh automatisch genutzt)
+python3 -m venv ~/ansible-venv && ~/ansible-venv/bin/pip install ansible python-dotenv pyotp
+
 # Einmalig: persönliche Einstellungen anlegen
 cp ansible/.env.example ansible/.env
 nano ansible/.env
@@ -183,8 +186,8 @@ emerge -av sys-auth/oath-toolkit
 # Debian/Ubuntu
 apt install oathtool
 
-# Python
-pip install pyotp
+# Python (ansible-venv – wird von build_and_deploy.sh genutzt)
+~/ansible-venv/bin/pip install pyotp
 ```
 
 > Das `E2E_TOTP_SECRET` ist dasselbe Base32-Secret, das beim Erstdeployment in den Vault

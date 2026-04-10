@@ -462,7 +462,7 @@ def run_e2e(env: dict) -> None:
         f"{pi_user}@{pi_host}",
         'docker ps --filter name=pi-daemon --filter status=running --format "{{.Names}}"',
     ])
-    if r.returncode == 0 and b"pi-daemon" in r.stdout:
+    if r.returncode == 0 and "pi-daemon" in r.stdout:
         print(green("OK"))
     else:
         print(red("FEHLER – Container läuft nicht!"))
@@ -512,7 +512,16 @@ def run_e2e(env: dict) -> None:
                 else:
                     print(yellow(f"WARNUNG – recording_running={rec}"))
 
-                # [5] 10s-Testaufnahme
+                # [5] Testaufnahme – Detection ggf. stoppen (409 sonst)
+                _, status_body = http_get(f"{base_url}/api/status", headers=auth)
+                detection_was_running = status_body.get("detection_running", False)
+                detection_mode_was_auto = status_body.get("detection_mode", False) is True
+                if detection_was_running:
+                    print("   [5a] Detection stoppen (läuft)... ", end="", flush=True)
+                    _, db = http_post(f"{base_url}/api/detection/stop", {}, headers=auth)
+                    print(green("OK") if db.get("success") else yellow("Warnung"))
+                    time.sleep(2)
+
                 print("   [5] 10s-Testaufnahme starten (HD)... ", end="", flush=True)
                 _, body = http_post(f"{base_url}/api/record",
                                     {"duration": 10, "profile": "normal_hd"},
@@ -537,6 +546,12 @@ def run_e2e(env: dict) -> None:
                 else:
                     print(red("FEHLER – Aufnahme konnte nicht gestartet werden"))
                     errors += 1
+
+                if detection_was_running:
+                    print("   [5b] Detection wieder starten... ", end="", flush=True)
+                    endpoint = "/api/detection/mode/start" if detection_mode_was_auto else "/api/detection/start"
+                    _, db = http_post(f"{base_url}{endpoint}", {}, headers=auth)
+                    print(green("OK") if db.get("success") else yellow("Warnung"))
 
     print()
     if errors == 0:

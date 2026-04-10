@@ -10,7 +10,7 @@
 # ── Basics ────────────────────────────────────────────────────────────────
 - name: package.accept_keywords – Docker
   ansible.builtin.lineinfile:
-    path: /etc/portage/package.accept_keywords
+    path: /etc/portage/package.accept_keywords/docker
     line: "{{ item }}"
     create: true
   loop:
@@ -21,16 +21,22 @@
 
 - name: package.accept_keywords – QEMU
   ansible.builtin.lineinfile:
-    path: /etc/portage/package.accept_keywords
+    path: /etc/portage/package.accept_keywords/qemu
     line: "app-emulation/qemu ~amd64"
     create: true
   become: true
 
-- name: package.use – QEMU static-user
+- name: package.use – QEMU static-user + Abhängigkeiten
   ansible.builtin.lineinfile:
     path: /etc/portage/package.use/qemu
-    line: "app-emulation/qemu static-user"
+    line: "{{ item }}"
     create: true
+  loop:
+    - "app-emulation/qemu static-user"
+    - "dev-libs/glib static-libs"
+    - "sys-apps/attr static-libs"
+    - "dev-libs/libpcre2 static-libs"
+    - "sys-libs/zlib static-libs"
   become: true
 
 # QEMU_USER_TARGETS ist eine make.conf-Variable, kein USE-Flag → gehört in
