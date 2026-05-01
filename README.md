@@ -94,7 +94,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**Kleiber in 4K – Nahaufnahme am neuen Vogelfutterha...**](https://www.youtube.com/watch?v=cz382stk1C4) | 28.04.2026 | 2:11 | 21 | 4 | 1 |
+| [**Kleiber in 4K – Nahaufnahme am neuen Vogelfutterha...**](https://www.youtube.com/watch?v=cz382stk1C4) | 28.04.2026 | 2:11 | 27 | 5 | 1 |
 | [**Stieglitz in 4K – Nahaufnahme am neuen Vogelfutter...**](https://www.youtube.com/watch?v=0QABEj8JjS0) | 10.04.2026 | 3:20 | 84 | 6 | 0 |
 | [**🐦Kohlmeise am Futterhaus - Zeitlupen-Aufnahmen**](https://www.youtube.com/watch?v=-9orWyLCK3A) | 07.04.2026 | 2:23 | 53 | 4 | 0 |
 | [**Haussperling und Grünling am Futterhaus - Zeitlupe...**](https://www.youtube.com/watch?v=NXworCxUw8Q) | 24.03.2026 | 2:40 | 54 | 3 | 0 |
@@ -115,7 +115,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**Vogelhaus mit Kernbeißer (2 Kameras)**](https://www.youtube.com/watch?v=dvCXPdMdNCg) | 27.04.2025 | 2:12 | 87 | 8 | 2 |
 | [**Vogelhaus mit Kernbeißer und Blaumeise (Vogel-Paar...**](https://www.youtube.com/watch?v=61Szkcp9hcM) | 23.04.2025 | 2:59 | 57 | 6 | 2 |
 
-*Automatisch aktualisiert: 30.04.2026 08:45 Uhr (Sommerzeit (MESZ))*
+*Automatisch aktualisiert: 01.05.2026 08:47 Uhr (Sommerzeit (MESZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## 🔩 Hardware-Stückliste
