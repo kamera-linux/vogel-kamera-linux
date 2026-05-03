@@ -74,31 +74,126 @@ cd ansible && bash build_and_deploy.sh --update
 
 ---
 
-### Sudo-Authentifizierung ohne Passwort (Optional)
+### Sudo-Authentifizierung ohne Passwort (Optional, empfohlen)
 
-Der Build benötigt `sudo` für `systemctl restart docker`. Standardmäßig wird das Passwort interaktiv
-abgefragt. Um das zu automatisieren, nutzen Sie:
+Der Build benötigt `sudo` für das Neustarten des Docker-Daemon beim Aktualisieren der binfmt-Handler
+(QEMU-Emulatoren). Dies ist auf Gentoo notwendig für stabile ARM64-Cross-Compilation.
+
+**Problem (ohne Setup):**
+- Build fragt jedes Mal nach `sudo` Passwort
+- Bei CI/CD-Automation nicht möglich (unattended Build)
+- Manuell lästig bei häufigen Updates
+
+**Lösung:** Spezifische `systemctl`-Befehle mit `NOPASSWD` erlauben (sicher & standard).
+
+#### Automatische Einrichtung (empfohlen)
 
 ```bash
-# Einmalig: Passwordlose Sudo-Befehle einrichten
+# Einmalig: setup-sudo-nopasswd.sh ausführen
 bash ansible/setup-sudo-nopasswd.sh
+
+# Beispiel-Output:
+# 🔧 Richte passwordlose Sudo-Befehle für Docker ein...
+# ✅ /etc/sudoers.d/vogel-kamera-buildx erstellt
+# ✅ Einrichtung abgeschlossen!
 ```
 
-**Was macht das Script:**
-1. Erstellt `/etc/sudoers.d/vogel-kamera-buildx` mit `NOPASSWD`-Regeln
-2. Erlaubt nur **spezifische Docker systemctl Befehle** ohne Passwort
-3. Bleib sicher: Keine allgemeinen Root-Befehle ohne Passwort
+**Was das Script macht:**
+1. Erstellt sichere `/etc/sudoers.d/vogel-kamera-buildx`
+2. Nur `systemctl` Befehle erlaubt: `restart`, `start`, `status`, `enable`
+3. Nur für `%docker` Gruppe (falls Ihr User drin ist)
+4. Chmod 0440 (sudoers-Standard)
+5. Verifiziert mit `sudo -l` nach der Einrichtung
 
-**Nach Einrichtung:** Beim nächsten Build werden Sie **nicht** nach dem Passwort gefragt.
+#### Manuelle Einrichtung
 
-**Manuelle Alternative** (falls Sie setup-sudo-nopasswd.sh nicht nutzen möchten):
+Falls Sie das Script nicht nutzen möchten:
+
+```bash
+# Option 1: Mit visudo (empfohlen – syntax-checked)
+sudo visudo -f /etc/sudoers.d/vogel-kamera-buildx
+# Dann folgende Zeilen hinzufügen:
+```
+
+```sudoers
+# Vogel-Kamera Linux - Docker Buildx Build-Host Setup
+# Erlaubt passwordloses Neustarten von Docker (nötig für binfmt-Handler)
+
+Defaults env_keep += "DOCKER_HOST"
+Defaults secure_path = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Build-Host: Docker systemctl Befehle (ohne Passwort)
+%docker ALL=(ALL) NOPASSWD: /bin/systemctl restart docker
+%docker ALL=(ALL) NOPASSWD: /bin/systemctl start docker
+%docker ALL=(ALL) NOPASSWD: /bin/systemctl status docker
+%docker ALL=(ALL) NOPASSWD: /bin/systemctl enable docker
+```
+
+**Option 2: Direkt mit tee (schnell, aber ohne Syntax-Check)**
+
 ```bash
 sudo tee /etc/sudoers.d/vogel-kamera-buildx > /dev/null <<'EOF'
 %docker ALL=(ALL) NOPASSWD: /bin/systemctl restart docker
 %docker ALL=(ALL) NOPASSWD: /bin/systemctl start docker
 %docker ALL=(ALL) NOPASSWD: /bin/systemctl status docker
+%docker ALL=(ALL) NOPASSWD: /bin/systemctl enable docker
 EOF
+
 sudo chmod 0440 /etc/sudoers.d/vogel-kamera-buildx
+```
+
+#### Verifizierung
+
+Nach der Einrichtung überprüfen:
+
+```bash
+# Prüfe, ob Einträge sichtbar sind
+sudo -l | grep docker
+# → Sollte die NOPASSWD-Einträge anzeigen
+
+# Test: Sollte ohne Passwort funktionieren
+sudo systemctl is-active docker
+# ✅ OK, wenn: active (erfolgreich ohne Passwort)
+```
+
+#### Sicherheit & Besonderheiten
+
+**Warum ist das sicher?**
+- ✅ Nur Docker `systemctl` Befehle erlaubt (nicht beliebige Root-Befehle)
+- ✅ Nicht im Script oder `.env` gespeichert (nicht im RAM bei Prozess-Dump)
+- ✅ Standard für professionelle Automatisierung & CI/CD
+- ✅ Reversibl: `sudo rm /etc/sudoers.d/vogel-kamera-buildx` deaktiviert alles
+
+**Nur für docker Gruppe?**
+Falls Sie nicht in der `docker`-Gruppe sind, ändern Sie die erste Zeile:
+```sudoers
+# Für einzelnen User statt Gruppe:
+imme ALL=(ALL) NOPASSWD: /bin/systemctl restart docker
+```
+
+**Was, wenn Fehler nach Setup?**
+
+```bash
+# sudoers-Syntax-Fehler beheben (falls mit tee gemacht)
+sudo visudo -c
+# → "parsed OK" = gut
+
+# User in docker-Gruppe?
+groups
+# → Sollte docker enthalten, sonst: sudo usermod -a -G docker $USER
+
+# Danach neu anmelden oder:
+newgrp docker
+```
+
+#### Nach der Einrichtung
+
+Beim nächsten Build:
+
+```bash
+cd ansible && bash build_and_deploy.sh --update
+# ✅ Kein Passwort-Prompt!
+# Docker startet neu im Hintergrund während Build kompiliert
 ```
 
 ---
