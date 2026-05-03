@@ -343,14 +343,60 @@ def setup_host() -> None:
     print("   Danach: ./ansible/build_and_deploy.py --install")
 
 
+# ── QEMU binfmt-Handler ────────────────────────────────────────────────────────
+def ensure_qemu_binfmt_handlers() -> None:
+    """Aktualisiert QEMU-Emulatoren für ARM64 Cross-Compilation.
+    
+    Gentoo + Hardened-Kernel: QEMU aarch64 segfault bei ASLR (randomize_va_space=2).
+    Workaround: tonistiigi/binfmt mit aktuellen Patches installieren.
+    
+    Siehe: https://github.com/tonistiigi/binfmt/issues/215
+           https://github.com/docker/buildx/issues/3170
+    """
+    print(yellow("🔄 QEMU binfmt-Handler aktualisieren (tonistiigi/binfmt)..."))
+    try:
+        # Deinstalliere alte QEMU-Versionen
+        run_capture(["docker", "run", "--privileged", "--rm", "tonistiigi/binfmt", 
+                     "--uninstall", "qemu-*"])
+        
+        # Installiere alle Emulatoren (mit aktuellen Workarounds für Gentoo/ASLR)
+        result = run(["docker", "run", "--privileged", "--rm", "tonistiigi/binfmt",
+                      "--install", "all"])
+        
+        # Docker-Daemon neu starten, um Handler zu laden
+        print(yellow("   🔄 Docker-Daemon wird neu gestartet..."))
+        run(["sudo", "systemctl", "restart", "docker"])
+        time.sleep(3)  # Gib Docker Zeit zum Hochfahren
+        
+        print(green("   ✅ binfmt-Handler aktualisiert"))
+    except Exception as e:
+        print(yellow(f"   ⚠ binfmt-Update fehlgeschlagen: {e}"))
+        print("   (Weitermachen – fallback auf existierenden Builder)")
+
+
 # ── Docker Build ──────────────────────────────────────────────────────────────
 def docker_build(no_cache: bool) -> None:
-    if run_capture(["docker", "buildx", "inspect", "pi-builder"]).returncode != 0:
-        print(yellow("⚙ Erstelle docker buildx Kontext 'pi-builder'..."))
-        run(["docker", "buildx", "create", "--name", "pi-builder", "--use"])
-        run(["docker", "buildx", "inspect", "--bootstrap"])
-    run(["docker", "buildx", "use", "pi-builder"])
-
+    """Baut ARM64 Docker-Image mit buildx für Raspberry Pi Deployment.
+    
+    **Gentoo x86_64 → ARM64 Cross-Compilation:**
+    - Verwendet tonistiigi/binfmt für QEMU aarch64 Emulation
+    - Nutzt den stabilen 'default' docker-driver Builder
+    - Vermeidet gRPC-Fehler beim Erstellen neuer docker-container-driver Builder
+    
+    **Fehlerbehandlung bei gRPC Frame-Größe (v2.3.2+):**
+    - Symptom: "error reading server preface: http2: frame too large"
+    - Ursache: QEMU aarch64 Segfault auf Gentoo Hardened-Kernel (ASLR-Patches)
+    - Lösung: ensure_qemu_binfmt_handlers() + docker-driver Builder
+    
+    Siehe auch: ansible/README.md "QEMU binfmt-Handler · Laufzeit-Updates"
+    """
+    # ── Stelle sicher, dass QEMU binfmt-Handler aktuell sind ────────────────
+    ensure_qemu_binfmt_handlers()
+    
+    # ── Nutze den default builder (der bereits auf Gentoo funktioniert) ────────
+    print(yellow("📍 Verwende docker buildx 'default' Builder..."))
+    run(["docker", "buildx", "use", "default"])
+    
     print(f"\n{bold('📦 Baue Docker-Image für linux/arm64...')}")
     print(f"   Dockerfile: {DOCKERFILE}")
     print(f"   Build-Kontext: {REPO_ROOT}\n")

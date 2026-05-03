@@ -123,8 +123,57 @@ erreichbar ist.
 ```bash
 # Status prüfen
 cat /proc/sys/fs/binfmt_misc/qemu-aarch64
-docker buildx inspect pi-builder | grep Platforms
+docker buildx inspect | grep Platforms
 # → Platforms: linux/amd64, linux/arm64, ...
+```
+
+---
+
+### QEMU binfmt-Handler · Laufzeit-Updates
+
+Die `qemu-aarch64`-Emulatoren werden von **tonistiigi/binfmt** verwaltet. Diese Container-Images
+enthalten aktuelle QEMU-Workarounds für Hardening-Kernel wie Gentoo's *ASLR + Hardened PIE*.
+
+**Problem auf Gentoo (vor v2.3.2):**
+- QEMU aarch64 segfault bei Gentoo's hardenem Kernel (randomize_va_space=2)
+- gRPC HTTP/2-Rahmen-Fehler beim Starten von docker-container-driver Builder
+- `docker buildx create --name pi-builder` → `error reading server preface: http2: frame too large`
+
+**Lösung (v2.3.2+):**
+Die Python-Wrapper-Skripte `build_and_deploy.py` und `build_and_deploy.sh` kümmern sich um:
+1. **Automatisches Update** der binfmt-Handler bei `--setup-host` oder `--build`:
+   ```bash
+   docker run --privileged --rm tonistiigi/binfmt --install all
+   sudo systemctl restart docker
+   ```
+2. **Fallback auf stabilen Builder:** Nutze den existierenden `default` docker-driver Builder
+   statt ein neues `docker-container`-Treiben Builder zu erstellen.
+
+**Manuelle Aktualisierung (falls nötig):**
+```bash
+# Alle Emulatoren deinstallieren und neu installieren
+docker run --privileged --rm tonistiigi/binfmt --uninstall qemu-*
+docker run --privileged --rm tonistiigi/binfmt --install all
+
+# Docker-Daemon neu starten, um Handler zu laden
+sudo systemctl restart docker
+
+# Verifizierung
+docker buildx inspect | grep -A5 "Platforms:"
+# → Sollte mindestens linux/arm64 enthalten
+```
+
+**Kernel-Parameter (Gentoo-spezifisch):**
+```bash
+# Verifizieren Sie diese Werte (sonst segfault):
+cat /proc/sys/vm/mmap_rnd_bits        # Sollte 28 sein (optimal für QEMU)
+cat /proc/sys/kernel/randomize_va_space  # 0 oder 1 sind OK, 2 verursacht QEMU-Segfault
+```
+
+Falls `randomize_va_space=2`, deaktivieren Sie ASLR:
+```bash
+echo "kernel.randomize_va_space = 0" | sudo tee -a /etc/sysctl.d/00-qemu-fix.conf
+sudo sysctl -p /etc/sysctl.d/00-qemu-fix.conf
 ```
 
 ---

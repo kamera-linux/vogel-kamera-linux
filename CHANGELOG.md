@@ -1,5 +1,45 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.3.2] - 3. Mai 2026 🔧 **Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler**
+
+### 🐛 Bugfixes
+- **Docker Buildx gRPC-Fehler auf Gentoo behoben** (v2.3.1 Regression)
+  - Symptom: `error reading server preface: http2: frame too large` bei `docker buildx create --name pi-builder`
+  - Ursache: QEMU aarch64 Segfault unter Gentoo's Hardened-Kernel (ASLR-Patches)
+  - Betroffen: buildx v0.19.0–v0.21.2, nur auf Gentoo mit randomize_va_space=2
+  - **Fix (Primary):** Fallback auf stabilen `default` docker-driver Builder statt `docker-container`-Driver
+  - **Fix (Secondary):** Automatische tonistiigi/binfmt-Handler-Aktualisierung mit Workarounds
+
+### ✨ Features
+- **Automatische QEMU binfmt-Handler-Aktualisierung** (`ansible/build_and_deploy.py`)
+  - Neue Funktion: `ensure_qemu_binfmt_handlers()` — wird vor jedem Build ausgeführt
+  - `docker run --privileged tonistiigi/binfmt --install all` mit neuesten QEMU-Patches
+  - Docker-Daemon wird automatisch neu gestartet nach Handler-Update
+  - Manuell jederzeit testbar via `--setup-host`
+
+- **Robuste Builder-Auswahl für Cross-Compilation**
+  - Alt: `docker buildx create --name pi-builder --use` (gRPC-fehleranfällig)
+  - Neu: `docker buildx use default` (stabil auf allen Linux-Distributionen)
+
+### 📚 Dokumentation
+- **Ansible README erweitert** (`ansible/README.md`)
+  - Neue Sektion: "QEMU binfmt-Handler · Laufzeit-Updates"
+  - Gentoo Kernel-Parameter (mmap_rnd_bits, randomize_va_space)
+  - Manuelle binfmt-Handler-Aktualisierung
+  - ASLR-Konfiguration für Gentoo
+
+### 🔧 Geänderte Dateien
+- `ansible/build_and_deploy.py` → `ensure_qemu_binfmt_handlers()` + `docker buildx use default`
+- `ansible/README.md` → Neue Sektion über QEMU binfmt-Handler
+- `VERSION`, `scripts/version.py`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/VERSION` → 2.3.2
+
+### 🧪 Testing
+- ✅ Mehrfache erfolgreiche ARM64-Builds auf Gentoo (kein gRPC-Fehler)
+- ✅ Build-Zeit: ~760 Sekunden für vollständigen Dockerimage-Build
+- ✅ Deployment + Ansible + E2E-Test bestanden
+
+---
+
 ## [2.3.1] - 6. April 2026 🐛 **Hailo-Deadlock-Fix · Container-Status-Kachel**
 
 ### 🐛 Bugfixes
