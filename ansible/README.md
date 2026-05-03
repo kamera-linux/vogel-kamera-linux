@@ -61,11 +61,44 @@ nano ansible/.env
 # Einmalig: Vault-Passwort hinterlegen
 echo 'MeinVaultPasswort' > ~/.pi-daemon-vault-pass && chmod 600 ~/.pi-daemon-vault-pass
 
+# Einmalig: Sudo-Authentifizierung für Docker (optional, empfohlen)
+bash ansible/setup-sudo-nopasswd.sh
+# → Danach keine Passwort-Abfragen mehr beim Build!
+
 # Erstdeployment (baut Image, überträgt, richtet Pi ein)
 cd ansible && bash build_and_deploy.sh --install
 
 # Normales Update (Image neu bauen + ausrollen)
 cd ansible && bash build_and_deploy.sh --update
+```
+
+---
+
+### Sudo-Authentifizierung ohne Passwort (Optional)
+
+Der Build benötigt `sudo` für `systemctl restart docker`. Standardmäßig wird das Passwort interaktiv
+abgefragt. Um das zu automatisieren, nutzen Sie:
+
+```bash
+# Einmalig: Passwordlose Sudo-Befehle einrichten
+bash ansible/setup-sudo-nopasswd.sh
+```
+
+**Was macht das Script:**
+1. Erstellt `/etc/sudoers.d/vogel-kamera-buildx` mit `NOPASSWD`-Regeln
+2. Erlaubt nur **spezifische Docker systemctl Befehle** ohne Passwort
+3. Bleib sicher: Keine allgemeinen Root-Befehle ohne Passwort
+
+**Nach Einrichtung:** Beim nächsten Build werden Sie **nicht** nach dem Passwort gefragt.
+
+**Manuelle Alternative** (falls Sie setup-sudo-nopasswd.sh nicht nutzen möchten):
+```bash
+sudo tee /etc/sudoers.d/vogel-kamera-buildx > /dev/null <<'EOF'
+%docker ALL=(ALL) NOPASSWD: /bin/systemctl restart docker
+%docker ALL=(ALL) NOPASSWD: /bin/systemctl start docker
+%docker ALL=(ALL) NOPASSWD: /bin/systemctl status docker
+EOF
+sudo chmod 0440 /etc/sudoers.d/vogel-kamera-buildx
 ```
 
 ---

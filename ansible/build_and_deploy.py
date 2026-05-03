@@ -12,6 +12,11 @@ Voraussetzungen (einmalig):
   1. docker buildx create --use --name pi-builder  (oder: --setup-host)
   2. ansible-vault encrypt ansible/group_vars/all/vault.yml
   3. echo 'VaultPasswort' > ~/.pi-daemon-vault-pass && chmod 600 ~/.pi-daemon-vault-pass
+  4. (Optional) bash ansible/setup-sudo-nopasswd.sh  # Sudo ohne Passwort für Docker
+
+Hinweis: Der Build fragt nach dem Sudo-Passwort für docker systemctl restart.
+Geben Sie 'bash ansible/setup-sudo-nopasswd.sh' ein, um dies zu automatisieren
+(setzt NOPASSWD-Regeln in /etc/sudoers.d/vogel-kamera-buildx).
 """
 
 import argparse
