@@ -8,10 +8,32 @@ Requires=docker.service
 Type=simple
 User={{ pi_user }}
 WorkingDirectory={{ pi_daemon_dir }}
-ExecStart=/usr/bin/docker compose up
+
+# ── Start-Befehl: docker compose up ohne detach (Logs gehen zu systemd journal) ────────────────────
+ExecStart=/usr/bin/docker compose up --no-color
 ExecStop=/usr/bin/docker compose down
-Restart=on-failure
-RestartSec=10
+
+# ── Restart-Verhalten: IMMER neu starten wenn Service beendet oder stuck ────────────────────
+Restart=always
+RestartSec=30
+
+# ── Start-Limit: Maximum 5 Starts pro 5 Minuten, dann gibt auf ────────────────────
+# Verhütert endlose Restart-Schleifen wenn Service fundamentale Fehler hat
+StartLimitInterval=300
+StartLimitBurst=5
+StartLimitAction=stop  # Stoppt Service wenn Limit überschritten
+
+# ── Robustheit: Standard-Signale für Stop + KillMode ────────────────────
+KillMode=mixed          # Sendet SIGTERM an main process + SIGKILL an alle child processes
+KillSignal=SIGTERM      # Standard bei manueller Beendigung
+TimeoutStopSec=20       # 20s warten bevor SIGKILL gesendet wird
+
+# ── Logging ────────────────────
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pi-daemon
 
 [Install]
 WantedBy=multi-user.target
+
+# ── Nach Reboot auto-starten ────────────────────

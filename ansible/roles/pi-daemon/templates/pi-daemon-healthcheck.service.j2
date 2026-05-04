@@ -1,0 +1,41 @@
+# Systemd-Service: Health-Check Monitor für Pi-Daemon
+# Überwacht regelmäßig den Docker Health-Status und startet Container neu wenn nötig.
+#
+# Installation:
+#   sudo cp pi-daemon-healthcheck.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable pi-daemon-healthcheck.service
+#   sudo systemctl start pi-daemon-healthcheck.service
+#
+# Logs anschauen:
+#   sudo journalctl -u pi-daemon-healthcheck -f
+#   tail -f /var/log/pi-daemon-health.log
+
+[Unit]
+Description=Vogel-Kamera Pi-Daemon Health-Check Monitor
+Documentation=man:pi-daemon(8)
+After=docker.service pi-daemon.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root  # Braucht root für docker restart Befehl
+ExecStart=/usr/local/bin/health-check-monitor.sh
+
+# Restart-Verhalten
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pi-daemon-healthcheck
+StandardOutputType=journal
+
+# Robustheit
+TimeoutStopSec=10
+KillMode=process
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

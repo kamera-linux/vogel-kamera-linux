@@ -5,7 +5,9 @@ services:
   pi-daemon:
     image: {{ pi_daemon_image }}:{{ pi_daemon_image_tag }}
     container_name: pi-daemon
-    restart: always
+    restart: on-failure:5
+    # Restart-Policy: Versucht bis zu 5 Mal neu zu starten, dann stoppt.
+    # Wird kombiniert mit systemd-Service (on-failure + StartLimitBurst) für zusätzliche Resilienz
 
     ports:
       - "{{ pi_daemon_port }}:{{ pi_daemon_port }}"
@@ -64,8 +66,31 @@ services:
     tmpfs:
       - /tmp:size=256m
 
+    # ── Health-Check: Prüft alle 30s ob Daemon noch reagiert ────────────────────────
+    # Wird von Docker genutzt um "on-failure:5" zu triggern.
+    # Gibt Health-Status an systemd via "docker ps" oder Logs.
+    healthcheck:
+      test: |
+        python3 -c "
+        import urllib.request, ssl, sys
+        try:
+          ctx = ssl.create_default_context()
+          ctx.check_hostname = False
+          ctx.verify_mode = ssl.CERT_NONE
+          urllib.request.urlopen('https://localhost:8443/api/health', context=ctx, timeout=4)
+          sys.exit(0)
+        except Exception as e:
+          print(f'Health-Check fehlgeschlagen: {e}')
+          sys.exit(1)
+        "
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+        labels: "service=pi-daemon"

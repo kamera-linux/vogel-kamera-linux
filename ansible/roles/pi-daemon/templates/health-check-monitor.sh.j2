@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# health-check-monitor.sh – Überwacht Pi-Daemon Health-Status
+# Läuft im Hintergrund und logged/alertiert bei Problemen
+#
+# Installation:
+#   sudo cp health-check-monitor.sh /usr/local/bin/
+#   sudo chmod +x /usr/local/bin/health-check-monitor.sh
+#
+# Als systemd-Service:
+#   sudo cp pi-daemon-healthcheck.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable pi-daemon-healthcheck.service
+#   sudo systemctl start pi-daemon-healthcheck.service
+#
+
+set -o pipefail
+
+# ── Konfiguration ──────────────────────────────────────────────────────────
+CONTAINER_NAME="pi-daemon"
+CHECK_INTERVAL=60           # Sekunden zwischen Checks
+UNHEALTHY_THRESHOLD=3       # Anzahl fehlgeschlagener Checks bevor Alert
+LOG_FILE="/var/log/pi-daemon-health.log"
+PORT="{{ pi_daemon_port }}"
+
+# ── Hilfsfunktionen ───────────────────────────────────────────────────────
+log() {
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+alert() {
+  log "🚨 ALERT: $*"
+  # Optional: systemd journal an
+  journalctl -n 50 | tail -20 >> "$LOG_FILE"
+}
+
+restart_container() {
+  log "↻ Starte Pi-Daemon Container neu…"
+  docker restart "$CONTAINER_NAME" >> "$LOG_FILE" 2>&1
+  if [ $? -eq 0 ]; then
+    log "✅ Container neu gestartet"
+  else
+    log "❌ Container-Neustart fehlgeschlagen!"
+    alert "Docker restart fehlgeschlagen"
+  fi
+}
+
+# ── Health-Check ──────────────────────────────────────────────────────────
+consecutive_failures=0
+
+while true; do
+  # Docker Health-Status prüfen
+  health_status=$(docker inspect "$CONTAINER_NAME" --format='{{json .State.Health.Status}}' 2>/dev/null | tr -d '"')
+  
+  case "$health_status" in
+    "healthy")
+      # ✅ Alles OK
+      if [ $consecutive_failures -gt 0 ]; then
+        log "✅ Container wieder healthy (war $consecutive_failures Mal fehlgeschlagen)"
+        consecutive_failures=0
+      fi
+      ;;
+    "unhealthy")
+      # ⚠️ Health-Check fehlgeschlagen
+      consecutive_failures=$((consecutive_failures + 1))
+      log "⚠️  Health-Check fehlgeschlagen (#$consecutive_failures/$UNHEALTHY_THRESHOLD)"
+      
+      if [ $consecutive_failures -ge $UNHEALTHY_THRESHOLD ]; then
+        alert "Unhealthy nach $UNHEALTHY_THRESHOLD Checks – starte Neustart"
+        restart_container
+        consecutive_failures=0  # Reset nach Neustart-Versuch
+      fi
+      ;;
+    *)
+      # Docker nicht erreichbar oder Container existiert nicht
+      log "❌ Container Status ungültig: $health_status (existiert Container?)"
+      consecutive_failures=$((consecutive_failures + 1))
+      
+      if [ $consecutive_failures -ge $UNHEALTHY_THRESHOLD ]; then
+        alert "Container nicht erreichbar – versuche Neustart"
+        restart_container
+        consecutive_failures=0
+      fi
+      ;;
+  esac
+  
+  sleep "$CHECK_INTERVAL"
+done
