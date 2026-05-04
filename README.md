@@ -4,49 +4,56 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.3.2 — Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler 🔧
+## Release v2.3.3 — Health-Check System · Daemon Resilience 🏥
 
-- **Version:** v2.3.2 (3. Mai 2026)
-- **🔧 Bugfix – Gentoo Buildx-Error (3 Wochen alt):**
-  - **Behoben:** `error reading server preface: http2: frame too large` bei `docker buildx create` auf Gentoo
-  - **Ursache:** QEMU aarch64 Segfault unter Hardened-Kernel (ASLR-Patches)
-  - **Lösung:** 
-    1. Automatische tonistiigi/binfmt-Handler-Aktualisierung vor jedem Build
-    2. Fallback auf stabilen `default` docker-driver Builder (statt fehlerhafte docker-container-Driver)
-  - **Auswirkung:** Zuverlässige ARM64-Cross-Builds auf Gentoo jetzt möglich
+- **Version:** v2.3.3 (4. Mai 2026)
+- **🏥 Neue Features – Health-Check System:**
+  - **Unauthentifizierter `/api/health` Endpoint** für Docker HEALTHCHECK
+  - **Systemd Health-Check Service** mit automatischer Überwachung
+  - **Bash-Monitor-Script** mit Auto-Restart bei Ausfällen
+  - **Docker-Compose Integration** mit vollständiger Health-Check Konfiguration
+  - **Umfassende Dokumentation** (4 neue Guides im `docs/` Verzeichnis)
 
 - **✨ Verbesserungen:**
-  - Automatisierte QEMU-Emulator-Aktualisierung mit Workarounds
-  - Robuste Builder-Auswahl für alle Linux-Distributionen
-  - Erweiterte Ansible-Dokumentation (QEMU/Kernel-Setup für Gentoo)
+  - Bessere Daemon-Resilience unter Last
+  - Robusteres SSH-Error-Handling
+  - Improved Thread-Management
+  - Graceful Shutdown in Systemd
 
-- **🔧 Technical Stack:** (unverändert)
+- **📚 Neue Dokumentation:**
+  - `docs/README-HEALTH-CHECK-SYSTEM.md` — Übersicht & Navigation
+  - `docs/HEALTHCHECK-CHEATSHEET.md` — Schnell-Referenz (Ops/DevOps)
+  - `docs/HEALTHCHECK-OPTIMIZATION.md` — Detaillierte Architektur
+  - `docs/HEALTHCHECK-MERMAID.md` — 7 Visuelle Diagramme
+
+- **🔧 Technical Stack:** (erweitert)
   - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
   - ✅ JWT-Authentifizierung + TOTP-2FA (PyOTP)
   - ✅ Hailo-8 NPU Detection (rpicam-hello + YOLOv8 HEF) als Subprocess im Container
   - ✅ Automatische Video-Konvertierung (H264 → MP4) und SSH-Sync zu Zielsystemen
   - ✅ Persönliche Konfiguration ausschließlich in `ansible/.env` (gitignored)
-  - ✅ **NEU:** Cross-Compilation x86_64 → ARM64 auf Gentoo stabil
+  - ✅ **NEU:** `/api/health` Endpoint ohne Authentifizierung für Docker Health-Checks
+  - ✅ **NEU:** Systemd Service + Bash Monitor für kontinuierliche Überwachung
 
 **Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.3.2/`](releases/v2.3.2/README.md)
+**Release Notes:** [`releases/v2.3.3/`](releases/v2.3.3/RELEASE_NOTES_v2.3.3.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.3.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.2)
+[![Version](https://img.shields.io/badge/Version-v2.3.3-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.3)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
-[![Gentoo Compatible](https://img.shields.io/badge/Gentoo-Buildx--Fixed-purple)]()
+[![Health Monitoring](https://img.shields.io/badge/Monitoring-Health--Check-ff69b4)]()
 
-### v2.3.0 (Archiv)
-**NPU Throttle-Level · Dashboard Stats · Favicon**
-- **Version:** v2.3.0 (5. April 2026)
-- Siehe [Archiv-Release](releases/v2.3.0/RELEASE_NOTES_v2.3.0.md) für Details oder CHANGELOG.md
+### v2.3.2 (Archiv)
+**Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler**
+- **Version:** v2.3.2 (3. Mai 2026)
+- Siehe [Archiv-Release](releases/v2.3.2/RELEASE_NOTES_v2.3.2.md) für Details oder CHANGELOG.md
 
-### v2.2.6 (Archiv)
-**Bugfix: Detection-Prozess & Aufnahmen-Tageszähler**
-- **Version:** v2.2.6 (31. März 2026)
-- Siehe [Archiv-Release](releases/v2.2.6/) für Details oder CHANGELOG.md
+### v2.3.1 (Archiv)
+**Hailo-Deadlock-Fix · Container-Status-Kachel**
+- **Version:** v2.3.1 (6. April 2026)
+- Siehe [Archiv-Release](releases/v2.3.1/RELEASE_NOTES_v2.3.1.md) für Details oder CHANGELOG.md
 
 ### v2.2.5 (Archiv)
 **EV & AWB Sliders**

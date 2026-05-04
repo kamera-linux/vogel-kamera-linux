@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.3.2"
-__version_info__ = (2, 3, 2)
+__version__ = "2.3.3"
+__version_info__ = (2, 3, 3)
 
 # Release Information
-RELEASE_NAME = "Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler"
-RELEASE_DATE = "2026-05-03"
-RELEASE_TYPE = "patch"  # major, minor, patch
+RELEASE_NAME = "Health-Check System · Daemon Resilience"
+RELEASE_DATE = "2026-05-04"
+RELEASE_TYPE = "minor"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20260503-1"
-GIT_TAG = "v2.3.2"
+BUILD_NUMBER = "20260504-1"
+GIT_TAG = "v2.3.3"
 
 # Feature Flags
 FEATURES = {

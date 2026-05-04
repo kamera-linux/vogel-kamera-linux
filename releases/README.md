@@ -4,30 +4,41 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.2.1** - "Web-GUI Verbesserungen & HTTPS-Komfort" 🆕
+**Version 2.3.3** - "Health-Check System · Daemon Resilience" 🏥
 - **Branch:** main
-- **Release Notes:** [v2.2.1/RELEASE_NOTES_v2.2.1.md](v2.2.1/RELEASE_NOTES_v2.2.1.md)
-- **Release Date:** 2026-03-15
+- **Release Notes:** [v2.3.3/RELEASE_NOTES_v2.3.3.md](v2.3.3/RELEASE_NOTES_v2.3.3.md)
+- **Release Date:** 2026-05-04
 - **🆕 Features:**
-  - 🆕 **Versions-Badge** in der Web-GUI-Topbar (live aus `/api/status`)
-  - 🆕 **Projekt-Logo** auf Login-Seite (220 px) und Topbar (32 px)
-  - 🆕 **HTTPS-Komfort:** `GET /cert.pem` Route + Chrome-Importanleitung auf der Login-Seite
-  - 🆕 **Hilfe-Modal** um Audio-Only und Live-Vorschau Sektionen ergänzt
-- **🐛 Bugfixes:**
-  - E2E-Test Profilname `FHD` → `normal_hd` (HTTP 400 behoben)
-  - Dockerfile `--platform`-Warnung `RedundantTargetPlatform` behoben
-- **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
+  - 🏥 **Unauthentifizierter `/api/health` Endpoint** für Docker HEALTHCHECK
+  - 🏥 **Systemd Health-Check Service** mit automatischer Überwachung
+  - 🏥 **Bash-Monitor-Script** mit Auto-Restart bei Ausfällen
+  - 📚 **4 neue Dokumentations-Guides** (README, Cheatsheet, Optimization, Mermaid-Diagramme)
+- **🔧 Verbesserungen:**
+  - Bessere Daemon-Resilience unter Last
+  - Robusteres SSH-Error-Handling
+  - Improved Thread-Management
+- **Kompatibel:** Raspberry Pi OS, Gentoo Linux
 
 ## 📦 Vorherige Versionen
 
-### Version 2.2.0 - "Docker & Ansible Build-Infrastruktur"
-- **Release Notes:** [v2.2.0/RELEASE_NOTES_v2.2.0.md](v2.2.0/RELEASE_NOTES_v2.2.0.md)
-- **Release Date:** 2026-03-13
+### Version 2.3.2 - "Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler"
+- **Release Notes:** [v2.3.2/RELEASE_NOTES_v2.3.2.md](v2.3.2/RELEASE_NOTES_v2.3.2.md)
+- **Release Date:** 2026-05-03
 - **Features:**
-  - 🐳 Ansible-Rolle `build-host` für Gentoo Build-Rechner
-  - 🐳 Neuer `--setup-host` Befehl in `build_and_deploy.sh`
-  - 🐳 Playbook `setup-build-host.yml` für lokalen Cross-Compilation-Host
-  - 📖 Vollständige `ansible/README.md` + `docker/README.md`
+  - 🔧 Behobener kritischer gRPC-Fehler auf Gentoo (`http2: frame too large`)
+  - 🔧 Automatische QEMU binfmt-Handler-Aktualisierung
+  - 🔧 Robuster Builder-Fallback auf `default` docker-driver
+
+### Version 2.3.1 - "Hailo-Deadlock-Fix · Container-Status-Kachel"
+- **Release Notes:** [v2.3.1/RELEASE_NOTES_v2.3.1.md](v2.3.1/RELEASE_NOTES_v2.3.1.md)
+- **Release Date:** 2026-04-06
+- **Features:**
+  - 🐛 Kritischer Deadlock-Fix im Hailo-Temp-Monitor behoben
+  - 📊 Container-Status-Kachel hinzugefügt
+  - 🔧 SSH-Resilience verbessert
+
+### Version 2.3.0 - "NPU Throttle-Level · Dashboard Stats · Favicon"
+- **Release Notes:** [v2.3.0/RELEASE_NOTES_v2.3.0.md](v2.3.0/RELEASE_NOTES_v2.3.0.md)
 - **Kompatibel:** Raspberry Pi OS Trixie (Debian 13)
 
 ### Version 2.1.1 - "Graceful Shutdown & Detect-and-Record Mode"
