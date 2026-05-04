@@ -1274,6 +1274,29 @@ def api_login():
     return jsonify({'token': token, 'expires_in': TOKEN_EXPIRY_H * 3600})
 
 
+# ── Health-Check (OHNE Auth für Docker) ─────────────────────────────────────────
+
+@app.route('/api/health')
+def api_health():
+    """Unauthentifizierter Health-Check Endpoint für Docker Health-Check."""
+    try:
+        mem = psutil.virtual_memory()
+        disk = psutil.disk_usage(VIDEO_BASE_DIR if Path(VIDEO_BASE_DIR).exists() else '/')
+        system = {
+            'mem_used_mb': round(mem.used / 1_048_576),
+            'mem_total_mb': round(mem.total / 1_048_576),
+            'disk_free_gb': round(disk.free / 1_073_741_824, 1),
+        }
+    except Exception:
+        system = {}
+    
+    return jsonify({
+        'version': APP_VERSION,
+        'system': system,
+        'status': 'ok',
+    })
+
+
 # ── Status ────────────────────────────────────────────────────────────────────
 
 @app.route('/api/status')
