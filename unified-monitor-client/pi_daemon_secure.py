@@ -392,17 +392,17 @@ RECORDING_PROFILES = {
     },
     # ── Zeitlupe-Profile (High-FPS Aufnahme, Wiedergabe bei 30fps = Zeitlupe) ─
     'slowmo_720p': {
-        'label':      'Zeitlupe 720p (120fps → 4× langsamer)',
-        'resolution': 'slowmo_720p',  # 1280×720 @ 120fps
-        'fps':        120,
-        'bitrate':    12000,
+        'label':      'Zeitlupe HQ (2304×1296 @ 56fps → 1.9× langsamer) ✨',
+        'resolution': 'slowmo_hq',  # 2304×1296 @ 56fps - Bessere Qualität
+        'fps':        56,
+        'bitrate':    18000,
         'slowmotion': True,
     },
     'slowmo_1080p': {
-        'label':      'Zeitlupe 1080p (60fps → 2× langsamer)',
-        'resolution': 'slowmo_1080p',  # 1920×1080 @ 60fps
-        'fps':        60,
-        'bitrate':    16000,
+        'label':      'Zeitlupe 120fps (1536×864 @ 120fps → 4× langsamer)',
+        'resolution': 'slowmo_fast',  # 1536×864 @ 120fps - Ultra-Highspeed
+        'fps':        120,
+        'bitrate':    14000,
         'slowmotion': True,
     },
 }
@@ -414,8 +414,8 @@ _RESOLUTION_MAP = {
     '1080p':       (1920,  1080),
     '2k':          (2560,  1440),
     '4k':          (4096,  2160),
-    'slowmo_720p': (1280,   720),   # 1280×720 @ 120fps
-    'slowmo_1080p':(1920,  1080),   # 1920×1080 @ 60fps
+    'slowmo_hq':   (2304,  1296),   # 2304×1296 @ 56fps - Bessere Qualität
+    'slowmo_fast': (1536,   864),   # 1536×864 @ 120fps - Ultra-Highspeed
 }
 
 # Persistente Aufnahme-Einstellungen (werden via API gesetzt)

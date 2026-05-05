@@ -68,7 +68,11 @@ RECORDING_MODES = {
         'audio': True,
     },
     'slowmo': {
-        'desc': 'Zeitlupen-Modus (1536x864 @ 120fps)',
+        'desc': 'Zeitlupen-Modus HQ (2304x1296 @ 56fps)',
+        'audio': False,
+    },
+    'slowmo-fast': {
+        'desc': 'Zeitlupen-Modus Ultra-Highspeed (1536x864 @ 120fps)',
         'audio': False,
     },
     '4k': {

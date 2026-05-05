@@ -991,7 +991,8 @@ def main():
     parser.add_argument('--recording-height', type=int, default=2160, help='Aufnahme-Höhe (default: 2160 - Cinema 4K)')
     parser.add_argument('--recording-fps', type=int, default=30, help='Aufnahme-FPS (default: 30)')
     parser.add_argument('--recording-duration', type=int, default=60, help='Aufnahme-Dauer in Sekunden (default: 60)')
-    parser.add_argument('--slowmo', action='store_true', help='Zeitlupen-Modus (1536x864 @ 120fps, überschreibt Auflösung/FPS)')
+    parser.add_argument('--slowmo', action='store_true', help='Zeitlupen-Modus HQ (2304x1296 @ 56fps, überschreibt Auflösung/FPS)')
+    parser.add_argument('--slowmo-fast', action='store_true', help='Zeitlupen-Modus Ultra-Highspeed (1536x864 @ 120fps, überschreibt Auflösung/FPS)')
     parser.add_argument('--enable-audio', action='store_true', help='Audio-Aufnahme aktivieren (parallel zum Video)')
     parser.add_argument('--debug', action='store_true', help='Debug-Modus aktivieren')
     
@@ -1005,7 +1006,16 @@ def main():
     # Zeitlupen-Modus: Überschreibe Auflösung und FPS
     if args.slowmo:
         print("=" * 70)
-        print("🎬 ZEITLUPEN-MODUS AKTIVIERT")
+        print("🎬 ZEITLUPEN-MODUS HQ AKTIVIERT (Bessere Qualität)")
+        print(f"📹 Auflösung: {2304}x{1296} @ {56}fps")
+        print("=" * 70 + "\n")
+        args.recording_width = 2304
+        args.recording_height = 1296
+        args.recording_fps = 56
+    
+    if args.slowmo_fast:
+        print("=" * 70)
+        print("🎬 ZEITLUPEN-MODUS 120FPS AKTIVIERT (Ultra-Highspeed)")
         print(f"📹 Auflösung: {1536}x{864} @ {120}fps")
         print("=" * 70 + "\n")
         args.recording_width = 1536
