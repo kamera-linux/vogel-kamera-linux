@@ -4,53 +4,44 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.3.4 — Audio-Qualität Upgrade · Professional Recording 🎤
+## Release v2.3.5 — Slow-Motion Upgrade · High-Performance Recording 🎬
 
-- **Version:** v2.3.4 (5. Mai 2026)
-- **🎤 Neue Features – Professional Audio Recording:**
-  - **Professionelle Audio-Aufnahme mit ffmpeg** (statt altem arecord)
-  - **48kHz Sample-Rate überall** (Video+Audio, Audio-only, und Fallback)
-  - **Audio-Filterung:** Hochpass @ 80Hz (Brummtöne weg) + Volume 1.5x (bessere Aussteuerung)
-  - **Automatisches Fallback** auf arecord mit 48kHz wenn ffmpeg fehlt
-  - **Einheitliche Audio-Pipeline** – gleiche Qualität bei allen Aufnahme-Modi
+- **Version:** v2.3.5 (5. Mai 2026)
+- **🎬 Neue Features – High-Performance Zeitlupe:**
+  - **Zeitlupen-Modus HQ:** 2304×1296 @ 56fps (1.9× langsamer, bessere Qualität)
+  - **Zeitlupen-Modus 120fps:** 1536×864 @ 120fps (4× langsamer, ultra-highspeed)
+  - **Automatische Auflösungswahl** basierend auf FPS-Anforderung
+  - **Beide Modi im Web-Dashboard wählbar** (Recording Profiles)
 
 - **✨ Verbesserungen:**
-  - **Keine Qualitäts-Unterschiede mehr:** Video+Audio und Audio-only nutzen jetzt die gleiche ffmpeg-Pipeline
-  - Robustere Fehlerbehandlung (Non-blocking stderr-Lesen, besseres Logging)
-  - Vogelgesang-Analyse optimiert: 48kHz Bandbreite bis 24kHz (vs. 22kHz bei 44.1kHz)
-  - Audio-Aufnahmen sind ~5-10% kleiner bei besserer Qualität
+  - Kamera-Auflösung optimiert für höhere Framerates
+  - CPU-Auslastung optimiert (~60% bei HQ-Slowmo, ~75% bei 120fps)
+  - Bessere Flugbewegungsanalyse durch höhere Auflösung bei Zeitlupen
+  - Profile persistent gespeichert
 
 - **🔧 Technische Änderungen:**
-  - `pi_daemon_secure.py` → `record_audio()` komplett überarbeitet
-  - Legacy-Scripts aktualisiert: `_start_audio_recording()` + Threads
-  - Alle Audio-Aufnahmen nutzen **48kHz statt 44.1kHz**
-  - Fallback-Mechanismus für Kompatibilität
+  - `pi_daemon_secure.py` RECORDING_PROFILES + Resolution Map
+  - Legacy Scripts: `--slowmo` (HQ) + `--slowmo-fast` (120fps)
+  - Wiki: Recording-Modes.md dokumentiert mit Performance-Vergleich
 
 - **📚 Dokumentation:**
-  - `AUDIO_QUALITY_IMPROVEMENTS.md` — Detaillierte Übersicht
-  - `AUDIO_UPGRADE_CHECKLIST.md` — Test-Checkliste + Troubleshooting
-  - Release Notes erweitert mit Audio-Wissenschaft
+  - Recording-Modes.md: Slowmo-Modi mit Qualitäts-Vergleich
+  - Release Notes: v2.3.5 mit Performance-Daten
 
 **Deployment:** [`ansible/build_and_deploy.sh --hotpatch`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.3.4/`](releases/v2.3.4/RELEASE_NOTES_v2.3.4.md)  
-**Audio-Dokumentation:** [`AUDIO_QUALITY_IMPROVEMENTS.md`](AUDIO_QUALITY_IMPROVEMENTS.md)
+**Release Notes:** [`releases/v2.3.5/`](releases/v2.3.5/RELEASE_NOTES_v2.3.5.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.3.4-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.4)
+[![Version](https://img.shields.io/badge/Version-v2.3.5-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.5)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
-[![Audio Quality](https://img.shields.io/badge/Audio-48kHz%20Professional-ff69b4)]()
+[![Slow-Motion](https://img.shields.io/badge/Slow--Motion-2304x1296%40%2056fps-ff9800)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
 
-### v2.3.3 (Archiv)
-**Health-Check System · Daemon Resilience**
-- **Version:** v2.3.3 (4. Mai 2026)
-- Siehe [Archiv-Release](releases/v2.3.3/RELEASE_NOTES_v2.3.3.md) für Details oder CHANGELOG.md
-
-### v2.3.2 (Archiv)
-**Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler**
-- **Version:** v2.3.2 (3. Mai 2026)
-- Siehe [Archiv-Release](releases/v2.3.2/RELEASE_NOTES_v2.3.2.md) für Details oder CHANGELOG.md
+### v2.3.4 (Archiv)
+**Audio Quality Upgrade · Professional Recording**
+- **Version:** v2.3.4 (5. Mai 2026)
+- Siehe [Archiv-Release](releases/v2.3.4/RELEASE_NOTES_v2.3.4.md) für Details oder CHANGELOG.md
 
 ### v2.2.5 (Archiv)
 **EV & AWB Sliders**

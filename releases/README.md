@@ -4,56 +4,39 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.3.4** - "Audio-Qualität Upgrade · Professional Recording" 🎤
+**Version 2.3.5** - "Slow-Motion Upgrade · High-Performance Recording" 🎬
 - **Branch:** main
+- **Release Notes:** [v2.3.5/RELEASE_NOTES_v2.3.5.md](v2.3.5/RELEASE_NOTES_v2.3.5.md)
+- **Release Date:** 2026-05-05
+- **🆕 Features:**
+  - 🎬 **Zeitlupen-Modus HQ:** 2304×1296 @ 56fps (1.9× langsamer)
+  - 🎬 **Zeitlupen-Modus 120fps:** 1536×864 @ 120fps (4× langsamer)
+  - 🎬 **Beide Modi im Web-Dashboard wählbar**
+  - 📊 **Performance optimiert** (~60-75% CPU je nach Modus)
+- **🔧 Verbesserungen:**
+  - Bessere Qualität bei Zeitlupen-Aufnahmen
+  - Automatische Auflösungswahl für höhere FPS
+  - Beide Slowmo-Varianten persistent speicherbar
+- **Kompatibel:** Raspberry Pi OS, Gentoo Linux
+
+## 📦 Vorherige Versionen
+
+### Version 2.3.4 - "Audio Quality Upgrade · Professional Recording" 🎤
 - **Release Notes:** [v2.3.4/RELEASE_NOTES_v2.3.4.md](v2.3.4/RELEASE_NOTES_v2.3.4.md)
 - **Release Date:** 2026-05-05
 - **🆕 Features:**
   - 🎤 **Professionelle Audio-Aufnahme mit ffmpeg** (statt arecord)
   - 🎤 **48kHz Sample-Rate überall** (Video+Audio, Audio-only, Fallback)
   - 🎤 **Audio-Filterung:** Hochpass @ 80Hz + Volume 1.5x
-  - 🎤 **Automatisches Fallback** zu arecord wenn ffmpeg fehlt
   - 📚 **AUDIO_QUALITY_IMPROVEMENTS.md** + **AUDIO_UPGRADE_CHECKLIST.md**
 - **🔧 Verbesserungen:**
   - Einheitliche Audio-Pipeline für alle Modi
   - Robustere Fehlerbehandlung (Non-blocking I/O)
   - Besseres Logging in Web-UI
-  - Vogelgesang-Analyse optimiert (bis 24kHz Bandbreite)
-- **🐛 Bugfixes:**
-  - Audio-Datei nicht erstellt Fehler behoben
-  - ffmpeg-Filter vereinfacht (weniger fehleranfällig)
-- **Kompatibel:** Raspberry Pi OS, Gentoo Linux
-
-## 📦 Vorherige Versionen
 
 ### Version 2.3.3 - "Health-Check System · Daemon Resilience" 🏥
 - **Release Notes:** [v2.3.3/RELEASE_NOTES_v2.3.3.md](v2.3.3/RELEASE_NOTES_v2.3.3.md)
 - **Release Date:** 2026-05-04
-- **🆕 Features:**
-  - 🏥 **Unauthentifizierter `/api/health` Endpoint** für Docker HEALTHCHECK
-  - 🏥 **Systemd Health-Check Service** mit automatischer Überwachung
-  - 🏥 **Bash-Monitor-Script** mit Auto-Restart bei Ausfällen
-  - 📚 **4 neue Dokumentations-Guides** (README, Cheatsheet, Optimization, Mermaid-Diagramme)
-- **🔧 Verbesserungen:**
-  - Bessere Daemon-Resilience unter Last
-  - Robusteres SSH-Error-Handling
-  - Improved Thread-Management
-
-### Version 2.3.2 - "Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler"
-- **Release Notes:** [v2.3.2/RELEASE_NOTES_v2.3.2.md](v2.3.2/RELEASE_NOTES_v2.3.2.md)
-- **Release Date:** 2026-05-03
-- **Features:**
-  - 🔧 Behobener kritischer gRPC-Fehler auf Gentoo (`http2: frame too large`)
-  - 🔧 Automatische QEMU binfmt-Handler-Aktualisierung
-  - 🔧 Robuster Builder-Fallback auf `default` docker-driver
-
-### Version 2.3.1 - "Hailo-Deadlock-Fix · Container-Status-Kachel"
-- **Release Notes:** [v2.3.1/RELEASE_NOTES_v2.3.1.md](v2.3.1/RELEASE_NOTES_v2.3.1.md)
-- **Release Date:** 2026-04-06
-- **Features:**
-  - 🐛 Kritischer Deadlock-Fix im Hailo-Temp-Monitor behoben
-  - 📊 Container-Status-Kachel hinzugefügt
-  - 🔧 SSH-Resilience verbessert
 
 ### Version 2.3.0 - "NPU Throttle-Level · Dashboard Stats · Favicon"
 - **Release Notes:** [v2.3.0/RELEASE_NOTES_v2.3.0.md](v2.3.0/RELEASE_NOTES_v2.3.0.md)

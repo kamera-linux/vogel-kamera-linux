@@ -1,5 +1,35 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.3.5] - 5. Mai 2026 🎬 **Slow-Motion Upgrade · High-Performance Recording**
+
+### ✨ Features
+- **Zwei Zeitlupen-Modi** mit optimalen Einstellungen
+  - `slowmo` (HQ): **2304×1296 @ 56fps** → 1.9× langsamer (bessere Qualität, empfohlen)
+  - `slowmo_fast`: **1536×864 @ 120fps** → 4× langsamer (ultra-highspeed)
+  
+- **Kamera-Optimierungen**
+  - Automatische Auflösungswahl basierend auf FPS-Anforderung
+  - Bessere CPU-Auslastung bei höheren Framerates
+  - Profile im Web-Dashboard wählbar
+
+### 🔧 Technische Änderungen
+- `pi_daemon_secure.py` RECORDING_PROFILES erweitert
+  - `slowmo_720p` → `slowmo_720p` (HQ): 2304×1296 @ 56fps
+  - `slowmo_1080p` → `slowmo_1080p` (120fps): 1536×864 @ 120fps
+- Resolution Map aktualisiert mit `slowmo_hq` & `slowmo_fast`
+- Legacy Scripts: `--slowmo` und `--slowmo-fast` Flags
+- Wiki-Dokumentation: Recording-Modes.md aktualisiert
+
+### 📊 Performance-Vergleich (Neu)
+
+| Modus | Auflösung | FPS | Verlangsamung | CPU | Qualität |
+|-------|-----------|-----|--------------|-----|----------|
+| **slowmo** (neu) | 2304×1296 | **56** | 1.9× | ~60% | ⭐⭐⭐⭐⭐ |
+| slowmo_fast | 1536×864 | 120 | 4× | ~75% | ⭐⭐⭐⭐ |
+| Alt: slowmo | 1920×1080 | 60 | 2× | ~50% | ⭐⭐⭐⭐ |
+
+---
+
 ## [2.3.4] - 5. Mai 2026 🎤 **Audio-Qualität Upgrade · Professional Recording**
 
 ### ✨ Features
