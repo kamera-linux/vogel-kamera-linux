@@ -4,8 +4,29 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.3.3** - "Health-Check System · Daemon Resilience" 🏥
+**Version 2.3.4** - "Audio-Qualität Upgrade · Professional Recording" 🎤
 - **Branch:** main
+- **Release Notes:** [v2.3.4/RELEASE_NOTES_v2.3.4.md](v2.3.4/RELEASE_NOTES_v2.3.4.md)
+- **Release Date:** 2026-05-05
+- **🆕 Features:**
+  - 🎤 **Professionelle Audio-Aufnahme mit ffmpeg** (statt arecord)
+  - 🎤 **48kHz Sample-Rate überall** (Video+Audio, Audio-only, Fallback)
+  - 🎤 **Audio-Filterung:** Hochpass @ 80Hz + Volume 1.5x
+  - 🎤 **Automatisches Fallback** zu arecord wenn ffmpeg fehlt
+  - 📚 **AUDIO_QUALITY_IMPROVEMENTS.md** + **AUDIO_UPGRADE_CHECKLIST.md**
+- **🔧 Verbesserungen:**
+  - Einheitliche Audio-Pipeline für alle Modi
+  - Robustere Fehlerbehandlung (Non-blocking I/O)
+  - Besseres Logging in Web-UI
+  - Vogelgesang-Analyse optimiert (bis 24kHz Bandbreite)
+- **🐛 Bugfixes:**
+  - Audio-Datei nicht erstellt Fehler behoben
+  - ffmpeg-Filter vereinfacht (weniger fehleranfällig)
+- **Kompatibel:** Raspberry Pi OS, Gentoo Linux
+
+## 📦 Vorherige Versionen
+
+### Version 2.3.3 - "Health-Check System · Daemon Resilience" 🏥
 - **Release Notes:** [v2.3.3/RELEASE_NOTES_v2.3.3.md](v2.3.3/RELEASE_NOTES_v2.3.3.md)
 - **Release Date:** 2026-05-04
 - **🆕 Features:**
@@ -17,9 +38,6 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
   - Bessere Daemon-Resilience unter Last
   - Robusteres SSH-Error-Handling
   - Improved Thread-Management
-- **Kompatibel:** Raspberry Pi OS, Gentoo Linux
-
-## 📦 Vorherige Versionen
 
 ### Version 2.3.2 - "Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler"
 - **Release Notes:** [v2.3.2/RELEASE_NOTES_v2.3.2.md](v2.3.2/RELEASE_NOTES_v2.3.2.md)

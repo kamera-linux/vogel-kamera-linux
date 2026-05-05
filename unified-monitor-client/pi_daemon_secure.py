@@ -15,6 +15,7 @@ import subprocess
 import threading
 import time
 import logging
+import shutil
 from pathlib import Path
 from urllib.parse import unquote
 from datetime import datetime, timedelta, timezone
@@ -31,7 +32,7 @@ from flask_limiter.util import get_remote_address
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.3.3'
+APP_VERSION = '2.3.4'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -877,8 +878,8 @@ class CameraManager:
 
     @staticmethod
     def record_audio(duration: int = 60):
-        """Startet eine reine Audio-Aufnahme (kein Video) mit arecord.
-        Orientiert an Legacy-Skript ai-had-audio-remote-param-vogel-libcamera-single.py.
+        """Startet eine reine Audio-Aufnahme (kein Video) mit ffmpeg (oder arecord als Fallback).
+        Nutzt 48kHz und ggf. Audio-Verarbeitung.
         Gibt (ok, wav_path_or_error) zurück."""
         with _lock:
             if state.recording_running:
@@ -898,14 +899,6 @@ class CameraManager:
             dur_min = max(1, round(duration / 60))
             wav = recording_dir / f'{ts}_audio_{dur_min}min.wav'
 
-            # arecord: 44.1 kHz, Mono, 16-bit signed LE, WAV-Format
-            # Kein -D: nutzt ALSA-Default (erstes verfügbares Mikrofon)
-            # Kein -d Flag: Dauer via Python-Sleep + Kill (analog Video)
-            audio_cmd = [
-                'arecord', '-f', 'S16_LE', '-r', '44100', '-c', '1', '-t', 'wav',
-                str(wav),
-            ]
-
             # Mic-Eingangspegel sicherstellen
             try:
                 subprocess.run(
@@ -915,65 +908,138 @@ class CameraManager:
             except Exception:
                 pass
 
-            logger.info('Audio-Only-Recording gestartet: %ds → %s', duration, wav.name)
-            audio_proc = subprocess.Popen(
-                audio_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            # ── Versuche ffmpeg zuerst (mit 48kHz und einfachen Filtern) ──
+            use_ffmpeg = True
+            ffmpeg_available = shutil.which('ffmpeg') is not None
+            
+            if not ffmpeg_available:
+                logger.warning('ffmpeg nicht verfügbar – verwende arecord stattdessen')
+                use_ffmpeg = False
+
+            if use_ffmpeg:
+                logger.info('Audio-Recording mit ffmpeg gestartet: %ds → %s (48kHz)', duration, wav.name)
+                audio_cmd = [
+                    'ffmpeg',
+                    '-hide_banner',
+                    '-loglevel', 'warning',
+                    '-f', 'alsa',
+                    '-i', 'default',
+                    '-t', str(duration),
+                    '-af', 'highpass=f=80,volume=1.5',  # Einfache, robuste Filter
+                    '-acodec', 'pcm_s16le',
+                    '-ar', '48000',  # 48kHz
+                    '-ac', '1',
+                    '-y',
+                    str(wav),
+                ]
+                logger.debug('ffmpeg cmd: %s', ' '.join(audio_cmd))
+                
+                audio_proc = subprocess.Popen(
+                    audio_cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1
+                )
+            else:
+                # Fallback: arecord mit 48kHz
+                logger.info('Audio-Recording mit arecord gestartet: %ds → %s (48kHz)', duration, wav.name)
+                audio_cmd = [
+                    'arecord',
+                    '-f', 'S16_LE',
+                    '-r', '48000',  # 48kHz (nicht default 44100)
+                    '-c', '1',
+                    '-t', 'wav',
+                    '-d', str(duration),
+                    str(wav),
+                ]
+                logger.debug('arecord cmd: %s', ' '.join(audio_cmd))
+                
+                audio_proc = subprocess.Popen(
+                    audio_cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1
+                )
 
             with _lock:
                 state.recording_process = audio_proc
 
-            # Dauer abwarten (1s-Schritte für sofortigen Kill-Response)
+            # Dauer abwarten (mit Fehler-Überwachung)
+            stderr_lines = []
             deadline = time.monotonic() + duration
             while time.monotonic() < deadline:
-                if audio_proc.poll() is not None:
-                    logger.warning('arecord vorzeitig beendet (rc=%d)', audio_proc.returncode)
+                rc = audio_proc.poll()
+                if rc is not None:
+                    # Prozess beendet (Fehler oder OK)
+                    logger.warning('%s beendet mit rc=%d', 'ffmpeg' if use_ffmpeg else 'arecord', rc)
+                    try:
+                        remaining = audio_proc.stderr.read()
+                        if remaining:
+                            stderr_lines.append(remaining)
+                    except:
+                        pass
                     break
                 time.sleep(1)
 
-            # Prozess explizit stoppen
+            # Prozess explicit stoppen (falls noch läuft)
             if audio_proc.poll() is None:
                 try:
                     _kill_process_group(audio_proc, timeout=5)
+                    logger.info('Audio-Prozess beendet')
                 except Exception as e:
-                    logger.warning('arecord Kill fehlgeschlagen: %s', e)
+                    logger.warning('Audio-Prozess Kill fehlgeschlagen: %s', e)
 
             with _lock:
                 state.recording_process = None
 
-            # stderr auswerten
+            # stderr vollständig auslesen
             try:
-                stderr_out = audio_proc.stderr.read().decode('utf-8', errors='replace').strip()
+                stderr_remaining = audio_proc.stderr.read()
+                if stderr_remaining:
+                    stderr_lines.append(stderr_remaining)
             except Exception:
-                stderr_out = ''
+                pass
+            
+            stderr_out = ''.join(stderr_lines).strip()
             if stderr_out:
-                for line in stderr_out.splitlines():
+                for line in stderr_out.splitlines()[:5]:  # Nur erste 5 Zeilen loggen
                     if 'error' in line.lower():
-                        logger.error('arecord: %s', line)
+                        logger.error('Audio-Prozess: %s', line)
                     else:
-                        logger.debug('arecord: %s', line)
+                        logger.debug('Audio-Prozess: %s', line)
 
             time.sleep(1)  # Dateisystem-Flush
 
+            # Überprüfe ob Datei erstellt wurde
             if wav.exists() and wav.stat().st_size > 4096:
-                logger.info('Audio-Aufnahme abgeschlossen: %s (%.1f MB)',
-                            wav.name, wav.stat().st_size / 1048576)
+                file_size_mb = wav.stat().st_size / 1048576
+                logger.info('Audio-Aufnahme erfolgreich: %s (%.2f MB)', wav.name, file_size_mb)
                 CameraManager.transfer_all(str(wav))
                 return True, str(wav)
 
-            err = f'WAV-Datei nicht erstellt oder leer ({wav.name})'
+            # Datei nicht erstellt oder zu klein
+            err = f'Audio-Datei nicht erstellt oder zu klein: {wav.name}'
             if stderr_out:
-                err = next((l for l in stderr_out.splitlines() if 'error' in l.lower()),
-                           stderr_out.splitlines()[-1] if stderr_out else err)
+                # Fehler aus stderr
+                error_lines = [l for l in stderr_out.splitlines() if 'error' in l.lower()]
+                if error_lines:
+                    err = error_lines[0]
+                elif stderr_out.splitlines():
+                    err = stderr_out.splitlines()[-1]
+            
             logger.error(err)
             with _lock:
                 state.last_error = err
             return False, err
 
         except Exception as exc:
-            logger.error('Audio-Aufnahme fehlgeschlagen: %s', exc)
+            err = f'Audio-Aufnahme Fehler: {exc}'
+            logger.error(err)
             with _lock:
-                state.last_error = str(exc)
-            return False, str(exc)
+                state.last_error = err
+            return False, err
 
         finally:
             with _lock:

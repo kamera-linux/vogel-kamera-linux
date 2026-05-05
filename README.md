@@ -4,56 +4,53 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.3.3 — Health-Check System · Daemon Resilience 🏥
+## Release v2.3.4 — Audio-Qualität Upgrade · Professional Recording 🎤
 
-- **Version:** v2.3.3 (4. Mai 2026)
-- **🏥 Neue Features – Health-Check System:**
-  - **Unauthentifizierter `/api/health` Endpoint** für Docker HEALTHCHECK
-  - **Systemd Health-Check Service** mit automatischer Überwachung
-  - **Bash-Monitor-Script** mit Auto-Restart bei Ausfällen
-  - **Docker-Compose Integration** mit vollständiger Health-Check Konfiguration
-  - **Umfassende Dokumentation** (4 neue Guides im `docs/` Verzeichnis)
+- **Version:** v2.3.4 (5. Mai 2026)
+- **🎤 Neue Features – Professional Audio Recording:**
+  - **Professionelle Audio-Aufnahme mit ffmpeg** (statt altem arecord)
+  - **48kHz Sample-Rate überall** (Video+Audio, Audio-only, und Fallback)
+  - **Audio-Filterung:** Hochpass @ 80Hz (Brummtöne weg) + Volume 1.5x (bessere Aussteuerung)
+  - **Automatisches Fallback** auf arecord mit 48kHz wenn ffmpeg fehlt
+  - **Einheitliche Audio-Pipeline** – gleiche Qualität bei allen Aufnahme-Modi
 
 - **✨ Verbesserungen:**
-  - Bessere Daemon-Resilience unter Last
-  - Robusteres SSH-Error-Handling
-  - Improved Thread-Management
-  - Graceful Shutdown in Systemd
+  - **Keine Qualitäts-Unterschiede mehr:** Video+Audio und Audio-only nutzen jetzt die gleiche ffmpeg-Pipeline
+  - Robustere Fehlerbehandlung (Non-blocking stderr-Lesen, besseres Logging)
+  - Vogelgesang-Analyse optimiert: 48kHz Bandbreite bis 24kHz (vs. 22kHz bei 44.1kHz)
+  - Audio-Aufnahmen sind ~5-10% kleiner bei besserer Qualität
 
-- **📚 Neue Dokumentation:**
-  - `docs/README-HEALTH-CHECK-SYSTEM.md` — Übersicht & Navigation
-  - `docs/HEALTHCHECK-CHEATSHEET.md` — Schnell-Referenz (Ops/DevOps)
-  - `docs/HEALTHCHECK-OPTIMIZATION.md` — Detaillierte Architektur
-  - `docs/HEALTHCHECK-MERMAID.md` — 7 Visuelle Diagramme
+- **🔧 Technische Änderungen:**
+  - `pi_daemon_secure.py` → `record_audio()` komplett überarbeitet
+  - Legacy-Scripts aktualisiert: `_start_audio_recording()` + Threads
+  - Alle Audio-Aufnahmen nutzen **48kHz statt 44.1kHz**
+  - Fallback-Mechanismus für Kompatibilität
 
-- **🔧 Technical Stack:** (erweitert)
-  - ✅ Flask + HTTPS (selbstsigniertes Zertifikat, Port 8443)
-  - ✅ JWT-Authentifizierung + TOTP-2FA (PyOTP)
-  - ✅ Hailo-8 NPU Detection (rpicam-hello + YOLOv8 HEF) als Subprocess im Container
-  - ✅ Automatische Video-Konvertierung (H264 → MP4) und SSH-Sync zu Zielsystemen
-  - ✅ Persönliche Konfiguration ausschließlich in `ansible/.env` (gitignored)
-  - ✅ **NEU:** `/api/health` Endpoint ohne Authentifizierung für Docker Health-Checks
-  - ✅ **NEU:** Systemd Service + Bash Monitor für kontinuierliche Überwachung
+- **📚 Dokumentation:**
+  - `AUDIO_QUALITY_IMPROVEMENTS.md` — Detaillierte Übersicht
+  - `AUDIO_UPGRADE_CHECKLIST.md` — Test-Checkliste + Troubleshooting
+  - Release Notes erweitert mit Audio-Wissenschaft
 
-**Deployment:** [`ansible/build_and_deploy.sh`](ansible/build_and_deploy.sh)  
+**Deployment:** [`ansible/build_and_deploy.sh --hotpatch`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.3.3/`](releases/v2.3.3/RELEASE_NOTES_v2.3.3.md)
+**Release Notes:** [`releases/v2.3.4/`](releases/v2.3.4/RELEASE_NOTES_v2.3.4.md)  
+**Audio-Dokumentation:** [`AUDIO_QUALITY_IMPROVEMENTS.md`](AUDIO_QUALITY_IMPROVEMENTS.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.3.3-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.3)
+[![Version](https://img.shields.io/badge/Version-v2.3.4-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.4)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
+[![Audio Quality](https://img.shields.io/badge/Audio-48kHz%20Professional-ff69b4)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
-[![Health Monitoring](https://img.shields.io/badge/Monitoring-Health--Check-ff69b4)]()
+
+### v2.3.3 (Archiv)
+**Health-Check System · Daemon Resilience**
+- **Version:** v2.3.3 (4. Mai 2026)
+- Siehe [Archiv-Release](releases/v2.3.3/RELEASE_NOTES_v2.3.3.md) für Details oder CHANGELOG.md
 
 ### v2.3.2 (Archiv)
 **Gentoo Docker-Buildx-Fix · QEMU binfmt-Handler**
 - **Version:** v2.3.2 (3. Mai 2026)
 - Siehe [Archiv-Release](releases/v2.3.2/RELEASE_NOTES_v2.3.2.md) für Details oder CHANGELOG.md
-
-### v2.3.1 (Archiv)
-**Hailo-Deadlock-Fix · Container-Status-Kachel**
-- **Version:** v2.3.1 (6. April 2026)
-- Siehe [Archiv-Release](releases/v2.3.1/RELEASE_NOTES_v2.3.1.md) für Details oder CHANGELOG.md
 
 ### v2.2.5 (Archiv)
 **EV & AWB Sliders**

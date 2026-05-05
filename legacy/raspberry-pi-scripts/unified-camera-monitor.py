@@ -683,27 +683,32 @@ class UnifiedCameraMonitor:
                 except Exception as e:
                     logger.error(f"❌ Video-Thread Exception: {e}")
             
-            # ===== THREAD 2: Audio mit arecord =====
+            # ===== THREAD 2: Audio mit ffmpeg (robuste Verarbeitung) =====
             def run_audio():
                 if not self.enable_audio or not self.audio_device:
                     logger.info("ℹ️  Audio deaktiviert oder kein Device")
                     return
                 
-                logger.info(f"🎤 Audio-Thread startet: arecord -D {self.audio_device}")
+                logger.info(f"🎤 Audio-Thread startet: ffmpeg -i {self.audio_device}")
                 try:
-                    arecord_cmd = [
-                        'arecord',
-                        '-D', self.audio_device,
-                        '-f', 'S16_LE',
-                        '-r', '44100',
-                        '-c', '1',
-                        '-t', 'wav',
-                        '-d', str(duration_s),  # EXAKT: Duration in Sekunden (gleich wie Video!)
+                    # ffmpeg mit ROBUSTEREN Audio-Filtern (vereinfacht, weniger fehleranfällig)
+                    ffmpeg_cmd = [
+                        'ffmpeg',
+                        '-hide_banner',
+                        '-loglevel', 'warning',
+                        '-f', 'alsa',
+                        '-i', self.audio_device,
+                        '-t', str(duration_s),
+                        '-af', 'highpass=f=80,volume=1.5',  # Simplified: Highpass + Verstärkung
+                        '-acodec', 'pcm_s16le',
+                        '-ar', '48000',  # 48kHz wie professionelle Audio (nicht 44100)
+                        '-ac', '1',      # Mono
+                        '-y',
                         str(audio_file)
                     ]
                     
                     audio_proc = subprocess.Popen(
-                        arecord_cmd,
+                        ffmpeg_cmd,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         text=True
@@ -711,7 +716,7 @@ class UnifiedCameraMonitor:
                     stdout, stderr = audio_proc.communicate()
                     
                     if audio_proc.returncode == 0:
-                        logger.info(f"✅ Audio-Thread erfolgreich")
+                        logger.info(f"✅ Audio-Thread erfolgreich (48kHz)")
                     else:
                         logger.error(f"❌ Audio-Thread Fehler: {stderr}")
                 except Exception as e:

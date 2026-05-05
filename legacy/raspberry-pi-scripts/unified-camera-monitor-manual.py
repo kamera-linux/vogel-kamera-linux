@@ -473,7 +473,7 @@ class UnifiedCameraMonitor:
     def _start_audio_recording(self, audio_file: Path, duration_seconds: int) -> bool:
         """
         Startet Audio-Aufnahme mit ffmpeg (parallel zu Video).
-        Nutzt ffmpeg statt arecord für bessere Input-Verstärkungskontrolle.
+        Nutzt ffmpeg mit 48kHz und Audio-Verarbeitung (vereinfacht, robust).
         
         Args:
             audio_file: Pfad zur WAV-Datei
@@ -486,25 +486,28 @@ class UnifiedCameraMonitor:
             return False
         
         try:
-            # ffmpeg mit Input-Verstärkung UND Rausch-Reduktion
+            # ffmpeg mit ROBUSTEREN Audio-Filtern (vereinfacht, weniger fehleranfällig)
             # -af: Audio-Filter chain:
-            #   anoisremove=om=o: Rausch-Reduktion (om=o = aus Stille lernen)
-            #   highpass=f=100: Hochpass-Filter (schneidet tiefe Rausch-Frequenzen)
-            #   volume=2.0: 2x Verstärkung (plus 23.81dB vom Mikrofon = ausreichend)
+            #   highpass=f=80: Hochpass-Filter (schneidet tiefe Rausch-Frequenzen)
+            #   volume=1.5: 1.5x Verstärkung (bessere Aussteuerung)
+            # 
+            # WICHTIG: 48kHz wie professionelle Audio
             cmd = [
                 'ffmpeg',
+                '-hide_banner',
+                '-loglevel', 'warning',
                 '-f', 'alsa',
                 '-i', self.audio_device,
                 '-t', str(duration_seconds),
-                '-af', 'anoisremove=om=o,highpass=f=100,volume=2.0',  # Rausch-Reduktion + Boost
+                '-af', 'highpass=f=80,volume=1.5',  # Simplified: Highpass + Verstärkung
                 '-acodec', 'pcm_s16le',
-                '-ar', '44100',
-                '-ac', '1',
-                '-y',  # Überschreibe Datei ohne Frage
+                '-ar', '48000',  # 48kHz wie professionelle Audio (nicht 44100)
+                '-ac', '1',      # Mono
+                '-y',
                 str(audio_file)
             ]
             
-            logger.info(f"🎤 Starte Audio-Aufnahme (ffmpeg mit Rausch-Reduktion): {audio_file.name}")
+            logger.info(f"🎤 Starte professionelle Audio-Aufnahme (ffmpeg 48kHz): {audio_file.name}")
             self.audio_process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -750,27 +753,32 @@ class UnifiedCameraMonitor:
                 except Exception as e:
                     logger.error(f"❌ Video-Thread Exception: {e}")
             
-            # ===== THREAD 2: Audio mit arecord =====
+            # ===== THREAD 2: Audio mit ffmpeg (robuste Verarbeitung) =====
             def run_audio():
                 if not self.enable_audio or not self.audio_device:
                     logger.info("ℹ️  Audio deaktiviert oder kein Device")
                     return
                 
-                logger.info(f"🎤 Audio-Thread startet: arecord -D {self.audio_device}")
+                logger.info(f"🎤 Audio-Thread startet: ffmpeg -i {self.audio_device}")
                 try:
-                    arecord_cmd = [
-                        'arecord',
-                        '-D', self.audio_device,
-                        '-f', 'S16_LE',
-                        '-r', '44100',
-                        '-c', '1',
-                        '-t', 'wav',
-                        '-d', str(duration_s),  # EXAKT: Duration in Sekunden (gleich wie Video!)
+                    # ffmpeg mit ROBUSTEREN Audio-Filtern (vereinfacht, weniger fehleranfällig)
+                    ffmpeg_cmd = [
+                        'ffmpeg',
+                        '-hide_banner',
+                        '-loglevel', 'warning',
+                        '-f', 'alsa',
+                        '-i', self.audio_device,
+                        '-t', str(duration_s),
+                        '-af', 'highpass=f=80,volume=1.5',  # Simplified: Highpass + Verstärkung
+                        '-acodec', 'pcm_s16le',
+                        '-ar', '48000',  # 48kHz wie professionelle Audio (nicht 44100)
+                        '-ac', '1',      # Mono
+                        '-y',
                         str(audio_file)
                     ]
                     
                     audio_proc = subprocess.Popen(
-                        arecord_cmd,
+                        ffmpeg_cmd,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         text=True
@@ -778,7 +786,7 @@ class UnifiedCameraMonitor:
                     stdout, stderr = audio_proc.communicate()
                     
                     if audio_proc.returncode == 0:
-                        logger.info(f"✅ Audio-Thread erfolgreich")
+                        logger.info(f"✅ Audio-Thread erfolgreich (48kHz)")
                     else:
                         logger.error(f"❌ Audio-Thread Fehler: {stderr}")
                 except Exception as e:

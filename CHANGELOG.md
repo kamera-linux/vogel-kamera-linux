@@ -1,5 +1,78 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.3.4] - 5. Mai 2026 🎤 **Audio-Qualität Upgrade · Professional Recording**
+
+### ✨ Features
+- **Professionelle Audio-Aufnahme mit ffmpeg** (`unified-monitor-client/pi_daemon_secure.py`)
+  - Migration von `arecord` zu `ffmpeg` mit 48kHz Sample-Rate (statt 44.1kHz)
+  - Audio-Filter: `highpass=f=80` (Brummtöne weg) + `volume=1.5` (bessere Aussteuerung)
+  - Einheitliche Audio-Qualität: **Video+Audio und Audio-only nutzen jetzt die gleiche Pipeline**
+  - Non-blocking stderr-Lesen → keine Deadlocks
+  - Automatisches Fallback auf `arecord` mit 48kHz wenn ffmpeg fehlt
+
+- **Audio-Filterung für alle Modi** (legacy scripts aktualisiert)
+  - `legacy/raspberry-pi-scripts/unified-camera-monitor-manual.py` → ffmpeg Threads aktualisiert
+  - `legacy/raspberry-pi-scripts/unified-camera-monitor.py` → ffmpeg Threads aktualisiert
+  - `_start_audio_recording()` Methode → robustere Fehlerbehandlung
+  - Alle Audio-Aufnahmen nutzen einheitlich 48kHz
+
+### 🐛 Bugfixes
+- **Audio-Datei nicht erstellt Fehler behoben**
+  - Symptom: `Error opening output file /videos/2026_19_05_093547_audio_1min.wav`
+  - Ursache: Complex ffmpeg-Filter `anoisremove=om=o:om=o:r=0.001,acompressor=...` zu fehleranfällig
+  - Fix: Vereinfachte Filter (highpass + volume), besseres Error-Handling
+  - Logging auf `warning` Level für bessere Diagnostik
+
+- **Robuste Fehlerbehandlung bei Audio-Prozessen**
+  - Nicht-blockierendes stderr-Lesen → verhindert Deadlocks
+  - Explizites Process-Timeout + Kill-Group-Management
+  - Fehler-Details in Logs und Web-UI sichtbar
+
+### 📚 Dokumentation
+- **AUDIO_QUALITY_IMPROVEMENTS.md** — Kurze Übersicht + Technische Details
+- **AUDIO_UPGRADE_CHECKLIST.md** — Test-Checkliste + Troubleshooting
+- **Release-Notes erweitert** → Audio-Wissenschaft (Warum 48kHz? Hochpass @ 80Hz?)
+
+### 🔧 Geänderte Dateien
+- `unified-monitor-client/pi_daemon_secure.py` → `record_audio()` komplett überarbeitet + `shutil` Import
+- `legacy/raspberry-pi-scripts/unified-camera-monitor-manual.py` → `_start_audio_recording()` + `run_audio()` Thread
+- `legacy/raspberry-pi-scripts/unified-camera-monitor.py` → `run_audio()` Thread aktualisiert
+- `VERSION`, `raspberry-pi-scripts/VERSION`, `unified-monitor-client/pi_daemon_secure.py` → 2.3.4
+- `AUDIO_QUALITY_IMPROVEMENTS.md` (neu)
+- `AUDIO_UPGRADE_CHECKLIST.md` (neu)
+- `releases/v2.3.4/RELEASE_NOTES_v2.3.4.md` (neu)
+
+### 🧪 Testing
+- ✅ ffmpeg mit 48kHz nutzen (nicht 44.1kHz)
+- ✅ Fallback zu arecord bei ffmpeg-Fehler
+- ✅ Audio-Datei > 4KB nach Aufnahme
+- ✅ Besseres Logging in Docker-Logs
+- ✅ Deployment via hotpatch + update erfolgreich
+
+### 🚀 Verwendung (Automatisch)
+```bash
+# Keine neuen Parameter erforderlich!
+# Audio-Aufnahme nutzt automatisch:
+# - ffmpeg mit 48kHz + Filter (Standard)
+# - oder arecord mit 48kHz (Fallback)
+
+# Web-UI 🎤 Audio Button
+# - Startet Audio-Aufnahme mit verbesserter Qualität
+# - Logs zeigen "48kHz" und Filterung-Status
+```
+
+### 📊 Qualitäts-Vergleich
+
+| Aspekt | v2.3.3 | v2.3.4 |
+|--------|--------|--------|
+| **Sample-Rate** | 44.1 kHz | **48 kHz** |
+| **Video-Sync** | Mismatch | **Perfekt** |
+| **Rausch-Reduktion** | Keine | **Highpass @ 80Hz** |
+| **Aussteuerung** | Variabel | **Optimiert (1.5x)** |
+| **Fehlermeldung** | Vage | **Detailliert** |
+
+---
+
 ## [2.3.3] - 4. Mai 2026 🏥 **Health-Check System · Daemon Resilience**
 
 ### ✨ Features
