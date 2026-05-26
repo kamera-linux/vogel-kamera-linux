@@ -99,7 +99,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**🤖 KI erkennt Haussperling am Futterhaus 🐦**](https://www.youtube.com/watch?v=GjOl43K4uUI) | 02.05.2026 | 1:52 | 97 | 5 | 1 |
+| [**🤖 KI erkennt Haussperling am Futterhaus 🐦**](https://www.youtube.com/watch?v=GjOl43K4uUI) | 02.05.2026 | 1:52 | 98 | 5 | 1 |
 | [**Haussperling in 4K – Nahaufnahme am neuen Vogelfut...**](https://www.youtube.com/watch?v=utk6eLfYg_4) | 01.05.2026 | 2:16 | 48 | 7 | 0 |
 | [**Kernbeißer in 4K – Nahaufnahme am neuen Vogelfutte...**](https://www.youtube.com/watch?v=Jf6locShc_c) | 01.05.2026 | 2:22 | 51 | 6 | 1 |
 | [**Stieglitz in 4K – Nahaufnahme am neuen Vogelfutter...**](https://www.youtube.com/watch?v=0QABEj8JjS0) | 10.04.2026 | 3:20 | 93 | 6 | 0 |
@@ -110,7 +110,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**🐦 Vogel-Beobachtung mit KI: Meisen, Rotkehlchen un...**](https://www.youtube.com/watch?v=1Mrq4oIzckI) | 30.11.2025 | 2:38 | 177 | 1 | 2 |
 | [**3 Vogelarten live am Futterhaus - KI erkennt Kohlm...**](https://www.youtube.com/watch?v=uZm4Ao9JHoo) | 24.11.2025 | 3:10 | 180 | 6 | 1 |
 | [**🐦 Wunderschönes Rotkehlchen beim Fressen \| 4K Voge...**](https://www.youtube.com/watch?v=rWkWFUeVK0o) | 31.10.2025 | 1:58 | 73 | 6 | 0 |
-| [**🐦 Blaumeise beim Fressen \| KI-Kamera 120fps Zeitlu...**](https://www.youtube.com/watch?v=ew3l12TSn5k) | 28.10.2025 | 2:25 | 112 | 9 | 0 |
+| [**🐦 Blaumeise beim Fressen \| KI-Kamera 120fps Zeitlu...**](https://www.youtube.com/watch?v=ew3l12TSn5k) | 28.10.2025 | 2:25 | 113 | 9 | 0 |
 | [**🐦 Sumpfmeise in Zeitlupe \| Futtersuche im Vogelhau...**](https://www.youtube.com/watch?v=dORu9qs8KSA) | 20.10.2025 | 2:46 | 54 | 6 | 1 |
 | [**5 Vogelarten mit Aufnahme (120fps) \| Automatische ...**](https://www.youtube.com/watch?v=k3tS0oJX7YE) | 06.10.2025 | 3:24 | 78 | 8 | 5 |
 | [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 124 | 7 | 1 |
@@ -120,7 +120,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**Vogelhaus mit Kohlmeisen  (Fütterung Jungtiere mit...**](https://www.youtube.com/watch?v=sqvd99Pbubc) | 18.05.2025 | 3:22 | 54 | 6 | 1 |
 | [**Vogelhaus mit Kohlmeise  (Fütterung Jungtier mit 2...**](https://www.youtube.com/watch?v=vXWDleJ-18Q) | 17.05.2025 | 2:44 | 21 | 6 | 0 |
 
-*Automatisch aktualisiert: 25.05.2026 09:22 Uhr (Sommerzeit (MESZ))*
+*Automatisch aktualisiert: 26.05.2026 09:02 Uhr (Sommerzeit (MESZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## 🔩 Hardware-Stückliste
