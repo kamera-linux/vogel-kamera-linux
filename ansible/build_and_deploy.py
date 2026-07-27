@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Abhängigkeiten: pip install python-dotenv ansible  (z.B. in ~/ansible-venv)
+# Abhängigkeiten: pip install python-dotenv ansible  (z.B. in ~/ansible-venv oder ./ansible-venv-local)
 """build_and_deploy.py – Docker-Image bauen und auf Pi deployen
 
 Verwendung (aus dem ansible/-Ordner oder Repo-Root):
@@ -9,10 +9,14 @@ Verwendung (aus dem ansible/-Ordner oder Repo-Root):
   ./ansible/build_and_deploy.py --setup-host   # Gentoo Build-Host einrichten (Docker, QEMU, buildx)
 
 Voraussetzungen (einmalig):
-  1. docker buildx create --use --name pi-builder  (oder: --setup-host)
-  2. ansible-vault encrypt ansible/group_vars/all/vault.yml
-  3. echo 'VaultPasswort' > ~/.pi-daemon-vault-pass && chmod 600 ~/.pi-daemon-vault-pass
-  4. (Optional) bash ansible/setup-sudo-nopasswd.sh  # Sudo ohne Passwort für Docker
+  1. Virtual Environment mit Ansible:
+     cd <repo-root>
+     python3 -m venv ansible-venv-local --copies
+     ansible-venv-local/bin/pip install ansible python-dotenv pyotp
+  2. docker buildx create --use --name pi-builder  (oder: --setup-host)
+  3. ansible-vault encrypt ansible/group_vars/all/vault.yml
+  4. echo 'VaultPasswort' > ~/.pi-daemon-vault-pass && chmod 600 ~/.pi-daemon-vault-pass
+  5. (Optional) bash ansible/setup-sudo-nopasswd.sh  # Sudo ohne Passwort für Docker
 
 Hinweis: Der Build fragt nach dem Sudo-Passwort für docker systemctl restart.
 Geben Sie 'bash ansible/setup-sudo-nopasswd.sh' ein, um dies zu automatisieren
@@ -115,17 +119,23 @@ def load_env() -> dict:
 
 # ── Tool-Lookups ─────────────────────────────────────────────────────────────
 def find_tool(name: str) -> str | None:
-    """Sucht Tool im PATH, danach in bekannten Venv-Verzeichnissen."""
-    if path := shutil.which(name):
-        return path
+    """Sucht Tool in bekannten Venv-Verzeichnissen, dann im PATH."""
+    # Lokale Venvs haben Priorität vor PATH (kann alte, beschädigte Installationen überschreiben)
     for d in (
+        REPO_ROOT / "ansible-venv-local" / "bin",
         REPO_ROOT / ".venv" / "bin",
         Path.home() / "ansible-venv" / "bin",
-        Path.home() / ".local" / "bin",
     ):
         candidate = d / name
         if candidate.is_file() and os.access(candidate, os.X_OK):
             return str(candidate)
+    # Dann im PATH suchen
+    if path := shutil.which(name):
+        return path
+    # Fallback: .local/bin als letztes (kann alte Installation sein)
+    candidate = Path.home() / ".local" / "bin" / name
+    if candidate.is_file() and os.access(candidate, os.X_OK):
+        return str(candidate)
     return None
 
 
@@ -134,8 +144,10 @@ def require_tool(name: str) -> str:
         return path
     print(red(f"❌ '{name}' nicht gefunden."), file=sys.stderr)
     if name == "ansible-playbook":
-        print("   python3 -m venv ~/ansible-venv && ~/ansible-venv/bin/pip install ansible",
-              file=sys.stderr)
+        print("   Bitte installieren Sie Ansible in einem venv:", file=sys.stderr)
+        print(f"   cd {REPO_ROOT}", file=sys.stderr)
+        print("   python3 -m venv ansible-venv-local --copies", file=sys.stderr)
+        print("   ansible-venv-local/bin/pip install ansible python-dotenv pyotp", file=sys.stderr)
     sys.exit(1)
 
 
