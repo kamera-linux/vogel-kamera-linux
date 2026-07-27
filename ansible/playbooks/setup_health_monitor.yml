@@ -1,0 +1,101 @@
+---
+# Ansible-Playbook: Docker Health-Monitor auf Pi installieren
+# 
+# Installiert das Health-Monitoring-System mit Cron-Job
+#
+# Verwendung:
+#   ansible-playbook -i ansible/inventory/ ansible/playbooks/setup_health_monitor.yml
+#   ansible-playbook -i ansible/inventory/ ansible/playbooks/setup_health_monitor.yml -e "alert_email=alerts@example.com"
+
+- name: "Setup Docker Health-Monitor"
+  hosts: pi-camera
+  become: yes
+  gather_facts: yes
+
+  vars:
+    monitor_script_src: "{{ playbook_dir }}/../scripts/docker_health_monitor.py"
+    monitor_script_dest: "/usr/local/bin/docker_health_monitor.py"
+    health_log_dir: "/var/log/pi-daemon"
+    cron_job_name: "docker-health-monitor"
+
+  tasks:
+    - name: "Erstelle Log-Verzeichnis"
+      file:
+        path: "{{ health_log_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: "Kopiere Health-Monitor-Script"
+      copy:
+        src: "{{ monitor_script_src }}"
+        dest: "{{ monitor_script_dest }}"
+        owner: root
+        group: root
+        mode: '0755'
+      notify: "Restart health-monitor cron"
+
+    - name: "Installiere Cron-Job für Health-Checks (alle 5 Minuten)"
+      cron:
+        name: "{{ cron_job_name }}"
+        minute: "*/5"
+        job: "{{ monitor_script_dest }} >> {{ health_log_dir }}/monitor.cron.log 2>&1"
+        user: root
+        state: present
+      notify: "Restart cron"
+
+    - name: "Configure Email-Alerts (optional)"
+      block:
+        - name: "Setze Email-Alert Umgebungsvariablen (wenn konfiguriert)"
+          lineinfile:
+            path: "/etc/environment"
+            line: "{{ item.key }}={{ item.value }}"
+            regexp: "^{{ item.key }}="
+            state: "{{ 'present' if item.value else 'absent' }}"
+          loop:
+            - key: "PI_DAEMON_ALERT_EMAIL"
+              value: "{{ alert_email_from | default('') }}"
+            - key: "PI_DAEMON_ALERT_RECIPIENT"
+              value: "{{ alert_email | default('') }}"
+            - key: "PI_DAEMON_SMTP_SERVER"
+              value: "{{ smtp_server | default('localhost') }}"
+            - key: "PI_DAEMON_SMTP_PORT"
+              value: "{{ smtp_port | default('25') }}"
+          when: "alert_email is defined"
+
+    - name: "Teste Health-Monitor Script"
+      command: "python3 {{ monitor_script_dest }} --test"
+      register: test_result
+      failed_when: false
+      changed_when: false
+
+    - name: "Health-Monitor Status"
+      debug:
+        msg: "✅ Health-Monitor installiert und konfiguriert"
+
+  handlers:
+    - name: "Restart cron"
+      service:
+        name: cron
+        state: restarted
+
+    - name: "Restart health-monitor cron"
+      debug:
+        msg: "Health-Monitor Script aktualisiert"
+
+  post_tasks:
+    - name: "Anzeige der Konfiguration"
+      debug:
+        msg: |
+          ✅ Health-Monitor Setup abgeschlossen
+          
+          📍 Script-Pfad: {{ monitor_script_dest }}
+          📍 Log-Verzeichnis: {{ health_log_dir }}
+          📍 Cron-Job: Alle 5 Minuten
+          
+          Wichtige Befehle:
+            • Manuelle Check: python3 {{ monitor_script_dest }}
+            • Health-Status: cat {{ health_log_dir }}/health.log
+            • Monitoring Logs: tail -f {{ health_log_dir }}/monitor.cron.log
+            • Test-Alert: python3 {{ monitor_script_dest }} --test

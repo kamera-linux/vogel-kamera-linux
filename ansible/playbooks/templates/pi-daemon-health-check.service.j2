@@ -1,0 +1,15 @@
+[Unit]
+Description=Pi-Daemon Container Health Check
+After=docker.service
+Wants=pi-daemon-health-check.timer
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pi-daemon-health-check
+StandardOutput=journal
+StandardError=journal
+Environment="HOME=/root"
+
+# Fehlertoleranz: Script kann auch bei unhealthy erfolgreich sein
+# (es loggt den Status, wertet aber auch fehlgeschlagene Checks)
+RemainAfterExit=no

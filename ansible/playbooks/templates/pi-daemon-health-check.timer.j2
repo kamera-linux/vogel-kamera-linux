@@ -1,0 +1,17 @@
+[Unit]
+Description=Pi-Daemon Health Check Timer (alle 30s)
+Documentation=https://github.com/roimme/vogel-kamera-linux/docs/HEALTHCHECK-*
+
+[Timer]
+# Alle 30 Sekunden
+OnBootSec=10s
+OnUnitActiveSec=30s
+
+# Persistente Timer (falls systemd neu startet, nachholen)
+Persistent=true
+
+# Fehlertoleranz
+OnFailure=
+
+[Install]
+WantedBy=timers.target
