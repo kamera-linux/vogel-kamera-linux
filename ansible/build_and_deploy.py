@@ -487,7 +487,9 @@ def ansible_deploy(env: dict, mode: str, ansible: str) -> None:
         print(bold("🚀 Ansible – Voll-Deployment (Erstinstall)..."))
         run([ansible, "playbooks/deploy.yml", *vault_opts])
         print(bold("📊 Ansible – Health-Monitoring Setup..."))
-        run([ansible, "playbooks/setup_pi_daemon_health_monitoring.yml", *vault_opts])
+        run([ansible, "-i", f"{env['PI_HOST']},", "-u", env["PI_USER"], 
+             "--private-key", env["PI_SSH_KEY"],
+             "playbooks/setup_pi_daemon_health_monitoring.yml", *vault_opts])
     elif mode == "hotpatch":
         print(bold("🩹 Ansible – Hotpatch (pi_daemon_secure.py)..."))
         run([ansible, "playbooks/hotpatch.yml", *vault_opts])
@@ -495,7 +497,9 @@ def ansible_deploy(env: dict, mode: str, ansible: str) -> None:
         print(bold("🔄 Ansible – Image-Update..."))
         run([ansible, "playbooks/update.yml", *vault_opts])
         print(bold("📊 Ansible – Health-Monitoring Setup..."))
-        run([ansible, "playbooks/setup_pi_daemon_health_monitoring.yml", *vault_opts])
+        run([ansible, "-i", f"{env['PI_HOST']},", "-u", env["PI_USER"], 
+             "--private-key", env["PI_SSH_KEY"],
+             "playbooks/setup_pi_daemon_health_monitoring.yml", *vault_opts])
 
 
 # ── TOTP-Generierung ──────────────────────────────────────────────────────────

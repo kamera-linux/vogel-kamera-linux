@@ -1,0 +1,91 @@
+---
+# ansible/playbooks/setup_pi_daemon_health_monitoring.yml
+# Deployt Monitoring-Script und systemd-Timer für Container Health-Checks
+# Wird automatisch von build_and_deploy.py mit -i "{{ PI_HOST }}," aufgerufen
+
+- name: "Pi-Daemon Health Monitoring – Setup"
+  hosts: all
+  gather_facts: yes
+  vars:
+    monitor_script_src: "{{ playbook_dir }}/../../scripts/container_health_monitor.py"
+    monitor_script_dest: "/usr/local/bin/pi-daemon-health-check"
+    monitor_log_dir: "/var/log/pi-daemon"
+  
+  tasks:
+    - name: "Logging-Verzeichnis erstellen"
+      file:
+        path: "{{ monitor_log_dir }}"
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+      become: yes
+
+    - name: "Health-Monitor-Script deployen"
+      copy:
+        src: "{{ monitor_script_src }}"
+        dest: "{{ monitor_script_dest }}"
+        mode: "0755"
+        owner: root
+        group: root
+      become: yes
+      register: deploy_monitor
+
+    - name: "systemd Service-Datei erstellen (Pi-Daemon Health Check)"
+      template:
+        src: pi-daemon-health-check.service.j2
+        dest: /etc/systemd/system/pi-daemon-health-check.service
+        owner: root
+        group: root
+        mode: "0644"
+      become: yes
+      register: deploy_service
+
+    - name: "systemd Timer-Datei erstellen (alle 30s)"
+      template:
+        src: pi-daemon-health-check.timer.j2
+        dest: /etc/systemd/system/pi-daemon-health-check.timer
+        owner: root
+        group: root
+        mode: "0644"
+      become: yes
+      register: deploy_timer
+
+    - name: "systemd Daemon neu laden"
+      systemd:
+        daemon_reload: yes
+      become: yes
+      when: deploy_service.changed or deploy_timer.changed
+
+    - name: "Health-Check-Timer starten und aktivieren"
+      systemd:
+        name: pi-daemon-health-check.timer
+        state: started
+        enabled: yes
+      become: yes
+
+    - name: "Health-Check-Status überprüfen"
+      shell: "systemctl status pi-daemon-health-check.timer --no-pager"
+      register: timer_status
+      become: yes
+      changed_when: false
+
+    - name: "Erfolg: Health Monitoring aktiv"
+      debug:
+        msg: |
+          ✅ Pi-Daemon Health Monitoring eingerichtet!
+          
+          Service: pi-daemon-health-check.service
+          Timer: pi-daemon-health-check.timer (alle 30s)
+          Log-Verzeichnis: {{ monitor_log_dir }}/
+          
+          Logs anschauen:
+            ssh {{ ansible_user }}@{{ inventory_hostname }} \
+              'tail -f {{ monitor_log_dir }}/health_*.log'
+          
+          Health-Historie (JSON):
+            ssh {{ ansible_user }}@{{ inventory_hostname }} \
+              'jq . {{ monitor_log_dir }}/health_history.json | tail -20'
+          
+          Timer-Status:
+            systemctl status pi-daemon-health-check.timer
