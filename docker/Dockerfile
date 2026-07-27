@@ -70,7 +70,7 @@ RUN groupadd -r appuser \
 
 EXPOSE 8443
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD python3 -c "import urllib.request, ssl, sys, json; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; resp=urllib.request.urlopen('https://localhost:8443/api/health', context=ctx, timeout=8); data=json.loads(resp.read()); (sys.exit(0) if 'version' in data and 'system' in data else sys.exit(1))"
+HEALTHCHECK --interval=30s --timeout=15s --start-period=30s --retries=3 \
+  CMD python3 -c "import urllib.request, ssl, sys, json; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; resp=urllib.request.urlopen('https://localhost:8443/api/health', context=ctx, timeout=12); data=json.loads(resp.read()); (sys.exit(0) if 'version' in data and 'system' in data else sys.exit(1))"
 
 ENTRYPOINT ["/entrypoint.sh"]
