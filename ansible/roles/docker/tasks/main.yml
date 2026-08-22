@@ -20,15 +20,25 @@
     state: present
     filename: docker
 
-- name: Docker CE installieren
+- name: Docker CE in stabiler Version installieren (29.6.0)
   ansible.builtin.apt:
     name:
-      - docker-ce
-      - docker-ce-cli
+      - docker-ce=5:29.6.0-*
+      - docker-ce-cli=5:29.6.0-*
       - containerd.io
       - docker-compose-plugin
     state: present
     update_cache: true
+
+- name: Docker CE Pakete vor Updates sperren (apt-mark hold)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-compose-plugin
 
 - name: User zur docker-Gruppe hinzufügen
   ansible.builtin.user:
@@ -41,3 +51,20 @@
     name: docker
     enabled: true
     state: started
+
+- name: daemon.json erstellen (Logging + Konfiguration)
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2"
+      }
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart docker

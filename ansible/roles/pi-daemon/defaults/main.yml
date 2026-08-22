@@ -1,0 +1,7 @@
+---
+# Pi-Daemon Role Defaults
+
+# Gotify Alert-Konfiguration (optional - selbst-gehostetes Alert-System)
+# Setze diese Werte in group_vars/host_vars um Alerts zu aktivieren
+pi_daemon_gotify_url: ""      # z.B. http://192.168.178.36:8080
+pi_daemon_gotify_token: ""    # API Token von Gotify (generiert im Dashboard)

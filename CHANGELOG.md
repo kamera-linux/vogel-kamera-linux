@@ -1,5 +1,36 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.3.8] - 22. August 2026 🔧 **Ansible Toolchain & E2E Testing Improvements**
+
+### ✨ Features
+- **Ansible Python-Interpreter explizit konfiguriert**
+  - Warnung bei `Gathering Facts` eliminiert
+  - `interpreter_python = /usr/bin/python3.13` in `ansible.cfg` gesetzt
+  - Verhindert Ansible-Warnungen bei zukünftigen Deployments
+
+- **E2E-Test Fehlerbehandlung verbessert**
+  - Bessere TOTP-Code-Generierung mit Fallback-Support
+  - Präzisere Fehlermeldungen (welches Tool fehlt: `oathtool` oder `pyotp`)
+  - Optional: `pyotp` in venv für lokale E2E-Tests
+
+### 🔧 Technische Änderungen
+- `ansible/ansible.cfg` → `interpreter_python` explizit gesetzt
+- `ansible/build_and_deploy.py` → pyotp-Import optimiert (globale HAS_PYOTP-Flag)
+- `ansible/build_and_deploy.py` → `_generate_totp()` Fehlerbehandlung verfeinert
+- `VERSION`, `raspberry-pi-scripts/VERSION` → 2.3.8
+- `unified-monitor-client/VERSION` → 2.3.8
+- `scripts/__version__.py`, `scripts/version.py` → 2.3.8
+
+### 🧪 Testing
+- ✅ E2E-Test mit TOTP funktioniert (wenn pyotp installiert)
+- ✅ Ansible-Warnungen eliminiert
+- ✅ Deployment erfolgreich mit `--update --no-cache --e2e`
+
+### 🔗 Abhängigkeiten
+- Optional: `pip install pyotp` für vollständige E2E-Tests
+
+---
+
 ## [2.3.5] - 5. Mai 2026 🎬 **Slow-Motion Upgrade · High-Performance Recording**
 
 ### ✨ Features

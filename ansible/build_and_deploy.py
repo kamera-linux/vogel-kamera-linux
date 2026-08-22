@@ -41,6 +41,13 @@ except ImportError:
     print("❌ python-dotenv nicht installiert: pip install python-dotenv", file=sys.stderr)
     sys.exit(1)
 
+# Versuche pyotp zu laden (optional, für E2E-Tests)
+try:
+    import pyotp
+    HAS_PYOTP = True
+except ImportError:
+    HAS_PYOTP = False
+
 # ── ANSI-Farben ──────────────────────────────────────────────────────────────
 BOLD   = "\033[1m"
 GREEN  = "\033[32m"
@@ -508,11 +515,9 @@ def _generate_totp(secret: str) -> str:
         r = run_capture([oathtool, "--base32", "--totp", secret])
         if r.returncode == 0:
             return r.stdout.decode().strip()
-    try:
-        import pyotp
+    if HAS_PYOTP:
         return pyotp.TOTP(secret).now()
-    except ImportError:
-        return ""
+    return ""
 
 
 # ── E2E-Test ──────────────────────────────────────────────────────────────────
@@ -558,7 +563,10 @@ def run_e2e(env: dict) -> None:
         totp = _generate_totp(totp_secret)
         if not totp:
             print(yellow("   ⚠ TOTP konnte nicht generiert werden."))
-            print(  "     Bitte 'oathtool' (oath-toolkit) oder pyotp installieren.")
+            if not shutil.which("oathtool"):
+                print(  "     Bitte 'oathtool' installieren: apt install oathtool")
+            if not HAS_PYOTP:
+                print(  "     ODER 'pyotp' installieren: pip install pyotp")
         else:
             # [3] Login → JWT
             print("   [3] Login (JWT-Token)... ", end="", flush=True)

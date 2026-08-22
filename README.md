@@ -4,9 +4,9 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.3.5 — Slow-Motion Upgrade · High-Performance Recording 🎬
+## Release v2.3.8 — Ansible Toolchain & Web-GUI Verbesserungen 🔧
 
-- **Version:** v2.3.5 (5. Mai 2026)
+- **Version:** v2.3.8 (22. August 2026)
 - **🎬 Neue Features – High-Performance Zeitlupe:**
   - **Zeitlupen-Modus HQ:** 2304×1296 @ 56fps (1.9× langsamer, bessere Qualität)
   - **Zeitlupen-Modus 120fps:** 1536×864 @ 120fps (4× langsamer, ultra-highspeed)
@@ -32,7 +32,7 @@
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
 **Release Notes:** [`releases/v2.3.5/`](releases/v2.3.5/RELEASE_NOTES_v2.3.5.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.3.5-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.5)
+[![Version](https://img.shields.io/badge/Version-v2.3.8-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.8)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Slow-Motion](https://img.shields.io/badge/Slow--Motion-2304x1296%40%2056fps-ff9800)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
@@ -40,7 +40,7 @@
 
 ### v2.3.4 (Archiv)
 **Audio Quality Upgrade · Professional Recording**
-- **Version:** v2.3.4 (5. Mai 2026)
+- **Version:** v2.3.5 (5. Mai 2026)
 - Siehe [Archiv-Release](releases/v2.3.4/RELEASE_NOTES_v2.3.4.md) für Details oder CHANGELOG.md
 
 ### v2.2.5 (Archiv)

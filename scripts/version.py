@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.3.3"
-__version_info__ = (2, 3, 3)
+__version__ = "2.3.8"
+__version_info__ = (2, 3, 8)
 
 # Release Information
-RELEASE_NAME = "Health-Check System · Daemon Resilience"
-RELEASE_DATE = "2026-05-04"
-RELEASE_TYPE = "minor"  # major, minor, patch
+RELEASE_NAME = "Ansible Python Interpreter & E2E Testing Improvements"
+RELEASE_DATE = "2026-08-22"
+RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20260504-1"
-GIT_TAG = "v2.3.3"
+BUILD_NUMBER = "20260822-1"
+GIT_TAG = "v2.3.8"
 
 # Feature Flags
 FEATURES = {
