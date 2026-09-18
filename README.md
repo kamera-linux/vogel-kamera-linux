@@ -99,28 +99,28 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**Montage - Windows to Linux - Client Laptop #shorts...**](https://www.youtube.com/watch?v=-B7X7jsQzT4) | 25.04.2025 | 0:24 | 172 | 1 | 0 |
-| [**Learning by Editing – das hab ich direkt im Video ...**](https://www.youtube.com/watch?v=6rPA8vBeV7Y) | 18.04.2025 | 0:50 | 158 | 4 | 0 |
-| [**Ich hätte nicht gedacht, dass mir so viele Steine ...**](https://www.youtube.com/watch?v=lxbxXfsiHwM) | 17.04.2025 | 22:24 | 248 | 14 | 5 |
-| [**Requiescat in Pace - Mein Freund (Dell XPS 15 9950...**](https://www.youtube.com/watch?v=qITDxduLyWU) | 26.02.2025 | 0:31 | 18 | 2 | 0 |
-| [**Requiescat in Pace - Mein Freund (Dell XPS 15 9950...**](https://www.youtube.com/watch?v=YWcbVoAc0zs) | 26.02.2025 | 0:31 | 90 | 2 | 0 |
-| [**👻🎃Alles fusioniert ergibt dann..💀 ? - Tag 30,31 #s...**](https://www.youtube.com/watch?v=-cS5Fe__gzs) | 03.11.2024 | 0:24 | 152 | 4 | 1 |
-| [**👻🎃  Wie zeichnet man ein  💀 ?  - Tag 29 #shorts  #...**](https://www.youtube.com/watch?v=qXSMJhTLilc) | 02.11.2024 | 0:32 | 51 | 2 | 0 |
-| [**The cake is a (drawn) lie - Tag 28 #shorts  #inkto...**](https://www.youtube.com/watch?v=wkyGhlBcbYU) | 01.11.2024 | 0:30 | 16 | 2 | 0 |
-| [**🕊️ Hast du gerade ein Foto von mir..?!  🕊️ - Tag 2...**](https://www.youtube.com/watch?v=BPPg8UDgrK4) | 31.10.2024 | 0:37 | 251 | 7 | 2 |
-| [**🕊️ Scheuch den Vogel  🕊️ - Tag 25 #shorts  #inktob...**](https://www.youtube.com/watch?v=KfNcfengsJU) | 30.10.2024 | 0:37 | 19 | 9 | 2 |
-| [**🔥 Maximaleeeee Feuer-Energieeeeee 🔥 - Tag 24 #shor...**](https://www.youtube.com/watch?v=E8dx9nGDuNo) | 29.10.2024 | 0:23 | 17 | 6 | 1 |
-| [**😈 Lasst euch verzaubern ...von ihrem..eh Dämonenge...**](https://www.youtube.com/watch?v=RG-kSm17jMM) | 27.10.2024 | 0:40 | 563 | 16 | 1 |
-| [**🍃 it all to me 🍂🍁  - Tag 23 #shorts  #inktober2024...**](https://www.youtube.com/watch?v=r7iSlxSofEM) | 26.10.2024 | 0:36 | 416 | 9 | 0 |
-| [**🎵 Setzt euch ans Lager-feuerrr 🔥 singt das Lagerfe...**](https://www.youtube.com/watch?v=ZJ13-QpQOCI) | 25.10.2024 | 0:32 | 444 | 18 | 2 |
-| [**🥺 Es ist so cute geworden 🥺  - Tag 21 #shorts  #in...**](https://www.youtube.com/watch?v=uqkr_Jyw-rM) | 24.10.2024 | 0:33 | 15 | 4 | 3 |
-| [**🤚 Das ist der Albtraum eines jeden Künstlers 😱👩‍🎨 ...**](https://www.youtube.com/watch?v=o61saUGicnQ) | 23.10.2024 | 0:33 | 462 | 19 | 3 |
-| [**Dieser Dolch macht dich zum Drachen 😱    - Tag 18 ...**](https://www.youtube.com/watch?v=6NR5OZG4AUk) | 22.10.2024 | 0:42 | 428 | 12 | 2 |
-| [**Ich habe jeden Tag ein Bild gezeichnet..  👀  -  #s...**](https://www.youtube.com/watch?v=x-kzTKAaZHM) | 19.10.2024 | 0:36 | 34 | 3 | 0 |
-| [**😱 Schau nicht hin, Sleima 😱    - Tag 17 #shorts  #...**](https://www.youtube.com/watch?v=Uxj_6sE8N7U) | 18.10.2024 | 0:42 | 415 | 12 | 2 |
-| [**Ich lasse mir den Text vom Spiel vorlesen 😱 #short...**](https://www.youtube.com/watch?v=9EEP7VsWftA) | 18.10.2024 | 1:00 | 66 | 4 | 1 |
+| [**🐦 Haussperlinge am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XdpjpbCXhQE) | 29.08.2026 | 1:56 | 116 | 4 | 0 |
+| [**🐦 Sumpfmeise beim Hamstern (Zeitlupe)**](https://www.youtube.com/watch?v=pee3rH2nBnI) | 23.08.2026 | 2:15 | 89 | 6 | 0 |
+| [**🐦 Vögel am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XoG5j0GHGcM) | 12.08.2026 | 3:02 | 58 | 7 | 0 |
+| [**🤖 KI erkennt Haussperling am Futterhaus 🐦**](https://www.youtube.com/watch?v=GjOl43K4uUI) | 02.05.2026 | 1:53 | 134 | 6 | 1 |
+| [**Haussperling in 4K – Nahaufnahme am neuen Vogelfut...**](https://www.youtube.com/watch?v=utk6eLfYg_4) | 01.05.2026 | 2:16 | 57 | 7 | 0 |
+| [**Kernbeißer in 4K – Nahaufnahme am neuen Vogelfutte...**](https://www.youtube.com/watch?v=Jf6locShc_c) | 01.05.2026 | 2:22 | 60 | 6 | 1 |
+| [**Stieglitz in 4K – Nahaufnahme am neuen Vogelfutter...**](https://www.youtube.com/watch?v=0QABEj8JjS0) | 10.04.2026 | 3:20 | 109 | 6 | 0 |
+| [**🐦Kohlmeise am Futterhaus - Zeitlupen-Aufnahmen**](https://www.youtube.com/watch?v=-9orWyLCK3A) | 07.04.2026 | 2:23 | 58 | 5 | 0 |
+| [**Haussperling und Grünling am Futterhaus - Zeitlupe...**](https://www.youtube.com/watch?v=NXworCxUw8Q) | 24.03.2026 | 2:40 | 59 | 5 | 0 |
+| [**🐦 Vogel-Beobachtung mit neuem Futterhaus**](https://www.youtube.com/watch?v=Y3KsGb4NkbU) | 23.03.2026 | 0:55 | 34 | 5 | 0 |
+| [**🐦 Vogel-Beobachtung von einem Star am Futterhaus**](https://www.youtube.com/watch?v=0bNoF5cutnc) | 06.03.2026 | 2:33 | 72 | 6 | 0 |
+| [**🐦 Vogel-Beobachtung mit KI: Meisen, Rotkehlchen un...**](https://www.youtube.com/watch?v=1Mrq4oIzckI) | 30.11.2025 | 2:38 | 190 | 1 | 2 |
+| [**3 Vogelarten live am Futterhaus - KI erkennt Kohlm...**](https://www.youtube.com/watch?v=uZm4Ao9JHoo) | 24.11.2025 | 3:10 | 183 | 6 | 1 |
+| [**🐦 Wunderschönes Rotkehlchen beim Fressen \| 4K Voge...**](https://www.youtube.com/watch?v=rWkWFUeVK0o) | 31.10.2025 | 1:58 | 76 | 6 | 0 |
+| [**🐦 Blaumeise beim Fressen \| KI-Kamera 120fps Zeitlu...**](https://www.youtube.com/watch?v=ew3l12TSn5k) | 28.10.2025 | 2:25 | 122 | 9 | 0 |
+| [**🐦 Sumpfmeise in Zeitlupe \| Futtersuche im Vogelhau...**](https://www.youtube.com/watch?v=dORu9qs8KSA) | 20.10.2025 | 2:46 | 57 | 6 | 1 |
+| [**5 Vogelarten mit Aufnahme (120fps) \| Automatische ...**](https://www.youtube.com/watch?v=k3tS0oJX7YE) | 06.10.2025 | 3:24 | 83 | 8 | 5 |
+| [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 131 | 7 | 1 |
+| [**Vogelhaus mit Kleiber  (Futtersuche in Zeitlupe)**](https://www.youtube.com/watch?v=QALijFTA_s8) | 29.09.2025 | 5:07 | 83 | 7 | 2 |
+| [**Vogelhaus mit junge Haussperlinge**](https://www.youtube.com/watch?v=3na90KiJ-J8) | 06.06.2025 | 3:11 | 61 | 6 | 0 |
 
-*Automatisch aktualisiert: 17.09.2026 12:30 Uhr (Sommerzeit (MESZ))*
+*Automatisch aktualisiert: 18.09.2026 12:06 Uhr (Sommerzeit (MESZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## 🔩 Hardware-Stückliste
