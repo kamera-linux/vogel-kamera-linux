@@ -99,12 +99,12 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**🐦 Haussperlinge am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XdpjpbCXhQE) | 29.08.2026 | 1:56 | 135 | 4 | 1 |
-| [**🐦 Sumpfmeise beim Hamstern (Zeitlupe)**](https://www.youtube.com/watch?v=pee3rH2nBnI) | 23.08.2026 | 2:15 | 98 | 6 | 0 |
-| [**🐦 Vögel am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XoG5j0GHGcM) | 12.08.2026 | 3:02 | 63 | 7 | 0 |
-| [**🤖 KI erkennt Haussperling am Futterhaus 🐦**](https://www.youtube.com/watch?v=GjOl43K4uUI) | 02.05.2026 | 1:53 | 140 | 6 | 1 |
+| [**🐦 Haussperlinge am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XdpjpbCXhQE) | 29.08.2026 | 1:56 | 136 | 4 | 1 |
+| [**🐦 Sumpfmeise beim Hamstern (Zeitlupe)**](https://www.youtube.com/watch?v=pee3rH2nBnI) | 23.08.2026 | 2:15 | 99 | 6 | 0 |
+| [**🐦 Vögel am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XoG5j0GHGcM) | 12.08.2026 | 3:02 | 64 | 7 | 0 |
+| [**🤖 KI erkennt Haussperling am Futterhaus 🐦**](https://www.youtube.com/watch?v=GjOl43K4uUI) | 02.05.2026 | 1:53 | 141 | 6 | 1 |
 | [**Haussperling in 4K – Nahaufnahme am neuen Vogelfut...**](https://www.youtube.com/watch?v=utk6eLfYg_4) | 01.05.2026 | 2:16 | 58 | 7 | 0 |
-| [**Kernbeißer in 4K – Nahaufnahme am neuen Vogelfutte...**](https://www.youtube.com/watch?v=Jf6locShc_c) | 01.05.2026 | 2:22 | 60 | 6 | 1 |
+| [**Kernbeißer in 4K – Nahaufnahme am neuen Vogelfutte...**](https://www.youtube.com/watch?v=Jf6locShc_c) | 01.05.2026 | 2:22 | 61 | 6 | 1 |
 | [**Stieglitz in 4K – Nahaufnahme am neuen Vogelfutter...**](https://www.youtube.com/watch?v=0QABEj8JjS0) | 10.04.2026 | 3:20 | 110 | 6 | 0 |
 | [**🐦Kohlmeise am Futterhaus - Zeitlupen-Aufnahmen**](https://www.youtube.com/watch?v=-9orWyLCK3A) | 07.04.2026 | 2:23 | 59 | 5 | 0 |
 | [**Haussperling und Grünling am Futterhaus - Zeitlupe...**](https://www.youtube.com/watch?v=NXworCxUw8Q) | 24.03.2026 | 2:40 | 59 | 5 | 0 |
@@ -120,7 +120,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**Vogelhaus mit Kleiber  (Futtersuche in Zeitlupe)**](https://www.youtube.com/watch?v=QALijFTA_s8) | 29.09.2025 | 5:07 | 83 | 7 | 2 |
 | [**Vogelhaus mit junge Haussperlinge**](https://www.youtube.com/watch?v=3na90KiJ-J8) | 06.06.2025 | 3:11 | 61 | 6 | 0 |
 
-*Automatisch aktualisiert: 12.10.2026 15:36 Uhr (Sommerzeit (MESZ))*
+*Automatisch aktualisiert: 13.10.2026 15:00 Uhr (Sommerzeit (MESZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## 🔩 Hardware-Stückliste
