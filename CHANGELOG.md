@@ -1031,6 +1031,25 @@ Siehe `legacy/README.md` für vollständigen Migration Guide.
 
 ---
 
+## [1.3.2] - 2025-11-10 🔍 Video-Analyse-Tool
+
+### ✨ Hinzugefügt
+- **Video-Analyse-Tool** `tools/analyze_video_bird_content.py` (YOLOv8)
+  - Erkennt Vogel-Anteil und zusammenhängende Vogel-Segmente in aufgezeichneten Videos
+  - Konfigurierbare Sample-Rate (jeder n-te Frame, Standard: 5)
+  - JSON-Export, optionales Löschen von Videos ohne Vogelinhalt (`--delete`), Logging
+- `tools/requirements.txt` und `tools/README.md`
+
+### 🐛 Behoben
+- Defekte Emojis in `tools/README.md`
+
+> Das Tool wurde später als eigenständiges Paket ausgelagert:
+> [vogel-video-analyzer](python-toolbox/vogel-video-analyzer) (Git-Submodul).
+
+Details: [releases/v1.3.2](releases/v1.3.2/RELEASE_NOTES_v1.3.2.md)
+
+---
+
 ## [1.3.1] - 2025-11-05
 
 ### ✨ Hinzugefügt
