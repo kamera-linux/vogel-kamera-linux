@@ -126,7 +126,7 @@ on:
 ```mermaid
 graph LR
     A[GitHub Actions] --> B[Checkout Code]
-    B --> C[Python 3.11 Setup]
+    B --> C[Python 3.13 Setup]
     C --> D[Dependencies installieren]
     D --> E[YouTube API Call]
     E --> F{Änderungen?}
@@ -139,8 +139,8 @@ graph LR
 ### Schritte im Detail:
 
 1. **Checkout Repository** - Holt aktuellen Code
-2. **Setup Python 3.11** - Bereitet Python-Umgebung vor
-3. **Install Dependencies** - Installiert `google-api-python-client`
+2. **Setup Python 3.13** - Bereitet Python-Umgebung vor
+3. **Install Dependencies** - Installiert die Pakete aus `tools/requirements-youtube.txt` (feste Versionen)
 4. **Update YouTube Statistics** - Führt `tools/update_youtube_stats.py` aus
 5. **Check for Changes** - Prüft ob README.md geändert wurde
 6. **Commit and Push** - Committet nur wenn Änderungen vorhanden
@@ -372,17 +372,8 @@ error: failed to push some refs
 - ✅ Keine manuellen Merges nötig
 - ✅ Vollautomatischer Workflow
 
-**Lösung 2: Workflow erstellt automatisch Branch**
-
-Falls Branch Protection aktiv bleibt:
-- Action erstellt Branch: `youtube-stats-update-YYYYMMDD-HHMMSS`
-- Pusht Änderungen auf diesen Branch
-- Du musst Branch manuell mergen
-
-**Branches finden:**
-```
-https://github.com/kamera-linux/vogel-kamera-linux/branches
-```
+Ohne Bypass schlägt der Lauf fehl (rot in der Actions-Übersicht) – es wird
+kein Ersatz-Branch mehr angelegt.
 
 **Detaillierte Anleitung:**
 Siehe: `.github/BRANCH_PROTECTION_SETUP.md`

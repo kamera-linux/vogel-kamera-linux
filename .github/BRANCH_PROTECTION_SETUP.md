@@ -99,32 +99,14 @@ jobs:
 
 ---
 
-## 🔍 Aktuelles Verhalten (Workaround aktiv)
+## 🔍 Verhalten des Workflows
 
-Die GitHub Action funktioniert **bereits** mit folgendem Hybrid-Ansatz:
+Der Workflow pusht direkt auf `main`. Blockiert Branch Protection den Push,
+**schlägt der Lauf fehl** (rot in der Actions-Übersicht, mit Hinweis auf diese
+Anleitung). Früher wurde stattdessen täglich ein `youtube-stats-update-*`-Branch
+angelegt, der von Hand gemergt werden musste – das ist entfernt.
 
-1. ✅ Erstellt Branch: `youtube-stats-update-YYYYMMDD-HHMMSS`
-2. ✅ Committed Änderungen auf Branch
-3. ✅ Pusht Branch zu GitHub
-4. 🔄 Versucht direkten Push auf `main`
-5. ❌ Schlägt fehl (Branch Protection)
-6. ℹ️ Branch bleibt für manuelles Merge
-
-**Was du tun musst:**
-- Gehe zu: https://github.com/kamera-linux/vogel-kamera-linux/branches
-- Finde Branch: `youtube-stats-update-...`
-- Klicke "Compare & pull request"
-- Merge den PR
-
-**Oder:**
-```bash
-# Lokal mergen
-git checkout main
-git pull
-git merge origin/youtube-stats-update-YYYYMMDD-HHMMSS
-git push origin main
-git push origin --delete youtube-stats-update-YYYYMMDD-HHMMSS
-```
+Lösung bei Fehlschlag: Option 1 (Bypass für GitHub Actions) einrichten.
 
 ---
 

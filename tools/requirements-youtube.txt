@@ -1,0 +1,4 @@
+# Abhängigkeiten für tools/update_youtube_stats.py
+# (feste Versionen, damit der tägliche Workflow reproduzierbar läuft)
+google-api-python-client==2.201.0
+python-dotenv==1.2.4

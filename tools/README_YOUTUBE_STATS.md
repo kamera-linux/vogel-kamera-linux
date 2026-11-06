@@ -14,11 +14,8 @@ Automatisches Tool zum Aktualisieren der YouTube-Video-Statistiken in der README
 ## 🛠️ Installation
 
 ```bash
-# Abhängigkeiten installieren
-pip install google-api-python-client python-dotenv
-
-# Oder mit requirements.txt
-pip install -r config/requirements.txt
+# Abhängigkeiten installieren (feste Versionen, wie im Workflow)
+pip install -r tools/requirements-youtube.txt
 ```
 
 ## 🔑 API-Key erhalten
@@ -80,47 +77,10 @@ Das Tool generiert eine Markdown-Tabelle wie diese:
 
 ### GitHub Actions (empfohlen)
 
-Erstelle `.github/workflows/update-youtube-stats.yml`:
-
-```yaml
-name: Update YouTube Statistics
-
-on:
-  schedule:
-    # Täglich um 06:00 UTC
-    - cron: '0 6 * * *'
-  workflow_dispatch:  # Manueller Trigger
-
-jobs:
-  update-stats:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
-      - name: Install dependencies
-        run: |
-          pip install google-api-python-client python-dotenv
-      
-      - name: Update YouTube Stats
-        env:
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: |
-          python3 tools/update_youtube_stats.py
-      
-      - name: Commit changes
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add README.md
-          git diff --quiet && git diff --staged --quiet || \
-            git commit -m "docs: Update YouTube video statistics [skip ci]"
-          git push
-```
+Der Workflow ist bereits eingerichtet:
+[`.github/workflows/update-youtube-stats.yml`](../.github/workflows/update-youtube-stats.yml)
+(täglich 06:00 UTC + manuell über „Run workflow“). Details:
+[.github/workflows/README.md](../.github/workflows/README.md).
 
 **Wichtig:** Füge `YOUTUBE_API_KEY` als Repository Secret hinzu:
 - GitHub → Settings → Secrets and variables → Actions
@@ -161,7 +121,7 @@ export YOUTUBE_API_KEY="dein_key_hier"
 
 ### Fehler: "googleapiclient not installed"
 ```bash
-pip install google-api-python-client
+pip install -r tools/requirements-youtube.txt
 ```
 
 ### Fehler: "YouTube-Video-Marker nicht gefunden"

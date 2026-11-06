@@ -8,6 +8,11 @@ on:
   # Erlaubt manuelles Triggern über GitHub UI
   workflow_dispatch:
 
+# Nie zwei Läufe gleichzeitig (sonst Push-Konflikte auf main)
+concurrency:
+  group: youtube-stats
+  cancel-in-progress: false
+
 jobs:
   update-stats:
     runs-on: ubuntu-latest
@@ -15,20 +20,21 @@ jobs:
     # Permissions für GITHUB_TOKEN
     permissions:
       contents: write        # Erlaubt Commit und Push
-      pull-requests: write   # Für Pull Request Erstellung (falls Branch Protection aktiv)
     
     steps:
       - name: Checkout Repository
-        run: |
-          git clone --depth=1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-      
-      - name: Setup Python and Install Dependencies
-        run: |
-          python3 --version
-          pip install --user google-api-python-client python-dotenv
-      
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: tools/requirements-youtube.txt
+
+      - name: Install Dependencies
+        run: pip install -r tools/requirements-youtube.txt
+
       - name: Update YouTube Statistics
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -63,48 +69,24 @@ jobs:
       - name: Commit and Push Changes
         if: steps.git-check.outputs.changed == 'true'
         run: |
-          # Versuche zuerst direkten Commit auf main
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
           git add README.md
           git commit -m "docs: Update YouTube video statistics [skip ci]"
-          
-          # Pull latest changes
-          git pull --rebase origin main || {
-            echo "⚠️ Rebase fehlgeschlagen, versuche erneut..."
-            git rebase --abort
-            git pull --rebase origin main
-          }
-          
-          # Versuche direkten Push auf main
-          if git push origin main; then
-            echo ""
-            echo "✅ Direkter Push auf main erfolgreich"
-          else
-            echo ""
-            echo "❌ Direkter Push fehlgeschlagen - Branch Protection aktiv"
-            echo ""
-            
-            # Fallback: Erstelle Branch für manuellen Merge
-            BRANCH_NAME="youtube-stats-update-$(date +%Y%m%d-%H%M%S)"
-            git checkout -b "$BRANCH_NAME"
-            git push origin "$BRANCH_NAME"
-            
-            echo "ℹ️ Branch Protection ist aktiv - GitHub Actions benötigt Bypass-Berechtigung"
-            echo "📋 Branch '$BRANCH_NAME' enthält die Updates"
-            echo "�� Lösung: Aktiviere 'Deploy keys' in den Branch Protection Bypass-Regeln"
-            echo ""
-            echo "🔗 Merge-Link: https://github.com/${{ github.repository }}/compare/$BRANCH_NAME?expand=1"
-            echo "📖 Anleitung: .github/BRANCH_PROTECTION_SETUP.md"
+          git pull --rebase origin main
+          if ! git push origin HEAD:main; then
+            echo "::error::Push auf main fehlgeschlagen – vermutlich Branch Protection. Siehe .github/BRANCH_PROTECTION_SETUP.md"
+            exit 1
           fi
-      
+          echo "✅ README.md aktualisiert und gepusht"
+
       - name: Summary
+        if: always()
         run: |
           echo "## 📊 YouTube Stats Update" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.git-check.outputs.changed }}" == "true" ]; then
             echo "✅ README.md wurde aktualisiert" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "ℹ️ **Hinweis:** Falls Branch Protection aktiv ist, wurde ein Branch erstellt." >> $GITHUB_STEP_SUMMARY
-            echo "Bitte manuell mergen oder GitHub Actions von den Branch Protection Rules ausnehmen." >> $GITHUB_STEP_SUMMARY
           else
             echo "ℹ️ Keine Änderungen - README.md bereits aktuell" >> $GITHUB_STEP_SUMMARY
           fi
