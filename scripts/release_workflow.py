@@ -10,14 +10,27 @@ Version History:
 - v2.0.2: YOLO26 Migration, Trixie Support
 - v2.0.1: rpicam-vid Integration
 """
+import shlex
+import subprocess
 import sys
 from pathlib import Path
 
-# Git-Automation importieren
-sys.path.append('git-automation/')
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# Git-Automation importieren (unabhängig vom aktuellen Arbeitsverzeichnis)
+sys.path.append(str(REPO_ROOT / 'git-automation'))
 from git_automation import SecureGitAutomation
 
-def complete_release_workflow(version="2.1.2"):
+
+def read_current_version():
+    """Liest die aktuelle Version aus der VERSION-Datei im Repo-Root"""
+    try:
+        return (REPO_ROOT / 'VERSION').read_text().strip()
+    except OSError:
+        return None
+
+
+def complete_release_workflow(version):
     """Vollständiger Release-Workflow"""
     print(f"🚀 Vollständiger Release-Workflow für v{version}")
     print("=" * 60)
@@ -42,8 +55,8 @@ def complete_release_workflow(version="2.1.2"):
             automation.run_command("git add .")
             
             # Commit für die Version
-            commit_msg = f"🔖 Release v{version} - Sichere Konfiguration & Datenschutz"
-            success, output = automation.run_command(f'git commit -m "{commit_msg}"')
+            commit_msg = f"🔖 Release v{version}"
+            success, output = automation.run_command(f'git commit -m {shlex.quote(commit_msg)}')
             
             if success:
                 print(f"✅ Commit erstellt: {commit_msg}")
@@ -64,7 +77,7 @@ def complete_release_workflow(version="2.1.2"):
         
         # 4. Tag erstellen
         print(f"\n🏷️ Erstelle Tag v{version}...")
-        success, output = automation.run_command(f"git tag -a v{version} -m 'Release v{version}: Secure Config, Dynamic Paths, Data Privacy'")
+        success, output = automation.run_command(f"git tag -a v{version} -m 'Release v{version}'")
         if success:
             print(f"✅ Tag v{version} erstellt")
         else:
@@ -129,10 +142,67 @@ def complete_release_workflow(version="2.1.2"):
         if current_branch == "devel":
             print("✅ Merge zu main durchgeführt")
         
+        # GitHub Release mit Notes erstellen
+        print("\n" + "=" * 60)
+        create_github_release(version)
+        
         return True
         
     except Exception as e:
         print(f"❌ Fehler im Release-Workflow: {e}")
+        return False
+
+def create_github_release(version):
+    """Erstellt automatisch GitHub Release mit Release-Notes"""
+    print(f"\n🚀 GitHub Release v{version} erstellen...")
+    print("=" * 50)
+    
+    def gh(*args):
+        # Ohne Shell aufrufen: Notes-Inhalt (Backticks, $, Anführungszeichen)
+        # wird so weder interpretiert noch verfälscht.
+        result = subprocess.run(['gh', *args], cwd=REPO_ROOT,
+                                capture_output=True, text=True)
+        return result.returncode == 0, (result.stdout + result.stderr).strip()
+
+    try:
+        tag = f"v{version}"
+
+        # Release-Notes Datei suchen
+        release_notes_file = REPO_ROOT / "releases" / tag / f"RELEASE_NOTES_{tag}.md"
+
+        if release_notes_file.exists():
+            print(f"✅ Release-Notes gefunden: {release_notes_file.relative_to(REPO_ROOT)}")
+            notes_args = ['--notes-file', str(release_notes_file)]
+        else:
+            print(f"⚠️ Release-Notes nicht gefunden: {release_notes_file.relative_to(REPO_ROOT)}")
+            print("   Erstelle Release ohne Notes...")
+            notes_args = ['--notes', f"## {tag}\n\nSiehe CHANGELOG.md für Details."]
+
+        # GitHub Release erstellen mit gh CLI
+        print(f"\n📤 Erstelle GitHub Release für Tag {tag}...")
+        success, output = gh('release', 'create', tag, '--title', tag, *notes_args)
+
+        if success:
+            print(f"✅ GitHub Release {tag} erstellt!")
+            print(f"   🔗 https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/{tag}")
+        else:
+            # Release könnte bereits existieren
+            if "already exists" in output:
+                print(f"ℹ️ Release {tag} existiert bereits")
+                # Versuche zu updaten
+                success, output = gh('release', 'edit', tag, *notes_args)
+                if success:
+                    print("✅ Release-Notes aktualisiert!")
+                else:
+                    print(f"⚠️ Konnte Release-Notes nicht aktualisieren: {output}")
+            else:
+                print(f"❌ Release-Erstellung fehlgeschlagen: {output}")
+                return False
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Fehler beim Release erstellen: {e}")
         return False
 
 def simple_commit_and_push():
@@ -157,7 +227,7 @@ def simple_commit_and_push():
         automation.run_command("git add .")
         
         commit_msg = input("💬 Commit-Nachricht: ") or "🔄 Automatisches Update"
-        success, output = automation.run_command(f'git commit -m "{commit_msg}"')
+        success, output = automation.run_command(f'git commit -m {shlex.quote(commit_msg)}')
         
         if success:
             print("✅ Commit erstellt")
@@ -176,23 +246,36 @@ def simple_commit_and_push():
 
 def main():
     """Hauptmenü für Git-Automatisierung"""
-    print("🔐 Git-Automatisierung v2.1.2")
-    print("=" * 40)
+    current_version = read_current_version()
+    print(f"🔐 Git-Automatisierung (aktuelle Version: {current_version or 'unbekannt'})")
+    print("=" * 50)
     print("1️⃣ Vollständiger Release-Workflow (mit Tags & Branches)")
     print("2️⃣ Einfacher Commit & Push")
     print("3️⃣ Nur Status anzeigen")
+    print("4️⃣ GitHub Release mit Notes erstellen (Tag bereits vorhanden)")
     
-    choice = input("\nWahl (1-3): ").strip()
+    choice = input("\nWahl (1-4): ").strip()
     
     if choice == "1":
-        version = input("Version eingeben (Standard: 2.1.2): ").strip() or "2.1.2"
-        complete_release_workflow(version)
+        default = f" (Standard: {current_version})" if current_version else ""
+        version = input(f"Version eingeben{default}: ").strip() or current_version
+        if version:
+            complete_release_workflow(version)
+        else:
+            print("❌ Version erforderlich")
     elif choice == "2":
         simple_commit_and_push()
     elif choice == "3":
         automation = SecureGitAutomation()
         success, output = automation.run_command("git status")
         print(f"\n📊 Git Status:\n{output}")
+    elif choice == "4":
+        default = f" (Standard: {current_version})" if current_version else ""
+        version = input(f"Version eingeben{default}: ").strip() or current_version
+        if version:
+            create_github_release(version)
+        else:
+            print("❌ Version erforderlich")
     else:
         print("❌ Ungültige Wahl")
 

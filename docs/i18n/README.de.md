@@ -240,7 +240,6 @@ vogel-kamera-linux/
 │   └── README.md                                                # Python-Toolbox Dokumentation
 ├── tools/                                                        # 🛠️ Test & Entwicklungstools
 │   ├── check_emojis.py                                          # Emoji-Validator für Markdown
-│   ├── automation_test.txt                                      # Automatisierungs-Tests
 │   ├── test_ai_features.py                                      # AI-Feature Tests
 │   └── README.md                                                # Tools-Dokumentation
 ├── network-tools/                                               # 🌐 Netzwerk-Diagnose-Tools *(v1.2.0)*

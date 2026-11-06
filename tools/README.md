@@ -18,7 +18,6 @@ pip install -r tools/requirements.txt
 | `local-system-status.py` | Lokaler System-Monitor | Prüft CPU, RAM, Festplatte, Last (ohne SSH) |
 | `check_emojis.py` | Emoji-Validator für Markdown-Dateien | Prüft alle Dokumente auf defekte Emojis |
 | `test_ai_features.py` | AI-Feature Tests | Testet KI-Funktionen |
-| `automation_test.txt` | Automatisierungs-Tests | Test-Dokumentation |
 
 ---
 
@@ -406,11 +405,6 @@ Testet die KI-Funktionen des Projekts.
 ```bash
 python3 tools/test_ai_features.py
 ```
-
-## 📝 automation_test.txt - Automatisierungs-Tests
-
-### Beschreibung
-Dokumentation der Automatisierungs-Tests.
 
 ## 🤝 Beitragen
 
