@@ -1982,23 +1982,16 @@ def api_recordings():
 # ── Download ──────────────────────────────────────────────────────────────────
 
 @app.route('/api/download')
+@require_auth
 def api_download():
-    # Token entweder als Bearer-Header ODER als ?token= Query-Parameter (für <a href> Downloads)
-    auth = request.headers.get('Authorization', '')
-    token_val = auth[7:] if auth.startswith('Bearer ') else request.args.get('token', '')
-    if not token_val:
-        abort(401)
-    try:
-        jwt.decode(token_val, JWT_SECRET, algorithms=['HS256'])
-    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-        abort(401)
+    # Token nur per Authorization-Header (kein ?token= – landet sonst in Logs/Verlauf)
     rel = request.args.get('p', '')
     if not rel:
         return jsonify({'error': 'Parameter p fehlt'}), 400
     # Sicherheit: kein Path-Traversal ausserhalb VIDEO_BASE_DIR
     base = Path(VIDEO_BASE_DIR).resolve()
     target = (base / rel).resolve()
-    if not str(target).startswith(str(base) + '/'):
+    if target == base or not target.is_relative_to(base):
         return jsonify({'error': 'Zugriff verweigert'}), 403
     if not target.exists() or not target.is_file():
         return jsonify({'error': 'Datei nicht gefunden'}), 404
@@ -2016,7 +2009,7 @@ def api_delete():
         return jsonify({'error': 'Parameter p fehlt'}), 400
     base = Path(VIDEO_BASE_DIR).resolve()
     target = (base / rel).resolve()
-    if not str(target).startswith(str(base) + '/'):
+    if target == base or not target.is_relative_to(base):
         return jsonify({'error': 'Zugriff verweigert'}), 403
     if not target.exists() or not target.is_file():
         return jsonify({'error': 'Datei nicht gefunden'}), 404
@@ -2219,17 +2212,9 @@ _STREAM_FRAME = Path('/tmp/det_latest_frame.jpg')
 
 
 @app.route('/api/snapshot')
+@require_auth
 def api_snapshot():
-    """Einzelnes JPEG-Frame der Detection-Kamera (für JS-Polling).
-    Token via ?token= Query-Parameter oder Bearer-Header."""
-    auth = request.headers.get('Authorization', '')
-    token_val = auth[7:] if auth.startswith('Bearer ') else request.args.get('token', '')
-    if not token_val:
-        abort(401)
-    try:
-        jwt.decode(token_val, JWT_SECRET, algorithms=['HS256'])
-    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-        abort(401)
+    """Einzelnes JPEG-Frame der Detection-Kamera (für JS-Polling, Token per Bearer-Header)."""
     if not _STREAM_FRAME.exists():
         abort(503)   # Noch kein Frame verfügbar
     resp = send_file(str(_STREAM_FRAME), mimetype='image/jpeg')

@@ -1667,8 +1667,8 @@
   // ── Video-Download (fetch+Blob, umgeht Chrome-SSL-Sperre bei self-signed Cert) ──
   async function downloadVideo(relPath) {
     try {
-      const url = '/api/download?p=' + encodeURIComponent(relPath) + '&token=' + encodeURIComponent(token);
-      const resp = await fetch(url);
+      const url = '/api/download?p=' + encodeURIComponent(relPath);
+      const resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
       if (!resp.ok) {
         let msg = 'HTTP ' + resp.status;
         try { const j = await resp.json(); msg = j.error || msg; } catch(_) {}
@@ -1861,7 +1861,7 @@
     const placeholder = document.getElementById('preview-placeholder');
     const statusEl    = document.getElementById('preview-status');
     try {
-      const resp = await fetch('/api/snapshot?token=' + encodeURIComponent(token));
+      const resp = await fetch('/api/snapshot', { headers: { 'Authorization': 'Bearer ' + token } });
       if (resp.ok) {
         const blob = await resp.blob();
         const url  = URL.createObjectURL(blob);

@@ -19,9 +19,21 @@ def test_download_ok(client, auth_header, aufnahme):
     assert r.data == b'video'
 
 
-def test_download_token_als_query(client, aufnahme):
+def test_download_token_als_query_abgelehnt(client, aufnahme):
+    # Token darf nicht in der URL stehen (Logs, Browser-Verlauf)
     r = client.get(f'/api/download?p=2026-11-06/vogel.mp4&token={make_token()}')
+    assert r.status_code == 401
+
+
+def test_snapshot_braucht_header(client, monkeypatch, tmp_path, auth_header):
+    import pi_daemon_secure as daemon
+    frame = tmp_path / 'frame.jpg'
+    frame.write_bytes(b'\xff\xd8jpeg')
+    monkeypatch.setattr(daemon, '_STREAM_FRAME', frame)
+    assert client.get(f'/api/snapshot?token={make_token()}').status_code == 401
+    r = client.get('/api/snapshot', headers=auth_header)
     assert r.status_code == 200
+    assert r.data == b'\xff\xd8jpeg'
 
 
 def test_download_ohne_token(client, aufnahme):
