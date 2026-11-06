@@ -97,7 +97,7 @@ def test_pexpect_method(ssh_key, passphrase):
             child.close()
             return child.exitstatus == 0
         else:
-            print(f"   Unerwartete Ausgabe oder Timeout")
+            print("   Unerwartete Ausgabe oder Timeout")
             return False
             
     except ImportError:

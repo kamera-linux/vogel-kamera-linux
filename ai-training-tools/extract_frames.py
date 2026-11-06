@@ -38,7 +38,7 @@ def extract_frames(video_path, output_dir, interval=30, max_frames=None):
     duration = total_frames / fps
     frame_interval = int(fps * interval)
     
-    print(f"📹 Video-Info:")
+    print("📹 Video-Info:")
     print(f"   FPS: {fps:.2f}")
     print(f"   Dauer: {duration:.1f} Sekunden")
     print(f"   Frames gesamt: {total_frames}")
@@ -77,7 +77,7 @@ def extract_frames(video_path, output_dir, interval=30, max_frames=None):
     
     cap.release()
     
-    print(f"\n✅ Extraktion abgeschlossen:")
+    print("\n✅ Extraktion abgeschlossen:")
     print(f"   Extrahiert: {saved_count} Frames")
     print(f"   Ausgabe: {output_dir}")
     

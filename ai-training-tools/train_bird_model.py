@@ -90,7 +90,7 @@ def load_dataset_config(config_path):
         train_images = len(list(train_path.glob('*.jpg'))) + len(list(train_path.glob('*.png')))
         val_images = len(list(val_path.glob('*.jpg'))) + len(list(val_path.glob('*.png')))
         
-        print(f"📊 Dataset-Info:")
+        print("📊 Dataset-Info:")
         print(f"   Klassen: {config['nc']}")
         print(f"   Training-Bilder: {train_images}")
         print(f"   Validierungs-Bilder: {val_images}")
@@ -140,7 +140,7 @@ def train_bird_model(config_path, **training_args):
     project_name = training_args.get('project', 'bird_training')
     experiment_name = f"bird_detector_{model_size}_{timestamp}"
     
-    print(f"🚀 Starte Training:")
+    print("🚀 Starte Training:")
     print(f"   Modell: YOLOv8{model_size}")
     print(f"   Epochen: {epochs}")
     print(f"   Batch-Größe: {batch_size}")
@@ -150,7 +150,7 @@ def train_bird_model(config_path, **training_args):
     
     try:
         # Training starten
-        results = model.train(
+        model.train(
             data=config_path,
             epochs=epochs,
             batch=batch_size,
@@ -175,10 +175,10 @@ def train_bird_model(config_path, **training_args):
         print(f"📁 Bestes Modell: {best_model_path}")
         
         # Export-Empfehlungen
-        print(f"\n📤 Nächste Schritte:")
+        print("\n📤 Nächste Schritte:")
         print(f"   1. Modell testen: python test_model.py {best_model_path}")
         print(f"   2. ONNX Export: python export_model.py {best_model_path}")
-        print(f"   3. Integration: Siehe ANLEITUNG-EIGENES-AI-MODELL.md")
+        print("   3. Integration: Siehe ANLEITUNG-EIGENES-AI-MODELL.md")
         
         return True
         

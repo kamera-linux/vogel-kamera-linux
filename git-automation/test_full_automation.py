@@ -4,7 +4,6 @@ Test der vollständigen Git-Automatisierung
 """
 import sys
 from pathlib import Path
-from getpass import getpass
 
 # Git-Automation importieren
 sys.path.append(str(Path(__file__).parent))
@@ -32,7 +31,7 @@ def test_full_automation():
         
         if status_success:
             if status_output.strip():
-                print(f"   📝 Unversionierte Änderungen vorhanden:")
+                print("   📝 Unversionierte Änderungen vorhanden:")
                 for line in status_output.strip().split('\n')[:5]:  # Max 5 Zeilen
                     print(f"      {line}")
                 if len(status_output.strip().split('\n')) > 5:
@@ -131,7 +130,7 @@ def demo_commit_and_push():
             
         # Cleanup
         demo_file.unlink(missing_ok=True)
-        automation.run_command(f"git reset --soft HEAD~1")  # Commit rückgängig
+        automation.run_command("git reset --soft HEAD~1")  # Commit rückgängig
         print("🧹 Demo-Änderungen bereinigt")
         
     except Exception as e:

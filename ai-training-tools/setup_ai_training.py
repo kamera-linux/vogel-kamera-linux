@@ -16,7 +16,7 @@ def run_command(command, description):
     
     print(f"🔄 {description}...")
     try:
-        result = subprocess.run(command, shell=True, check=True, 
+        subprocess.run(command, shell=True, check=True, 
                               capture_output=True, text=True)
         print(f"✅ {description} erfolgreich")
         return True
@@ -85,14 +85,14 @@ def install_requirements():
         for package in failed_packages:
             print(f"   • {package}")
         
-        print(f"\n💡 Manuelle Installation versuchen:")
+        print("\n💡 Manuelle Installation versuchen:")
         for package in failed_packages:
             print(f"   pip install {package}")
     else:
         print("✅ Alle Pakete erfolgreich installiert!")
     
     # Verification
-    print(f"\n🔍 Verifikation...")
+    print("\n🔍 Verifikation...")
     test_imports()
     
     return len(failed_packages) == 0
@@ -121,7 +121,7 @@ def test_imports():
     # Spezialtest: Ultralytics (kann länger dauern)
     print("   🔄 Ultralytics (kann länger dauern)...")
     try:
-        from ultralytics import YOLO
+        from ultralytics import YOLO  # noqa: F401 (Verfügbarkeitsprüfung)
         print("   ✅ Ultralytics/YOLO")
     except ImportError as e:
         print(f"   ❌ Ultralytics: {e}")
@@ -148,11 +148,11 @@ def create_virtual_env():
         # Aktivierungs-Anweisungen
         if os.name == 'nt':  # Windows
             activate_script = venv_path / "Scripts" / "activate.bat"
-            print(f"\n💡 Zum Aktivieren (Windows):")
+            print("\n💡 Zum Aktivieren (Windows):")
             print(f"   {activate_script}")
         else:  # Linux/Mac
             activate_script = venv_path / "bin" / "activate"
-            print(f"\n💡 Zum Aktivieren (Linux/Mac):")
+            print("\n💡 Zum Aktivieren (Linux/Mac):")
             print(f"   source {activate_script}")
         
         return str(venv_path)
@@ -210,12 +210,12 @@ def main():
             print("❌ Virtual Environment konnte nicht erstellt werden")
             return 1
         
-        print(f"\n⚠️ Aktivieren Sie das Virtual Environment und führen Sie das Skript erneut aus:")
+        print("\n⚠️ Aktivieren Sie das Virtual Environment und führen Sie das Skript erneut aus:")
         if os.name == 'nt':
             print(f"   {venv_path}\\Scripts\\activate")
         else:
             print(f"   source {venv_path}/bin/activate")
-        print(f"   python setup_ai_training.py")
+        print("   python setup_ai_training.py")
         return 0
     
     # Requirements installieren

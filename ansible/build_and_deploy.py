@@ -384,7 +384,7 @@ def ensure_qemu_binfmt_handlers() -> None:
                      "--uninstall", "qemu-*"])
         
         # Installiere alle Emulatoren (mit aktuellen Workarounds für Gentoo/ASLR)
-        result = run(["docker", "run", "--privileged", "--rm", "tonistiigi/binfmt",
+        run(["docker", "run", "--privileged", "--rm", "tonistiigi/binfmt",
                       "--install", "all"])
         
         # Docker-Daemon neu starten, um Handler zu laden

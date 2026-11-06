@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, devel]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (ruff + shellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: ruff
+        run: |
+          pip install ruff==0.17.4
+          ruff check --output-format github .
+
+      - name: shellcheck
+        run: |
+          git ls-files '*.sh' | grep -v '^legacy/' | xargs shellcheck -S warning
+
+  test:
+    name: Tests (pi-daemon)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'   # wie docker/Dockerfile
+          cache: pip
+          cache-dependency-path: unified-monitor-client/requirements-test.txt
+
+      - name: Abhängigkeiten installieren
+        run: pip install -r unified-monitor-client/requirements-test.txt
+
+      - name: pytest
+        run: pytest -v unified-monitor-client/tests

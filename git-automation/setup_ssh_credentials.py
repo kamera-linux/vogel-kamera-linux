@@ -3,8 +3,6 @@
 SSH-Credentials Setup für SecureGitAutomation
 Erstellt verschlüsselte SSH-Konfiguration mit Master-Password
 """
-import json
-import os
 from pathlib import Path
 from getpass import getpass
 import sys
@@ -68,7 +66,7 @@ def setup_git_config():
         current_name = name_result.stdout.strip() if name_result.returncode == 0 else ""
         current_email = email_result.stdout.strip() if email_result.returncode == 0 else ""
         
-    except:
+    except Exception:
         current_name = ""
         current_email = ""
     

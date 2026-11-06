@@ -1,4 +1,25 @@
-# 🤖 GitHub Actions - Automatische YouTube-Statistiken
+# 🤖 GitHub Actions
+
+| Workflow | Auslöser | Zweck |
+|----------|----------|-------|
+| [`ci.yml`](ci.yml) | Push auf `main`/`devel`, Pull Requests | Lint (ruff, shellcheck) + Tests für den pi-daemon |
+| [`update-youtube-stats.yml`](update-youtube-stats.yml) | täglich 06:00 UTC | YouTube-Statistiken in der README aktualisieren |
+
+## ✅ CI lokal ausführen
+
+```bash
+pip install ruff==0.17.4 -r unified-monitor-client/requirements-test.txt
+ruff check .                                   # Konfiguration: ruff.toml
+git ls-files '*.sh' | grep -v '^legacy/' | xargs shellcheck -S warning
+pytest unified-monitor-client/tests
+```
+
+Die Tests brauchen weder Raspberry Pi noch Kamera: Secrets und Videoordner
+werden in `unified-monitor-client/tests/conftest.py` durch Testwerte ersetzt.
+
+---
+
+# 📺 Automatische YouTube-Statistiken
 
 ## ✨ Was macht diese Action?
 

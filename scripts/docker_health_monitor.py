@@ -21,7 +21,6 @@ import datetime
 import json
 import logging
 import os
-import re
 import smtplib
 import socket
 import subprocess
@@ -213,9 +212,6 @@ def check_health():
         f"Failing-Streak: {current['failing_streak']} | "
         f"Output: {current['output'][:100] if current['output'] else 'ok'}"
     )
-    
-    # Status-Änderung oder Schwelle überschritten
-    status_changed = current['status'] != state.get('last_status')
     
     if current['status'] in ['unhealthy', 'error']:
         state['failure_streak'] = (state.get('failure_streak', 0) or 0) + 1

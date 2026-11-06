@@ -27,7 +27,6 @@ import time
 import os
 import sys
 import signal
-from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
 import logging
@@ -151,7 +150,7 @@ class DetectionOnlyMonitor:
                 # Frame in Queue einreihen (max 2, älteste Frames werden ignoriert)
                 try:
                     self.frame_queue.put_nowait(frame)
-                except:
+                except Exception:
                     # Queue voll - ignoriere ältestes Frame
                     pass
             
@@ -188,8 +187,8 @@ class DetectionOnlyMonitor:
         """
         try:
             # Import-Check für pycoral
-            from pycoral.adapters import common
-            from pycoral.utils.edgetpu import make_interpreter
+            from pycoral.adapters import common  # noqa: F401 (Verfügbarkeitsprüfung)
+            from pycoral.utils.edgetpu import make_interpreter  # noqa: F401 (Verfügbarkeitsprüfung)
             
             # Hardware-Check: lsusb
             import subprocess
@@ -226,7 +225,6 @@ class DetectionOnlyMonitor:
                 logger.info("🚀 Versuche Coral TPU für YOLO-Inference zu verwenden...")
                 
                 try:
-                    import subprocess
                     
                     # Standard-Pfade für TFLite Modelle (Coral TPU)
                     possible_models = [
@@ -243,12 +241,11 @@ class DetectionOnlyMonitor:
                             break
                     
                     if not tflite_model:
-                        logger.warning(f"⚠️  Kein TFLite Model für Coral TPU gefunden")
+                        logger.warning("⚠️  Kein TFLite Model für Coral TPU gefunden")
                         logger.info("💡 Fallback zu CPU YOLO mit adaptiver FPS...")
                         raise FileNotFoundError("TFLite model not found")
                     
                     # Lade TFLite Interpreter mit EdgeTPU
-                    from pycoral.adapters import common, detection
                     from pycoral.utils.edgetpu import make_interpreter
                     
                     self.interpreter = make_interpreter(tflite_model)
@@ -259,9 +256,9 @@ class DetectionOnlyMonitor:
                     old_fps = self.preview_fps
                     self.preview_fps = 8  # TPU ist schnell genug für 8 FPS!
                     
-                    logger.info(f"✅ Coral TPU Model geladen!")
+                    logger.info("✅ Coral TPU Model geladen!")
                     logger.info(f"   🚀 FPS adaptiv erhöht: {old_fps} → {self.preview_fps} FPS")
-                    logger.info(f"   💪 Ultra-schnelle Inferenz, minimal CPU-Last")
+                    logger.info("   💪 Ultra-schnelle Inferenz, minimal CPU-Last")
                     return True
                     
                 except Exception as e:
@@ -275,7 +272,7 @@ class DetectionOnlyMonitor:
                 logger.info(f"📦 Custom Model: {self.model_path}")
                 self.model = YOLO(self.model_path)
             else:
-                logger.info(f"📦 YOLO26n (Standard-Model für CPU)")
+                logger.info("📦 YOLO26n (Standard-Model für CPU)")
                 self.model = YOLO("yolov8n.pt")
             
             # CPU Fallback - FPS reduzieren für Stabilität
@@ -284,7 +281,7 @@ class DetectionOnlyMonitor:
                 old_fps = self.preview_fps
                 self.preview_fps = 4  # CPU braucht niedrigere FPS
                 logger.info(f"   ⚙️ FPS adaptiv reduziert: {old_fps} → {self.preview_fps} FPS")
-                logger.info(f"   (CPU-Fallback - optimiert für Stabilität)")
+                logger.info("   (CPU-Fallback - optimiert für Stabilität)")
             
             logger.info("✅ CPU YOLO-Model geladen")
             return True
@@ -469,7 +466,7 @@ class DetectionOnlyMonitor:
                     if consistency >= 0.6:
                         avg_confidence = np.mean([c for t, d, c in self.detection_history if d])
                         print(f"🎥 TRIGGER! Vogel erkannt: {duration:.1f}s @ {avg_confidence*100:.0f}% Confidence")
-                        logger.info(f"✅ TRIGGER-BEDINGUNGEN ERFÜLLT!")
+                        logger.info("✅ TRIGGER-BEDINGUNGEN ERFÜLLT!")
                         logger.info(f"   - Dauer: {duration:.1f}s")
                         logger.info(f"   - Konsistenz: {consistency*100:.0f}%")
                         logger.info(f"   - Avg Confidence: {avg_confidence*100:.0f}%")

@@ -1,0 +1,10 @@
+# Abhängigkeiten für die Tests (ohne Kamera/AI-Pakete aus requirements_daemon.txt)
+#   pip install -r unified-monitor-client/requirements-test.txt
+#   pytest unified-monitor-client/tests
+flask>=3.0.0
+flask-limiter>=3.5.0
+PyJWT>=2.8.0
+pyotp>=2.9.0
+bcrypt>=4.1.0
+psutil>=5.9.0
+pytest>=8.0.0

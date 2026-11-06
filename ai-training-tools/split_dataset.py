@@ -6,7 +6,6 @@ Dataset-Aufteilung für AI-Training
 Teilt ein Dataset in Training- und Validierungssets auf.
 """
 
-import os
 import shutil
 import random
 import argparse
@@ -61,7 +60,7 @@ def split_dataset(image_dir, label_dir, output_dir, train_ratio=0.8, val_ratio=0
     train_images = images[:train_count]
     val_images = images[train_count:train_count + val_count]
     
-    print(f"📊 Aufteilung:")
+    print("📊 Aufteilung:")
     print(f"   Training: {len(train_images)} Bilder ({len(train_images)/total_images*100:.1f}%)")
     print(f"   Validation: {len(val_images)} Bilder ({len(val_images)/total_images*100:.1f}%)")
     
@@ -178,7 +177,7 @@ def analyze_dataset(image_dir, label_dir):
                     class_counts[class_id] = class_counts.get(class_id, 0) + 1
                     total_objects += 1
     
-    print(f"📊 Dataset-Analyse:")
+    print("📊 Dataset-Analyse:")
     print(f"   Bilder: {len(images)}")
     print(f"   Labels: {len(labels)}")
     print(f"   Bilder ohne Label: {len(images) - len(labels)}")
@@ -186,7 +185,7 @@ def analyze_dataset(image_dir, label_dir):
     print(f"   Klassen: {len(class_counts)}")
     
     if class_counts:
-        print(f"\n📈 Klassen-Verteilung:")
+        print("\n📈 Klassen-Verteilung:")
         for class_id, count in sorted(class_counts.items()):
             percentage = count / total_objects * 100
             print(f"   Klasse {class_id}: {count} Objekte ({percentage:.1f}%)")
@@ -250,7 +249,7 @@ Beispiele:
     print("📊 Analysiere Dataset...")
     analyze_dataset(args.image_dir, args.label_dir)
     
-    print(f"\n🔄 Teile Dataset auf...")
+    print("\n🔄 Teile Dataset auf...")
     success = split_dataset(
         args.image_dir, args.label_dir, args.output_dir,
         args.train_ratio, args.val_ratio, args.seed

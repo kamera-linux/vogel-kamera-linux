@@ -4,7 +4,6 @@ Automatisches Version-Update mit Git-Automatisierung
 Beispiel-Skript für die Verwendung der sicheren Git-Automation
 """
 import sys
-from pathlib import Path
 
 # Git-Automation importieren
 sys.path.append('git-automation/')

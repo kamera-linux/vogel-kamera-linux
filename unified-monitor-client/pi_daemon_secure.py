@@ -19,7 +19,6 @@ import shutil
 import traceback
 import faulthandler
 from pathlib import Path
-from urllib.parse import unquote
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
@@ -821,7 +820,6 @@ class CameraManager:
                 ]
                 video_proc = subprocess.Popen(video_cmd,
                                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-                audio_proc = None
             else:
                 # ── Normal: rpicam-vid --codec libav mit eingebautem Audio ──
                 # Ein einziger Prozess muxed Video+Audio in die gleiche Timeline.
@@ -852,7 +850,6 @@ class CameraManager:
                 ]
                 video_proc = subprocess.Popen(video_cmd,
                                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-                audio_proc = None
 
             logger.info('Recording [%s] %ds %s %dfps → %s | Load: %.2f %.2f %.2f',
                         triggered_by, duration, resolution, fps, video_file.name,
@@ -1056,7 +1053,7 @@ class CameraManager:
                         remaining = audio_proc.stderr.read()
                         if remaining:
                             stderr_lines.append(remaining)
-                    except:
+                    except Exception:
                         pass
                     break
                 time.sleep(1)

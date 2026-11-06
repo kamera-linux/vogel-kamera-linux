@@ -5,7 +5,6 @@ Automatische Erstellung von QR-Codes für Veranstaltung und Vortrag
 """
 
 import qrcode
-import os
 
 def create_qr_code(url, filename, description):
     """Erstelle einen QR-Code für eine gegebene URL"""

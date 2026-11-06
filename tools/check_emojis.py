@@ -17,11 +17,9 @@ Verwendung:
     python3 tools/check_emojis.py --fix  # Automatische Korrektur (experimentell)
 """
 
-import os
-import re
 import sys
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Dict
 import unicodedata
 
 class EmojiChecker:
@@ -163,7 +161,7 @@ class EmojiChecker:
         report.append("=" * 80)
         report.append("🔍 EMOJI-VALIDIERUNGS-BERICHT")
         report.append("=" * 80)
-        report.append(f"📊 Statistik:")
+        report.append("📊 Statistik:")
         report.append(f"   - Überprüfte Dateien: {self.files_checked}")
         report.append(f"   - Gefundene Probleme: {self.issues_found}")
         report.append("")

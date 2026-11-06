@@ -1,0 +1,15 @@
+# Ruff-Konfiguration (Lint in CI: .github/workflows/ci.yml)
+# Bewusst schmaler Regelsatz: echte Fehler (Syntax, undefinierte Namen,
+# unbenutzte Imports/Variablen, nackte excepts) – kein Stil-Lint.
+target-version = "py311"
+extend-exclude = [
+    "legacy",
+    "venv",
+    "ansible-venv-local",
+    # Git-Submodule (eigene Repos mit eigener CI)
+    "python-toolbox/vogel-video-analyzer",
+    "ai-training-tools/vogel-model-trainer",
+]
+
+[lint]
+select = ["E9", "F", "E722"]

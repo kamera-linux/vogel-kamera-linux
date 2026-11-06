@@ -130,7 +130,7 @@ def get_channel_videos(youtube, channel_id: str, max_results: int = 50) -> List[
         uploads_playlist_id = response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
         channel_stats = response['items'][0]['statistics']
         
-        print(f"📊 Kanal-Statistiken:")
+        print("📊 Kanal-Statistiken:")
         print(f"   Videos: {channel_stats.get('videoCount', 'N/A')}")
         print(f"   Abonnenten: {channel_stats.get('subscriberCount', 'N/A')}")
         print(f"   Views gesamt: {channel_stats.get('viewCount', 'N/A')}")
@@ -216,7 +216,7 @@ def format_date(date_str: str) -> str:
     try:
         dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
         return dt.strftime('%d.%m.%Y')
-    except:
+    except Exception:
         return date_str
 
 def parse_duration(duration: str) -> str:
@@ -294,7 +294,6 @@ def update_readme(video_table: str, dry_run: bool = False) -> bool:
         
         # Finde YouTube-Kanal Sektion
         # Suche nach: ### 🎬 YouTube-Kanal & Beispielaufnahmen
-        pattern = r'(### 🎬 YouTube-Kanal & Beispielaufnahmen\n\n.*?\n\n)(<!-- YOUTUBE_VIDEOS_START -->.*?<!-- YOUTUBE_VIDEOS_END -->)'
         
         # Prüfe ob Marker existieren
         if '<!-- YOUTUBE_VIDEOS_START -->' not in content:
