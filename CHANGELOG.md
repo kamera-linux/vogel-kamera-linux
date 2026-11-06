@@ -1,5 +1,40 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.3.9] - 6. November 2026 🔒 **Sicherheit, Code-Struktur & CI**
+
+### 🔒 Sicherheit
+- **Login-Token nicht mehr in der URL:** `/api/download` und `/api/snapshot` akzeptieren das
+  JWT nur noch im `Authorization`-Header (vorher auch `?token=`, das in Server-Logs und im
+  Browser-Verlauf landen konnte). Die Web-GUI schickt den Header mit.
+- Pfadprüfung bei Download/Löschen auf `Path.is_relative_to` umgestellt
+
+### 🏗️ Code-Struktur
+- **`pi_daemon_secure.py` aufgeteilt** (2400 Zeilen → Paket `unified-monitor-client/pi_daemon/`
+  mit `config`, `runtime`, `settings`, `hailo`, `monitoring`, `sync`, `camera`, `api`, `main`).
+  `pi_daemon_secure.py` bleibt als Startpunkt, Docker-Entrypoint unverändert.
+- Dockerfile kopiert `pi_daemon/`; `--hotpatch` überträgt das Paket mit
+
+### ✅ CI & Tests
+- Neuer Workflow `ci.yml`: ruff, shellcheck und 28 pytest-Tests für den pi-daemon
+  (Login/TOTP, Rate-Limit, JWT, Path Traversal, Einstellungen → Kamera)
+- YouTube-Workflow: feste Paketversionen, kein täglicher Fallback-Branch mehr
+- Actions auf `checkout@v7` / `setup-python@v7` (Node 24)
+
+### 🔧 Bug Fixes
+- `release_workflow.py`: GitHub-Release-Notes werden korrekt übernommen (`--notes-file`),
+  Standardversion aus `VERSION`, Commit-Nachrichten sicher gequotet
+- `git_automation.py`: Commit-Nachrichten sicher gequotet
+- `test_full_automation.py` pusht keinen Test-Commit mehr (`git push --dry-run`)
+
+### 📚 Dokumentation & Aufräumen
+- CHANGELOG zusammengeführt (falsch datierte Alt-Einträge korrigiert, 1.3.2/2.3.6/2.3.7 ergänzt)
+- git-automation-Doku zusammengeführt, Audio-Doku ins Archiv `releases/v2.3.4/`
+- Versehentlich committete Dateien entfernt, ungenutzte Imports/Variablen bereinigt
+
+Details: [releases/v2.3.9](releases/v2.3.9/RELEASE_NOTES_v2.3.9.md)
+
+---
+
 ## [2.3.8] - 22. August 2026 🔧 **Ansible Toolchain & E2E Testing Improvements**
 
 ### ✨ Features

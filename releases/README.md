@@ -4,8 +4,30 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.3.5** - "Slow-Motion Upgrade · High-Performance Recording" 🎬
+**Version 2.3.9** - "Sicherheit, Code-Struktur & CI" 🔒
 - **Branch:** main
+- **Release Notes:** [v2.3.9/RELEASE_NOTES_v2.3.9.md](v2.3.9/RELEASE_NOTES_v2.3.9.md)
+- **Release Date:** 2026-11-06
+- **🔒 Sicherheit:** Login-Token nicht mehr in URLs (nur noch `Authorization`-Header)
+- **🏗️ Code-Struktur:** Daemon aufgeteilt in das Paket `unified-monitor-client/pi_daemon/`
+- **✅ CI:** ruff, shellcheck und 28 pytest-Tests bei jedem Push
+- **🔧 Fixes:** Release-Skript (Release-Notes, Versionen), sichere Commit-Nachrichten
+
+## 📦 Vorherige Versionen
+
+### Version 2.3.8 - "Ansible Toolchain & E2E Testing Improvements" 🔧
+- **Release Notes:** [v2.3.8/RELEASE_NOTES_v2.3.8.md](v2.3.8/RELEASE_NOTES_v2.3.8.md)
+- **Release Date:** 2026-08-22
+
+### Version 2.3.7 - "Health-Check Resilience & Proactive Monitoring" 🏥
+- **Release Notes:** [v2.3.7/RELEASE_NOTES_v2.3.7.md](v2.3.7/RELEASE_NOTES_v2.3.7.md)
+- **Release Date:** 2026-07-27
+
+### Version 2.3.6 - "Ansible Toolchain Verbesserung" 🐧
+- **Release Notes:** [v2.3.6/RELEASE_NOTES_v2.3.6.md](v2.3.6/RELEASE_NOTES_v2.3.6.md)
+- **Release Date:** 2026-07-27
+
+### Version 2.3.5 - "Slow-Motion Upgrade · High-Performance Recording" 🎬
 - **Release Notes:** [v2.3.5/RELEASE_NOTES_v2.3.5.md](v2.3.5/RELEASE_NOTES_v2.3.5.md)
 - **Release Date:** 2026-05-05
 - **🆕 Features:**
@@ -18,8 +40,6 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
   - Automatische Auflösungswahl für höhere FPS
   - Beide Slowmo-Varianten persistent speicherbar
 - **Kompatibel:** Raspberry Pi OS, Gentoo Linux
-
-## 📦 Vorherige Versionen
 
 ### Version 2.3.4 - "Audio Quality Upgrade · Professional Recording" 🎤
 - **Release Notes:** [v2.3.4/RELEASE_NOTES_v2.3.4.md](v2.3.4/RELEASE_NOTES_v2.3.4.md)

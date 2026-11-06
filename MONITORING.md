@@ -47,7 +47,7 @@ Beispiel-Response:
     "mem_used_mb": 513
   },
   "threads_active": 5,
-  "version": "2.3.8"
+  "version": "2.3.9"
 }
 ```
 

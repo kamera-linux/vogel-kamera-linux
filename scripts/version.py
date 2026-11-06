@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.3.8"
-__version_info__ = (2, 3, 8)
+__version__ = "2.3.9"
+__version_info__ = (2, 3, 9)
 
 # Release Information
-RELEASE_NAME = "Ansible Python Interpreter & E2E Testing Improvements"
-RELEASE_DATE = "2026-08-22"
+RELEASE_NAME = "Security, Code Structure & CI"
+RELEASE_DATE = "2026-11-06"
 RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20260822-1"
-GIT_TAG = "v2.3.8"
+BUILD_NUMBER = "20261106-1"
+GIT_TAG = "v2.3.9"
 
 # Feature Flags
 FEATURES = {
@@ -44,7 +44,7 @@ FEATURES = {
     "ssh_resilience": True,  # New in v2.0.1 - Enhanced SSH error handling
     "yolo26_detection": True,  # New in v2.0.2 - YOLO26 model (yolo26n.pt)
     "monitoring_improvements": True,  # New in v2.0.2 - CPU/RAM display, SSH stability
-    "web_interface": False,  # Planned for future
+    "web_interface": True,  # Since v2.2.0 - Web-GUI im pi-daemon
     "mobile_app": False,  # Planned for future
 }
 

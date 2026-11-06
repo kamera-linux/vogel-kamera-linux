@@ -4,43 +4,44 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.3.8 — Ansible Toolchain & Web-GUI Verbesserungen 🔧
+## Release v2.3.9 — Sicherheit, Code-Struktur & CI 🔒
 
-- **Version:** v2.3.8 (22. August 2026)
-- **🎬 Neue Features – High-Performance Zeitlupe:**
-  - **Zeitlupen-Modus HQ:** 2304×1296 @ 56fps (1.9× langsamer, bessere Qualität)
-  - **Zeitlupen-Modus 120fps:** 1536×864 @ 120fps (4× langsamer, ultra-highspeed)
-  - **Automatische Auflösungswahl** basierend auf FPS-Anforderung
-  - **Beide Modi im Web-Dashboard wählbar** (Recording Profiles)
+- **Version:** v2.3.9 (6. November 2026)
+- **🔒 Sicherheit:**
+  - Login-Token wird nicht mehr in URLs übertragen (Download & Live-Vorschau nur noch per Header)
+- **🏗️ Code-Struktur:**
+  - Der Daemon ist jetzt das Paket [`unified-monitor-client/pi_daemon/`](unified-monitor-client/pi_daemon/)
+    (api, camera, settings, monitoring, …) statt einer 2400-Zeilen-Datei
+- **✅ Automatische Prüfung bei jedem Push:**
+  - ruff, shellcheck und 28 Tests für den pi-daemon (ohne Pi/Kamera lauffähig)
+- **🔧 Fixes:** Release-Skript übernimmt Release-Notes korrekt, sichere Commit-Nachrichten
+- **📚 Doku:** CHANGELOG zusammengeführt und korrigiert
 
-- **✨ Verbesserungen:**
-  - Kamera-Auflösung optimiert für höhere Framerates
-  - CPU-Auslastung optimiert (~60% bei HQ-Slowmo, ~75% bei 120fps)
-  - Bessere Flugbewegungsanalyse durch höhere Auflösung bei Zeitlupen
-  - Profile persistent gespeichert
-
-- **🔧 Technische Änderungen:**
-  - `pi_daemon_secure.py` RECORDING_PROFILES + Resolution Map
-  - Legacy Scripts: `--slowmo` (HQ) + `--slowmo-fast` (120fps)
-  - Wiki: Recording-Modes.md dokumentiert mit Performance-Vergleich
-
-- **📚 Dokumentation:**
-  - Recording-Modes.md: Slowmo-Modi mit Qualitäts-Vergleich
-  - Release Notes: v2.3.5 mit Performance-Daten
-
-**Deployment:** [`ansible/build_and_deploy.sh --hotpatch`](ansible/build_and_deploy.sh)  
+**Update:** [`./ansible/build_and_deploy.sh --update`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.3.5/`](releases/v2.3.5/RELEASE_NOTES_v2.3.5.md)
+**Release Notes:** [`releases/v2.3.9/`](releases/v2.3.9/RELEASE_NOTES_v2.3.9.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.3.8-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.8)
+[![Version](https://img.shields.io/badge/Version-v2.3.9-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.9)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Slow-Motion](https://img.shields.io/badge/Slow--Motion-2304x1296%40%2056fps-ff9800)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
+[![CI](https://github.com/kamera-linux/vogel-kamera-linux/actions/workflows/ci.yml/badge.svg)](https://github.com/kamera-linux/vogel-kamera-linux/actions/workflows/ci.yml)
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.3.8 (Archiv)
+**Ansible Toolchain & E2E-Test Verbesserungen**
+- **Version:** v2.3.8 (22. August 2026)
+- Siehe [Archiv-Release](releases/v2.3.8/RELEASE_NOTES_v2.3.8.md) für Details oder CHANGELOG.md
+
+### v2.3.5 (Archiv)
+**Slow-Motion Upgrade · High-Performance Recording**
+- **Version:** v2.3.5 (5. Mai 2026)
+- Zeitlupe HQ 2304×1296 @ 56fps und 120fps-Modus, beide im Web-Dashboard wählbar
+- Siehe [Archiv-Release](releases/v2.3.5/RELEASE_NOTES_v2.3.5.md) für Details
 
 ### v2.3.4 (Archiv)
 **Audio Quality Upgrade · Professional Recording**
-- **Version:** v2.3.5 (5. Mai 2026)
+- **Version:** v2.3.4 (5. Mai 2026)
 - Siehe [Archiv-Release](releases/v2.3.4/RELEASE_NOTES_v2.3.4.md) für Details oder CHANGELOG.md
 
 ### v2.2.5 (Archiv)
