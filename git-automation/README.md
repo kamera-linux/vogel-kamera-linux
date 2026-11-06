@@ -14,7 +14,7 @@ Wird auch von [`scripts/release_workflow.py`](../scripts/release_workflow.py) ve
 | `setup_ssh_credentials.py` | Einmalige Einrichtung der verschlüsselten Secrets |
 | `test_ssh_agent.py` | Debug-Test der einzelnen SSH-Agent-Methoden |
 | `test_ssh_automation.py` | Test: SSH-Agent mit gespeicherten Secrets |
-| `test_full_automation.py` | Integrationstest: legt einen Test-Commit an und nimmt ihn lokal zurück (siehe Warnung unten) |
+| `test_full_automation.py` | Integrationstest: SSH-Agent, Remotes, GitHub-Login und `git push --dry-run` (ändert nichts) |
 | `git_automation_requirements.txt` | Python-Abhängigkeiten (`cryptography`, `pexpect`) |
 | `.git_secrets_encrypted.json` | Verschlüsselte Secrets – wird beim Setup erzeugt, **nicht committen** (steht in `.gitignore`) |
 
@@ -34,10 +34,6 @@ Testen:
 python3 git-automation/test_ssh_automation.py   # nur SSH-Agent
 python3 git-automation/test_full_automation.py  # kompletter Ablauf
 ```
-
-> ⚠️ `test_full_automation.py` fragt, ob der Test-Commit gepusht werden soll.
-> Mit **n** antworten: Der Commit wird danach nur lokal zurückgenommen – ein
-> gepushter Test-Commit (`automation_test.txt`) bliebe auf GitHub.
 
 ## 💡 Verwendung
 

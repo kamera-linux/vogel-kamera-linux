@@ -74,67 +74,28 @@ def test_full_automation():
         print(f"❌ Fehler beim Test: {e}")
         return False
 
-def demo_commit_and_push():
-    """Demo für Commit und Push (nur simulation)"""
+def test_push_dry_run():
+    """Prüft den Push-Weg (SSH-Auth + Remote-Rechte) mit git push --dry-run.
+
+    Es wird nichts committet und nichts auf den Server übertragen.
+    """
     print("\n" + "=" * 50)
-    print("🎯 Demo: Automatischer Commit & Push")
+    print("🎯 Test: Push-Berechtigung (git push --dry-run)")
     print("=" * 50)
-    
-    choice = input("Soll eine Demo-Änderung committed und gepusht werden? (j/n): ")
-    if choice.lower() not in ['j', 'ja', 'y', 'yes']:
-        print("Demo übersprungen")
-        return
-    
+
     try:
         automation = SecureGitAutomation()
-        
-        # Demo-Datei erstellen
-        demo_file = automation.repo_path / "automation_test.txt"
-        demo_content = "Git-Automatisierung Test\nZeitpunkt: " + str(Path(__file__).stat().st_mtime)
-        
-        with open(demo_file, 'w') as f:
-            f.write(demo_content)
-        
-        print(f"📝 Demo-Datei erstellt: {demo_file}")
-        
-        # Git Add
-        add_success, add_output = automation.run_command(f"git add {demo_file}")
-        if add_success:
-            print("✅ Git Add erfolgreich")
+        success, output = automation.run_command("git push --dry-run")
+        if success:
+            print("✅ Push wäre möglich – SSH-Auth und Schreibrechte OK")
+            if output.strip():
+                print(f"   {output.strip()}")
         else:
-            print(f"❌ Git Add fehlgeschlagen: {add_output}")
-            return
-        
-        # Git Commit
-        commit_msg = "Test: Git-Automatisierung Demo"
-        commit_success, commit_output = automation.run_command(f'git commit -m "{commit_msg}"')
-        
-        if commit_success:
-            print(f"✅ Git Commit erfolgreich: {commit_msg}")
-        else:
-            print(f"❌ Git Commit fehlgeschlagen: {commit_output}")
-            return
-        
-        # Git Push (mit SSH-Agent)
-        push_choice = input("🚀 Git Push ausführen? (j/n): ")
-        if push_choice.lower() in ['j', 'ja', 'y', 'yes']:
-            push_success, push_output = automation.run_command("git push")
-            
-            if push_success:
-                print("✅ Git Push erfolgreich!")
-                print("🎉 Vollständige Git-Automatisierung funktioniert!")
-            else:
-                print(f"❌ Git Push fehlgeschlagen: {push_output}")
-        else:
-            print("Git Push übersprungen")
-            
-        # Cleanup
-        demo_file.unlink(missing_ok=True)
-        automation.run_command("git reset --soft HEAD~1")  # Commit rückgängig
-        print("🧹 Demo-Änderungen bereinigt")
-        
+            print(f"❌ Push-Test fehlgeschlagen: {output}")
+        return success
     except Exception as e:
-        print(f"❌ Demo Fehler: {e}")
+        print(f"❌ Push-Test Fehler: {e}")
+        return False
 
 def main():
     """Haupttest-Funktion"""
@@ -145,8 +106,8 @@ def main():
     automation_ok = test_full_automation()
     
     if automation_ok:
-        # Test 2: Demo Commit & Push
-        demo_commit_and_push()
+        # Test 2: Push-Weg prüfen (ohne echten Push)
+        test_push_dry_run()
     else:
         print("\n❌ Grundlegende Tests fehlgeschlagen")
         print("Führe zuerst 'python3 setup_ssh_credentials.py' aus")
