@@ -387,7 +387,9 @@ vogel-kamera-linux/
 │
 ├── unified-monitor-client/           # 🐳 Docker-Container (Hauptsystem)
 │   ├── web/                          #    Web-GUI (index.html + logo.png)
-│   ├── pi_daemon_secure.py           #    ⭐ Flask HTTPS-Daemon (JWT + TOTP)
+│   ├── pi_daemon_secure.py           #    ⭐ Flask HTTPS-Daemon (JWT + TOTP) – Startpunkt
+│   ├── pi_daemon/                    #    Daemon-Code (api, camera, settings, …)
+│   ├── tests/                        #    pytest (CI)
 │   ├── requirements_daemon.txt
 │   └── README.md / SETUP_GUIDE.md
 │

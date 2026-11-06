@@ -26,10 +26,10 @@ def test_download_token_als_query_abgelehnt(client, aufnahme):
 
 
 def test_snapshot_braucht_header(client, monkeypatch, tmp_path, auth_header):
-    import pi_daemon_secure as daemon
+    from pi_daemon import api
     frame = tmp_path / 'frame.jpg'
     frame.write_bytes(b'\xff\xd8jpeg')
-    monkeypatch.setattr(daemon, '_STREAM_FRAME', frame)
+    monkeypatch.setattr(api, '_STREAM_FRAME', frame)
     assert client.get(f'/api/snapshot?token={make_token()}').status_code == 401
     r = client.get('/api/snapshot', headers=auth_header)
     assert r.status_code == 200

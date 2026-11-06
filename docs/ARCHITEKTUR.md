@@ -53,6 +53,9 @@ Das System basiert auf einem **Docker-Container auf dem Raspberry Pi 5**, der ü
 
 **Aufgabe:** Zentraler API-Server im Container. Nimmt HTTP-Anfragen entgegen, startet/stoppt Subprozesse, verwaltet Dateien.
 
+**Code:** `pi_daemon_secure.py` ist nur der Startpunkt; der Code liegt im Paket
+`unified-monitor-client/pi_daemon/` (Übersicht der Module in `pi_daemon/__init__.py`).
+
 **Authentifizierung:**
 - Login-Endpunkt `/api/login` erwartet TOTP-Code
 - Bei Erfolg: JWT-Token (zeitlich begrenzt)

@@ -54,6 +54,7 @@ RUN printf '#!/bin/sh\nexport LD_LIBRARY_PATH=/host/lib:/host/usr/lib:/host/usr/
 
 # ── App-Code ───────────────────────────────────────────────────────────────
 COPY unified-monitor-client/pi_daemon_secure.py .
+COPY unified-monitor-client/pi_daemon/          ./pi_daemon/
 COPY unified-monitor-client/web/               ./web/
 
 # ── Raspberry-Pi-Skripte (werden vom Daemon als Subprocess gestartet) ──────

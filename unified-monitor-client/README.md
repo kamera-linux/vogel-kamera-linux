@@ -22,11 +22,21 @@ Der **lokale Python-Client** (`unified_monitor_client.py`) aus älteren Versione
 
 ```
 unified-monitor-client/
-├── pi_daemon_secure.py      ⭐ HAUPT-SYSTEM: Flask HTTPS-Daemon
+├── pi_daemon_secure.py      ⭐ HAUPT-SYSTEM: Startpunkt des Flask HTTPS-Daemons
+├── pi_daemon/               # Code des Daemons, aufgeteilt nach Aufgaben
+│   ├── config.py            # Umgebungsvariablen, Logging
+│   ├── runtime.py           # Gemeinsamer Zustand (_lock, state)
+│   ├── settings.py          # Engine-, Detection-, Kamera-, Aufnahme-Einstellungen
+│   ├── camera.py            # Detection-Prozess, Aufnahme, Konvertierung, Transfer, Watchdog
+│   ├── api.py               # Flask-App: Login (Passwort + TOTP → JWT) und alle Routen
+│   ├── hailo.py             # Hailo-NPU Hardware-Info
+│   ├── monitoring.py        # Health-Cache, Gotify-Alerts
+│   ├── sync.py              # Sync-Ziele (rsync)
+│   └── main.py              # Start: Threads + HTTPS-Server
+├── tests/                   # pytest (läuft in CI, ohne Pi/Kamera)
 ├── web/                     # Web-GUI (HTML/CSS/JS)
-│   ├── index.html           # Single-Page-Oberfläche
-│   ├── style.css            # Styling
-│   └── app.js               # Frontend-Logik
+│   ├── index.html           # Single-Page-Oberfläche (HTML, CSS und JS in einer Datei)
+│   └── logo.png
 ├── requirements_daemon.txt  # Python-Dependencies im Container
 ├── README.md                # Diese Datei
 ├── SETUP_GUIDE.md           # Deployment-Anleitung (Ansible)

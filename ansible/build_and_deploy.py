@@ -92,7 +92,7 @@ def parse_args() -> argparse.Namespace:
     grp.add_argument("--setup-host", dest="mode", action="store_const", const="setup-host",
                      help="Gentoo Build-Host einrichten (Docker, QEMU aarch64, buildx)")
     grp.add_argument("--hotpatch",   dest="mode", action="store_const", const="hotpatch",
-                     help="pi_daemon_secure.py direkt in Container kopieren + Neustart (kein Image-Rebuild)")
+                     help="pi_daemon_secure.py + pi_daemon/ direkt in Container kopieren + Neustart (kein Image-Rebuild)")
     parser.add_argument("--no-cache", action="store_true",
                         help="Docker Build-Cache ignorieren (sauberer Rebuild)")
     parser.add_argument("--e2e",      action="store_true",
@@ -498,7 +498,7 @@ def ansible_deploy(env: dict, mode: str, ansible: str) -> None:
              "--private-key", env["PI_SSH_KEY"],
              "playbooks/setup_pi_daemon_health_monitoring.yml", *vault_opts])
     elif mode == "hotpatch":
-        print(bold("🩹 Ansible – Hotpatch (pi_daemon_secure.py)..."))
+        print(bold("🩹 Ansible – Hotpatch (pi_daemon_secure.py + pi_daemon/)..."))
         run([ansible, "playbooks/hotpatch.yml", *vault_opts])
     else:
         print(bold("🔄 Ansible – Image-Update..."))

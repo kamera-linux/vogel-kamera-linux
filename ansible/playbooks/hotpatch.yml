@@ -1,5 +1,6 @@
 ---
-# Kopiert pi_daemon_secure.py direkt in den laufenden Container und startet ihn neu.
+# Kopiert pi_daemon_secure.py, das Paket pi_daemon/ und web/index.html direkt in den
+# laufenden Container und startet ihn neu.
 # Kein Image-Rebuild nötig – ideal für schnelle Bugfixes.
 #
 # Aufruf (Passwort aus Datei, kein manuelles Eingeben):
@@ -13,7 +14,7 @@
 # Einmalig Vault-Passwort-Datei anlegen (falls noch nicht vorhanden):
 #   echo 'MeinVaultPasswort' > ~/.pi-daemon-vault-pass && chmod 600 ~/.pi-daemon-vault-pass
 
-- name: Pi-Daemon Hotpatch (pi_daemon_secure.py)
+- name: Pi-Daemon Hotpatch (pi_daemon_secure.py + pi_daemon/)
   hosts: all
   gather_facts: false
 
@@ -23,8 +24,10 @@
 
   vars:
     local_script: "{{ playbook_dir }}/../../unified-monitor-client/pi_daemon_secure.py"
+    local_pkg:    "{{ playbook_dir }}/../../unified-monitor-client/pi_daemon/"
     local_html:   "{{ playbook_dir }}/../../unified-monitor-client/web/index.html"
     remote_tmp_py:   /tmp/pi_daemon_secure.py
+    remote_tmp_pkg:  /tmp/pi_daemon_pkg
     remote_tmp_html: /tmp/pi_daemon_index.html
 
   tasks:
@@ -33,6 +36,18 @@
         src:   "{{ local_script }}"
         dest:  "{{ remote_tmp_py }}"
         mode:  "0644"
+
+    - name: Altes Paket-Verzeichnis auf dem Pi entfernen
+      ansible.builtin.file:
+        path:  "{{ remote_tmp_pkg }}"
+        state: absent
+
+    - name: Paket pi_daemon/ auf den Pi übertragen
+      ansible.builtin.copy:
+        src:   "{{ local_pkg }}"      # Slash am Ende → Inhalt kopieren
+        dest:  "{{ remote_tmp_pkg }}/"
+        mode:  "0644"
+        directory_mode: "0755"
 
     - name: index.html auf den Pi übertragen
       ansible.builtin.copy:
@@ -55,6 +70,10 @@
       ansible.builtin.command:
         cmd: "docker cp {{ remote_tmp_py }} {{ container_id.stdout }}:/app/pi_daemon_secure.py"
 
+    - name: Paket pi_daemon/ in Container kopieren
+      ansible.builtin.command:
+        cmd: "docker cp {{ remote_tmp_pkg }}/. {{ container_id.stdout }}:/app/pi_daemon/"
+
     - name: index.html in Container kopieren
       ansible.builtin.command:
         cmd: "docker cp {{ remote_tmp_html }} {{ container_id.stdout }}:/app/web/index.html"
@@ -65,6 +84,7 @@
         state: absent
       loop:
         - "{{ remote_tmp_py }}"
+        - "{{ remote_tmp_pkg }}"
         - "{{ remote_tmp_html }}"
 
     - name: Container neu starten

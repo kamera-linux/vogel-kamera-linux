@@ -204,7 +204,7 @@ cd ansible && bash build_and_deploy.sh --update
 |--------|-------------|-------------|
 | `--install` | Vollständiges Erstdeployment: Docker CE, SSL-Zertifikat, Firewall, systemd-Service | Erstmalige Einrichtung |
 | `--update` | Image neu bauen → gzippen → SCP → `docker load` → Daemon neu starten | Jedes Code-Update |
-| `--hotpatch` | `pi_daemon_secure.py` + `web/index.html` direkt in laufenden Container kopieren + Neustart | Schneller Bugfix ohne Image-Rebuild |
+| `--hotpatch` | `pi_daemon_secure.py`, `pi_daemon/` + `web/index.html` direkt in laufenden Container kopieren + Neustart | Schneller Bugfix ohne Image-Rebuild |
 | `--build` | Nur ARM64-Image bauen, kein Transfer und kein Deploy | Lokaler Test |
 | `--setup-host` | Gentoo-Build-Rechner einrichten: Docker, QEMU aarch64, buildx, binfmt | Einmalig auf dem Build-Host |
 | `--no-cache` | Kombinierbar mit obigen: Docker-Cache ignorieren | Nach Dependency-Updates |
@@ -429,9 +429,9 @@ python3 build_and_deploy.py --hotpatch
 ```
 
 **Ablauf:**
-1. `pi_daemon_secure.py` + `web/index.html` per SCP auf den Pi übertragen
+1. `pi_daemon_secure.py`, Paket `pi_daemon/` + `web/index.html` per SCP auf den Pi übertragen
 2. Container-ID via `docker ps --filter name=pi-daemon` ermitteln
-3. Beide Dateien per `docker cp` in den Container kopieren
+3. Alles per `docker cp` in den Container kopieren
 4. `docker restart <container-id>`
 5. Warten bis Port 8443 antwortet (max. 60 s)
 

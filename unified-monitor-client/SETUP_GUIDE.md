@@ -97,7 +97,7 @@ Das Zertifikat ist selbstsigniert → Browser-Warnung einmalig bestätigen ("Tro
 
 ## Aktualisierung
 
-Nach Code-Änderungen an `pi_daemon_secure.py`, `web/` oder dem Detection-Skript:
+Nach Code-Änderungen an `pi_daemon_secure.py` / `pi_daemon/`, `web/` oder dem Detection-Skript:
 
 ```bash
 ./ansible/build_and_deploy.sh --update
@@ -115,7 +115,7 @@ Dieser Befehl:
 
 | Komponente | Ort | Beschreibung |
 |------------|-----|--------------|
-| `pi_daemon_secure.py` | Im Docker-Container | Flask HTTPS-Daemon, Port 8443 |
+| `pi_daemon_secure.py` + `pi_daemon/` | Im Docker-Container | Flask HTTPS-Daemon, Port 8443 |
 | `web/` | Im Docker-Container | Web-GUI (HTML/CSS/JS) |
 | `unified-camera-monitor-detect-only.py` | Im Docker-Container | Detection-Subprocess |
 | Aufnahmen | Container-Volume `/videos` | Persistentes Verzeichnis auf dem Pi (`/home/<user>/Videos`) |
