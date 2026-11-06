@@ -260,8 +260,8 @@ Fallback:       arecord -r 48000 (wenn ffmpeg fehlt) ✅
 
 ## 🔗 Verwandte Dokumentation
 
-- [AUDIO_QUALITY_IMPROVEMENTS.md](../../AUDIO_QUALITY_IMPROVEMENTS.md)
-- [AUDIO_UPGRADE_CHECKLIST.md](../../AUDIO_UPGRADE_CHECKLIST.md)
+- [AUDIO_QUALITY_IMPROVEMENTS.md](AUDIO_QUALITY_IMPROVEMENTS.md)
+- [AUDIO_UPGRADE_CHECKLIST.md](AUDIO_UPGRADE_CHECKLIST.md)
 - [UNIFIED-MONITOR-README.md](../../raspberry-pi-scripts/UNIFIED-MONITOR-README.md)
 - [DETECT_AND_RECORD.md](../../unified-monitor-client/DETECT_AND_RECORD.md)
 

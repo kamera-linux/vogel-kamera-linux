@@ -28,7 +28,7 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
   - 🎤 **Professionelle Audio-Aufnahme mit ffmpeg** (statt arecord)
   - 🎤 **48kHz Sample-Rate überall** (Video+Audio, Audio-only, Fallback)
   - 🎤 **Audio-Filterung:** Hochpass @ 80Hz + Volume 1.5x
-  - 📚 **AUDIO_QUALITY_IMPROVEMENTS.md** + **AUDIO_UPGRADE_CHECKLIST.md**
+  - 📚 [AUDIO_QUALITY_IMPROVEMENTS.md](v2.3.4/AUDIO_QUALITY_IMPROVEMENTS.md) + [AUDIO_UPGRADE_CHECKLIST.md](v2.3.4/AUDIO_UPGRADE_CHECKLIST.md)
 - **🔧 Verbesserungen:**
   - Einheitliche Audio-Pipeline für alle Modi
   - Robustere Fehlerbehandlung (Non-blocking I/O)

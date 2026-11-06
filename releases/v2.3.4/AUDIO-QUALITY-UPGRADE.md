@@ -1,5 +1,9 @@
 # 🎙️ Audio-Qualität Upgrade - Manuelle Audio-Aufnahme
 
+> 📦 **Archiv – Stand v2.3.4 (Mai 2026).** Seitdem vereinfacht: Die reine Audio-Aufnahme
+> nutzt aktuell nur noch `highpass=f=80,volume=1.5` (siehe `record_audio()` in
+> `unified-monitor-client/pi_daemon_secure.py`), Video+Audio läuft über `rpicam-vid --libav-audio`.
+
 ## 📋 Zusammenfassung
 
 Die **manuelle Audio-Aufnahme** wurde von `arecord` (einfache Mikrofonaufnahme) auf **ffmpeg mit professioneller Audio-Verarbeitung** aktualisiert.
@@ -58,15 +62,15 @@ ffmpeg -f alsa -i default -t 60 \
 ## 📝 Updatete Dateien
 
 ### Legacy (Raspberry Pi Scripts)
-✅ [unified-camera-monitor-manual.py](legacy/raspberry-pi-scripts/unified-camera-monitor-manual.py)
+✅ [unified-camera-monitor-manual.py](../../legacy/raspberry-pi-scripts/unified-camera-monitor-manual.py)
 - `_start_audio_recording()` Funktion
 - `run_audio()` Thread in `_start_recording_manual()`
 
-✅ [unified-camera-monitor.py](legacy/raspberry-pi-scripts/unified-camera-monitor.py)
+✅ [unified-camera-monitor.py](../../legacy/raspberry-pi-scripts/unified-camera-monitor.py)
 - `run_audio()` Thread in `_start_recording_manual()`
 
 ### Modern (Unified Monitor Client)
-✅ [pi_daemon_secure.py](unified-monitor-client/pi_daemon_secure.py)
+✅ [pi_daemon_secure.py](../../unified-monitor-client/pi_daemon_secure.py)
 - `record_audio()` statische Methode (Audio-only Aufnahme)
 
 ---
@@ -180,8 +184,8 @@ Falls du die Filter anpassen möchtest, editiere die `_start_audio_recording()` 
 
 ## 🔗 Siehe auch
 
-- [UNIFIED-MONITOR-README.md](raspberry-pi-scripts/UNIFIED-MONITOR-README.md)
-- [DETECT_AND_RECORD.md](unified-monitor-client/DETECT_AND_RECORD.md)
+- [UNIFIED-MONITOR-README.md](../../raspberry-pi-scripts/UNIFIED-MONITOR-README.md)
+- [DETECT_AND_RECORD.md](../../unified-monitor-client/DETECT_AND_RECORD.md)
 - [ffmpeg Audio Filter Dokumentation](https://ffmpeg.org/ffmpeg-filters.html#Audio-Filters)
 
 ---

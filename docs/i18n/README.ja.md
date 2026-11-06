@@ -280,7 +280,7 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py --model yolov8n.pt
 ## 📚 ドキュメント
 
 ### メインドキュメント
-- **[docs/CHANGELOG.md](../CHANGELOG.md)** - 完全なバージョン履歴
+- **[CHANGELOG.md](../../CHANGELOG.md)** - 完全なバージョン履歴
 - **[docs/ARCHITEKTUR.md](../ARCHITEKTUR.md)** - 🏗️ **v1.2.0 の新機能！** Mermaid 図を含む詳細なシステムアーキテクチャ
 - **[docs/PROJEKT-REORGANISATION.md](../PROJEKT-REORGANISATION.md)** - プロジェクト再編成の履歴
 
@@ -298,7 +298,7 @@ python3 raspberry-pi-scripts/unified-camera-monitor.py --model yolov8n.pt
 
 ## 📋 変更履歴
 
-すべての変更は **[docs/CHANGELOG.md](../CHANGELOG.md)** に文書化されています。
+すべての変更は **[CHANGELOG.md](../../CHANGELOG.md)** に文書化されています。
 
 ### 🆕 v2.0.0 の新機能（2025年11月）
 - 🎯 **統合カメラモニター:** SSH オーバーヘッドなしの単一プロセスシステム

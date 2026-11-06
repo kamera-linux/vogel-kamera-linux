@@ -280,7 +280,7 @@ For questions or issues:
 ## 📚 Documentation
 
 ### Main Documentation
-- **[docs/CHANGELOG.md](../CHANGELOG.md)** - Complete version history
+- **[CHANGELOG.md](../../CHANGELOG.md)** - Complete version history
 - **[docs/ARCHITEKTUR.md](../ARCHITEKTUR.md)** - 🏗️ **NEW in v1.2.0!** Detailed system architecture with Mermaid diagrams
 - **[docs/PROJEKT-REORGANISATION.md](../PROJEKT-REORGANISATION.md)** - Project reorganization history
 
@@ -298,7 +298,7 @@ For questions or issues:
 
 ## 📋 Changelog
 
-All changes are documented in **[docs/CHANGELOG.md](../CHANGELOG.md)**.
+All changes are documented in **[CHANGELOG.md](../../CHANGELOG.md)**.
 
 ### 🆕 New in v2.0.0 (November 2025)
 - 🎯 **Unified Camera Monitor:** Single-process system without SSH overhead

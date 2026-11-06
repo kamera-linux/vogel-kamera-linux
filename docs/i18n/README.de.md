@@ -228,7 +228,6 @@ vogel-kamera-linux/
 │   ├── release_workflow.py                                     # Release-Automatisierung
 │   └── update_version.py                                       # Versions-Update-Skript
 ├── docs/                                                         # 📚 Dokumentation
-│   ├── CHANGELOG.md                                             # Versionshistorie (v1.2.0)
 │   ├── ARCHITEKTUR.md                                           # 🏗️ Systemarchitektur mit Mermaid-Diagrammen *(v1.2.0)*
 │   ├── PROJEKT-REORGANISATION.md                                # Projekt-Reorganisations-Dokumentation
 │   ├── SECURITY.md                                              # Sicherheitsrichtlinien
@@ -742,7 +741,7 @@ Bei Fragen oder Problemen:
 ## 📚 Dokumentation
 
 ### Hauptdokumentation
-- **[docs/CHANGELOG.md](docs/CHANGELOG.md)** - Vollständige Versionshistorie mit allen Änderungen
+- **[CHANGELOG.md](../../CHANGELOG.md)** - Vollständige Versionshistorie mit allen Änderungen
 - **[docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)** - 🏗️ **NEU in v1.2.0!** Detaillierte Systemarchitektur mit Mermaid-Diagrammen
   - Kommunikationsflüsse (PC ↔ Raspberry Pi)
   - CPU-Optimierungs-Visualisierung (107% → 40%)
@@ -766,7 +765,7 @@ Bei Fragen oder Problemen:
 
 ## 📋 Changelog
 
-Alle Änderungen werden in **[docs/CHANGELOG.md](docs/CHANGELOG.md)** dokumentiert.
+Alle Änderungen werden in **[CHANGELOG.md](../../CHANGELOG.md)** dokumentiert.
 
 ### 🆕 Neu in v1.3.1 (05. November 2025)
 - 🎬 **Live-Progressbar:** Custom single-line Progressbar während Aufnahmen

@@ -12,6 +12,7 @@ SICHERHEIT:
 """
 
 import os
+import shlex
 import sys
 import json
 import base64
@@ -557,7 +558,7 @@ Beispiele:
                 automation.run_command("git add .", cwd=automation.repo_path)
                 
                 commit_msg = f"🔖 Release {version}"
-                success, output = automation.run_command(f'git commit -m "{commit_msg}"')
+                success, output = automation.run_command(f'git commit -m {shlex.quote(commit_msg)}')
                 if success:
                     print(f"✅ Commit: {commit_msg}")
                 else:
@@ -603,19 +604,19 @@ Beispiele:
             
             # Ggf. zu spezifischem Branch wechseln
             if args.branch and args.branch != current_branch.strip():
-                print(f"� Wechsle zu Branch '{branch}'...")
+                print(f"🔄 Wechsle zu Branch '{branch}'...")
                 success, output = automation.run_command(f"git checkout {branch}", cwd=automation.repo_path)
                 if not success:
                     print(f"❌ Branch-Wechsel fehlgeschlagen: {output}")
                     return
             
-            print(f"�📝 Add, Commit und Push auf Branch '{branch}': '{commit_msg}'")
+            print(f"📝 Add, Commit und Push auf Branch '{branch}': '{commit_msg}'")
             
             # Add all changes (vom Repository-Root)
             automation.run_command("git add .", cwd=automation.repo_path)
             
             # Commit (vom Repository-Root)
-            success, output = automation.run_command(f'git commit -m "{commit_msg}"', cwd=automation.repo_path)
+            success, output = automation.run_command(f'git commit -m {shlex.quote(commit_msg)}', cwd=automation.repo_path)
             if success:
                 print(f"✅ Commit: {commit_msg}")
                 

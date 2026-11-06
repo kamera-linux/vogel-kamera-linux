@@ -1,5 +1,9 @@
 # ✅ Audio-Qualitäts-Upgrade Checkliste
 
+> 📦 **Archiv – Stand v2.3.4 (Mai 2026).** Seitdem vereinfacht: Die reine Audio-Aufnahme
+> nutzt aktuell nur noch `highpass=f=80,volume=1.5` (siehe `record_audio()` in
+> `unified-monitor-client/pi_daemon_secure.py`), Video+Audio läuft über `rpicam-vid --libav-audio`.
+
 ## 🎯 Was wurde geändert?
 
 ### ✅ Code-Änderungen abgeschlossen
@@ -159,13 +163,13 @@ python3 unified-camera-monitor.py \
 
 Falls notwendig, aktualisiere auch:
 
-- [ ] [UNIFIED-MONITOR-README.md](raspberry-pi-scripts/UNIFIED-MONITOR-README.md)
+- [ ] [UNIFIED-MONITOR-README.md](../../raspberry-pi-scripts/UNIFIED-MONITOR-README.md)
   - Audio-Quality Hinweis hinzufügen
   
-- [ ] [DETECT_AND_RECORD.md](unified-monitor-client/DETECT_AND_RECORD.md)
+- [ ] [DETECT_AND_RECORD.md](../../unified-monitor-client/DETECT_AND_RECORD.md)
   - 48kHz als Standard dokumentieren
 
-- [ ] [CHANGELOG.md](CHANGELOG.md)
+- [ ] [CHANGELOG.md](../../CHANGELOG.md)
   - Eintrag: "Audio-Quality: Upgrade zu ffmpeg 48kHz mit Filterung"
 
 ---

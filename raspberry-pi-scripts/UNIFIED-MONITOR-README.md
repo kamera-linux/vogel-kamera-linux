@@ -376,7 +376,7 @@ ffprobe -v error -show_entries format=duration <audio.wav>
 
 - **Hauptdoku:** [README.md](../README.md)
 - **Client-Tool:** [unified-monitor-client/README.md](../unified-monitor-client/README.md)
-- **Audio-Integration Changelog:** [AUDIO-FIX-CHANGELOG.md](../AUDIO-FIX-CHANGELOG.md)
+- **Changelog:** [CHANGELOG.md](../CHANGELOG.md)
 
 ## Lizenz
 

@@ -1,5 +1,9 @@
 # 🎙️ Audio-Qualität Upgrade - Professionelle Audio-Aufnahme
 
+> 📦 **Archiv – Stand v2.3.4 (Mai 2026).** Seitdem vereinfacht: Die reine Audio-Aufnahme
+> nutzt aktuell nur noch `highpass=f=80,volume=1.5` (siehe `record_audio()` in
+> `unified-monitor-client/pi_daemon_secure.py`), Video+Audio läuft über `rpicam-vid --libav-audio`.
+
 ## 📋 Das Problem
 
 Du hast es richtig erkannt! ✅
@@ -159,7 +163,7 @@ Falls gewünscht, können die Filter angepasst werden:
 ## 🔍 Weitere Infos
 
 Siehe auch:
-- [AUDIO-QUALITY-UPGRADE.md](AUDIO_QUALITY_IMPROVEMENTS.md) - Detaillierte Dokumentation
-- [UNIFIED-MONITOR-README.md](raspberry-pi-scripts/UNIFIED-MONITOR-README.md) - Benutzerdokumentation
-- [DETECT_AND_RECORD.md](unified-monitor-client/DETECT_AND_RECORD.md) - Parameter-Referenz
+- [AUDIO-QUALITY-UPGRADE.md](AUDIO-QUALITY-UPGRADE.md) - Detaillierte Dokumentation
+- [UNIFIED-MONITOR-README.md](../../raspberry-pi-scripts/UNIFIED-MONITOR-README.md) - Benutzerdokumentation
+- [DETECT_AND_RECORD.md](../../unified-monitor-client/DETECT_AND_RECORD.md) - Parameter-Referenz
 
