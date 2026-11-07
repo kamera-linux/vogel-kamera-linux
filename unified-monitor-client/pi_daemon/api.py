@@ -368,7 +368,7 @@ def api_detection_settings():
         return jsonify({'target_class': settings._detection_target, 'threshold': settings._detection_threshold})
     data = request.get_json(silent=True) or {}
     target = data.get('target_class', settings._detection_target)
-    if target not in ('bird', 'person', 'dog', 'cat', 'all4'):
+    if target not in settings.DETECTION_TARGETS:
         return jsonify({'error': f'Ungültige Zielklasse: {target}. Erlaubt: bird, person, dog, cat, all4'}), 400
     try:
         threshold = float(data.get('threshold', settings._detection_threshold))

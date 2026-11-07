@@ -83,3 +83,11 @@ def test_rec_settings_roundtrip(client, auth_header):
 def test_main_importierbar():
     from pi_daemon import main
     assert callable(main.main)
+
+
+def test_detection_target_bleibt_nach_neustart(settings_tmp):
+    """dog/cat/all4 wurden beim Laden auf bird zurückgesetzt (nur bird/person erlaubt)."""
+    from pi_daemon import settings
+    for target in ('dog', 'cat', 'all4'):
+        settings._save_detection_settings(target, 0.5)
+        assert settings._load_detection_settings()['target_class'] == target

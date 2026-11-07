@@ -46,6 +46,7 @@ _active_engine: str = _load_active_engine()
 DETECTION_SCRIPT: str = DETECTION_ENGINES[_active_engine]['script']
 
 # Detection-Settings: Erkennungsziel und Confidence-Schwelle
+DETECTION_TARGETS = ('bird', 'person', 'dog', 'cat', 'all4')
 DETECTION_SETTINGS_FILE = '/config/detection-settings.json'
 
 
@@ -54,7 +55,7 @@ def _load_detection_settings() -> dict:
     try:
         data = json.loads(Path(DETECTION_SETTINGS_FILE).read_text())
         target = data.get('target_class', 'bird')
-        if target not in ('bird', 'person'):
+        if target not in DETECTION_TARGETS:
             target = 'bird'
         threshold = float(data.get('threshold', 0.45))
         threshold = max(0.1, min(0.95, threshold))
