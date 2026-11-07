@@ -5,7 +5,7 @@ Hailo NPU Bird Detector – Vogel-Kamera-Linux
 ==============================================
 
 Nutzt rpicam-hello + Hailo YOLOv8 HEF für 25+ fps Vogel-Erkennung
-auf dem Raspberry Pi AI HAD+.  Kein YOLO-CPU, kein LD_LIBRARY_PATH-Hack,
+auf dem Raspberry Pi AI HAT+.  Kein YOLO-CPU, kein LD_LIBRARY_PATH-Hack,
 kein picamera2-Import – läuft direkt mit Container-Python.
 
 Architektur:
@@ -20,7 +20,7 @@ Exit-Code-Protokoll mit pi_daemon_secure.py:
     1  → Startfehler    (daemon wartet und versucht neu)
     2  → Gestoppt       (daemon hat SIGTERM gesendet – kein Aufnahme-Trigger)
 
-Performance (AI HAD+ mit Hailo-8):
+Performance (AI HAT+ mit Hailo-8):
     FPS:      25–28
     CPU-Last: < 5 %   (NPU erledigt Inferenz)
     RAM:      ~50 MB  (kein YOLO-Modell geladen)

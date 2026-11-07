@@ -14,7 +14,7 @@ from .config import logger
 # Verfügbare Detection-Engines (key → Dateipfad im Container)
 _SCRIPT_BASE = '/home/roimme/vogel-kamera-linux/raspberry-pi-scripts'
 DETECTION_ENGINES: dict = {
-    'hailo':    {'label': '🔬 Hailo NPU (AI HAD+, 25fps, <5% CPU)',  'script': f'{_SCRIPT_BASE}/unified-camera-monitor-hailo.py'},
+    'hailo':    {'label': '🔬 Hailo NPU (AI HAT+, 25fps, <5% CPU)',  'script': f'{_SCRIPT_BASE}/unified-camera-monitor-hailo.py'},
     'cpu_yolo': {'label': '🖥 CPU-YOLO (kein HAT nötig, ~80% CPU)', 'script': f'{_SCRIPT_BASE}/unified-camera-monitor-detect-only.py'},
 }
 DETECTION_ENGINE_FILE = '/config/detection-engine.json'
