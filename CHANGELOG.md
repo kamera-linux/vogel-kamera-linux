@@ -1,5 +1,10 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [Unreleased]
+
+### 🔧 Bug Fixes
+- Erkennungsziel Hund, Katze oder „alle vier“ wurde nach einem Neustart auf „Vogel“ zurückgesetzt
+
 ## [2.4.1] - 7. November 2026 🔒 **Security-Audit**
 
 ### 🔒 Security-Audit ([Bericht](docs/SECURITY-AUDIT-2026-11.md))
