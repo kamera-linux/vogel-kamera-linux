@@ -19,6 +19,8 @@ sauber herunter, bevor der Strom ausfällt.
 
 Neue Kartengruppe **„Powerbank“** (über „System“):
 
+![Powerbank im Webinterface](../../assets/WebGUI-Powerbank.png)
+
 | Karte | Inhalt |
 |-------|--------|
 | 🔋 Akku | Akkustand in % (grün / orange ≤ 25 % / rot ≤ 10 %), Uhrzeit der letzten Messung |

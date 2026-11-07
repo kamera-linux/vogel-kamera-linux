@@ -1,5 +1,25 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [Unreleased]
+
+### 🔒 Security-Audit ([Bericht](docs/SECURITY-AUDIT-2026-11.md))
+- **Sync-Ziele:** Host/Benutzer/Pfad werden geprüft, `--` vor ssh/rsync-Zielen – vorher war
+  mit Login Befehlsausführung als root über einen präparierten Benutzernamen möglich
+- **Host-Key-Prüfung** bei Video-Übertragung (`accept-new` + `/etc/pi-daemon/known_hosts`)
+  statt `StrictHostKeyChecking=no`
+- **Neue Ansible-Rolle `hardening`** (bei `--install` und `--update`): `/etc/pi-daemon` nicht mehr
+  für alle beschreibbar, TLS-Schlüssel nicht mehr für alle lesbar, SSH nur mit Schlüssel und ohne
+  root-Login, veraltete Firewall-Regeln (8554, 5201) entfernt, Video-Verzeichnis nicht world-writable
+- **Feste Paketversionen** in `requirements_daemon.txt` (Supply-Chain-Schutz)
+- **Web-GUI:** Security-Header (CSP, `X-Frame-Options`, `nosniff`), vollständiges HTML-Escaping,
+  Dateinamen nicht mehr in `onclick`-Code
+- SSH-Keys werden direkt mit `0600` geschrieben; ungültige Zahlen führen nicht mehr zu HTTP 500
+- 22 neue Sicherheitstests (`tests/test_security.py`)
+
+### 📚 Dokumentation
+- `docs/SECURITY.md` neu: aktuelle Versionen, Architektur, Schutzmaßnahmen, akzeptierte Risiken
+- Screenshot der Powerbank-Anzeige in README und Release Notes v2.4.0
+
 ## [2.4.0] - 7. November 2026 🔋 **Powerbank-Überwachung**
 
 ### 🔋 Neu: Powerbank-Überwachung

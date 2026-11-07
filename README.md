@@ -196,6 +196,8 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 > Powerbanks laufen genauso, nur ohne Anzeige. Einrichtung:
 > [Release Notes v2.4.0](releases/v2.4.0/RELEASE_NOTES_v2.4.0.md) (Abschnitt „Einrichtung“)
 
+![Powerbank im Webinterface](assets/WebGUI-Powerbank.png)
+
 ---
 
 ## ✨ Features
@@ -263,6 +265,10 @@ flowchart TD
 | Manuelles Video | Online-Hilfe |
 |----------------|-------------|
 | ![Web-GUI Manuelles Video](assets/WebGUI-Manuelles-Video.png) | ![Web-GUI Online-Hilfe](assets/WebGUI-OnlineHilfe.png) |
+
+**Powerbank-Überwachung** *(Neu in v2.4.0)*
+
+![Web-GUI Powerbank: Akkustand, Ausgangsleistung, Ladeleistung, Temperatur](assets/WebGUI-Powerbank.png)
 
 ### Deployment
 

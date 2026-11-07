@@ -1,243 +1,83 @@
 # Security Policy
 
-## 🔒 Sicherheitsrichtlinien für Vogel-Kamera-Linux
-
-Wir nehmen die Sicherheit unseres Projekts ernst und schätzen die Hilfe der Community beim Auffinden und Beheben von Sicherheitsproblemen.
-
 ## 🚨 Unterstützte Versionen
 
-Wir bieten Sicherheits-Updates für die folgenden Versionen:
+| Version | Unterstützt | OS-Basis | Architektur |
+| ------- | ----------- | -------- | ----------- |
+| 2.4.x   | ✅ Sicherheits-Updates | Raspberry Pi OS Trixie (Debian 13) | Docker-Container, HTTPS-Web-GUI (JWT + TOTP) |
+| 2.3.x   | ⚠️ Bitte auf 2.4.x aktualisieren | Trixie | wie 2.4.x |
+| < 2.3   | ❌ Nicht mehr unterstützt | – | – |
 
-| Version | Unterstützt        | OS-Basis | Architektur |
-| ------- | ------------------ | -------- | ----------- |
-| 2.2.x   | ✅ Vollständig     | Trixie (Debian 13) | Docker + HTTPS Web API (aktuell) |
-| 2.1.x   | ⚠️ Kritische Fixes | Trixie (Debian 13) | Unified Monitor (SSH-Client) |
-| 2.0.x   | ⚠️ Kritische Fixes | Trixie (Debian 13) | Unified Monitor (Legacy) |
-| 1.3.x   | ❌ Nicht mehr unterstützt | Trixie (Debian 13) | Legacy Remote-Control |
-| 1.2.x   | ❌ Nicht mehr unterstützt | Bookworm (Debian 12) | Legacy Remote-Control |
-| 1.1.x   | ❌ Nicht mehr unterstützt | Bookworm | Legacy |
-| < 1.1   | ❌ Nicht mehr unterstützt | - | - |
-
-> ✅ **Aktuell (v2.2.x):** Docker-Container mit Flask HTTPS-API, JWT + TOTP 2FA. Kein SSH-Overhead vom Client.
-> 
-> ⚠️ **Ältere Versionen (v2.1.x, v2.0.x):** SSH-basierter Python-Client. Skripte in `legacy/` archiviert.
-> 
-> 📘 **Für Bookworm (Debian 12):** Verwenden Sie [bookworm-legacy Branch v1.2.x](https://github.com/kamera-linux/vogel-kamera-linux/tree/bookworm-legacy)
+Sicherheits-Fixes erscheinen nur für die aktuelle Version. Ein Update ist ein Befehl:
+`./ansible/build_and_deploy.sh --update`
 
 ## 🐛 Sicherheitslücken melden
 
-### 🔐 Vertrauliche Meldung (Bevorzugt)
+Bitte **nicht** als öffentliches Issue melden, sondern vertraulich:
 
-Für **kritische Sicherheitsprobleme** nutzen Sie bitte eine der folgenden vertraulichen Kanäle:
-
-- **GitHub Security Advisories:** [Private Vulnerability Report](https://github.com/kamera-linux/vogel-kamera-linux/security/advisories/new)
+- **GitHub:** [Private Vulnerability Report](https://github.com/kamera-linux/vogel-kamera-linux/security/advisories/new)
 - **E-Mail:** kamera-linux@mailbox.org
 
-### 📋 Informationen für Sicherheitsberichte
+Hilfreich sind: betroffene Version, betroffener Endpunkt oder Datei, Schritte zum Nachstellen
+und – falls möglich – ein Vorschlag zur Behebung.
 
-Bitte geben Sie folgende Informationen an:
+Dies ist ein Hobby-Projekt ohne festes Team. Wir bemühen uns, Meldungen innerhalb einer Woche
+zu beantworten und kritische Lücken vorrangig zu beheben.
 
-**🎯 Problembeschreibung:**
-- Art der Sicherheitslücke (z.B. RCE, XSS, Privilege Escalation)
-- Betroffene Komponenten (SSH, Kamera-Scripts, AI-Module)
-- Potenzielle Auswirkungen
+## 🏗️ Architektur und Angriffsfläche
 
-**🔄 Reproduktion:**
-- Schritt-für-Schritt Anleitung
-- Proof-of-Concept (falls möglich)
-- Betroffene Konfigurationen
-
-**🌐 Umgebung:**
-- Betriebssystem und Version
-- Python-Version
-- Vogel-Kamera-Linux Version
-- Hardware (Raspberry Pi Modell)
-
-**💡 Lösungsvorschlag (optional):**
-- Mögliche Fixes oder Workarounds
-- Code-Patches (falls entwickelt)
-
-## ⚡ Schweregrade
-
-### 🔴 **Kritisch (Critical)**
-- Remote Code Execution ohne Authentifizierung
-- Vollständige Systemkompromittierung
-- Datenlecks mit persönlichen Informationen
-
-### 🟠 **Hoch (High)**
-- Privilege Escalation
-- SSH-Schlüssel-Kompromittierung
-- Netzwerk-basierte Angriffe
-
-### 🟡 **Mittel (Medium)**
-- Denial of Service
-- Informationslecks
-- Schwache Kryptografie
-
-### 🟢 **Niedrig (Low)**
-- Client-seitige Probleme
-- Konfigurationsprobleme
-- Nicht-kritische Informationslecks
-
-## 🔄 Response-Prozess
-
-### ⏱️ Antwortzeiten
-
-- **Kritisch:** 24 Stunden
-- **Hoch:** 48 Stunden  
-- **Mittel:** 1 Woche
-- **Niedrig:** 2 Wochen
-
-### 📋 Ablauf
-
-1. **Eingangsbeste:** Wir bestätigen den Erhalt innerhalb der Antwortzeit
-2. **Analyse:** Bewertung der Schwere und Auswirkungen
-3. **Entwicklung:** Erstellung und Test eines Fixes
-4. **Koordination:** Abstimmung der Veröffentlichung mit dem Melder
-5. **Release:** Veröffentlichung des Security-Updates
-6. **Disclosure:** Öffentliche Bekanntgabe nach koordinierter Disclosure
-
-## 🛡️ Sicherheits-Best-Practices
-
-### 🔧 Für Entwickler
-
-- **SSH-Schlüssel:** Verwenden Sie starke Ed25519-Schlüssel
-- **Netzwerk:** Nutzen Sie Firewalls und VPN für Remote-Zugriff
-- **Updates:** Halten Sie System und Dependencies aktuell
-- **Credentials:** Niemals Passwörter/Schlüssel in Code committen
-
-### 👥 Für Nutzer
-
-**🔐 SSH-Sicherheit:**
-```bash
-# Starke SSH-Konfiguration
-ssh-keygen -t ed25519 -b 4096
-echo "PasswordAuthentication no" >> ~/.ssh/config
-echo "PermitRootLogin no" >> /etc/ssh/sshd_config
+```
+Browser ──HTTPS:8443──▶ Docker-Container „pi-daemon“ (root, privileged) auf dem Raspberry Pi 5
+                          ├─ Flask-API + Web-GUI (Login: Passwort + TOTP → JWT, 8 h gültig)
+                          ├─ Kamera/Hailo-NPU/Mikrofon (Geräte des Hosts)
+                          ├─ rsync/ssh zu Sync-Zielen (Videos übertragen)
+                          └─ Host-D-Bus: Bluetooth (Powerbank) + systemd-logind (Shutdown)
 ```
 
-**🌐 Netzwerk-Sicherheit:**
-```bash
-# Firewall für Raspberry Pi
-sudo ufw enable
-sudo ufw allow ssh
-sudo ufw deny 22/tcp from 0.0.0.0/0  # Nur bekannte IPs erlauben
+| Bereich | Schutz |
+|---------|--------|
+| **Anmeldung** | bcrypt-Passworthash + TOTP (2FA); max. 5 Versuche/Minute pro IP; 1 s Verzögerung bei Fehlversuch |
+| **Sitzung** | JWT (HS256) nur im `Authorization`-Header, nie in URLs; Token liegt im `sessionStorage` des Tabs |
+| **Transport** | HTTPS mit selbst signiertem Zertifikat (beim ersten Aufruf bestätigen oder `/cert.pem` importieren) |
+| **Browser** | Content-Security-Policy, `X-Frame-Options: DENY`, `nosniff`, `no-referrer`, `Cache-Control: no-store` für die API |
+| **Dateizugriff** | Download/Löschen nur innerhalb des Video-Verzeichnisses (Path-Traversal-Schutz) |
+| **Sync-Ziele** | Host, Benutzer und Pfad werden geprüft (keine Optionen/Shell-Zeichen); ssh merkt sich Host-Keys beim ersten Kontakt (`/etc/pi-daemon/known_hosts`) und lehnt danach geänderte Keys ab |
+| **Secrets** | in `ansible-vault` (verschlüsselt im Repo); auf dem Pi in `/etc/pi-daemon/app.env` (0640, root) |
+| **Abhängigkeiten** | feste Versionen in `requirements_daemon.txt`; CI prüft jeden Push (ruff, shellcheck, pytest) |
+| **Pi-Härtung** (Ansible-Rolle `hardening`) | SSH nur mit Schlüssel, kein root-Login; Konfiguration und TLS-Schlüssel nicht für andere Benutzer lesbar/schreibbar; UFW mit Standard „deny“ |
 
-# MediaMTX RTSP-Server absichern (v1.3.0+)
-sudo ufw allow from 192.168.178.0/24 to any port 8554 proto tcp  # Nur lokales Netzwerk
-sudo ufw deny 8554/tcp  # Blockiere alle anderen
+Ohne Login erreichbar sind nur: die Login-Seite, `/api/login`, `/api/health`
+(Version, RAM, freier Speicher – für den Docker-Health-Check) und `/cert.pem` (öffentliches Zertifikat).
 
-# Optional: MediaMTX mit Authentifizierung
-sudo nano /etc/mediamtx/mediamtx.yml
-# authMethod: internal
-# authInternalUsers:
-#   - user: vogel
-#     pass: <sicheres-passwort>
-```
+## ⚠️ Bekannte, bewusst akzeptierte Risiken
 
-**⚙️ System-Härtung:**
-```bash
-# Regelmäßige Updates
-sudo apt update && sudo apt upgrade
-pip install --upgrade -r requirements.txt
+| Risiko | Warum akzeptiert | Empfehlung |
+|--------|------------------|------------|
+| Container läuft **privileged als root** | Kamera-Reset per sysfs, Hailo-NPU, DMA-Heaps und Host-Bibliotheken brauchen vollen Gerätezugriff | Pi als dedizierte Kamera betreiben, keine weiteren Dienste darauf |
+| Eingeloggte Nutzer haben **volle Kontrolle** | Es gibt genau einen Admin-Zugang; die Web-GUI kann Aufnahmen löschen, Sync-Ziele und SSH-Keys setzen | Starkes Passwort, TOTP-Secret geheim halten |
+| **Flask-Entwicklungsserver** statt Gunicorn | Einzelner Nutzer im Heimnetz; ein Umbau würde den Thread-Start und Hotpatch ändern | Nicht direkt ins Internet stellen |
+| **Docker umgeht UFW** für Port 8443 | Docker trägt veröffentlichte Ports selbst in iptables ein; die UFW-Regel ist daher nicht die eigentliche Schranke | Port nur im Heimnetz erreichbar machen (Router); Zugriff von außen nur über VPN |
+| `roimme` hat **sudo ohne Passwort** | Standard bei Raspberry Pi OS; Ansible braucht es | Deshalb ist SSH-Passwort-Login abgeschaltet |
+| **Powerbank per Bluetooth** auslesbar | Die Anker-Firmware nutzt einen festen, öffentlich bekannten Schlüssel – jeder in Funkreichweite kann den Status lesen | Nur Statusdaten, keine Steuerung durch dieses Projekt |
+| GitHub Actions per **Tag statt Commit-SHA** | Nur offizielle `actions/*`; Workflows haben minimale Rechte | – |
 
-# Monitoring
-sudo fail2ban-client status
-```
+## 🛡️ Empfehlungen für den Betrieb
 
-## 🚫 Responsible Disclosure
+- Port 8443 **nicht** per Portweiterleitung ins Internet freigeben – für Fernzugriff ein VPN
+  (z. B. WireGuard) nutzen.
+- Regelmäßig aktualisieren: `sudo apt update && sudo apt full-upgrade` auf dem Pi und
+  `./ansible/build_and_deploy.sh --update` für den Daemon.
+- Für Sync-Ziele eigene SSH-Keys mit eingeschränkten Rechten verwenden (z. B. nur Schreibzugriff
+  auf das Zielverzeichnis).
+- Wechselt ein Sync-Ziel absichtlich seinen Host-Key (Neuinstallation), die Zeile in
+  `/etc/pi-daemon/known_hosts` löschen.
+- Gotify einrichten ([GOTIFY_SETUP.md](../GOTIFY_SETUP.md)), um Ausfälle und niedrigen Akku
+  mitzubekommen.
 
-### ✅ Erwartungen an Sicherheitsforscher
+## 📋 Audits
 
-- **Keine öffentliche Disclosure** vor koordinierter Veröffentlichung
-- **Keine Datenexfiltration** oder destruktive Tests
-- **Respekt vor Privatsphäre** anderer Nutzer
-- **Konstruktive Zusammenarbeit** bei der Problemlösung
-
-### 🎖️ Anerkennung
-
-- **Security.md Credits:** Auflistung in Sicherheitsdokumentation
-- **Release Notes:** Erwähnung in Danksagungen (nach Wunsch)
-- **GitHub Advisories:** Offizielle CVE-Anerkennung
-
-## ⚠️ Bekannte Sicherheitsüberlegungen
-
-### 🔍 Architektur-spezifische Risiken
-
-**v2.0.x - Unified Camera Monitor:**
-- Direkter Kamera-Zugriff auf Raspberry Pi (kein SSH)
-- YOLOv8 AI-Inferenz lokal (keine Netzwerk-Übertragung)
-- Automatische Aufnahmen bei Trigger (Datenschutz beachten)
-- System-Monitoring mit Auto-Shutdown (>75°C)
-
-**v1.x - Legacy Remote-Control (archiviert):**
-- SSH-basierte Architektur mit Remote-Zugriff
-- TCP-Stream über Netzwerk (Port 8888)
-- MediaMTX RTSP-Server (Port 8554)
-- Potenzielle Man-in-the-Middle Angriffe
-
-### 🛡️ Sicherheitsverbesserungen in v2.0
-
-✅ **Kein SSH-Overhead** - Eliminiert Remote-Angriffsvektoren
-✅ **Lokale AI-Verarbeitung** - Keine sensitiven Daten über Netzwerk
-✅ **Kein TCP-Stream** - Reduzierte Netzwerk-Exposition
-✅ **Direkter Kamera-Zugriff** - Weniger Komplexität, weniger Angriffsfläche
-✅ **CLI-Parameter** - Keine .env-Dateien mit Credentials
-
-### 🔒 Allgemeine Sicherheitsaspekte
-
-**AI-Module Dependencies:**
-- Externe Python-Pakete (YOLOv8, OpenCV)
-- Potenzielle Supply-Chain-Angriffe
-- Memory-intensive Operationen
-
-**Raspberry Pi Absicherung:**
-- Physischer Zugriff kann System kompromittieren
-- SD-Karte verschlüsseln für sensitive Aufnahmen
-- Updates regelmäßig installieren
-
-### 🛠️ Mitigationen
-
-**v2.0 (Unified Monitor):**
-- **Keine SSH-Keys benötigt** (Standard-Modus)
-- **start-unified-monitoring.sh** für optionalen Remote-Start
-- **Traffic Light Monitoring** für System-Health
-- **Auto-Shutdown** bei kritischer Temperatur
-- **Dependency-Pinning** in requirements-pi.txt
-- **Input-Validation** für alle CLI-Parameter
-
-**v1.x Legacy (falls noch verwendet):**
-- **SSH-Schlüssel-Authentifizierung** standardmäßig aktiviert
-- **RTSP-Port-Restriktion** über Firewall (nur vertrauenswürdige Clients)
-- **MediaMTX Authentication** konfigurierbar
-- **Error-Handling** verhindert Information Disclosure
-
-## 📚 Sicherheits-Ressourcen
-
-### 🔗 Externe Referenzen
-
-- [OWASP IoT Security](https://owasp.org/www-project-iot-security-guidance/)
-- [Raspberry Pi Security](https://www.raspberrypi.org/documentation/configuration/security.md)
-- [Python Security Guide](https://python-security.readthedocs.io/)
-
-### 📖 Projekt-spezifische Dokumentation
-
-- [[Security Guidelines]] - Detaillierte Sicherheitsrichtlinien (Wiki)
-- [[Installation Guide]] - Sichere Installations-Praktiken
-- [[Configuration]] - Sichere Konfigurationsempfehlungen
-
-## 📞 Kontakt
-
-**🚨 Für Sicherheitsprobleme:**
-- GitHub Security Advisories (bevorzugt)
-- E-Mail: kamera-linux@mailbox.org
-
-**💬 Für allgemeine Fragen:**
-- [GitHub Issues](https://github.com/kamera-linux/vogel-kamera-linux/issues)
-- [GitHub Discussions](https://github.com/kamera-linux/vogel-kamera-linux/discussions)
+- [Security-Audit November 2026](SECURITY-AUDIT-2026-11.md) – Funde, Fixes, Nachprüfung
 
 ---
 
-**🔒 Diese Security Policy wird regelmäßig überprüft und aktualisiert.**
-
-*Letzte Aktualisierung: 5. November 2025 (v1.3.1 - Production Release)*
+*Letzte Aktualisierung: 7. November 2026 (v2.4.x)*
