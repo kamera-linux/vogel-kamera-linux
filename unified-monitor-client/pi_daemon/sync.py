@@ -1,10 +1,55 @@
 """Sync-Ziele (Multi-Target rsync): Einstellungen laden/speichern, Legacy-Migration."""
 import json
 import os
+import re
 from pathlib import Path
 
 from . import config
 from .config import logger
+
+# ---------------------------------------------------------------------------
+# Eingabeprüfung: host/user/path landen in ssh- und rsync-Argumenten.
+# Ohne Prüfung könnte z. B. user="-oProxyCommand=…" einen Befehl ausführen.
+# ---------------------------------------------------------------------------
+_HOST_RE = re.compile(r'^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.?)+$|^[0-9A-Fa-f:]+$')
+_USER_RE = re.compile(r'^[A-Za-z_][A-Za-z0-9_.-]{0,31}$')
+_PATH_RE = re.compile(r'^[A-Za-z0-9_./~+@,=-]{1,255}$')
+
+KNOWN_HOSTS_FILE = '/config/known_hosts'
+
+
+def validate_target(host: str, user: str, path: str) -> str:
+    """Prüft ein Sync-Ziel. Rückgabe: Fehlermeldung oder '' wenn gültig."""
+    if not host or len(host) > 253 or not _HOST_RE.match(host):
+        return f'Ungültiger Host: {host!r} (erlaubt: Hostname, IPv4 oder IPv6)'
+    if not user or not _USER_RE.match(user):
+        return f'Ungültiger Benutzer: {user!r} (erlaubt: Buchstaben, Ziffern, _ . -; nicht mit - beginnen)'
+    if not path or path.startswith('-') or not _PATH_RE.match(path):
+        return (f'Ungültiger Pfad: {path!r} (erlaubt: Buchstaben, Ziffern, / . _ ~ + @ , = -; '
+                'keine Leerzeichen, nicht mit - beginnen)')
+    return ''
+
+
+def ssh_options(key_file: str) -> list:
+    """Gemeinsame ssh-Optionen: Host-Key beim ersten Kontakt merken, danach prüfen."""
+    opts = [
+        '-o', 'StrictHostKeyChecking=accept-new',
+        '-o', f'UserKnownHostsFile={KNOWN_HOSTS_FILE}',
+        '-o', 'ConnectTimeout=10',
+        '-o', 'BatchMode=yes',
+    ]
+    if Path(key_file).exists():
+        opts += ['-i', key_file]
+    return opts
+
+
+def write_private_key(key_file: Path, content: str) -> None:
+    """Schreibt einen SSH-Key direkt mit Rechten 0600 (kein kurzzeitig lesbarer Zustand)."""
+    key_file.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(str(key_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'w') as fh:
+        os.fchmod(fh.fileno(), 0o600)
+        fh.write(content + '\n')
 
 
 def _load_sync_settings() -> dict:
@@ -28,6 +73,10 @@ def _get_active_targets() -> list:
     result = []
     for t in s.get('targets', []):
         if t.get('enabled', True) and t.get('host') and t.get('user') and t.get('path'):
+            err = validate_target(t['host'], t['user'], t['path'])
+            if err:
+                logger.error('Sync-Ziel %r übersprungen: %s', t.get('name'), err)
+                continue
             result.append(t)
     return result
 

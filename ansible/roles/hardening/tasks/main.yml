@@ -1,0 +1,78 @@
+---
+# Sicherheits-Härtung des Raspberry Pi (läuft bei --install und --update).
+# Ergebnis des Security-Audits 2026-11 (docs/SECURITY-AUDIT-2026-11.md).
+
+# ── Dateirechte ──────────────────────────────────────────────────────────────
+# Der Container läuft als root und braucht keine Schreibrechte für "andere".
+# Vorher 0757: jeder lokale Benutzer konnte app.env (Secrets) ersetzen und
+# sync-config.json ändern.
+- name: Konfigurationsverzeichnis nur für root + pi_user
+  ansible.builtin.file:
+    path:  /etc/pi-daemon
+    state: directory
+    owner: root
+    group: "{{ pi_user }}"
+    mode:  "0750"
+
+- name: Zertifikatsverzeichnis absichern
+  ansible.builtin.file:
+    path:  "{{ pi_certs_dir }}"
+    state: directory
+    owner: root
+    group: "{{ pi_user }}"
+    mode:  "0750"
+
+- name: Prüfen ob TLS-Schlüssel vorhanden ist
+  ansible.builtin.stat:
+    path: "{{ pi_certs_dir }}/key.pem"
+  register: tls_key
+
+# Vorher 0644: privater TLS-Schlüssel für alle lesbar
+- name: TLS-Schlüssel nicht mehr für alle lesbar
+  ansible.builtin.file:
+    path:  "{{ pi_certs_dir }}/key.pem"
+    owner: root
+    group: "{{ pi_user }}"
+    mode:  "0640"
+  when: tls_key.stat.exists
+
+- name: Video-Verzeichnis nicht world-writable
+  ansible.builtin.file:
+    path:  "{{ pi_video_dir }}"
+    state: directory
+    owner: "{{ pi_user }}"
+    group: "{{ pi_user }}"
+    mode:  "0755"
+
+# ── SSH ──────────────────────────────────────────────────────────────────────
+# roimme hat NOPASSWD-sudo (Raspberry-Pi-OS-Standard, Ansible braucht es).
+# Mit Passwort-Login per SSH hieße ein erratenes Passwort sofort root.
+# Abschaltbar über pi_ssh_hardening: false (z. B. wenn ohne Key gearbeitet wird).
+- name: SSH nur mit Schlüssel, kein root-Login
+  ansible.builtin.copy:
+    dest:  /etc/ssh/sshd_config.d/10-vogel-kamera.conf
+    owner: root
+    group: root
+    mode:  "0644"
+    content: |
+      # Verwaltet von Ansible (roles/hardening) – manuelle Änderungen werden überschrieben
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+  when: pi_ssh_hardening | default(true) | bool
+  notify: sshd neu laden
+
+- name: SSH-Konfiguration prüfen (vor dem Neuladen)
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+  when: pi_ssh_hardening | default(true) | bool
+
+# ── Firewall ─────────────────────────────────────────────────────────────────
+# Alte Regeln aus v1.x (RTSP-Preview 8554, iperf3 5201) – dort lauscht nichts mehr
+- name: Veraltete UFW-Regeln entfernen
+  community.general.ufw:
+    rule:   allow
+    port:   "{{ item }}"
+    proto:  tcp
+    delete: true
+  loop: ["8554", "5201"]

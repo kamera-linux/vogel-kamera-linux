@@ -1,6 +1,7 @@
 """Kamera-Steuerung: Detection-Prozess, Aufnahme (Video/Audio), Konvertierung, Transfer."""
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import threading
@@ -12,7 +13,7 @@ from . import config, settings
 from .config import logger
 from .runtime import _lock, state
 from .settings import RECORDING_PROFILES, _RESOLUTION_MAP, _load_rec_settings
-from .sync import _get_active_targets
+from .sync import _get_active_targets, ssh_options
 
 
 def _count_today_recordings() -> int:
@@ -776,10 +777,10 @@ class CameraManager:
         for t in targets:
             dest = f"{t['user']}@{t['host']}:{t['path']}"
             key_file = f"/config/sync_key_{t['id']}"
-            ssh_cmd = ('ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
-                       ' -o LogLevel=ERROR -o ConnectTimeout=10'
-                       + (f' -i {key_file}' if Path(key_file).exists() else ''))
-            cmd = ['rsync', '-az', '-e', ssh_cmd, mp4_path, dest]
+            # Feste Optionen ohne Nutzereingaben → shlex.join ist hier sicher;
+            # '--' trennt Optionen von Quelle/Ziel (Ziel ist bereits validiert)
+            ssh_cmd = shlex.join(['ssh', '-o', 'LogLevel=ERROR', *ssh_options(key_file)])
+            cmd = ['rsync', '-az', '-e', ssh_cmd, '--', mp4_path, dest]
             logger.info('Transfer [%s]: %s → %s', t['name'], Path(mp4_path).name, dest)
             try:
                 r = subprocess.run(cmd, capture_output=True, timeout=600)

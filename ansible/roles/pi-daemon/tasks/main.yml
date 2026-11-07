@@ -11,14 +11,14 @@
     - "{{ pi_daemon_dir }}"
     - "{{ pi_log_dir }}"
 
-# Video-Verzeichnis muss vom Docker-Container (appuser, UID 999) beschreibbar sein
-- name: Video-Verzeichnis anlegen (world-writable fuer Container-User)
+# Container läuft als root und kann ohnehin schreiben – kein world-writable nötig
+- name: Video-Verzeichnis anlegen
   ansible.builtin.file:
     path: "{{ pi_video_dir }}"
     state: directory
     owner: "{{ pi_user }}"
     group: "{{ pi_user }}"
-    mode: "0777"
+    mode: "0755"
 
 # docker-compose.yml aus Template deployen
 - name: docker-compose.yml deployen
@@ -37,7 +37,7 @@
     state: directory
     owner: root
     group: "{{ pi_user }}"
-    mode: "0757"   # o+rwx: appuser (UID 999) kann sync-config.json + SSH-Key schreiben
+    mode: "0750"   # Container läuft als root – kein Schreibrecht für andere nötig
 
 - name: app.env mit Secrets deployen
   ansible.builtin.template:

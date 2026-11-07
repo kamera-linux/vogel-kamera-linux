@@ -24,10 +24,12 @@ from .hailo import _get_hailo_hw_info
 from .monitoring import _log_thread_status
 from .runtime import _lock, state
 from .settings import (
-    DETECTION_ENGINES, RECORDING_PROFILES, _load_rec_settings, _save_active_engine,
+    DETECTION_ENGINES, RECORDING_PROFILES, _RESOLUTION_MAP, _load_rec_settings, _save_active_engine,
     _save_camera_settings, _save_detection_settings, _save_rec_settings,
 )
-from .sync import _load_sync_settings, _save_sync_settings
+from .sync import (
+    _load_sync_settings, _save_sync_settings, ssh_options, validate_target, write_private_key,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -41,6 +43,35 @@ limiter = Limiter(
     default_limits=[],
     storage_uri='memory://',
 )
+
+
+# ── Security-Header ──────────────────────────────────────────────────────────
+# Die Web-GUI ist eine einzelne Datei mit Inline-Skripten und onclick-Handlern,
+# daher 'unsafe-inline'. Die CSP verhindert trotzdem fremde Skriptquellen,
+# Datenabfluss an fremde Server (connect-src/img-src) und Einbetten in Frames.
+_CSP = ("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; connect-src 'self'; media-src 'self' blob:; "
+        "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
+
+
+@app.after_request
+def _security_headers(resp):
+    resp.headers.setdefault('Content-Security-Policy', _CSP)
+    resp.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    resp.headers.setdefault('X-Frame-Options', 'DENY')
+    resp.headers.setdefault('Referrer-Policy', 'no-referrer')
+    resp.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    if request.path.startswith('/api/'):
+        resp.headers.setdefault('Cache-Control', 'no-store')
+    return resp
+
+
+def _int_arg(value, default: int) -> int:
+    """int() für Request-Werte: ungültige Eingaben → Standardwert statt HTTP 500."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 # ── JWT-Helpers ─────────────────────────────────────────────────────────────
@@ -460,7 +491,7 @@ def api_rec_settings():
         return jsonify(_load_rec_settings())
     data = request.get_json(silent=True) or {}
     profile  = data.get('profile', 'normal_hd')
-    duration = min(max(int(data.get('duration', 15)), 3), 600)   # max 10 min = 600 s
+    duration = min(max(_int_arg(data.get('duration'), 15), 3), 600)   # max 10 min = 600 s
     if profile not in RECORDING_PROFILES:
         return jsonify({'error': f'Unbekanntes Profil: {profile}'}), 400
     _save_rec_settings({'profile': profile, 'duration': duration})
@@ -480,7 +511,7 @@ def api_record():
 
     data         = request.get_json(silent=True) or {}
     profile_name = data.get('profile')      # optionaler Profilname
-    duration     = min(max(int(data.get('duration', 15)), 3), 600)   # max 10 min = 600 s
+    duration     = min(max(_int_arg(data.get('duration'), 15), 3), 600)   # max 10 min = 600 s
 
     if profile_name and profile_name in RECORDING_PROFILES:
         profile    = RECORDING_PROFILES[profile_name]
@@ -490,9 +521,11 @@ def api_record():
         slowmotion = profile['slowmotion']
     else:
         # Fallback: direkte Parameter (Legacy-Kompatibilität)
-        resolution = data.get('resolution', '1080p')
-        fps        = min(max(int(data.get('fps',     30)),    1), 120)
-        bitrate    = min(max(int(data.get('bitrate', 8000)), 1000), 25000)
+        resolution = str(data.get('resolution', '1080p'))
+        if resolution not in _RESOLUTION_MAP:
+            return jsonify({'error': f'Unbekannte Auflösung: {resolution}'}), 400
+        fps        = min(max(_int_arg(data.get('fps'), 30), 1), 120)
+        bitrate    = min(max(_int_arg(data.get('bitrate'), 8000), 1000), 25000)
         slowmotion = bool(data.get('slowmotion', False))
 
     threading.Thread(
@@ -523,7 +556,7 @@ def api_record_audio():
             return jsonify({'error': 'Audio-Aufnahme läuft bereits'}), 409
 
     data     = request.get_json(silent=True) or {}
-    duration = min(max(int(data.get('duration', 60)), 3), 3600)
+    duration = min(max(_int_arg(data.get('duration'), 60), 3), 3600)
 
     threading.Thread(
         target=CameraManager.record_audio,
@@ -605,7 +638,7 @@ def api_download():
 @require_auth
 def api_delete():
     data = request.get_json(force=True, silent=True) or {}
-    rel = data.get('p', '').strip()
+    rel = str(data.get('p') or '').strip()
     if not rel:
         return jsonify({'error': 'Parameter p fehlt'}), 400
     base = Path(config.VIDEO_BASE_DIR).resolve()
@@ -669,8 +702,12 @@ def api_settings_targets_post():
     data = request.get_json(silent=True) or {}
     targets = data.get('targets', [])
     # Validierung + ID-Vergabe
+    if not isinstance(targets, list) or len(targets) > 20:
+        return jsonify({'success': False, 'error': 'targets muss eine Liste (max. 20) sein'}), 400
     clean = []
     for i, t in enumerate(targets):
+        if not isinstance(t, dict):
+            return jsonify({'success': False, 'error': f'Ziel {i + 1}: ungültiges Format'}), 400
         entry = {
             'id':      i,
             'name':    str(t.get('name', f'Ziel {i+1}')).strip()[:60],
@@ -679,18 +716,26 @@ def api_settings_targets_post():
             'path':    str(t.get('path', '')).strip(),
             'enabled': bool(t.get('enabled', True)),
         }
+        # Leere Ziele dürfen gespeichert werden (Formular halb ausgefüllt),
+        # sobald etwas eingetragen ist, muss alles gültig sein
+        if entry['host'] or entry['user'] or entry['path']:
+            err = validate_target(entry['host'], entry['user'], entry['path'])
+            if err:
+                return jsonify({'success': False, 'error': f'Ziel „{entry["name"]}“: {err}'}), 400
+        clean.append(entry)
+
+    for i, t in enumerate(targets):
         # SSH-Key optional mitliefern
         if t.get('ssh_key'):
-            key_content = t['ssh_key'].strip()
+            key_content = str(t['ssh_key']).strip()
+            if len(key_content) > 16384 or 'PRIVATE KEY-----' not in key_content:
+                return jsonify({'success': False, 'error': f'Ziel {i + 1}: kein gültiger privater SSH-Key'}), 400
             key_file = Path(f'/config/sync_key_{i}')
             try:
-                key_file.parent.mkdir(parents=True, exist_ok=True)
-                key_file.write_text(key_content + '\n')
-                os.chmod(str(key_file), 0o600)
+                write_private_key(key_file, key_content)
                 logger.info('SSH-Key gespeichert: %s', key_file)
             except Exception as exc:
                 return jsonify({'success': False, 'error': f'SSH-Key für Ziel {i} fehlgeschlagen: {exc}'}), 500
-        clean.append(entry)
     s = _load_sync_settings()
     s['targets'] = clean
     _save_sync_settings(s)
@@ -709,22 +754,20 @@ def api_settings_test():
     s = _load_sync_settings()
     targets = s.get('targets', [])
     if target_id is not None:
-        t = next((x for x in targets if x['id'] == int(target_id)), None)
+        tid = _int_arg(target_id, -1)
+        t = next((x for x in targets if x.get('id') == tid), None)
     else:
         t = next((x for x in targets if x.get('host') and x.get('user')), None)
     if not t:
         return jsonify({'success': False, 'error': 'Kein Sync-Ziel konfiguriert'})
-    host = t['host']
-    user = t['user']
+    host = t.get('host', '')
+    user = t.get('user', '')
+    err = validate_target(host, user, t.get('path') or '/')
+    if err:
+        return jsonify({'success': False, 'error': err})
     key_file = f"/config/sync_key_{t['id']}"
     key_exists = Path(key_file).exists()
-    key_opts = ['-i', key_file] if key_exists else []
-    cmd = ['ssh',
-           '-o', 'StrictHostKeyChecking=no',
-           '-o', 'UserKnownHostsFile=/dev/null',
-           '-o', 'ConnectTimeout=8',
-           '-o', 'BatchMode=yes',
-           ] + key_opts + [f'{user}@{host}', 'echo VERBINDUNG_OK']
+    cmd = ['ssh', *ssh_options(key_file), '--', f'{user}@{host}', 'echo VERBINDUNG_OK']
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=12, text=True)
         if result.returncode == 0 and 'VERBINDUNG_OK' in result.stdout:

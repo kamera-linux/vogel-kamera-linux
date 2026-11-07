@@ -11,7 +11,7 @@
     state: directory
     owner: root
     group: "{{ pi_user }}"
-    mode:  "0755"
+    mode:  "0750"
 
 - name: Prüfen ob Zertifikat existiert
   ansible.builtin.stat:
@@ -37,5 +37,4 @@
     mode:  "{{ item.mode }}"
   loop:
     - { path: "{{ pi_certs_dir }}/cert.pem", mode: "0644" }
-    - { path: "{{ pi_certs_dir }}/key.pem",  mode: "0644" }
-  when: not cert_file.stat.exists
+    - { path: "{{ pi_certs_dir }}/key.pem",  mode: "0640" }   # privater Schlüssel: nicht für alle lesbar

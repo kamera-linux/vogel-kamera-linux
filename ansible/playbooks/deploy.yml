@@ -16,6 +16,7 @@
     - role: docker      # Docker CE installieren
     - role: ssl         # Self-signed Zertifikat
     - role: firewall    # UFW-Regeln
+    - role: hardening   # Dateirechte, SSH nur mit Key, alte Firewall-Regeln
     - role: pi-daemon   # Image laden + docker-compose + systemd
 
   post_tasks:

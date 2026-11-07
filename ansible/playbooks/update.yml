@@ -64,6 +64,12 @@
         group: "{{ pi_user }}"
         mode:  "0644"
 
+    - name: Sicherheits-Härtung anwenden
+      ansible.builtin.include_role:
+        name: hardening
+        apply:
+          become: true
+
     - name: pi-daemon neu starten
       ansible.builtin.systemd:
         name:  pi-daemon
