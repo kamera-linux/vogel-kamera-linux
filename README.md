@@ -563,5 +563,5 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ---
 
-**Version:** v2.3.0 (5. April 2026) | **Status:** Produktionsreif ✅  
-**Raspberry Pi 5 AI HAD+ · Hailo-8 NPU · Debian Trixie (13) | Docker Web-API | JWT + TOTP 2FA**
+**Version:** v2.4.2 (7. November 2026) | **Status:** Produktionsreif ✅  
+**Raspberry Pi 5 AI HAT+ · Hailo-8 NPU · Debian Trixie (13) | Docker Web-API | JWT + TOTP 2FA | Powerbank-Überwachung (Bluetooth) | Security-Audit 11/2026**
