@@ -15,7 +15,7 @@ from flask import Flask, abort, jsonify, request, send_file, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from . import config, monitoring, settings
+from . import config, monitoring, powerbank, settings
 from .camera import (
     CameraManager, _count_today_recordings, _kill_process_group, _read_last_detection,
 )
@@ -232,6 +232,7 @@ def api_status():
         'detection_threshold':  settings._detection_threshold,
         'last_detection':       _read_last_detection(),
         'hailo_hw':             _get_hailo_hw_info(),
+        'powerbank':            powerbank.get_status(),
         'lens_position':        settings._lens_position,
         'ev':                   settings._ev,
         'awb':                  settings._awb,

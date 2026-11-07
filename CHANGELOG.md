@@ -1,5 +1,22 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [Unreleased]
+
+### 🔋 Neu: Powerbank-Überwachung
+- **Anker Prime Power Bank (27K, 250W) per Bluetooth:** Der pi-daemon liest alle 60 s
+  Akkustand, Leistung je Port, Ladeleistung und Temperatur aus (Protokoll nach
+  [atc1441](https://github.com/atc1441/Anker_Prime_BLE_hacking), kein Anker-Konto nötig).
+  Neue Kartengruppe „Powerbank“ im Webinterface, Feld `powerbank` in `/api/status`.
+- **Akku-Schutz:** Gotify-Warnung bei ≤ 10 %, bei ≤ 5 % (zwei Messungen, nicht am Laden)
+  werden Detection/Aufnahme beendet und der Pi über systemd-logind heruntergefahren.
+- Aktivierung über `PI_POWERBANK_MAC` in `ansible/.env`; Container bindet dafür
+  `/run/dbus/system_bus_socket` ein. Neue Abhängigkeiten: `bleak`, `cryptography`.
+
+### 🔧 Bug Fixes
+- `--update` schrieb die Umgebungsvariablen nach `/opt/pi-daemon/.env`, der Container liest
+  aber `/etc/pi-daemon/app.env` – neue Variablen kamen nur bei einer Erstinstallation an.
+  `update.yml` aktualisiert jetzt `app.env`.
+
 ## [2.3.9] - 6. November 2026 🔒 **Sicherheit, Code-Struktur & CI**
 
 ### 🔒 Sicherheit

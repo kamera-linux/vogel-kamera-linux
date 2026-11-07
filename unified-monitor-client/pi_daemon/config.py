@@ -31,6 +31,14 @@ SYNC_KEY_FILE     = '/config/sync_rsa'
 GOTIFY_URL        = os.environ.get('GOTIFY_URL', '')       # http://192.168.178.36:8080 oder http://nas.local:8080
 GOTIFY_TOKEN      = os.environ.get('GOTIFY_TOKEN', '')     # API Token von Gotify
 
+# ---------------------------------------------------------------------------
+# Powerbank (Anker Prime 27K/250W per Bluetooth) – leere MAC = deaktiviert
+# ---------------------------------------------------------------------------
+POWERBANK_MAC              = os.environ.get('PI_DAEMON_POWERBANK_MAC', '').strip()
+POWERBANK_INTERVAL         = int(os.environ.get('PI_DAEMON_POWERBANK_INTERVAL', 60))
+POWERBANK_WARN_PERCENT     = int(os.environ.get('PI_DAEMON_POWERBANK_WARN_PERCENT', 10))
+POWERBANK_SHUTDOWN_PERCENT = int(os.environ.get('PI_DAEMON_POWERBANK_SHUTDOWN_PERCENT', 5))
+
 
 # ---------------------------------------------------------------------------
 # Logging

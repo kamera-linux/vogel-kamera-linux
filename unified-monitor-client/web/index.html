@@ -391,6 +391,31 @@
       </div>
     </div>
 
+    <!-- Gruppe: Powerbank (nur sichtbar, wenn PI_DAEMON_POWERBANK_MAC gesetzt) -->
+    <div id="pb-group" style="display:none">
+    <h3 class="card-group-label">Powerbank</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="label">🔋 Akku</div>
+        <div class="value" id="s-pb-battery">–</div>
+        <div id="s-pb-info" style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem"></div>
+      </div>
+      <div class="card">
+        <div class="label">Ausgang</div>
+        <div class="value" id="s-pb-out">–</div>
+        <div id="s-pb-ports" style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem"></div>
+      </div>
+      <div class="card">
+        <div class="label">Eingang (Laden)</div>
+        <div class="value" id="s-pb-in">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Temperatur Powerbank</div>
+        <div class="value" id="s-pb-temp">–</div>
+      </div>
+    </div>
+    </div>
+
     <!-- Gruppe: System -->
     <h3 class="card-group-label">System</h3>
     <div class="cards">
@@ -1062,6 +1087,34 @@
     await Promise.all([fetchStatus(), fetchRecordings(), fetchPending()]);
   }
 
+  function renderPowerbank(pb) {
+    const group = document.getElementById('pb-group');
+    if (!Object.keys(pb).length) { group.style.display = 'none'; return; }
+    group.style.display = 'block';
+    const W = v => v != null ? v.toFixed(1) + ' W' : '–';
+    if (pb.battery_percent != null) {
+      const p = pb.battery_percent;
+      const c = p <= 10 ? '#ef4444' : p <= 25 ? '#f97316' : '#22c55e';
+      setText('s-pb-battery', `<span style="color:${c};font-weight:600">${p} %</span>`);
+    } else { setText('s-pb-battery', '–'); }
+    const info = document.getElementById('s-pb-info');
+    const t = pb.updated_at ? new Date(pb.updated_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) : null;
+    if (pb.ok === false) {
+      info.textContent = '⚠️ nicht erreichbar' + (t ? ' · Stand ' + t : '');
+      info.title = pb.error || '';
+    } else {
+      info.textContent = t ? 'Stand ' + t : 'wird abgefragt …';
+      info.title = '';
+    }
+    setText('s-pb-out', W(pb.total_output_w));
+    setText('s-pb-in',  W(pb.total_input_w));
+    const ports = [['usb_c1', 'C1'], ['usb_c2', 'C2'], ['usb_a', 'A']]
+      .filter(([k]) => pb[k] && pb[k].mode !== 'off')
+      .map(([k, n]) => `${n} ${pb[k].power_w.toFixed(1)} W`);
+    document.getElementById('s-pb-ports').textContent = ports.join(' · ');
+    setText('s-pb-temp', pb.temperature_c != null ? pb.temperature_c + ' °C' : '–');
+  }
+
   async function fetchStatus() {
     const data = await apiFetch('/api/status');
     if (!data) {
@@ -1121,6 +1174,7 @@
       const _zc = _zcols[_z] || '#ef4444';
       setText('s-throttle', `<span style="color:${_zc};font-weight:600">${_zn}</span>`);
     } else { setText('s-throttle', '\u2013'); }
+    renderPowerbank(data.powerbank || {});
     if (data.last_detection) {
       const d = data.last_detection;
       const cls = d.class ? d.class.charAt(0).toUpperCase() + d.class.slice(1) : '?';

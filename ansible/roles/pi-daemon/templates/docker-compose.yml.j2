@@ -25,6 +25,7 @@ services:
       - /run/udev:/run/udev:ro
       - /proc:/proc:ro                 # psutil braucht /proc
       - /sys/bus/i2c:/sys/bus/i2c      # Kamera-Reset via imx708 sysfs (unbind/bind)
+      - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket  # Host-D-Bus: BlueZ (Powerbank per Bluetooth) + logind (Shutdown bei leerem Akku)
       # rpicam-apps: Binary + Libraries vom Pi-Host einbinden (kein apt-Install nötig)
       - /usr/bin/rpicam-vid:/opt/rpicam-vid:ro              # Binary (Wrapper in /usr/local/bin/rpicam-vid)
       - /usr/bin/rpicam-hello:/opt/rpicam-hello:ro          # rpicam-hello für Hailo-NPU Detection

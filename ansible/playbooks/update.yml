@@ -43,13 +43,17 @@
       register: remote_prune
       changed_when: "'Total reclaimed space: 0B' not in remote_prune.stdout"
 
-    - name: .env aktualisieren (Secrets)
+    # Der Container liest /etc/pi-daemon/app.env (env_file in docker-compose.yml).
+    # Früher wurde hier nur {{ pi_daemon_dir }}/.env geschrieben, das der Container
+    # nicht nutzt – neue Variablen kamen per --update nie an.
+    - name: app.env aktualisieren (Secrets)
       ansible.builtin.template:
         src:   ../roles/pi-daemon/templates/env.j2
-        dest:  "{{ pi_daemon_dir }}/.env"
-        owner: "{{ pi_user }}"
+        dest:  /etc/pi-daemon/app.env
+        owner: root
         group: "{{ pi_user }}"
-        mode:  "0600"
+        mode:  "0640"
+      become: true
       no_log: true
 
     - name: docker-compose.yml aktualisieren

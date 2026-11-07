@@ -7,6 +7,7 @@ Module:
   hailo       Hailo-NPU Hardware-Info + Temperatur-Thread
   monitoring  Health-Cache, Gotify-Alerts, Thread-Diagnose
   sync        Sync-Ziele für rsync-Transfer
+  powerbank   Anker-Powerbank per Bluetooth, Akku-Warnung + Shutdown
   camera      Detection-Prozess, Aufnahme, Konvertierung, Transfer, Watchdog
   api         Flask-App mit allen HTTP-Routen
   main        Start (Threads + HTTPS-Server)

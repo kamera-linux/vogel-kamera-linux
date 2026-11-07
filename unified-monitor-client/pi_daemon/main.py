@@ -8,6 +8,7 @@ from .camera import CameraManager, _auto_convert_watcher, detection_watchdog
 from .config import logger
 from .hailo import _hailo_temp_updater
 from .monitoring import _thread_monitor_daemon
+from .powerbank import _powerbank_updater
 from .sync import _migrate_legacy_settings
 
 
@@ -24,6 +25,8 @@ def main() -> None:
     threading.Thread(target=_hailo_temp_updater, daemon=True, name='hailo-temp').start()
     # Thread-Monitoring Daemon: überwacht Deadlocks und aktualisiert Health-Cache
     threading.Thread(target=_thread_monitor_daemon, daemon=True, name='thread-monitor').start()
+    # Powerbank per Bluetooth auslesen, Warnung/Shutdown bei niedrigem Akku
+    threading.Thread(target=_powerbank_updater, daemon=True, name='powerbank').start()
 
     ssl_ctx = ((config.CERT_FILE, config.KEY_FILE)
                if Path(config.CERT_FILE).exists() and Path(config.KEY_FILE).exists() else None)
