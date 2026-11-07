@@ -4,29 +4,33 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.3.9 — Sicherheit, Code-Struktur & CI 🔒
+## Release v2.4.0 — Powerbank-Überwachung 🔋
 
-- **Version:** v2.3.9 (6. November 2026)
-- **🔒 Sicherheit:**
-  - Login-Token wird nicht mehr in URLs übertragen (Download & Live-Vorschau nur noch per Header)
-- **🏗️ Code-Struktur:**
-  - Der Daemon ist jetzt das Paket [`unified-monitor-client/pi_daemon/`](unified-monitor-client/pi_daemon/)
-    (api, camera, settings, monitoring, …) statt einer 2400-Zeilen-Datei
-- **✅ Automatische Prüfung bei jedem Push:**
-  - ruff, shellcheck und 28 Tests für den pi-daemon (ohne Pi/Kamera lauffähig)
-- **🔧 Fixes:** Release-Skript übernimmt Release-Notes korrekt, sichere Commit-Nachrichten
-- **📚 Doku:** CHANGELOG zusammengeführt und korrigiert
+- **Version:** v2.4.0 (7. November 2026)
+- **🔋 Powerbank im Webinterface:**
+  - Akkustand, Leistung je Port, Ladeleistung und Temperatur einer
+    **Anker Prime Power Bank (27K, 250W)** – per Bluetooth, alle 60 s, ohne Anker-Konto
+- **🛡️ Akku-Schutz:**
+  - Gotify-Warnung bei 10 %, bei 5 % fährt der Pi sauber herunter
+    (Aufnahme wird vorher beendet)
+- **🔧 Fix:** `--update` übernimmt jetzt auch neue Umgebungsvariablen
 
 **Update:** [`./ansible/build_and_deploy.sh --update`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.3.9/`](releases/v2.3.9/RELEASE_NOTES_v2.3.9.md)
+**Release Notes:** [`releases/v2.4.0/`](releases/v2.4.0/RELEASE_NOTES_v2.4.0.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.3.9-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.3.9)
+[![Version](https://img.shields.io/badge/Version-v2.4.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.4.0)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Slow-Motion](https://img.shields.io/badge/Slow--Motion-2304x1296%40%2056fps-ff9800)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![CI](https://github.com/kamera-linux/vogel-kamera-linux/actions/workflows/ci.yml/badge.svg)](https://github.com/kamera-linux/vogel-kamera-linux/actions/workflows/ci.yml)
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.3.9 (Archiv)
+**Sicherheit, Code-Struktur & CI**
+- **Version:** v2.3.9 (6. November 2026)
+- Login-Token nicht mehr in URLs, Daemon als Paket `pi_daemon/`, CI mit ruff + pytest
+- Siehe [Archiv-Release](releases/v2.3.9/RELEASE_NOTES_v2.3.9.md) für Details
 
 ### v2.3.8 (Archiv)
 **Ansible Toolchain & E2E-Test Verbesserungen**
@@ -184,8 +188,13 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | Komponente | Details |
 |---|---|
-| **Powerbank** | Anker 737 Power Bank (PowerCore 26K) · 140 W USB-C · 25.600 mAh |
-| **Ausgang** | 140 W USB-C PD (kompatibel mit Raspberry Pi 5 Netzteil-Anforderung 27 W) |
+| **Powerbank** | Anker Prime Power Bank (27K, 250W) · 27.650 mAh · Bluetooth |
+| **Ausgang** | 2× USB-C + 1× USB-A, 250 W gesamt (Raspberry Pi 5 braucht 27 W) |
+| **Überwachung** | Akkustand im Webinterface, Warnung bei 10 %, Shutdown bei 5 % *(Neu in v2.4.0)* |
+
+> Die Bluetooth-Überwachung funktioniert nur mit der Anker Prime 27K/250W. Andere
+> Powerbanks laufen genauso, nur ohne Anzeige. Einrichtung:
+> [Release Notes v2.4.0](releases/v2.4.0/RELEASE_NOTES_v2.4.0.md) (Abschnitt „Einrichtung“)
 
 ---
 
@@ -203,6 +212,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 - 📁 **Automatische Dateiorganisation** nach Jahr/Woche
 - ⚙️ **Flexible Konfiguration** über `ansible/.env` (gitignored)
 - 📊 **Fortschrittsanzeige** während der Aufnahme
+- 🔋 **Powerbank-Überwachung** per Bluetooth mit Warnung und automatischem Shutdown *(Neu in v2.4.0)*
 - 🔄 **Automatische Video-/Audio-Synchronisation**
 - 📱 **YouTube-Integration** mit QR-Codes für mobile Nutzer
 - 🔧 **Einfache Installation** per Ansible (`build_and_deploy.sh`)
@@ -242,6 +252,7 @@ flowchart TD
 | **Transfer** | SSH-Sync zu konfigurierten Zielsystemen |
 | **Download** | Direkte Browser-Downloads von Aufnahmen |
 | **Löschen** | Verwaltung der Aufnahmen im Container |
+| **Powerbank** | Akkustand, Leistung und Temperatur der Anker-Powerbank (Bluetooth) |
 
 ### Screenshots
 

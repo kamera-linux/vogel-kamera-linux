@@ -4,16 +4,19 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.3.9** - "Sicherheit, Code-Struktur & CI" 🔒
+**Version 2.4.0** - "Powerbank-Überwachung" 🔋
 - **Branch:** main
-- **Release Notes:** [v2.3.9/RELEASE_NOTES_v2.3.9.md](v2.3.9/RELEASE_NOTES_v2.3.9.md)
-- **Release Date:** 2026-11-06
-- **🔒 Sicherheit:** Login-Token nicht mehr in URLs (nur noch `Authorization`-Header)
-- **🏗️ Code-Struktur:** Daemon aufgeteilt in das Paket `unified-monitor-client/pi_daemon/`
-- **✅ CI:** ruff, shellcheck und 28 pytest-Tests bei jedem Push
-- **🔧 Fixes:** Release-Skript (Release-Notes, Versionen), sichere Commit-Nachrichten
+- **Release Notes:** [v2.4.0/RELEASE_NOTES_v2.4.0.md](v2.4.0/RELEASE_NOTES_v2.4.0.md)
+- **Release Date:** 2026-11-07
+- **🔋 Powerbank:** Anker Prime 27K/250W per Bluetooth – Akkustand, Leistung, Temperatur im Webinterface
+- **🛡️ Akku-Schutz:** Gotify-Warnung bei 10 %, sauberes Herunterfahren bei 5 %
+- **🔧 Fix:** `--update` übernimmt neue Umgebungsvariablen (`/etc/pi-daemon/app.env`)
 
 ## 📦 Vorherige Versionen
+
+### Version 2.3.9 - "Sicherheit, Code-Struktur & CI" 🔒
+- **Release Notes:** [v2.3.9/RELEASE_NOTES_v2.3.9.md](v2.3.9/RELEASE_NOTES_v2.3.9.md)
+- **Release Date:** 2026-11-06
 
 ### Version 2.3.8 - "Ansible Toolchain & E2E Testing Improvements" 🔧
 - **Release Notes:** [v2.3.8/RELEASE_NOTES_v2.3.8.md](v2.3.8/RELEASE_NOTES_v2.3.8.md)

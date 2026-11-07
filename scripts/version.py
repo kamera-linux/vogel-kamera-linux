@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.3.9"
-__version_info__ = (2, 3, 9)
+__version__ = "2.4.0"
+__version_info__ = (2, 4, 0)
 
 # Release Information
-RELEASE_NAME = "Security, Code Structure & CI"
-RELEASE_DATE = "2026-11-06"
-RELEASE_TYPE = "patch"  # major, minor, patch
+RELEASE_NAME = "Powerbank Monitoring"
+RELEASE_DATE = "2026-11-07"
+RELEASE_TYPE = "minor"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20261106-1"
-GIT_TAG = "v2.3.9"
+BUILD_NUMBER = "20261107-1"
+GIT_TAG = "v2.4.0"
 
 # Feature Flags
 FEATURES = {
@@ -45,6 +45,7 @@ FEATURES = {
     "yolo26_detection": True,  # New in v2.0.2 - YOLO26 model (yolo26n.pt)
     "monitoring_improvements": True,  # New in v2.0.2 - CPU/RAM display, SSH stability
     "web_interface": True,  # Since v2.2.0 - Web-GUI im pi-daemon
+    "powerbank_monitoring": True,  # New in v2.4.0 - Anker Prime per Bluetooth, Akku-Schutz
     "mobile_app": False,  # Planned for future
 }
 

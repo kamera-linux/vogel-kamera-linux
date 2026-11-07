@@ -1,6 +1,6 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
-## [Unreleased]
+## [2.4.0] - 7. November 2026 🔋 **Powerbank-Überwachung**
 
 ### 🔋 Neu: Powerbank-Überwachung
 - **Anker Prime Power Bank (27K, 250W) per Bluetooth:** Der pi-daemon liest alle 60 s
