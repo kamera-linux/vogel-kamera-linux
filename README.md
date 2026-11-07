@@ -149,7 +149,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | **RAM** | 8 GB LPDDR4X *(dieses System)* · alternativ: 4 GB oder 2 GB erhältlich |
 | **Netzwerk** | WLAN (Broadcom brcmfmac, 2.4/5 GHz) · Ethernet RP1 PCIe (integriert) |
 
-### 🤖 KI-Beschleuniger (AI HAD+)
+### 🤖 KI-Beschleuniger (AI HAT+)
 
 | Komponente | Details |
 |---|---|
