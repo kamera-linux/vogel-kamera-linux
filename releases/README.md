@@ -4,14 +4,18 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.4.1** - "Security-Audit" 🔒
+**Version 2.4.2** - "Erkennungsziele & Online-Hilfe" 🐕
 - **Branch:** main
-- **Release Notes:** [v2.4.1/RELEASE_NOTES_v2.4.1.md](v2.4.1/RELEASE_NOTES_v2.4.1.md)
+- **Release Notes:** [v2.4.2/RELEASE_NOTES_v2.4.2.md](v2.4.2/RELEASE_NOTES_v2.4.2.md)
 - **Release Date:** 2026-11-07
-- **🔒 Security:** alle Funde aus dem [Audit](../docs/SECURITY-AUDIT-2026-11.md) behoben (2 hoch, 5 mittel, 6 niedrig)
-- **🛡️ Härtung:** neue Ansible-Rolle `hardening` (Dateirechte, SSH nur mit Key, Firewall)
+- **🔧 Fix:** Erkennungsziel Hund/Katze/Alle 4 bleibt nach Neustart erhalten
+- **📚 Doku:** Online-Hilfe der Web-GUI und Wiki aktualisiert
 
 ## 📦 Vorherige Versionen
+
+### Version 2.4.1 - "Security-Audit" 🔒
+- **Release Notes:** [v2.4.1/RELEASE_NOTES_v2.4.1.md](v2.4.1/RELEASE_NOTES_v2.4.1.md)
+- **Release Date:** 2026-11-07
 
 ### Version 2.4.0 - "Powerbank-Überwachung" 🔋
 - **Release Notes:** [v2.4.0/RELEASE_NOTES_v2.4.0.md](v2.4.0/RELEASE_NOTES_v2.4.0.md)

@@ -731,13 +731,16 @@
     <ul>
       <li><strong>🐦 Vogel</strong> – erkennt COCO-Klasse <code>bird</code> (Standard)</li>
       <li><strong>🧍 Mensch</strong> – erkennt COCO-Klasse <code>person</code></li>
+      <li><strong>🐕 Hund</strong> / <strong>🐈 Katze</strong> – COCO-Klassen <code>dog</code> / <code>cat</code></li>
+      <li><strong>Alle 4</strong> – jede der vier Klassen löst eine Aufnahme aus</li>
       <li><strong>Confidence-Slider</strong> – Wert zwischen 0,10 und 0,95 (Standard 0,45).
           Höher = weniger Fehlalarme, aber auch weniger Treffer</li>
       <li>Einstellungen werden sofort gespeichert und beim nächsten Detectionsstart
           automatisch übernommen. Eine laufende Detection wird kurz neu gestartet.</li>
     </ul>
     <p><strong>Hintergrund:</strong> Das YOLOv8-Modell kennt 80 COCO-Klassen.
-       Nur die gewählte Klasse löst eine Aufnahme aus &ndash; alle anderen werden ignoriert.</p>
+       Nur die gewählte Klasse löst eine Aufnahme aus &ndash; alle anderen werden ignoriert.
+       Vogelarten werden nicht unterschieden.</p>
 
     <hr>
     <h3>⏺ Manuelle Aufnahme</h3>
@@ -748,10 +751,15 @@
           <li><code>Normal HD</code> – 1080p, 30 fps</li>
           <li><code>Normal 2K</code> – 2560×1440, 30 fps</li>
           <li><code>Normal 4K</code> – 4096×2160, 25 fps (Sensor-Maximum)</li>
-          <li><code>Zeitlupe 720p</code> – 120 fps → 4× Zeitlupe bei Wiedergabe</li>
-          <li><code>Zeitlupe 1080p</code> – 60 fps → 2× Zeitlupe bei Wiedergabe</li>
+          <li><code>Zeitlupe HQ</code> – 2304×1296, 56 fps (bessere Bildqualität)</li>
+          <li><code>Zeitlupe 120fps</code> – 1536×864, 120 fps (sehr schnelle Bewegungen)</li>
         </ul>
       </li>
+      <li><strong>Zeitlupe</strong> – nach der Aufnahme entstehen automatisch vier MP4-Versionen
+          ohne Ton: <code>_pb10fps</code>, <code>_pb20fps</code>, <code>_pb30fps</code> und das
+          Original ohne Zusatz. Bei 120&nbsp;fps ergibt <code>_pb30fps</code> 4× und
+          <code>_pb10fps</code> 12× Zeitlupe; bei 56&nbsp;fps 1,9× bzw. 5,6×</li>
+      <li>Profil und Dauer gelten auch für Aufnahmen im Detection-Modus</li>
       <li>Während eine Aufnahme läuft, zeigt ein <strong>Fortschrittsbalken</strong>
           den aktuellen Fortschritt und die verbleibende Zeit an</li>
     </ul>
@@ -903,11 +911,14 @@
       <li><strong>Host / IP</strong> – Hostname oder IP-Adresse des Zielrechners</li>
       <li><strong>SSH Benutzer</strong> – Benutzername auf dem Zielsystem</li>
       <li><strong>Ziel-Pfad</strong> – Verzeichnis auf dem Zielrechner, z.&nbsp;B.
-          <code>/home/imme/Videos/Vogelhaus/2026</code></li>
+          <code>/srv/vogel-videos/</code> (keine Leerzeichen, nicht mit <code>-</code> beginnen)</li>
       <li><strong>SSH Private Key</strong> – Privaten Schlüssel einfügen (OpenSSH-Format).
           Einmal gespeichert, muss er nicht erneut eingegeben werden.</li>
       <li>Mit <span class="help-badge">🔌 Testen</span> die Verbindung direkt prüfen</li>
-      <li>Mehrere Ziele möglich – z.&nbsp;B. NAS + Laptop gleichzeitig</li>
+      <li>Mehrere Ziele möglich (bis 20) – z.&nbsp;B. NAS + Laptop gleichzeitig</li>
+      <li>Beim ersten Kontakt merkt sich der Pi den <strong>Host-Key</strong> des Ziels und
+          prüft ihn danach. Wurde das Ziel neu installiert: Zeile in
+          <code>/etc/pi-daemon/known_hosts</code> auf dem Pi löschen</li>
     </ul>
     <p style="margin-top:.5rem"><strong>Voraussetzung:</strong> Der <em>Public Key</em> des
        eingetragenen Private Keys muss auf dem Zielrechner in
@@ -926,7 +937,7 @@
 
     <hr>
     <h3>📊 System-Status</h3>
-    <p>Das Dashboard ist in vier Gruppen gegliedert:</p>
+    <p>Das Dashboard ist in fünf Gruppen gegliedert (Powerbank nur, wenn eingerichtet):</p>
 
     <h3>🎯 Kamera &amp; Erkennung</h3>
     <ul>
@@ -956,6 +967,17 @@
       </li>
     </ul>
 
+    <h3>🔋 Powerbank</h3>
+    <ul>
+      <li><strong>Akku</strong> – Ladestand der Anker Prime Powerbank (per Bluetooth, alle 60&nbsp;s).
+          Grün · Orange ≤&nbsp;25&nbsp;% · Rot ≤&nbsp;10&nbsp;%. Darunter die Uhrzeit der letzten Messung</li>
+      <li><strong>Ausgang</strong> – abgegebene Leistung, darunter die aktiven Anschlüsse</li>
+      <li><strong>Eingang (Laden)</strong> – Ladeleistung, wenn die Powerbank geladen wird</li>
+      <li><strong>Temperatur Powerbank</strong> – in °C</li>
+      <li>Bei ≤&nbsp;10&nbsp;% kommt eine Gotify-Warnung, bei ≤&nbsp;5&nbsp;% werden Aufnahmen beendet
+          und der Pi wird heruntergefahren (nur wenn nicht geladen wird)</li>
+    </ul>
+
     <h3>🖥️ System</h3>
     <ul>
       <li><strong>CPU</strong> – aktuelle CPU-Auslastung in Prozent (&lt;&nbsp;5&nbsp;% typisch bei Hailo-NPU)</li>
@@ -978,8 +1000,11 @@
     <ul>
       <li>Login erfordert <strong>Passwort + 2FA-Code (TOTP)</strong> – kompatibel mit
           Google Authenticator, Aegis, Bitwarden u.&nbsp;a.</li>
-      <li>Alle API-Aufrufe sind Bearer-Token-geschützt (Session-gültig)</li>
+      <li>Max. 5 Login-Versuche pro Minute</li>
+      <li>Alle API-Aufrufe sind Bearer-Token-geschützt; ein Login gilt 8&nbsp;Stunden und nur
+          für diesen Browser-Tab</li>
       <li>Verbindung ist TLS-verschlüsselt (HTTPS, selbstsigniertes Zertifikat)</li>
+      <li>Port 8443 nicht im Router freigeben – für Zugriff von unterwegs ein VPN nutzen</li>
     </ul>
 
     <div style="margin-top:1.5rem;text-align:right">

@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.4.1"
-__version_info__ = (2, 4, 1)
+__version__ = "2.4.2"
+__version_info__ = (2, 4, 2)
 
 # Release Information
-RELEASE_NAME = "Security Audit Fixes"
+RELEASE_NAME = "Detection Targets & Online Help"
 RELEASE_DATE = "2026-11-07"
 RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20261107-2"
-GIT_TAG = "v2.4.1"
+BUILD_NUMBER = "20261107-3"
+GIT_TAG = "v2.4.2"
 
 # Feature Flags
 FEATURES = {

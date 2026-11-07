@@ -1,9 +1,16 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
-## [Unreleased]
+## [2.4.2] - 7. November 2026 🐕 **Erkennungsziele & Online-Hilfe**
 
 ### 🔧 Bug Fixes
 - Erkennungsziel Hund, Katze oder „alle vier“ wurde nach einem Neustart auf „Vogel“ zurückgesetzt
+  (`_load_detection_settings` ließ nur `bird`/`person` zu)
+
+### 📚 Dokumentation
+- Online-Hilfe der Web-GUI aktualisiert: richtige Zeitlupen-Profile (2304×1296 @ 56 fps,
+  1536×864 @ 120 fps) und die vier Wiedergabe-Versionen, alle fünf Erkennungsziele, neue
+  Gruppe „Powerbank“, Host-Key-Prüfung bei Sync-Zielen, Sicherheitshinweise
+- Wiki komplett auf den aktuellen Stand gebracht (neue Seiten „Powerbank“ und „Security“)
 
 ## [2.4.1] - 7. November 2026 🔒 **Security-Audit**
 
