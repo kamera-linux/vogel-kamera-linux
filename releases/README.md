@@ -4,15 +4,18 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.4.0** - "Powerbank-Überwachung" 🔋
+**Version 2.4.1** - "Security-Audit" 🔒
 - **Branch:** main
-- **Release Notes:** [v2.4.0/RELEASE_NOTES_v2.4.0.md](v2.4.0/RELEASE_NOTES_v2.4.0.md)
+- **Release Notes:** [v2.4.1/RELEASE_NOTES_v2.4.1.md](v2.4.1/RELEASE_NOTES_v2.4.1.md)
 - **Release Date:** 2026-11-07
-- **🔋 Powerbank:** Anker Prime 27K/250W per Bluetooth – Akkustand, Leistung, Temperatur im Webinterface
-- **🛡️ Akku-Schutz:** Gotify-Warnung bei 10 %, sauberes Herunterfahren bei 5 %
-- **🔧 Fix:** `--update` übernimmt neue Umgebungsvariablen (`/etc/pi-daemon/app.env`)
+- **🔒 Security:** alle Funde aus dem [Audit](../docs/SECURITY-AUDIT-2026-11.md) behoben (2 hoch, 5 mittel, 6 niedrig)
+- **🛡️ Härtung:** neue Ansible-Rolle `hardening` (Dateirechte, SSH nur mit Key, Firewall)
 
 ## 📦 Vorherige Versionen
+
+### Version 2.4.0 - "Powerbank-Überwachung" 🔋
+- **Release Notes:** [v2.4.0/RELEASE_NOTES_v2.4.0.md](v2.4.0/RELEASE_NOTES_v2.4.0.md)
+- **Release Date:** 2026-11-07
 
 ### Version 2.3.9 - "Sicherheit, Code-Struktur & CI" 🔒
 - **Release Notes:** [v2.3.9/RELEASE_NOTES_v2.3.9.md](v2.3.9/RELEASE_NOTES_v2.3.9.md)

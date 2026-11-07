@@ -1,6 +1,6 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
-## [Unreleased]
+## [2.4.1] - 7. November 2026 🔒 **Security-Audit**
 
 ### 🔒 Security-Audit ([Bericht](docs/SECURITY-AUDIT-2026-11.md))
 - **Sync-Ziele:** Host/Benutzer/Pfad werden geprüft, `--` vor ssh/rsync-Zielen – vorher war

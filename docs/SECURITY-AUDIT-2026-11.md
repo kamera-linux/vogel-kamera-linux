@@ -1,7 +1,7 @@
 # 🔍 Security-Audit November 2026
 
 **Datum:** 7. November 2026  
-**Version:** v2.4.0 (Audit) → Fixes ab Commit nach v2.4.0  
+**Version:** v2.4.0 (Audit) → behoben in v2.4.1  
 **Umfang:** pi-daemon (API, Web-GUI, Prozessaufrufe), Docker/Compose, Ansible-Rollen,
 CI-Workflows, Repository/Git-History und das laufende System auf dem Raspberry Pi
 **Methode:** Code-Review, Prüfung des laufenden Pi (Dateirechte, sshd, Firewall, offene Ports,

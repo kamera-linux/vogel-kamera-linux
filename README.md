@@ -4,27 +4,31 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.4.0 — Powerbank-Überwachung 🔋
+## Release v2.4.1 — Security-Audit 🔒
 
-- **Version:** v2.4.0 (7. November 2026)
-- **🔋 Powerbank im Webinterface:**
-  - Akkustand, Leistung je Port, Ladeleistung und Temperatur einer
-    **Anker Prime Power Bank (27K, 250W)** – per Bluetooth, alle 60 s, ohne Anker-Konto
-- **🛡️ Akku-Schutz:**
-  - Gotify-Warnung bei 10 %, bei 5 % fährt der Pi sauber herunter
-    (Aufnahme wird vorher beendet)
-- **🔧 Fix:** `--update` übernimmt jetzt auch neue Umgebungsvariablen
+- **Version:** v2.4.1 (7. November 2026)
+- **🔒 Alle Funde aus dem [Security-Audit](docs/SECURITY-AUDIT-2026-11.md) behoben** – Update empfohlen
+  - Sync-Ziele werden geprüft (vorher Befehlsausführung mit Login möglich)
+  - Host-Key-Prüfung bei Video-Übertragung, SSH nur noch mit Schlüssel
+  - Dateirechte auf dem Pi korrigiert, feste Paketversionen, Security-Header in der Web-GUI
+- **📚 [SECURITY.md](docs/SECURITY.md) neu geschrieben**
 
 **Update:** [`./ansible/build_and_deploy.sh --update`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.4.0/`](releases/v2.4.0/RELEASE_NOTES_v2.4.0.md)
+**Release Notes:** [`releases/v2.4.1/`](releases/v2.4.1/RELEASE_NOTES_v2.4.1.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.4.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.4.0)
+[![Version](https://img.shields.io/badge/Version-v2.4.1-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.4.1)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Slow-Motion](https://img.shields.io/badge/Slow--Motion-2304x1296%40%2056fps-ff9800)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![CI](https://github.com/kamera-linux/vogel-kamera-linux/actions/workflows/ci.yml/badge.svg)](https://github.com/kamera-linux/vogel-kamera-linux/actions/workflows/ci.yml)
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.4.0 (Archiv)
+**Powerbank-Überwachung**
+- **Version:** v2.4.0 (7. November 2026)
+- Anker Prime 27K/250W per Bluetooth im Webinterface, Warnung bei 10 %, Shutdown bei 5 %
+- Siehe [Archiv-Release](releases/v2.4.0/RELEASE_NOTES_v2.4.0.md) für Details
 
 ### v2.3.9 (Archiv)
 **Sicherheit, Code-Struktur & CI**
