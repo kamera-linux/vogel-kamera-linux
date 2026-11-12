@@ -112,3 +112,12 @@ def test_gesehen_nur_wenn_frisch_und_detection_laeuft(client, auth_header, files
     monkeypatch.setattr(state, 'detection_running', True)
     seen.write_text('{kaputt')
     assert status() is None                                       # halbe/kaputte Datei
+
+
+def test_skript_enthaelt_keine_einzelnen_surrogate():
+    r"""'🐦' ist in Python kein Emoji, sondern zwei einzelne Surrogate. Die ließen sich
+    nicht ins Log schreiben – die Zeile „Erkannt!" ging dadurch verloren."""
+    for name in ('unified-camera-monitor-hailo.py', 'unified-camera-monitor-detect-only.py'):
+        quelle = (SCRIPT.parent / name).read_text()
+        assert not __import__('re').search(r'\\u[dD][89a-fA-F][0-9a-fA-F]{2}', quelle), name
+        quelle.encode('utf-8')

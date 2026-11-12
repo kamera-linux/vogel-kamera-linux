@@ -45,6 +45,7 @@ Einrichtung: [monitoring/README.md](../../monitoring/README.md)
   **Achtung:** Dateigrößen normaler Aufnahmen ändern sich dadurch
 - Auto-Convert konnte eine noch laufende Zeitlupen-Aufnahme konvertieren und das halbe Video übertragen
 - Logdateien im tmpfs wuchsen unbegrenzt – jetzt mit Rotation
+- Im Detection-Log fehlte die Zeile „Erkannt!“ mit Klasse und Confidence der Auslösung
 - Einstellungsdateien werden atomar geschrieben (kein halbes JSON nach Akku-Abschaltung)
 
 ## ⚙️ Neue Einstellungen (alle optional, in `ansible/.env` bzw. `group_vars`)
@@ -67,4 +68,4 @@ Version das ganze `web/`-Verzeichnis.
 
 ## 🧪 Tests
 
-59 neue Tests (119 gesamt): Aufnahme-Ablauf, Web-GUI und Download-Tickets, Prometheus-Endpunkt.
+60 neue Tests (120 gesamt): Aufnahme-Ablauf, Web-GUI und Download-Tickets, Prometheus-Endpunkt.

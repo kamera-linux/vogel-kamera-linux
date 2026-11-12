@@ -298,13 +298,17 @@ Anleitung: [monitoring/README.md](monitoring/README.md)
 |--------------------------------|--------------|
 | ![Web-GUI Aufnahme](assets/WebGUI-Manuelles-Video.png) | ![Web-GUI Online-Hilfe](assets/WebGUI-OnlineHilfe.png) |
 
+| Letzte Aufnahmen mit Abspielen | |
+|--------------------------------|---|
+| ![Web-GUI Aufnahmeliste](assets/WebGUI-Aufnahmen.png) | |
+
 | Auf dem Handy | Grafana-Dashboard *(Neu in v2.5.0)* |
 |---------------|-------------------------------------|
 | <img src="assets/WebGUI-Mobil.png" alt="Web-GUI auf dem Handy" width="260"> | ![Grafana-Dashboard Vogel-Kamera](assets/Grafana-Dashboard.png) |
 
-**Powerbank-Überwachung** *(Neu in v2.4.0)*
+**Powerbank und System**
 
-![Web-GUI Powerbank: Akkustand, Ausgangsleistung, Ladeleistung, Temperatur](assets/WebGUI-Powerbank.png)
+![Web-GUI: Akkustand der Powerbank, NPU, System und Netzwerk](assets/WebGUI-System.png)
 
 ### Deployment
 
