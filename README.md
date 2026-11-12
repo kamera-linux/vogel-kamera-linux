@@ -290,16 +290,17 @@ Anleitung: [monitoring/README.md](monitoring/README.md)
 
 ### Screenshots
 
-> Die Screenshots zeigen die Oberfläche vor v2.5.0. Seitdem steht die Steuerung oben, die
-> Aufnahmeliste hat einen Abspielen-Knopf und „System & Hardware" ist einklappbar.
-
-| Login | Status-Übersicht |
-|-------|-----------------|
+| Login | Status und Steuerung |
+|-------|----------------------|
 | ![Web-GUI Login](assets/WebGUI-Login.png) | ![Web-GUI Status](assets/WebGUI-Status.png) |
 
-| Manuelles Video | Online-Hilfe |
-|----------------|-------------|
-| ![Web-GUI Manuelles Video](assets/WebGUI-Manuelles-Video.png) | ![Web-GUI Online-Hilfe](assets/WebGUI-OnlineHilfe.png) |
+| Aufnahme und Bildeinstellungen | Online-Hilfe |
+|--------------------------------|--------------|
+| ![Web-GUI Aufnahme](assets/WebGUI-Manuelles-Video.png) | ![Web-GUI Online-Hilfe](assets/WebGUI-OnlineHilfe.png) |
+
+| Auf dem Handy | Grafana-Dashboard *(Neu in v2.5.0)* |
+|---------------|-------------------------------------|
+| <img src="assets/WebGUI-Mobil.png" alt="Web-GUI auf dem Handy" width="260"> | ![Grafana-Dashboard Vogel-Kamera](assets/Grafana-Dashboard.png) |
 
 **Powerbank-Überwachung** *(Neu in v2.4.0)*
 
