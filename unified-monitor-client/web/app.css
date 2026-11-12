@@ -275,7 +275,11 @@ tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(48,54,61,.5);
 
 .topbar-logo { height: 32px; width: auto; }
 .btn-small { padding: 0.25rem 0.6rem; font-size: 0.8rem; }
-.row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+/* Knöpfe bleiben in einer Zeile; bei langen Dateinamen (Zeitlupe) bricht der Name um, nicht die Knöpfe */
+.row-actions { display: flex; gap: 0.35rem; flex-wrap: nowrap; }
+.row-actions .btn { white-space: nowrap; }
+.recordings-list tbody td:first-child { word-break: break-all; }
+.recordings-list tbody td:nth-child(2), .recordings-list tbody td:nth-child(3) { white-space: nowrap; }
 .type-badge { font-size: .7rem; color: #fff; padding: .1rem .35rem; border-radius: 3px; margin-right: .35rem; }
 .type-video { background: #166534; }
 .type-audio { background: #1d4ed8; }
