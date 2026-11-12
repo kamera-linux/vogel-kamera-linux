@@ -1,4 +1,8 @@
 """Flask-App: Auth (Passwort + TOTP → JWT) und alle HTTP-Routen."""
+import gzip
+import hashlib
+import hmac
+import mimetypes
 import os
 import subprocess
 import threading
@@ -11,13 +15,13 @@ import bcrypt
 import jwt
 import psutil
 import pyotp
-from flask import Flask, abort, jsonify, request, send_file, send_from_directory
+from flask import Flask, Response, abort, jsonify, request, send_file, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from . import config, monitoring, powerbank, settings
+from . import config, metrics, monitoring, powerbank, settings
 from .camera import (
-    CameraManager, _count_today_recordings, _kill_process_group, _read_last_detection,
+    CameraManager, _kill_process_group, _read_last_detection, invalidate_media_scan, media_summary,
 )
 from .config import logger
 from .hailo import _get_hailo_hw_info
@@ -46,10 +50,11 @@ limiter = Limiter(
 
 
 # ── Security-Header ──────────────────────────────────────────────────────────
-# Die Web-GUI ist eine einzelne Datei mit Inline-Skripten und onclick-Handlern,
-# daher 'unsafe-inline'. Die CSP verhindert trotzdem fremde Skriptquellen,
-# Datenabfluss an fremde Server (connect-src/img-src) und Einbetten in Frames.
-_CSP = ("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+# Skripte kommen ausschließlich aus web/app.js – keine Inline-Skripte, keine
+# onclick-Attribute. Eingeschleustes HTML kann damit keinen Code ausführen.
+# Styles brauchen weiterhin 'unsafe-inline' (style-Attribute im Markup).
+# Dazu: kein Datenabfluss an fremde Server (connect-src/img-src), kein Einbetten in Frames.
+_CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: blob:; connect-src 'self'; media-src 'self' blob:; "
         "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
 
@@ -94,8 +99,12 @@ def require_auth(f):
         if not auth.startswith('Bearer '):
             abort(401)
         try:
-            jwt.decode(auth[7:], config.JWT_SECRET, algorithms=['HS256'])
+            claims = jwt.decode(auth[7:], config.JWT_SECRET, algorithms=['HS256'])
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+            abort(401)
+        # Nur echte Login-Token. Download-Tickets (typ=file) sind mit demselben Secret
+        # signiert, stehen aber in URLs – sie dürfen niemals als Login gelten.
+        if claims.get('sub') != 'admin' or 'typ' in claims:
             abort(401)
         return f(*args, **kwargs)
     return _inner
@@ -159,7 +168,26 @@ def api_health():
         }), 500
 
 
+# ── Prometheus-Metriken ───────────────────────────────────────────────────────
+
+@app.route('/metrics')
+def prometheus_metrics():
+    """Messwerte im Prometheus-Textformat. Eigenes, nur lesendes Token statt Login:
+    Prometheus kann kein 2FA, und das Token darf nichts steuern."""
+    if not config.METRICS_TOKEN:
+        abort(404)   # nicht eingerichtet → Endpunkt existiert nicht
+    auth = request.headers.get('Authorization', '')
+    given = auth[7:] if auth.startswith('Bearer ') else ''
+    if not hmac.compare_digest(given.encode(), config.METRICS_TOKEN.encode()):
+        abort(401)
+    resp = Response(metrics.render(), mimetype='text/plain')
+    resp.headers['Content-Type'] = 'text/plain; version=0.0.4; charset=utf-8'
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
 _net_io_prev: tuple = None   # (monotonic_time, bytes_recv, bytes_sent) für Netzwerk-Rate
+psutil.cpu_percent(interval=None)   # Messung starten, damit der erste Status-Abruf einen Wert hat
 
 
 # ── Status ────────────────────────────────────────────────────────────────────
@@ -168,7 +196,7 @@ _net_io_prev: tuple = None   # (monotonic_time, bytes_recv, bytes_sent) für Net
 @require_auth
 def api_status():
     try:
-        cpu  = psutil.cpu_percent(interval=0.3)
+        cpu  = psutil.cpu_percent(interval=None)   # seit dem letzten Aufruf – blockiert nicht
         mem  = psutil.virtual_memory()
         disk = psutil.disk_usage(config.VIDEO_BASE_DIR if Path(config.VIDEO_BASE_DIR).exists() else '/')
         load = os.getloadavg()
@@ -213,6 +241,8 @@ def api_status():
     except Exception:
         system = {}
 
+    media = media_summary()
+
     with _lock:
         rec_running  = state.recording_running
         rec_start    = state.recording_started_at
@@ -243,7 +273,9 @@ def api_status():
         'detection_running':    state.detection_running,
         'detection_mode':       state.detection_mode,
         'birds_recorded':       state.birds_recorded,
-        'today_recordings':     _count_today_recordings(),
+        'today_recordings':     media['today'],
+        'pending':              media['pending'],     # H264 ohne MP4
+        'recordings_rev':       media['rev'],         # ändert sich mit der Aufnahmeliste
         'recording_running':    rec_running,
         'recording_progress':   progress,       # 0–100 oder null
         'recording_remaining':  rec_remaining,  # Sekunden verbleibend oder null
@@ -258,6 +290,8 @@ def api_status():
         'started_at':           state.started_at,
         'system':               system,
         'version':              config.APP_VERSION,
+        'grafana_url':          config.GRAFANA_URL or None,   # Link „Monitoring" in der GUI
+        'grafana_port':         config.GRAFANA_PORT or None,  # … oder Grafana auf diesem Pi
         'active_engine':        settings._active_engine,
         'detection_target':     settings._detection_target,
         'detection_threshold':  settings._detection_threshold,
@@ -615,21 +649,69 @@ def api_recordings():
 
 # ── Download ──────────────────────────────────────────────────────────────────
 
+def _resolve_media_path(rel: str):
+    """Gibt (Path, None) für eine Datei unterhalb von VIDEO_BASE_DIR zurück,
+    sonst (None, Fehlerantwort). Verhindert Path-Traversal."""
+    if not rel:
+        return None, (jsonify({'error': 'Parameter p fehlt'}), 400)
+    base = Path(config.VIDEO_BASE_DIR).resolve()
+    target = (base / rel).resolve()
+    if target == base or not target.is_relative_to(base):
+        return None, (jsonify({'error': 'Zugriff verweigert'}), 403)
+    if not target.exists() or not target.is_file():
+        return None, (jsonify({'error': 'Datei nicht gefunden'}), 404)
+    return target, None
+
+
 @app.route('/api/download')
 @require_auth
 def api_download():
     # Token nur per Authorization-Header (kein ?token= – landet sonst in Logs/Verlauf)
-    rel = request.args.get('p', '')
-    if not rel:
-        return jsonify({'error': 'Parameter p fehlt'}), 400
-    # Sicherheit: kein Path-Traversal ausserhalb VIDEO_BASE_DIR
-    base = Path(config.VIDEO_BASE_DIR).resolve()
-    target = (base / rel).resolve()
-    if target == base or not target.is_relative_to(base):
-        return jsonify({'error': 'Zugriff verweigert'}), 403
-    if not target.exists() or not target.is_file():
-        return jsonify({'error': 'Datei nicht gefunden'}), 404
+    target, err = _resolve_media_path(request.args.get('p', ''))
+    if err:
+        return err
     return send_file(str(target), as_attachment=True, download_name=target.name)
+
+
+# ── Download-Ticket ───────────────────────────────────────────────────────────
+# Der Browser kann bei <video src=…> und bei normalen Datei-Downloads keinen
+# Authorization-Header mitschicken. Statt das Login-Token in die URL zu legen,
+# stellt die API ein Ticket aus: signiert, nur für genau eine Datei, kurz gültig.
+# Damit streamt der Browser selbst (Range-Requests, Fortschritt, kein Blob im RAM).
+
+_TICKET_TTL_S = 600
+
+
+@app.route('/api/download-ticket', methods=['POST'])
+@require_auth
+def api_download_ticket():
+    data = request.get_json(silent=True) or {}
+    rel = str(data.get('p') or '').strip()
+    target, err = _resolve_media_path(rel)
+    if err:
+        return err
+    now = datetime.now(timezone.utc)
+    ticket = jwt.encode(
+        {'typ': 'file', 'p': rel, 'iat': now, 'exp': now + timedelta(seconds=_TICKET_TTL_S)},
+        config.JWT_SECRET, algorithm='HS256')
+    return jsonify({'url': f'/api/file?t={ticket}', 'expires_in': _TICKET_TTL_S,
+                    'size': target.stat().st_size})
+
+
+@app.route('/api/file')
+def api_file():
+    """Liefert die Datei aus einem Download-Ticket. ?dl=1 → als Anhang speichern."""
+    try:
+        claims = jwt.decode(request.args.get('t', ''), config.JWT_SECRET, algorithms=['HS256'])
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        abort(401)
+    if claims.get('typ') != 'file':   # Login-Token ist hier ausdrücklich kein gültiges Ticket
+        abort(401)
+    target, err = _resolve_media_path(str(claims.get('p') or ''))
+    if err:
+        return err
+    return send_file(str(target), conditional=True, download_name=target.name,
+                     as_attachment=request.args.get('dl') == '1')
 
 
 # ── Löschen ───────────────────────────────────────────────────────────────────
@@ -655,6 +737,7 @@ def api_delete():
         if companion.exists():
             companion.unlink()
             deleted.append(companion.name)
+    invalidate_media_scan()
     logger.info('Gelöscht: %s', deleted)
     return jsonify({'success': True, 'deleted': deleted})
 
@@ -788,10 +871,7 @@ def api_settings_test():
 @require_auth
 def api_pending():
     """Gibt Anzahl H264-Dateien zurück, die noch nicht konvertiert wurden."""
-    base = Path(config.VIDEO_BASE_DIR)
-    h264_files = list(base.rglob('*.h264')) if base.exists() else []
-    pending = [f for f in h264_files if not f.with_suffix('.mp4').exists()]
-    return jsonify({'pending': len(pending)})
+    return jsonify({'pending': media_summary()['pending']})
 
 
 # ── Live-Stream (MJPEG) ──────────────────────────────────────────────────────
@@ -815,19 +895,56 @@ def api_snapshot():
 WEB_DIR = Path(__file__).resolve().parent.parent / 'web'
 
 
+_TEXT_SUFFIXES = ('.html', '.js', '.css', '.svg', '.json')
+_text_cache: dict = {}   # Pfad → (mtime_ns, size, etag, roh, gzip)
+
+
+def _serve_text(path: Path) -> Response:
+    """Liefert HTML/JS/CSS gzip-komprimiert und mit ETag aus.
+    'no-cache' heißt: Der Browser fragt jedes Mal nach, bekommt aber nur ein 304,
+    solange sich die Datei nicht geändert hat – nach einem Hotpatch sofort die neue."""
+    st = path.stat()
+    cached = _text_cache.get(str(path))
+    if not cached or cached[:2] != (st.st_mtime_ns, st.st_size):
+        raw = path.read_bytes()
+        etag = hashlib.sha1(raw).hexdigest()[:16]
+        cached = (st.st_mtime_ns, st.st_size, etag, raw, gzip.compress(raw, 6))
+        _text_cache[str(path)] = cached
+    _, _, etag, raw, packed = cached
+
+    use_gzip = 'gzip' in request.headers.get('Accept-Encoding', '')
+    # Eigener ETag je Kodierung, sonst liefern Caches die falsche Variante aus
+    full_etag = f'"{etag}-gz"' if use_gzip else f'"{etag}"'
+    if request.headers.get('If-None-Match') == full_etag:
+        resp = Response(status=304)
+    else:
+        mime = mimetypes.guess_type(path.name)[0] or 'application/octet-stream'
+        resp = Response(packed if use_gzip else raw, mimetype=mime)
+        if use_gzip:
+            resp.headers['Content-Encoding'] = 'gzip'
+    resp.headers['ETag'] = full_etag
+    resp.headers['Vary'] = 'Accept-Encoding'
+    resp.headers['Cache-Control'] = 'no-cache'
+    return resp
+
+
 @app.route('/')
 @app.route('/index.html')
 def serve_index():
     f = WEB_DIR / 'index.html'
     if f.exists():
-        return send_file(str(f))
+        return _serve_text(f)
     return '<!doctype html><h1>Web-GUI nicht gefunden</h1><p>web/index.html fehlt.</p>', 404
 
 
 @app.route('/web/<path:filename>')
 def serve_static(filename):
-    """Statische Dateien aus dem web/-Verzeichnis (z. B. logo.png)."""
-    return send_from_directory(str(WEB_DIR), filename)
+    """Statische Dateien aus dem web/-Verzeichnis (app.js, app.css, Logo)."""
+    target = (WEB_DIR / filename).resolve()
+    if target.suffix in _TEXT_SUFFIXES and target.is_file() and target.is_relative_to(WEB_DIR):
+        return _serve_text(target)
+    # Bilder ändern sich praktisch nie → einen Tag im Browser-Cache halten
+    return send_from_directory(str(WEB_DIR), filename, max_age=86400)
 
 
 @app.route('/cert.pem')

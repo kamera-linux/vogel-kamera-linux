@@ -29,6 +29,7 @@ Performance (AI HAT+ mit Hailo-8):
 import argparse
 import json
 import logging
+import logging.handlers
 import re
 import signal
 import subprocess
@@ -47,7 +48,9 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('/tmp/unified-camera-monitor.log'),
+        # /tmp ist ein tmpfs (RAM): Logdatei begrenzen auf 3 × 2 MB
+        logging.handlers.RotatingFileHandler(
+            '/tmp/unified-camera-monitor.log', maxBytes=2 * 1024 * 1024, backupCount=2),
     ],
 )
 logger = logging.getLogger(__name__)

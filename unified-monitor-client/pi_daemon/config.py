@@ -1,5 +1,6 @@
 """Konfiguration (ausschließlich Umgebungsvariablen), Logging, Startprüfung."""
 import logging
+import logging.handlers
 import os
 import sys
 
@@ -7,7 +8,7 @@ import sys
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.4.2'
+APP_VERSION = '2.5.0'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -22,6 +23,24 @@ TOKEN_EXPIRY_H    = int(os.environ.get('PI_DAEMON_TOKEN_EXPIRY_HOURS', 8))
 VIDEO_BASE_DIR    = os.environ.get('PI_DAEMON_VIDEO_DIR', '/videos/Vogelhaus/AI-HAD')
 SYNC_DEST         = os.environ.get('PI_DAEMON_SYNC_DEST', '')
 SYNC_SSH_KEY      = os.environ.get('PI_DAEMON_SYNC_SSH_KEY', '/certs/id_rsa_sync')
+# Prometheus: Token für /metrics (Authorization: Bearer …). Leer = Endpunkt aus.
+METRICS_TOKEN     = os.environ.get('PI_DAEMON_METRICS_TOKEN', '').strip()
+# Link „Monitoring" in der Web-GUI: Adresse des Grafana-Dashboards. Leer = kein Link.
+# Nur http(s) – alles andere wird verworfen, damit kein javascript:-Link in der GUI landet.
+GRAFANA_URL       = os.environ.get('PI_DAEMON_GRAFANA_URL', '').strip()
+if not GRAFANA_URL.lower().startswith(('http://', 'https://')):
+    GRAFANA_URL = ''
+# Läuft Grafana auf demselben Pi, reicht der Port: Die GUI nimmt den Rechnernamen,
+# unter dem sie selbst aufgerufen wurde. 0 = aus.
+try:
+    GRAFANA_PORT  = int(os.environ.get('PI_DAEMON_GRAFANA_PORT', 0) or 0)
+except ValueError:
+    GRAFANA_PORT  = 0
+if not 0 < GRAFANA_PORT < 65536:
+    GRAFANA_PORT  = 0
+# Speicher-Aufräumung: sinkt der freie Platz im Video-Verzeichnis unter diesen Wert,
+# werden die ältesten Aufnahmen gelöscht. 0 = aus (Standard).
+MIN_FREE_GB       = float(os.environ.get('PI_DAEMON_MIN_FREE_GB', 0) or 0)
 SETTINGS_FILE     = '/config/sync-config.json'
 SYNC_KEY_FILE     = '/config/sync_rsa'
 
@@ -47,7 +66,9 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)-8s %(message)s',
     handlers=[
-        logging.FileHandler('/tmp/pi_daemon_secure.log'),
+        # /tmp ist ein tmpfs (RAM): Logdatei begrenzen auf 3 × 5 MB
+        logging.handlers.RotatingFileHandler(
+            '/tmp/pi_daemon_secure.log', maxBytes=5 * 1024 * 1024, backupCount=2),
         logging.StreamHandler(),
     ],
 )

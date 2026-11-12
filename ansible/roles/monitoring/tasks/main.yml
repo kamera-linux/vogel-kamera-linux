@@ -1,0 +1,113 @@
+---
+# Prometheus + Grafana auf dem Pi. Aufruf nach dem pi-daemon (tasks/token.yml lief vorher).
+- name: Monitoring – Grafana-Passwort muss gesetzt sein
+  ansible.builtin.assert:
+    that: pi_grafana_admin_password | default('') | length >= 8
+    fail_msg: >-
+      PI_MONITORING=true, aber PI_GRAFANA_ADMIN_PASSWORD fehlt oder ist kürzer als 8 Zeichen.
+      Bitte in ansible/.env setzen (Login "admin" in Grafana).
+    quiet: true
+
+- name: Monitoring – Verzeichnisse anlegen
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ pi_monitoring_dir }}"
+    - "{{ pi_monitoring_dir }}/prometheus"
+    - "{{ pi_monitoring_dir }}/grafana"
+
+# Nur der Prometheus-Container (läuft als "nobody", UID 65534) darf Token und Zertifikat lesen
+- name: Monitoring – Verzeichnis für Token und Zertifikat
+  ansible.builtin.file:
+    path: "{{ pi_monitoring_dir }}/prometheus/secrets"
+    state: directory
+    owner: "65534"
+    group: "65534"
+    mode: "0500"
+
+- name: Monitoring – Metrics-Token für Prometheus ablegen
+  ansible.builtin.copy:
+    content: "{{ pi_metrics_token }}"
+    dest: "{{ pi_monitoring_dir }}/prometheus/secrets/metrics.token"
+    owner: "65534"
+    group: "65534"
+    mode: "0400"
+  no_log: true
+  notify: monitoring neu starten
+
+- name: Monitoring – Zertifikat des pi-daemon für Prometheus ablegen
+  ansible.builtin.copy:
+    src: "{{ pi_certs_dir }}/cert.pem"
+    dest: "{{ pi_monitoring_dir }}/prometheus/secrets/kamera.pem"
+    remote_src: true
+    owner: "65534"
+    group: "65534"
+    mode: "0400"
+  notify: monitoring neu starten
+
+- name: Monitoring – Prometheus-Konfiguration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ pi_monitoring_dir }}/prometheus/prometheus.yml"
+    mode: "0644"
+  notify: monitoring neu starten
+
+# Dashboard und Datenquelle kommen unverändert aus monitoring/grafana/ im Repository –
+# dieselben Dateien wie beim Betrieb auf einem anderen Rechner.
+- name: Monitoring – Grafana-Dashboard und Provisioning kopieren
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../monitoring/grafana/"   # Slash am Ende → Inhalt kopieren
+    dest: "{{ pi_monitoring_dir }}/grafana/"
+    mode: "0644"
+    directory_mode: "0755"
+  notify: monitoring neu starten
+
+- name: Monitoring – Grafana-Zugangsdaten (.env, nur root)
+  ansible.builtin.copy:
+    content: |
+      GRAFANA_ADMIN_PASSWORD={{ pi_grafana_admin_password }}
+    dest: "{{ pi_monitoring_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: monitoring neu starten
+
+- name: Monitoring – docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ pi_monitoring_dir }}/docker-compose.yml"
+    mode: "0644"
+  notify: monitoring neu starten
+
+- name: Monitoring – Firewall für Grafana öffnen
+  community.general.ufw:
+    rule: allow
+    port: "{{ pi_grafana_port }}"
+    proto: tcp
+    comment: "Vogel-Kamera Grafana"
+
+# Images kommen von Docker Hub – der Pi braucht dafür beim ersten Mal Internet.
+- name: Monitoring – Container starten
+  ansible.builtin.command:
+    cmd: docker compose up -d --remove-orphans
+    chdir: "{{ pi_monitoring_dir }}"
+  register: monitoring_up
+  changed_when: "'Started' in monitoring_up.stderr or 'Created' in monitoring_up.stderr"
+
+- name: Monitoring – warten bis Grafana antwortet
+  ansible.builtin.wait_for:
+    port: "{{ pi_grafana_port }}"
+    host: "{{ ansible_host }}"
+    delay: 3
+    timeout: 120
+
+- name: Monitoring – fertig
+  ansible.builtin.debug:
+    msg:
+      - "📈 Grafana: http://{{ inventory_hostname }}:{{ pi_grafana_port }}  (Benutzer admin)"
+      - "   In der Web-GUI der Kamera: Knopf „Monitoring“ in der Kopfzeile"

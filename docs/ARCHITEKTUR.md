@@ -1,162 +1,182 @@
-# 🏗️ Vogel-Kamera Architektur (v2.2)
+# 🏗️ Vogel-Kamera Architektur (v2.5)
 
 ## Überblick
 
-Das System basiert auf einem **Docker-Container auf dem Raspberry Pi 5**, der über eine HTTPS-Web-API gesteuert wird. Kein lokaler Python-Client nötig — die Bedienung erfolgt vollständig über den Browser.
+Das System ist ein **Docker-Container auf dem Raspberry Pi 5**, der über eine HTTPS-Web-Oberfläche
+bedient wird. Auf dem eigenen Rechner braucht es nur einen Browser – und für Installation und
+Updates Ansible.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Lokaler Rechner (deploy-PC)                            │
-│                                                         │
-│  Browser  ──HTTPS──►  https://<pi-host>:8443/           │
-│  Ansible  ──SSH──►    ./ansible/build_and_deploy.sh     │
-└──────────────────────────┬──────────────────────────────┘
-                           │ SSH / HTTPS
-┌──────────────────────────▼──────────────────────────────┐
-│  Raspberry Pi 5 (Trixie / ARM64)                        │
-│                                                         │
-│  ┌─────────────────────────────────────────────┐        │
-│  │  Docker-Container: vogel-pi:latest          │        │
-│  │                                             │        │
-│  │  pi_daemon_secure.py (Flask, Port 8443)     │        │
-│  │    ├─ JWT-Authentifizierung                 │        │
-│  │    ├─ TOTP-2FA (PyOTP)                      │        │
-│  │    ├─ HTTPS (selbstsigniertes Zertifikat)   │        │
-│  │    └─ REST-API + Web-GUI (web/)             │        │
-│  │              │                              │        │
-│  │              ▼ subprocess                   │        │
-│  │  unified-camera-monitor-detect-only.py      │        │
-│  │    ├─ YOLO26n KI-Erkennung                  │        │
-│  │    ├─ rpicam-vid (H264-Aufnahme)            │        │
-│  │    ├─ arecord (WAV-Audio)                   │        │
-│  │    └─ ffmpeg (H264 + WAV → MP4)             │        │
-│  │              │                              │        │
-│  │              ▼                              │        │
-│  │  /videos (Container-Volume)                 │        │
-│  │    └─ gemountet → ~/Videos/Vogelhaus        │        │
-│  └─────────────────────────────────────────────┘        │
-│                                                         │
-│  Hardware:  IMX708-Kamera  │  USB-Mikrofon              │
-└─────────────────────────────────────────────────────────┘
-                           │ SSH-Sync
-┌──────────────────────────▼──────────────────────────────┐
-│  Zielsystem(e) — konfigurierbar in Ansible vars         │
-│  (NAS, anderer PC, etc.)                                │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    B["💻 Browser"] -->|"HTTPS :8443 · Passwort + TOTP → JWT"| API
+    A["🛠 Ansible (build_and_deploy.sh)"] -->|"SSH"| PI
+
+    subgraph PI["Raspberry Pi 5 (Raspberry Pi OS Trixie)"]
+        subgraph C["Container pi-daemon (privileged, root)"]
+            API["Flask-API + Web-GUI\npi_daemon/api.py"]
+            CAM["Kamera-Steuerung\npi_daemon/camera.py"]
+            DET["Detection-Skript\nunified-camera-monitor-hailo.py"]
+            POST["Nachbearbeitung\nffmpeg + rsync"]
+            API --> CAM
+            CAM -->|"startet / stoppt"| DET
+            CAM -->|"rpicam-vid"| REC["Aufnahme MP4 / H264"]
+            REC --> POST
+        end
+        HW["IMX708-Kamera · Hailo-8 NPU · USB-Mikrofon"]
+        V["~/Videos (Volume /videos)"]
+        subgraph M["optional: Monitoring (PI_MONITORING=true)"]
+            PROM["Prometheus"] --> GRAF["Grafana :3000"]
+        end
+        DET --- HW
+        REC --> V
+        PROM -->|"HTTPS + Token /metrics"| API
+    end
+
+    POST -->|"rsync über SSH"| Z["Sync-Ziele (NAS, PC)"]
+    B -->|"HTTP :3000"| GRAF
 ```
 
 ---
 
 ## Komponenten
 
-### pi_daemon_secure.py — Flask HTTPS-Daemon
+### pi-daemon – der Container
 
-**Aufgabe:** Zentraler API-Server im Container. Nimmt HTTP-Anfragen entgegen, startet/stoppt Subprozesse, verwaltet Dateien.
+`unified-monitor-client/pi_daemon_secure.py` ist nur der Startpunkt. Der Code liegt im Paket
+`unified-monitor-client/pi_daemon/`:
 
-**Code:** `pi_daemon_secure.py` ist nur der Startpunkt; der Code liegt im Paket
-`unified-monitor-client/pi_daemon/` (Übersicht der Module in `pi_daemon/__init__.py`).
+| Modul | Aufgabe |
+|---|---|
+| `config` | Umgebungsvariablen, Logging (rotierend), Startprüfung |
+| `runtime` | gemeinsamer Zustand (`state`) und Lock |
+| `settings` | Erkennungsziel, Kamera-Einstellungen, Aufnahme-Profile – als JSON unter `/config` |
+| `storage` | atomares Schreiben dieser JSON-Dateien |
+| `camera` | Detection-Prozess, Aufnahme, Nachbearbeitung, Watchdog, Speicher-Aufräumung |
+| `api` | Flask-App: Login, alle Routen, Auslieferung der Web-GUI |
+| `hailo` | Hardware-Info und Temperatur der Hailo-NPU |
+| `powerbank` | Anker-Powerbank per Bluetooth, Warnung und Shutdown |
+| `monitoring` | Health-Cache für den Docker-Health-Check, Gotify-Meldungen |
+| `metrics` | Prometheus-Endpunkt `/metrics` |
+| `sync` | Sync-Ziele für die Übertragung |
+| `main` | startet Hintergrund-Threads und den HTTPS-Server |
 
-**Authentifizierung:**
-- Login-Endpunkt `/api/login` erwartet TOTP-Code
-- Bei Erfolg: JWT-Token (zeitlich begrenzt)
-- Alle anderen Endpunkte erfordern `Authorization: Bearer <jwt>`
+Der Container läuft **privileged als root**: Kamera-Reset per sysfs, Hailo-NPU und die
+Kamera-Bibliotheken des Hosts brauchen vollen Gerätezugriff. `rpicam-vid`, `rpicam-hello` und
+die zugehörigen Bibliotheken werden vom Host in den Container eingebunden.
 
-**Transport:**
-- HTTPS auf Port `8443` mit selbstsigniertem Zertifikat
-- Zertifikat wird beim Ansible-`--install` erzeugt und in den Container gemountet
+**Hintergrund-Threads** (alle in `main.py` gestartet):
 
-**Subprozess-Management:**
-- Detection-Skript wird als `subprocess.Popen` gestartet
-- Graceful Shutdown: SIGTERM → Wartzeit → SIGKILL
-- Status-Tracking über PID
+| Thread | Aufgabe |
+|---|---|
+| `detection-watchdog` | bemerkt das Ende des Detection-Skripts und startet Aufnahme oder Neustart |
+| `post-process` | arbeitet fertige Aufnahmen ab: Zeitlupe konvertieren, dann übertragen |
+| `auto-convert` | alle 3 Minuten: liegengebliebene H264 konvertieren, bei knappem Speicher aufräumen |
+| `thread-monitor` | hält den Health-Cache aktuell |
+| `hailo-temp` | liest alle 30 s die NPU-Temperatur |
+| `powerbank` | liest die Powerbank aus (nur wenn eingerichtet) |
 
-### unified-camera-monitor-detect-only.py — Detection + Recording
+### Detection-Skript
 
-**Aufgabe:** Läuft als Subprocess im Container, übernimmt KI-Erkennung und Aufnahme.
+`raspberry-pi-scripts/unified-camera-monitor-hailo.py` läuft als Subprozess im Container. Es
+startet `rpicam-hello` mit dem Hailo-YOLOv8-Modell und liest dessen Ausgabe mit. Wird das
+eingestellte Ziel (Vogel, Mensch, Hund, Katze oder alle vier) mit ausreichender Confidence
+erkannt, beendet sich das Skript mit Rückgabewert 0 – das ist das Signal für die Aufnahme.
 
-**Ablauf:**
-1. `picamera2` + YOLO26n: Frames analysieren, auf Vogelerkennung warten
-2. Bei Trigger: `rpicam-vid` starten → H264-Datei
-3. Parallel: `arecord` → WAV-Datei
-4. Nach Aufnahme: `ffmpeg` → H264 + WAV → MP4
-5. Aufnahme in `/videos` abgelegt
+| Rückgabewert | Bedeutung | Reaktion des Daemons |
+|---|---|---|
+| 0 | Ziel erkannt | Aufnahme starten (wenn Detection-Modus aktiv) |
+| 1 | Startfehler | kurz warten, neu starten |
+| 2 | vom Daemon gestoppt | nichts |
 
-**Parameter** (via Daemon übergeben):
-- `--threshold` — Erkennungs-Schwellenwert (0.0–1.0)
-- `--duration` — Aufnahmedauer in Sekunden
-- `--cooldown` — Pause zwischen Aufnahmen
+`unified-camera-monitor-detect-only.py` ist die ältere CPU-YOLO-Variante ohne Hailo.
 
-### web/ — Web-GUI
+### Web-GUI
 
-**Aufgabe:** Single-Page-Interface für die Bedienung über den Browser.
+`unified-monitor-client/web/` – `index.html` (Aufbau und Online-Hilfe), `app.js` (Logik),
+`app.css` (Gestaltung). Es gibt kein Inline-Skript; Knöpfe tragen `data-action="…"` und werden
+in `app.js` einer Funktion zugeordnet. Dadurch erlaubt die Content-Security-Policy Skripte nur
+aus der eigenen Quelle.
 
-**Funktionen:**
-- Login mit TOTP-Code
-- Detection starten / stoppen
-- Manuelle Aufnahmen starten
-- Dateiliste mit Download und Löschen
-- Transfer zu Zielsystemen anstoßen
-- Echtzeit-Logs (Polling `/api/logs`)
+Die Oberfläche fragt `/api/status` alle 5 Sekunden ab, solange der Tab sichtbar ist. Die
+Aufnahmeliste lädt sie nur neu, wenn sich `recordings_rev` im Status ändert.
 
-### ansible/ — Deployment
+### Ansible
 
-**Aufgabe:** Baut das Docker-Image, installiert es auf dem Pi, verwaltet Secrets.
+`ansible/build_and_deploy.sh` baut das ARM64-Image auf dem eigenen Rechner, überträgt es auf den
+Pi und richtet alles ein. Rollen: `docker`, `ssl`, `firewall`, `hardening`, `pi-daemon` und
+optional `monitoring`. Details: [../ansible/README.md](../ansible/README.md).
 
-```
-ansible/
-├── .env.example              Vorlage (in git)
-├── .env                      Persönliche Werte (gitignored!)
-├── build_and_deploy.sh       Haupt-Skript (--install / --update)
-├── ansible.cfg               SSH-Konfiguration
-├── inventory/hosts.yml       Pi-Definition (liest aus group_vars)
-└── group_vars/all/
-    ├── vars.yml              Variablen (PI_HOST, PI_USER etc. aus .env)
-    └── vault.yml             Verschlüsselte Secrets (TOTP-Seed)
-```
+### Monitoring (optional)
 
----
-
-## Datenfluss: Aufnahme-Session
-
-```
-1. User klickt "Detection starten" in der Web-GUI
-        ↓
-2. Browser  POST /api/detection/start  →  pi_daemon_secure.py
-        ↓
-3. Daemon startet subprocess:  unified-camera-monitor-detect-only.py
-        ↓
-4. Detect-Skript: picamera2 analysiert Frames mit YOLO26n
-        ↓
-5. Vogel erkannt (confidence ≥ threshold):
-        ↓
-6a. rpicam-vid  →  /videos/YYYY-MM-DD_HH-MM-SS.h264
-6b. arecord     →  /videos/YYYY-MM-DD_HH-MM-SS.wav
-        ↓
-7. ffmpeg merge:  .h264 + .wav  →  .mp4  (Container-intern)
-        ↓
-8. MP4 liegt in /videos (= ~/Videos/Vogelhaus auf dem Pi)
-        ↓
-9. Optional: Transfer-Button → SSH-Sync zu Zielsystemen
-```
+Mit `PI_MONITORING=true` startet die Rolle `monitoring` zwei weitere Container auf dem Pi:
+Prometheus fragt alle 30 s `/metrics` ab, Grafana zeigt das Dashboard „Vogel-Kamera". Beide
+laufen ohne besondere Rechte und mit festen Speicher-Obergrenzen. Alternativ läuft derselbe Stack
+auf einem anderen Rechner. Details: [../monitoring/README.md](../monitoring/README.md).
 
 ---
 
-## Deployment-Workflow
+## Datenfluss: automatische Aufnahme
+
+```mermaid
+sequenceDiagram
+    participant G as Web-GUI
+    participant D as pi-daemon
+    participant S as Detection-Skript
+    participant K as rpicam-vid
+    participant N as Nachbearbeitung
+
+    G->>D: POST /api/detection/mode/start
+    D->>S: starten (Ziel, Schwelle)
+    S-->>D: beendet sich mit 0 (Ziel erkannt)
+    Note over D: Watchdog bemerkt das Ende
+    D->>K: Aufnahme mit gespeichertem Profil und Dauer
+    K-->>D: Datei fertig
+    D->>S: sofort wieder starten
+    D->>N: Aufnahme in die Warteschlange
+    N->>N: Zeitlupe: ffmpeg → mehrere Wiedergabe-Versionen
+    N->>N: rsync an alle aktiven Sync-Ziele
+```
+
+Wichtig: Kamera und Detection teilen sich den Sensor. Während `rpicam-vid` aufnimmt, ist die
+Erkennung gestoppt. Konvertierung und Übertragung laufen dagegen getrennt davon – die Erkennung
+startet, sobald die Aufnahme selbst fertig ist.
+
+**Dateien:**
+
+| Profil | Was entsteht |
+|---|---|
+| Normal (HD, 2K, 4K) | direkt eine MP4 mit Ton (`rpicam-vid --codec libav`) |
+| Zeitlupe | rohes H264, danach vier MP4s: 10, 20, 30 fps und Originalgeschwindigkeit |
+| Audio | WAV, 48 kHz |
+
+Eine Datei, die gerade aufgenommen wird oder auf Nachbearbeitung wartet, fassen Auto-Convert und
+Speicher-Aufräumung nicht an.
+
+---
+
+## Deployment-Ablauf
 
 ```
-Lokaler Rechner
+Eigener Rechner
     │
     ├─ docker buildx build --platform linux/arm64  →  vogel-pi:latest
+    ├─ docker save | gzip  →  per SCP auf den Pi
     │
-    ├─ ansible-playbook site.yml (über SSH)
-    │     ├─ Image auf Pi übertragen (docker load)
-    │     ├─ TLS-Zertifikate erzeugen
-    │     ├─ TOTP-Seed generieren (Vault)
-    │     ├─ docker-compose oder docker run
-    │     └─ systemd-Service aktivieren
-    │
-    └─ Container läuft dauerhaft auf Port 8443
+    └─ ansible-playbook (über SSH)
+          ├─ --install: Docker, Zertifikat, Firewall, Härtung, Container, systemd-Dienst
+          ├─ --update:  Image laden, app.env + docker-compose.yml erneuern, Dienst neu starten
+          ├─ --hotpatch: nur pi_daemon/ und web/ in den laufenden Container kopieren
+          └─ optional:  Rolle monitoring (Prometheus + Grafana)
 ```
+
+Auf dem Pi:
+
+| Pfad | Inhalt |
+|---|---|
+| `/opt/pi-daemon/` | `docker-compose.yml` des Daemons |
+| `/etc/pi-daemon/` | `app.env` (Secrets), Zertifikat, Einstellungen als JSON, SSH-Keys der Sync-Ziele |
+| `~/Videos/` | Aufnahmen |
+| `/opt/pi-monitoring/` | Prometheus + Grafana (nur mit `PI_MONITORING=true`) |
 
 ---
 
@@ -164,26 +184,26 @@ Lokaler Rechner
 
 | Aspekt | Maßnahme |
 |--------|----------|
-| Transport-Verschlüsselung | HTTPS (TLS 1.2+, selbstsigniertes Zertifikat) |
-| Authentifizierung | JWT + TOTP (2-Faktor) |
-| Secrets-Verwaltung | Ansible Vault (AES-256) |
-| Persönliche Konfig | `ansible/.env` (gitignored, nie ins Repository) |
-| Container-User | `appuser` (UID 999, nicht root) |
-| Netzwerk | Nur Port 8443 exponiert, intern isoliert |
+| Transport | HTTPS mit selbstsigniertem Zertifikat |
+| Anmeldung | Passwort (bcrypt) + TOTP → JWT, 8 Stunden gültig |
+| Browser | Content-Security-Policy (`script-src 'self'`), weitere Security-Header |
+| Dateien | Zugriff nur innerhalb des Video-Verzeichnisses; Abspielen über kurzlebige Download-Tickets |
+| Monitoring | `/metrics` nur mit eigenem, nur lesendem Token |
+| Secrets | Ansible Vault; auf dem Pi in `/etc/pi-daemon/app.env` |
+| Container | privileged als root – bewusst, siehe oben |
+
+Vollständig mit bekannten Risiken: [SECURITY.md](SECURITY.md).
 
 ---
 
 ## Legacy-Architektur (< v2.2, archiviert)
 
-Die alte Architektur mit SSH-basiertem Python-Client ist in `legacy/` archiviert.
+Die alte Architektur mit SSH-basiertem Python-Client liegt in `legacy/`:
 
 ```
-# ALT (in legacy/unified-monitor-client/)
 Lokaler PC
   └─ unified_monitor_client.py (Python)
        └─ SSH → Pi
             └─ unified-camera-monitor-auto.py (picamera2)
             └─ unified-camera-monitor-manual.py (rpicam-vid)
 ```
-
-Alle zugehörigen Dateien (`config.py`, `ssh_manager.py`, `monitors.py`, `setup_environment.py` etc.) befinden sich in `legacy/unified-monitor-client/`.

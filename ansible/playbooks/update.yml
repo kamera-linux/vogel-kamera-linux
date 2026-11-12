@@ -43,6 +43,12 @@
       register: remote_prune
       changed_when: "'Total reclaimed space: 0B' not in remote_prune.stdout"
 
+    # Metrics-Token bereitstellen, bevor app.env geschrieben wird
+    - name: Monitoring vorbereiten (Metrics-Token)
+      ansible.builtin.include_role:
+        name: monitoring
+        tasks_from: token
+
     # Der Container liest /etc/pi-daemon/app.env (env_file in docker-compose.yml).
     # Früher wurde hier nur {{ pi_daemon_dir }}/.env geschrieben, das der Container
     # nicht nutzt – neue Variablen kamen per --update nie an.
@@ -83,6 +89,12 @@
         timeout: 180
       ignore_errors: true
       register: wait_result
+
+    # Optional: Prometheus + Grafana auf dem Pi (PI_MONITORING=true in ansible/.env)
+    - name: Monitoring einrichten/aktualisieren
+      ansible.builtin.include_role:
+        name: monitoring
+      when: pi_monitoring | bool
 
     - name: Update abgeschlossen
       ansible.builtin.debug:

@@ -1,0 +1,23 @@
+# Jinja2-Template → {{ pi_monitoring_dir }}/prometheus/prometheus.yml
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  # pi-daemon auf demselben Pi. Prometheus erreicht ihn über den Docker-Host
+  # (host.docker.internal); geprüft wird das Zertifikat gegen den Namen "localhost",
+  # der in jedem von der Rolle ssl erzeugten Zertifikat steht.
+  - job_name: vogelkamera
+    scheme: https
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    authorization:
+      credentials_file: /etc/prometheus/secrets/metrics.token
+    tls_config:
+      ca_file: /etc/prometheus/secrets/kamera.pem
+      server_name: localhost
+    static_configs:
+      - targets: ['host.docker.internal:{{ pi_daemon_port }}']
+        labels:
+          name: "{{ inventory_hostname }}"

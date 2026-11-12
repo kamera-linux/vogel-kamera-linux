@@ -4,9 +4,9 @@
 
 | Version | Unterstützt | OS-Basis | Architektur |
 | ------- | ----------- | -------- | ----------- |
-| 2.4.x   | ✅ Sicherheits-Updates | Raspberry Pi OS Trixie (Debian 13) | Docker-Container, HTTPS-Web-GUI (JWT + TOTP) |
-| 2.3.x   | ⚠️ Bitte auf 2.4.x aktualisieren | Trixie | wie 2.4.x |
-| < 2.3   | ❌ Nicht mehr unterstützt | – | – |
+| 2.5.x   | ✅ Sicherheits-Updates | Raspberry Pi OS Trixie (Debian 13) | Docker-Container, HTTPS-Web-GUI (JWT + TOTP) |
+| 2.4.x   | ⚠️ Bitte auf 2.5.x aktualisieren | Trixie | wie 2.5.x |
+| < 2.4   | ❌ Nicht mehr unterstützt | – | – |
 
 Sicherheits-Fixes erscheinen nur für die aktuelle Version. Ein Update ist ein Befehl:
 `./ansible/build_and_deploy.sh --update`
@@ -32,22 +32,30 @@ Browser ──HTTPS:8443──▶ Docker-Container „pi-daemon“ (root, privil
                           ├─ Kamera/Hailo-NPU/Mikrofon (Geräte des Hosts)
                           ├─ rsync/ssh zu Sync-Zielen (Videos übertragen)
                           └─ Host-D-Bus: Bluetooth (Powerbank) + systemd-logind (Shutdown)
+
+Optional (PI_MONITORING=true), eigene Container ohne besondere Rechte:
+Browser ──HTTP:3000──▶ Grafana (eigener Login „admin“) ──▶ Prometheus (nur lokal, Port 9090)
+                                                              └─HTTPS + Token─▶ pi-daemon /metrics
 ```
 
 | Bereich | Schutz |
 |---------|--------|
 | **Anmeldung** | bcrypt-Passworthash + TOTP (2FA); max. 5 Versuche/Minute pro IP; 1 s Verzögerung bei Fehlversuch |
 | **Sitzung** | JWT (HS256) nur im `Authorization`-Header, nie in URLs; Token liegt im `sessionStorage` des Tabs |
+| **Abspielen / große Downloads** | Download-Ticket statt Login-Token in der URL: signiert, nur für genau eine Datei, 10 Minuten gültig; als Login wird es abgelehnt |
 | **Transport** | HTTPS mit selbst signiertem Zertifikat (beim ersten Aufruf bestätigen oder `/cert.pem` importieren) |
-| **Browser** | Content-Security-Policy, `X-Frame-Options: DENY`, `nosniff`, `no-referrer`, `Cache-Control: no-store` für die API |
+| **Browser** | Content-Security-Policy mit `script-src 'self'` (keine Inline-Skripte, keine `onclick`-Attribute), `X-Frame-Options: DENY`, `nosniff`, `no-referrer`, `Cache-Control: no-store` für die API |
+| **Monitoring** | `/metrics` nur mit eigenem Token, das ausschließlich Messwerte lesen kann; ohne Token-Konfiguration existiert der Endpunkt nicht (404) |
 | **Dateizugriff** | Download/Löschen nur innerhalb des Video-Verzeichnisses (Path-Traversal-Schutz) |
 | **Sync-Ziele** | Host, Benutzer und Pfad werden geprüft (keine Optionen/Shell-Zeichen); ssh merkt sich Host-Keys beim ersten Kontakt (`/etc/pi-daemon/known_hosts`) und lehnt danach geänderte Keys ab |
 | **Secrets** | in `ansible-vault` (verschlüsselt im Repo); auf dem Pi in `/etc/pi-daemon/app.env` (0640, root) |
 | **Abhängigkeiten** | feste Versionen in `requirements_daemon.txt`; CI prüft jeden Push (ruff, shellcheck, pytest) |
 | **Pi-Härtung** (Ansible-Rolle `hardening`) | SSH nur mit Schlüssel, kein root-Login; Konfiguration und TLS-Schlüssel nicht für andere Benutzer lesbar/schreibbar; UFW mit Standard „deny“ |
 
-Ohne Login erreichbar sind nur: die Login-Seite, `/api/login`, `/api/health`
-(Version, RAM, freier Speicher – für den Docker-Health-Check) und `/cert.pem` (öffentliches Zertifikat).
+Ohne Login erreichbar sind nur: die Login-Seite mit ihren statischen Dateien (`/web/…`),
+`/api/login`, `/api/health` (Version, RAM, freier Speicher – für den Docker-Health-Check) und
+`/cert.pem` (öffentliches Zertifikat). `/api/file` verlangt ein gültiges Download-Ticket,
+`/metrics` das Metrics-Token.
 
 ## ⚠️ Bekannte, bewusst akzeptierte Risiken
 
@@ -60,6 +68,9 @@ Ohne Login erreichbar sind nur: die Login-Seite, `/api/login`, `/api/health`
 | `roimme` hat **sudo ohne Passwort** | Standard bei Raspberry Pi OS; Ansible braucht es | Deshalb ist SSH-Passwort-Login abgeschaltet |
 | **Powerbank per Bluetooth** auslesbar | Die Anker-Firmware nutzt einen festen, öffentlich bekannten Schlüssel – jeder in Funkreichweite kann den Status lesen | Nur Statusdaten, keine Steuerung durch dieses Projekt |
 | GitHub Actions per **Tag statt Commit-SHA** | Nur offizielle `actions/*`; Workflows haben minimale Rechte | – |
+| **Download-Ticket steht in der URL** | `<video>` und normale Downloads können keinen Header mitschicken; das Ticket landet damit im Zugriffslog des Daemons | Gilt nur 10 Minuten und nur für eine Datei |
+| **Styles mit `'unsafe-inline'`** | Das Markup der Web-GUI nutzt noch `style`-Attribute | Skripte sind strikt auf `'self'` beschränkt |
+| **Grafana über HTTP** (Port 3000, nur mit `PI_MONITORING=true`) | Heimnetz; Grafana hat einen eigenen Login und zeigt nur Messwerte, keine Videos | Starkes `PI_GRAFANA_ADMIN_PASSWORD`; Port nicht ins Internet freigeben |
 
 ## 🛡️ Empfehlungen für den Betrieb
 
@@ -80,4 +91,4 @@ Ohne Login erreichbar sind nur: die Login-Seite, `/api/login`, `/api/health`
 
 ---
 
-*Letzte Aktualisierung: 7. November 2026 (v2.4.x)*
+*Letzte Aktualisierung: 12. November 2026 (v2.5.x)*

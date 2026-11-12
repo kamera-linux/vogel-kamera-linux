@@ -1,5 +1,63 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.5.0] - 12. November 2026 📈 **Web-GUI, Player & Monitoring**
+
+### ⚡ Verbesserungen
+- **Erkennung läuft nach einer Aufnahme sofort weiter:** Zeitlupen-Konvertierung und rsync-Transfer
+  laufen jetzt in einem eigenen Nachbearbeitungs-Thread. Vorher blieb die Kamera blind, bis der
+  Upload fertig war (bei nicht erreichbarem Ziel mindestens 10 s pro Ziel)
+- **Speicher-Aufräumung (optional):** `pi_min_free_gb` / `PI_DAEMON_MIN_FREE_GB` – sinkt der freie
+  Platz darunter, werden die ältesten Aufnahmen gelöscht. Standard `0` = aus
+- Logdateien im tmpfs (`/tmp/pi_daemon_secure.log`, `/tmp/unified-camera-monitor.log`) rotieren
+  jetzt und können den RAM nicht mehr füllen
+- Einstellungsdateien werden atomar geschrieben (kein halbes JSON nach Akku-Abschaltung)
+
+### 📈 Monitoring
+- **Prometheus-Endpunkt `/metrics`** (optional, `PI_METRICS_TOKEN` in `ansible/.env`): Akku,
+  Temperaturen, Erkennungen, Speicher und Systemlast für Prometheus/Grafana im Heimnetz –
+  eigenes, nur lesendes Token, keine neue Abhängigkeit. Einrichtung: [MONITORING.md](MONITORING.md)
+- **Prometheus + Grafana direkt auf dem Pi:** `PI_MONITORING=true` und
+  `PI_GRAFANA_ADMIN_PASSWORD` in `ansible/.env` – die neue Ansible-Rolle `monitoring` richtet
+  Token, Container, Firewall und das Dashboard „Vogel-Kamera“ ein (Akku, Restlaufzeit,
+  Erkennungen, Temperaturen, Speicher, Netz)
+- Alternativ auf einem anderen Rechner im Heimnetz: Docker-Compose unter [`monitoring/`](monitoring/)
+- **Knopf „📈 Monitoring“** in der Web-GUI, sobald das Monitoring eingerichtet ist
+
+### 🖥 Web-GUI
+- **Aufnahmen direkt im Browser abspielen** (Video und Audio) über kurzlebige, auf eine Datei
+  beschränkte Download-Tickets (`/api/download-ticket`, `/api/file`); große Downloads (> 200 MB)
+  laufen ebenfalls darüber statt komplett in den Browser-Speicher
+- **Steuerung steht oben**, System- und Hardware-Kacheln sind einklappbar (auf dem Handy
+  standardmäßig zu); Aufnahmeliste auf dem Handy als Karten
+- Ein Knopf für Detection-Modus starten/stoppen; Ruhezustände („Bereit“, „Manuell“) grau statt rot
+- Gelber Hinweis bei Verbindungsverlust, veraltete Werte werden abgedunkelt
+- Weniger Last: 1 statt 13 Anfragen beim Öffnen, Aufnahmeliste wird nur bei Änderung neu geladen,
+  keine Abfragen bei Tab im Hintergrund, Verzeichnis-Scan auf dem Pi 3 s gecacht,
+  `/api/status` blockiert nicht mehr 0,3 s
+- GUI in `index.html`, `app.js`, `app.css` aufgeteilt, gzip + ETag; Logo 1,2 MB → 20 KB
+- **Strikte CSP** (`script-src 'self'`): keine Inline-Skripte und `onclick`-Attribute mehr
+- Hilfe/Player: Esc schließt, Fokus-Führung, Login als Formular; alle Kamera-Regler gleichen sich
+  zwischen Tabs ab
+- Hotpatch kopiert jetzt das ganze `web/`-Verzeichnis
+
+### 📚 Dokumentation
+- `ARCHITEKTUR.md` neu geschrieben (stand auf v2.2), API-Tabelle im Komponenten-README aus den
+  tatsächlichen Routen, `SECURITY.md`, Ansible-README und Wiki auf v2.5.0
+- Übersetzte READMEs (`docs/i18n/`) auf kurze Zusammenfassungen mit Verweis auf das deutsche
+  Haupt-README gekürzt – sie standen auf v2.0.1 bzw. v2.2.3
+
+### 🔧 Bug Fixes
+- Profil-Bitrate (8/12/25 Mbit/s) wurde bei normalen Aufnahmen nicht an `rpicam-vid` übergeben –
+  sie galt nur für Zeitlupe
+- Dauer-Regler zeigte „1 min“, obwohl 15 s gespeichert waren, und ließ nichts unter 1 Minute zu –
+  jetzt 10 s bis 10 min in Stufen
+- Auto-Convert konnte eine noch laufende Zeitlupen-Aufnahme konvertieren und das halbe Video
+  übertragen; gleichzeitige Konvertierungen derselben Datei sind jetzt ausgeschlossen
+
+### 🧪 Tests
+- 53 neue Tests (113 gesamt): Aufnahme-Ablauf (`tests/test_camera.py`), Web-GUI und Download-Tickets
+  (`tests/test_web.py`), Prometheus-Endpunkt (`tests/test_metrics.py`)
+
 ## [2.4.2] - 7. November 2026 🐕 **Erkennungsziele & Online-Hilfe**
 
 ### 🔧 Bug Fixes

@@ -4,279 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vogel-Kamera Steuerung</title>
-  <link rel="icon" type="image/png" href="/web/logo.png">
-  <link rel="apple-touch-icon" href="/web/logo.png">
-  <style>
-    :root {
-      --bg:      #0d1117;
-      --surface: #161b22;
-      --border:  #30363d;
-      --text:    #e6edf3;
-      --muted:   #8b949e;
-      --accent:  #58a6ff;
-      --green:   #3fb950;
-      --yellow:  #d29922;
-      --red:     #f85149;
-      --r:       8px;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-           background: var(--bg); color: var(--text); min-height: 100vh; }
-
-    /* ──── LOGIN ──────────────────────────────────────────────────── */
-    #login-screen {
-      display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; padding: 1rem;
-    }
-    .login-box {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 2rem; width: 100%; max-width: 360px;
-    }
-    .login-box h1 { font-size: 1.25rem; margin-bottom: 0.25rem; }
-    .login-box p  { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
-    .login-logo { display: block; height: 220px; width: auto; margin: 0 auto 1.25rem; object-fit: contain; }
-    .field { margin-bottom: 1rem; }
-    .field label { display: block; font-size: 0.875rem; color: var(--muted);
-                   margin-bottom: 0.35rem; }
-    .field input {
-      width: 100%; padding: 0.6rem 0.75rem;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: var(--r); color: var(--text); font-size: 1rem;
-      outline: none; transition: border-color 0.15s;
-    }
-    .field input:focus { border-color: var(--accent); }
-    .btn {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      padding: 0.6rem 1rem; border: none; border-radius: var(--r);
-      font-size: 0.9rem; cursor: pointer; transition: opacity 0.15s;
-      font-weight: 500; text-decoration: none;
-    }
-    .btn:active { opacity: 0.75; }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-primary  { background: var(--accent); color: #000; }
-    .btn-success  { background: var(--green);  color: #000; }
-    .btn-danger   { background: var(--red);    color: #fff; }
-    .btn-warning  { background: var(--yellow); color: #000; }
-    .btn-neutral  { background: var(--border); color: var(--text); }
-    .btn-full { width: 100%; justify-content: center; }
-    #login-error { color: var(--red); font-size: 0.875rem;
-                   margin-top: 0.5rem; display: none; }
-
-    /* ──── DASHBOARD ──────────────────────────────────────────────── */
-    #dashboard { display: none; }
-    .topbar {
-      background: var(--surface); border-bottom: 1px solid var(--border);
-      padding: 0.75rem 1.5rem; display: flex; align-items: center;
-      justify-content: space-between; position: sticky; top: 0; z-index: 10;
-    }
-    .topbar h1 { font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-    .topbar h1 .version-badge { font-size: 0.65rem; font-weight: 400; color: var(--muted); background: var(--border); border-radius: 99px; padding: 0.1em 0.55em; letter-spacing: 0.02em; }
-    .topbar .actions { display: flex; align-items: center; gap: 0.75rem; }
-    #last-update { color: var(--muted); font-size: 0.75rem; }
-
-    .main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
-
-    /* Status cards */
-    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-             gap: 1rem; margin-bottom: 1.5rem; }
-    .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 1rem;
-    }
-    .card .label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.35rem; }
-    .card .value { font-size: 1.4rem; font-weight: 600; }
-    .pill {
-      display: inline-block; padding: 0.15rem 0.6rem; border-radius: 99px;
-      font-size: 0.8rem; font-weight: 600;
-    }
-    .pill-green  { background: rgba(63,185,80,.15);  color: var(--green); }
-    .pill-red    { background: rgba(248,81,73,.15);  color: var(--red); }
-    .pill-yellow { background: rgba(210,153,34,.15); color: var(--yellow); }
-
-    /* Kachel-Gruppenüberschrift */
-    .card-group-label {
-      font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
-      letter-spacing: .08em; margin: 0.75rem 0 0.4rem;
-      border-bottom: 1px solid var(--border); padding-bottom: 0.25rem;
-    }
-
-    /* Action panel */
-    .panel {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 1.25rem; margin-bottom: 1.5rem;
-    }
-    .panel h2 { font-size: 0.9rem; color: var(--muted); text-transform: uppercase;
-                letter-spacing: .06em; margin-bottom: 1rem; }
-    .action-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
-    .sep { width: 1px; height: 24px; background: var(--border); margin: 0 0.25rem; }
-    .slider-group { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
-    .slider-group input[type=range] { accent-color: var(--accent); cursor: pointer; }
-    #rec-dur-label { min-width: 2.5rem; color: var(--accent); font-weight: 600; }
-
-    /* Select */
-    select {
-      padding: 0.5rem 0.6rem; background: var(--bg); border: 1px solid var(--border);
-      border-radius: var(--r); color: var(--text); font-size: 0.875rem; cursor: pointer;
-    }
-
-    /* Recordings */
-    .recordings-list { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    thead th { text-align: left; padding: 0.5rem 0.75rem; color: var(--muted);
-               border-bottom: 1px solid var(--border); font-weight: 500; }
-    tbody tr:hover { background: rgba(255,255,255,.03); }
-    tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(48,54,61,.5); }
-    .size-col { color: var(--muted); }
-    .empty-state { color: var(--muted); font-size: 0.875rem; padding: 2rem 0;
-                   text-align: center; }
-
-    /* Error box */
-    #error-box {
-      background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.4);
-      border-radius: var(--r); padding: 0.75rem 1rem; margin-bottom: 1rem;
-      font-size: 0.875rem; display: none;
-    }
-
-    /* Toast */
-    #toast {
-      position: fixed; bottom: 1.5rem; right: 1.5rem;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 0.75rem 1rem;
-      font-size: 0.875rem; opacity: 0; transition: opacity 0.3s;
-      pointer-events: none; max-width: 300px; z-index: 100;
-    }
-    #toast.show { opacity: 1; }
-
-    /* ──── EINSTELLUNGEN ──────────────────────────────────────────── */
-    #settings-panel {
-      display: none;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 1.25rem; margin-bottom: 1.5rem;
-    }
-    #settings-panel h2 { font-size: 0.9rem; color: var(--muted); text-transform: uppercase;
-                         letter-spacing: .06em; margin-bottom: 1rem; }
-    .target-card {
-      border: 1px solid var(--border); border-radius: var(--r);
-      padding: 1rem; margin-bottom: 1rem; background: var(--bg);
-    }
-    .target-card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
-    .target-card-header input.name-input {
-      font-weight: 600; font-size: 0.9rem; flex: 1;
-      background: transparent; border: none; border-bottom: 1px solid var(--border);
-      color: var(--text); padding: 0.2rem 0.3rem;
-    }
-    .target-card-header input.name-input:focus { outline: none; border-color: var(--accent); }
-    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-    @media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
-    .field textarea {
-      width: 100%; padding: 0.6rem 0.75rem; font-family: monospace; font-size: 0.78rem;
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
-      color: var(--text); resize: vertical; min-height: 90px;
-    }
-    .field textarea:focus { border-color: var(--accent); outline: none; }
-    .test-result-inline { font-size: 0.8rem; padding: 0.3rem 0.6rem;
-                          border-radius: var(--r); display: none; margin-left: auto; }
-    .test-ok  { background: rgba(63,185,80,.1);  border: 1px solid rgba(63,185,80,.3);  color: var(--green); }
-    .test-err { background: rgba(248,81,73,.1);  border: 1px solid rgba(248,81,73,.3);  color: var(--red); }
-    .toggle-label { display:flex; align-items:center; gap:.4rem; font-size:.85rem;
-                    color:var(--muted); cursor:pointer; user-select:none; }
-    .toggle-label input { accent-color: var(--accent); width:1rem; height:1rem; cursor:pointer; }
-    #pending-badge {
-      display: none; background: var(--yellow); color: #000;
-      font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.45rem;
-      border-radius: 99px; margin-left: 0.25rem;
-    }
-
-    /* ──── LIVE-PREVIEW ──────────────────────────────────────── */
-    #preview-panel img {
-      width: 100%; max-width: 640px; border-radius: var(--r);
-      display: block; background: #000;
-    }
-    #preview-panel .preview-placeholder {
-      width: 100%; max-width: 640px; height: 240px;
-      background: var(--bg); border: 1px dashed var(--border);
-      border-radius: var(--r); display: flex; align-items: center;
-      justify-content: center; color: var(--muted); font-size: 0.875rem;
-    }
-    #preview-toggle-btn { margin-top: 0.75rem; }
-
-    /* ──── KALENDER-ZEILEN ────────────────────────────────────────── */
-    .date-header td {
-      background: rgba(88,166,255,.06); color: var(--accent);
-      font-size: 0.8rem; font-weight: 600;
-      padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border);
-      letter-spacing: 0.04em;
-    }
-
-    @media (max-width: 600px) {
-      .topbar { padding: 0.75rem 1rem; }
-      .topbar h1 { font-size: 0.9rem; }
-      #last-update { display: none; }
-      .main   { padding: 0.75rem; }
-      .cards  { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-      .card .value { font-size: 1.1rem; }
-      .panel { padding: 1rem; }
-      .action-row { flex-direction: column; align-items: stretch; }
-      .action-row .btn { width: 100%; justify-content: center; }
-      .action-row .sep { display: none; }
-      .action-row .slider-group { width: 100%; justify-content: space-between; }
-      .action-row .slider-group input[type=range] { flex: 1; }
-      select { width: 100%; }
-      table { font-size: 0.8rem; }
-      thead th, tbody td { padding: 0.4rem 0.5rem; }
-      .recordings-list { -webkit-overflow-scrolling: touch; }
-      #preview-panel img, #preview-panel .preview-placeholder { max-width: 100%; }
-    }
-    @media (max-width: 380px) {
-      .cards { grid-template-columns: 1fr; }
-    }
-
-    /* ──── HILFE-MODAL ───────────────────────────────────────────── */
-    #help-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.65); z-index: 200;
-      align-items: flex-start; justify-content: center;
-      padding: 2rem 1rem; overflow-y: auto;
-    }
-    #help-overlay.open { display: flex; }
-    #help-modal {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 1.75rem; width: 100%;
-      max-width: 680px; position: relative;
-    }
-    #help-modal h2 { font-size: 1.05rem; margin-bottom: 1.25rem; }
-    #help-modal h3 { font-size: 0.85rem; color: var(--accent); text-transform: uppercase;
-                     letter-spacing: .06em; margin: 1.25rem 0 0.5rem; }
-    #help-modal p, #help-modal li {
-      font-size: 0.875rem; color: var(--muted); line-height: 1.6;
-    }
-    #help-modal ul { padding-left: 1.25rem; }
-    #help-modal li { margin-bottom: 0.3rem; }
-    #help-modal code {
-      font-family: monospace; font-size: 0.82rem;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 4px; padding: 0.1rem 0.4rem; color: var(--text);
-    }
-    #help-modal hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
-    .help-close {
-      position: absolute; top: 1rem; right: 1rem;
-      background: none; border: none; color: var(--muted);
-      font-size: 1.4rem; cursor: pointer; line-height: 1;
-    }
-    .help-close:hover { color: var(--text); }
-    .help-badge {
-      display: inline-block; background: var(--border); color: var(--text);
-      border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.78rem;
-      font-weight: 600; font-family: monospace; vertical-align: middle;
-    }
-  </style>
+  <link rel="icon" type="image/png" href="/web/icon.png">
+  <link rel="apple-touch-icon" href="/web/icon.png">
+  <link rel="stylesheet" href="/web/app.css">
+  <!-- Kein Inline-Skript, keine onclick-Attribute: die CSP erlaubt nur /web/app.js -->
+  <script src="/web/app.js" defer></script>
 </head>
 <body>
 
 <!-- ──── LOGIN ─────────────────────────────────────────────────────────── -->
 <div id="login-screen">
-  <div class="login-box">
-    <img src="/web/logo.png" alt="Vogel-Kamera Logo" class="login-logo">
+  <form class="login-box" id="login-form" novalidate>
+    <img src="/web/logo.webp" alt="Vogel-Kamera Logo" class="login-logo" width="163" height="220">
     <h1>🐦 Vogel-Kamera</h1>
     <p>Raspberry Pi Steuerung</p>
 
@@ -289,10 +28,10 @@
       <input type="text" id="totp" placeholder="123456" inputmode="numeric"
              maxlength="6" autocomplete="one-time-code">
     </div>
-    <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">
+    <button type="submit" class="btn btn-primary btn-full" id="login-btn">
       Anmelden
     </button>
-    <div id="login-error"></div>
+    <div id="login-error" role="alert"></div>
     <p style="margin-top:1.25rem;font-size:0.75rem;color:var(--muted);text-align:center;">
       Selbstsigniertes Zertifikat –
       <a href="/cert.pem" download="vogel-kamera.pem" style="color:var(--accent);">Zertifikat herunterladen</a><br>
@@ -300,22 +39,26 @@
       → <em>Zertifizierungsstellen</em> → <em>Importieren</em>
       → „Für Websites vertrauen" ✓
     </p>
-  </div>
+  </form>
 </div>
 
 <!-- ──── DASHBOARD ──────────────────────────────────────────────────────── -->
 <div id="dashboard">
   <div class="topbar">
-    <h1><img src="/web/logo.png" alt="" style="height:32px;width:auto;vertical-align:middle;margin-right:0.35rem;">Vogel-Kamera <small id="gui-version" class="version-badge"></small></h1>
+    <h1><img src="/web/icon.png" alt="" class="topbar-logo" width="32" height="32">Vogel-Kamera <small id="gui-version" class="version-badge"></small></h1>
     <div class="actions">
       <span id="last-update">–</span>
-      <button class="btn btn-neutral" onclick="openHelp()" title="Hilfe">❓ Hilfe</button>
-      <button class="btn btn-neutral" onclick="toggleSettings()">⚙ Einstellungen</button>
-      <button class="btn btn-neutral" onclick="doLogout()">Abmelden</button>
+      <!-- Nur sichtbar, wenn PI_DAEMON_GRAFANA_URL gesetzt ist (siehe MONITORING.md) -->
+      <a class="btn btn-neutral" id="grafana-link" target="_blank" rel="noopener noreferrer"
+         title="Grafana-Dashboard mit Verläufen (neuer Tab)" style="display:none">📈 Monitoring</a>
+      <button class="btn btn-neutral" data-action="help" title="Hilfe">❓ Hilfe</button>
+      <button class="btn btn-neutral" data-action="settings" aria-expanded="false" aria-controls="settings-panel">⚙ Einstellungen</button>
+      <button class="btn btn-neutral" data-action="logout">Abmelden</button>
     </div>
   </div>
 
-  <div class="main">
+  <div class="main" id="main">
+    <div id="conn-banner" role="alert"></div>
     <div id="error-box"></div>
     <div id="hw-error-box" style="display:none;background:#7f1d1d;color:#fecaca;
         border-left:4px solid #ef4444;border-radius:6px;padding:0.9rem 1.1rem;
@@ -329,14 +72,14 @@
       <h2>⚙ Sync-Ziele</h2>
       <div id="targets-container"></div>
       <div class="action-row" style="margin-top: 0.5rem;">
-        <button class="btn btn-neutral" onclick="addTarget()">＋ Ziel hinzufügen</button>
-        <button class="btn btn-primary" onclick="saveAllTargets()">💾 Alle speichern</button>
+        <button class="btn btn-neutral" data-action="add-target">＋ Ziel hinzufügen</button>
+        <button class="btn btn-primary" id="save-targets-btn" data-action="save-targets">💾 Alle speichern</button>
         <span id="save-status" style="font-size:0.85rem;color:var(--muted);"></span>
       </div>
     </div>
 
-    <!-- Status-Karten -->
-
+    <!-- Das Wichtigste zuerst: Zustand der Kamera, dann die Steuerung.
+         System-/Hardware-Werte stehen einklappbar am Ende. -->
     <!-- Gruppe: Kamera & Erkennung -->
     <h3 class="card-group-label">Kamera &amp; Erkennung</h3>
     <div class="cards">
@@ -374,20 +117,140 @@
       </div>
     </div>
 
-    <!-- Gruppe: NPU -->
-    <h3 class="card-group-label">NPU</h3>
-    <div class="cards">
-      <div class="card">
-        <div class="label">Temperatur NPU</div>
-        <div class="value" id="s-npu-temp">–</div>
+    <!-- ── Steuerung: Detection ─────────────────────────────────── -->
+    <div class="panel">
+      <h2>Detection</h2>
+      <div class="action-row">
+        <!-- Ein Knopf, der je nach Zustand startet oder stoppt (Beschriftung setzt app.js) -->
+        <button class="btn btn-success" id="det-toggle-btn" data-action="det-toggle" disabled>&#9654; Detection-Modus starten</button>
       </div>
-      <div class="card">
-        <div class="label">Takt NPU</div>
-        <div class="value" id="s-npu-clock">–</div>
+      <!-- Engine-Switcher ausgeblendet – aktuell nur Hailo NPU -->
+      <div style="display:none">
+        <label for="engine-select">Engine:</label>
+        <select id="engine-select">
+          <option value="hailo">Hailo NPU</option>
+          <option value="cpu_yolo" disabled>CPU-YOLO</option>
+        </select>
+        <span id="engine-status"></span>
       </div>
-      <div class="card">
-        <div class="label">Throttle-Level</div>
-        <div class="value" id="s-throttle" style="font-size:1.1rem">–</div>
+      <!-- Detection-Zielklasse + Threshold -->
+      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <span style="font-size:0.85rem;color:var(--muted);">Erkennen:</span>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="bird"   id="det-target-bird"> &#128038; Vogel
+        </label>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="person" id="det-target-person"> &#129485; Mensch
+        </label>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="dog"    id="det-target-dog"> &#128021; Hund
+        </label>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="cat"    id="det-target-cat"> &#128008; Katze
+        </label>
+        <label style="font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="det-target" value="all4"   id="det-target-all4"> &#128038;&#129485;&#128021;&#128008; Alle 4
+        </label>
+      </div>
+      <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <label for="det-threshold" style="font-size:0.85rem;color:var(--muted);">Confidence:</label>
+        <input type="range" id="det-threshold" min="0.10" max="0.95" step="0.05" value="0.45"
+               style="width:140px;accent-color:var(--accent,#2563eb);">
+        <span id="det-threshold-val" style="font-size:0.85rem;min-width:2.5rem;">0.45</span>
+        <span style="font-size:0.75rem;color:var(--muted);">(0.10–0.95)</span>
+        <span id="det-settings-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+      <div id="det-mode-info" style="display:none;margin-top:0.6rem;padding:0.5rem 0.75rem;background:var(--accent,#2563eb);color:#fff;border-radius:6px;font-size:0.9rem;">
+        &#129302; <strong>Detection-Modus aktiv</strong> &#8211; bei Erkennung wird automatisch aufgenommen.
+        Manuelle Aufnahme gesperrt. <span id="det-birds-inline"></span>
+      </div>
+    </div>
+
+    <!-- Live-Preview ausgeblendet (Hailo belegt ISP exklusiv) -->
+    <div class="panel" id="preview-panel" style="display:none">
+      <h2>&#128247; Live-Vorschau</h2>
+      <div class="preview-placeholder" id="preview-placeholder">&#128247; Vorschau wird geladen…</div>
+      <img id="preview-img" style="display:none; transform:rotate(180deg)" alt="Live-Vorschau">
+      <div class="action-row" style="margin-top:0.75rem;">
+        <button class="btn btn-neutral" id="preview-toggle-btn" data-action="preview-toggle">&#128247; Vorschau starten</button>
+        <span id="preview-status" style="font-size:0.8rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <!-- ── Steuerung: Aufnahme ──────────────────────────────────── -->
+    <div class="panel" id="record-panel">
+      <h2>Aufnahme</h2>
+      <div id="rec-blocked-info" style="display:none;margin-bottom:0.6rem;padding:0.5rem 0.75rem;background:#7c3aed;color:#fff;border-radius:6px;font-size:0.9rem;">
+        🔒 Manuelle Aufnahme gesperrt – Detection-Modus ist aktiv.
+      </div>
+      <div id="rec-progress-wrap" style="display:none;margin-bottom:0.8rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <progress id="rec-progress" max="100" value="0"
+                    style="flex:1;height:14px;accent-color:#2563eb;"></progress>
+          <span id="rec-progress-label" style="font-size:0.85rem;color:var(--muted,#6b7280);min-width:3.2rem;text-align:right;">0 %</span>
+        </div>
+        <div id="rec-progress-time" style="font-size:0.8rem;color:var(--muted,#6b7280);margin-top:0.2rem;"></div>
+      </div>
+      <div id="aud-progress-wrap" style="display:none;margin-bottom:0.8rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <span style="font-size:0.8rem;white-space:nowrap;">🎤 Audio:</span>
+          <progress id="aud-progress" max="100" value="0"
+                    style="flex:1;height:14px;accent-color:#16a34a;"></progress>
+          <span id="aud-progress-label" style="font-size:0.85rem;color:var(--muted,#6b7280);min-width:3.2rem;text-align:right;">0 %</span>
+        </div>
+        <div id="aud-progress-time" style="font-size:0.8rem;color:var(--muted,#6b7280);margin-top:0.2rem;"></div>
+      </div>
+      <div class="action-row">
+        <span class="slider-group">
+          <label for="rec-dur">Dauer</label>
+          <!-- Der Regler wählt eine Stufe aus DURATIONS in app.js (10 s … 10 min) -->
+          <input type="range" id="rec-dur" min="0" max="10" step="1" value="1">
+          <span id="rec-dur-label">15 s</span>
+        </span>
+        <div class="sep"></div>
+        <select id="rec-profile" aria-label="Aufnahme-Profil">
+          <option value="normal_hd">Normal HD (1080p 30fps)</option>
+        </select>
+        <button class="btn btn-primary" id="rec-btn" data-action="record">
+          ⏺ Aufnahme
+        </button>
+        <button class="btn btn-neutral" id="aud-btn" data-action="audio" title="Nur Audio aufnehmen (kein Video)">
+          🎤 Audio
+        </button>
+        <button class="btn btn-danger" id="rec-kill-btn" data-action="kill" style="display:none;" title="Hängenden Aufnahme- oder Audio-Prozess sofort beenden">
+          ⛔ Kill
+        </button>
+        <button class="btn btn-neutral" id="convert-btn" data-action="convert">
+          🔄 Konvertieren <span id="pending-badge"></span>
+        </button>
+        <button class="btn btn-neutral" id="transfer-btn" data-action="transfer" title="Alle MP4s an SSH-Ziele übertragen">
+          📤 Übertragen
+        </button>
+      </div>
+      <details class="sub" id="cam-details">
+        <summary>Bildeinstellungen (Fokus, Belichtung, Farbe)</summary>
+        <!-- Regler erzeugt app.js aus der Tabelle CAM_SETTINGS -->
+        <div id="cam-settings"></div>
+      </details>
+    </div>
+
+    <!-- ── Aufnahmen ────────────────────────────────────────────── -->
+    <div class="panel">
+      <h2>Letzte Aufnahmen</h2>
+      <div class="recordings-list">
+        <table>
+          <thead>
+            <tr>
+              <th>Dateiname</th>
+              <th>Größe</th>
+              <th>Zeit</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="recordings-body">
+            <tr><td colspan="4" class="empty-state">Lädt…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -414,6 +277,25 @@
         <div class="value" id="s-pb-temp">–</div>
       </div>
     </div>
+    </div>
+
+    <details class="group" id="system-details" open>
+      <summary>System &amp; Hardware</summary>
+    <!-- Gruppe: NPU -->
+    <h3 class="card-group-label">NPU</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="label">Temperatur NPU</div>
+        <div class="value" id="s-npu-temp">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Takt NPU</div>
+        <div class="value" id="s-npu-clock">–</div>
+      </div>
+      <div class="card">
+        <div class="label">Throttle-Level</div>
+        <div class="value" id="s-throttle" style="font-size:1.1rem">–</div>
+      </div>
     </div>
 
     <!-- Gruppe: System -->
@@ -465,246 +347,22 @@
         <div class="value" id="s-net-tx">–</div>
       </div>
     </div>
-
-    <!-- Aktionen -->
-    <div class="panel">
-      <h2>Detection</h2>
-      <div class="action-row">
-        <button class="btn btn-success" id="det-start-btn" onclick="detectionModeStart()">&#9654; Detection-Modus starten</button>
-        <button class="btn btn-danger"  id="det-stop-btn"  onclick="detectionModeStop()">&#9632; Detection-Modus stoppen</button>
-      </div>
-      <!-- Engine-Switcher ausgeblendet – aktuell nur Hailo NPU -->
-      <div style="display:none">
-        <label for="engine-select">Engine:</label>
-        <select id="engine-select" onchange="switchEngine(this.value)">
-          <option value="hailo">Hailo NPU</option>
-          <option value="cpu_yolo" disabled>CPU-YOLO</option>
-        </select>
-        <span id="engine-status"></span>
-      </div>
-      <!-- Detection-Zielklasse + Threshold -->
-      <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-        <span style="font-size:0.85rem;color:var(--muted);">Erkennen:</span>
-        <label style="font-size:0.85rem;cursor:pointer;">
-          <input type="radio" name="det-target" value="bird"   id="det-target-bird"   onchange="applyDetectionSettings()"> &#128038; Vogel
-        </label>
-        <label style="font-size:0.85rem;cursor:pointer;">
-          <input type="radio" name="det-target" value="person" id="det-target-person" onchange="applyDetectionSettings()"> &#129485; Mensch
-        </label>
-        <label style="font-size:0.85rem;cursor:pointer;">
-          <input type="radio" name="det-target" value="dog"    id="det-target-dog"    onchange="applyDetectionSettings()"> &#128021; Hund
-        </label>
-        <label style="font-size:0.85rem;cursor:pointer;">
-          <input type="radio" name="det-target" value="cat"    id="det-target-cat"    onchange="applyDetectionSettings()"> &#128008; Katze
-        </label>
-        <label style="font-size:0.85rem;cursor:pointer;">
-          <input type="radio" name="det-target" value="all4"   id="det-target-all4"   onchange="applyDetectionSettings()"> &#128038;&#129485;&#128021;&#128008; Alle 4
-        </label>
-      </div>
-      <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-        <label for="det-threshold" style="font-size:0.85rem;color:var(--muted);">Confidence:</label>
-        <input type="range" id="det-threshold" min="0.10" max="0.95" step="0.05" value="0.45"
-               style="width:140px;accent-color:var(--accent,#2563eb);"
-               oninput="document.getElementById('det-threshold-val').textContent=parseFloat(this.value).toFixed(2);"
-               onchange="applyDetectionSettings()">
-        <span id="det-threshold-val" style="font-size:0.85rem;min-width:2.5rem;">0.45</span>
-        <span style="font-size:0.75rem;color:var(--muted);">(0.10–0.95)</span>
-        <span id="det-settings-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <div id="det-mode-info" style="display:none;margin-top:0.6rem;padding:0.5rem 0.75rem;background:var(--accent,#2563eb);color:#fff;border-radius:6px;font-size:0.9rem;">
-        &#129302; <strong>Detection-Modus aktiv</strong> &#8211; bei Erkennung wird automatisch aufgenommen.
-        Manuelle Aufnahme gesperrt. <span id="det-birds-inline"></span>
-      </div>
-    </div>
-    <!-- Live-Preview ausgeblendet (Hailo belegt ISP exklusiv) -->
-    <div class="panel" id="preview-panel" style="display:none">
-      <h2>&#128247; Live-Vorschau</h2>
-      <div class="preview-placeholder" id="preview-placeholder">&#128247; Vorschau wird geladen…</div>
-      <img id="preview-img" style="display:none; transform:rotate(180deg)" alt="Live-Vorschau">
-      <div class="action-row" style="margin-top:0.75rem;">
-        <button class="btn btn-neutral" id="preview-toggle-btn" onclick="togglePreview()">&#128247; Vorschau starten</button>
-        <span id="preview-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-    </div>
-    <div class="panel" id="record-panel">
-      <h2>Aufnahme</h2>
-      <div id="rec-blocked-info" style="display:none;margin-bottom:0.6rem;padding:0.5rem 0.75rem;background:#7c3aed;color:#fff;border-radius:6px;font-size:0.9rem;">
-        🔒 Manuelle Aufnahme gesperrt – Detection-Modus ist aktiv.
-      </div>
-      <div id="rec-progress-wrap" style="display:none;margin-bottom:0.8rem;">
-        <div style="display:flex;align-items:center;gap:0.6rem;">
-          <progress id="rec-progress" max="100" value="0"
-                    style="flex:1;height:14px;accent-color:#2563eb;"></progress>
-          <span id="rec-progress-label" style="font-size:0.85rem;color:var(--muted,#6b7280);min-width:3.2rem;text-align:right;">0 %</span>
-        </div>
-        <div id="rec-progress-time" style="font-size:0.8rem;color:var(--muted,#6b7280);margin-top:0.2rem;"></div>
-      </div>
-      <div id="aud-progress-wrap" style="display:none;margin-bottom:0.8rem;">
-        <div style="display:flex;align-items:center;gap:0.6rem;">
-          <span style="font-size:0.8rem;white-space:nowrap;">🎤 Audio:</span>
-          <progress id="aud-progress" max="100" value="0"
-                    style="flex:1;height:14px;accent-color:#16a34a;"></progress>
-          <span id="aud-progress-label" style="font-size:0.85rem;color:var(--muted,#6b7280);min-width:3.2rem;text-align:right;">0 %</span>
-        </div>
-        <div id="aud-progress-time" style="font-size:0.8rem;color:var(--muted,#6b7280);margin-top:0.2rem;"></div>
-      </div>
-      <!-- Fokus-Einstellung -->
-      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-        <label for="lens-pos" style="font-size:0.85rem;color:var(--muted);">&#128247; Fokus:</label>
-        <input type="range" id="lens-pos" min="0.5" max="10.0" step="0.5" value="3.0"
-               style="width:160px;accent-color:var(--accent,#2563eb);"
-               oninput="updateLensLabel(this.value)"
-               onchange="saveLensPosition(this.value)">
-        <span id="lens-pos-val" style="font-size:0.85rem;min-width:5.5rem;">3.0 (≈ 33 cm)</span>
-        <span style="font-size:0.75rem;color:var(--muted);">(0.5=2m … 10=10cm)</span>
-        <span id="lens-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <!-- EV-Slider (Exposure Value) -->
-      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-        <label for="ev-slider" style="font-size:0.85rem;color:var(--muted);">☀️ Belichtung (EV):</label>
-        <input type="range" id="ev-slider" min="-2.0" max="2.0" step="0.5" value="0.0"
-               style="width:160px;accent-color:var(--accent,#2563eb);"
-               oninput="updateEVLabel(this.value)"
-               onchange="saveEVSetting(this.value)">
-        <span id="ev-val" style="font-size:0.85rem;min-width:3rem;">0.0</span>
-        <span style="font-size:0.75rem;color:var(--muted);">(-2=dunkel … +2=hell)</span>
-        <span id="ev-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <!-- AWB-Einstellung (Auto White Balance) -->
-      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-        <label for="awb-select" style="font-size:0.85rem;color:var(--muted);">💡 Weißabgleich (AWB):</label>
-        <select id="awb-select" style="height:32px;padding:0.25rem 0.4rem;background:var(--bg,#1e1e1e);border:1px solid var(--border,#333);border-radius:4px;color:var(--text,#e0e0e0);font-size:0.85rem;"
-                onchange="saveAWBSetting(this.value)">
-          <option value="auto">Auto</option>
-          <option value="daylight">Tageslicht</option>
-          <option value="cloudy">Bewölkt</option>
-          <option value="tungsten">Glühbirne</option>
-          <option value="fluorescent">Leuchtstoffröhre</option>
-          <option value="indoor">Innen</option>
-        </select>
-        <span id="awb-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <!-- Brightness (Helligkeit) -->
-      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-        <label for="brightness-slider" style="font-size:0.85rem;color:var(--muted);">☀️ Helligkeit:</label>
-        <input type="range" id="brightness-slider" min="-1" max="1" step="0.1" value="0"
-               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
-               oninput="updateBrightnessLabel(this.value)"
-               onchange="saveBrightnessSetting(this.value)">
-        <span id="brightness-val" style="font-size:0.85rem;min-width:3rem;">0.0</span>
-        <span style="font-size:0.75rem;color:var(--muted);">(-1=dunkel … +1=hell)</span>
-        <span id="brightness-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <!-- Contrast (Kontrast) -->
-      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-        <label for="contrast-slider" style="font-size:0.85rem;color:var(--muted);">🎨 Kontrast:</label>
-        <input type="range" id="contrast-slider" min="0.5" max="2" step="0.1" value="1"
-               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
-               oninput="updateContrastLabel(this.value)"
-               onchange="saveContrastSetting(this.value)">
-        <span id="contrast-val" style="font-size:0.85rem;min-width:3rem;">1.0</span>
-        <span style="font-size:0.75rem;color:var(--muted);">(0.5=flach … 1=normal … 2=knackig)</span>
-        <span id="contrast-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <!-- Saturation (Sättigung) -->
-      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-        <label for="saturation-slider" style="font-size:0.85rem;color:var(--muted);">🌈 Sättigung:</label>
-        <input type="range" id="saturation-slider" min="0" max="2" step="0.1" value="1"
-               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
-               oninput="updateSaturationLabel(this.value)"
-               onchange="saveSaturationSetting(this.value)">
-        <span id="saturation-val" style="font-size:0.85rem;min-width:3rem;">1.0</span>
-        <span style="font-size:0.75rem;color:var(--muted);">(0=graustufen … 1=normal … 2=+)</span>
-        <span id="saturation-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <!-- Sharpness (Schärfe) -->
-      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-        <label for="sharpness-slider" style="font-size:0.85rem;color:var(--muted);">✨ Schärfe:</label>
-        <input type="range" id="sharpness-slider" min="0" max="2" step="0.1" value="1"
-               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
-               oninput="updateSharpnessLabel(this.value)"
-               onchange="saveSharpnessSetting(this.value)">
-        <span id="sharpness-val" style="font-size:0.85rem;min-width:3rem;">1.0</span>
-        <span style="font-size:0.75rem;color:var(--muted);">(0=keine … 1=normal … 2=extra)</span>
-        <span id="sharpness-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <!-- Gain (ISO/Ausreißer bei Lowlight) -->
-      <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-        <label for="gain-slider" style="font-size:0.85rem;color:var(--muted);">📈 Gain (ISO):</label>
-        <input type="range" id="gain-slider" min="1" max="8" step="0.5" value="1"
-               style="flex:1;min-width:120px;height:24px;cursor:pointer;"
-               oninput="updateGainLabel(this.value)"
-               onchange="saveGainSetting(this.value)">
-        <span id="gain-val" style="font-size:0.85rem;min-width:3rem;">1.0</span>
-        <span style="font-size:0.75rem;color:var(--muted);">(1=normal … 8=max, nur bei Lowlight)</span>
-        <span id="gain-status" style="font-size:0.8rem;color:var(--muted);"></span>
-      </div>
-      <div class="action-row">
-        <span class="slider-group">
-          <label for="rec-dur">Dauer</label>
-          <input type="range" id="rec-dur" min="1" max="10" step="1" value="1"
-                 oninput="document.getElementById('rec-dur-label').textContent=this.value+' min'">
-          <span id="rec-dur-label">1 min</span>
-        </span>
-        <div class="sep"></div>
-        <select id="rec-profile">
-          <option value="normal_hd">Normal HD (1080p 30fps)</option>
-          <option value="normal_2k">Normal 2K (30fps)</option>
-          <option value="normal_4k">Normal 4K (25fps – max)</option>
-          <option value="slowmo_720p">Zeitlupe 720p (120fps)</option>
-          <option value="slowmo_1080p">Zeitlupe 1080p (60fps)</option>
-        </select>
-        <button class="btn btn-primary" id="rec-btn" onclick="startRecord()">
-          ⏺ Aufnahme
-        </button>
-        <button class="btn btn-neutral" id="aud-btn" onclick="startAudio()" title="Nur Audio aufnehmen (kein Video, max 3600s)">
-          🎤 Audio
-        </button>
-        <button class="btn btn-danger" id="rec-kill-btn" onclick="killRecord()" style="display:none;" title="Hängenden Aufnahme- oder Audio-Prozess sofort beenden">
-          ⛔ Kill
-        </button>
-        <button class="btn btn-neutral" id="convert-btn" onclick="startConvert()">
-          🔄 Konvertieren <span id="pending-badge"></span>
-        </button>
-        <button class="btn btn-neutral" id="transfer-btn" onclick="startTransfer()" title="Alle MP4s an SSH-Ziele übertragen">
-          📤 Übertragen
-        </button>
-      </div>
-    </div>
-
-    <!-- Aufnahmen -->
-    <div class="panel">
-      <h2>Letzte Aufnahmen</h2>
-      <div class="recordings-list">
-        <table>
-          <thead>
-            <tr>
-              <th>Dateiname</th>
-              <th>Größe</th>
-              <th>Zeit</th>
-              <th>Download</th>
-              <th>Löschen</th>
-            </tr>
-          </thead>
-          <tbody id="recordings-body">
-            <tr><td colspan="5" class="empty-state">Lädt…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </details>
   </div>
 </div>
 
 <!-- ──── HILFE-MODAL ──────────────────────────────────────────────────────── -->
-<div id="help-overlay" onclick="closeHelpOnBg(event)">
-  <div id="help-modal">
-    <button class="help-close" onclick="closeHelp()" title="Schließen">✕</button>
-    <h2>❓ Online-Hilfe – Vogel-Kamera</h2>
+<div id="help-overlay">
+  <div id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title" tabindex="-1">
+    <button class="help-close" data-action="close-help" title="Schließen" aria-label="Hilfe schließen">✕</button>
+    <h2 id="help-title">❓ Online-Hilfe – Vogel-Kamera</h2>
 
     <h3>Übersicht</h3>
     <p>Diese Oberfläche steuert den Vogel-Kamera-Daemon auf dem Raspberry Pi.
        Alle Aktionen laufen per HTTPS-API. Das Dashboard aktualisiert sich automatisch
-       alle 5 Sekunden.</p>
+       alle 5 Sekunden, solange der Tab sichtbar ist. Im Hintergrund pausiert die Abfrage.
+       Ist die Kamera nicht erreichbar, erscheint oben ein gelber Hinweis und die Werte
+       werden abgedunkelt.</p>
 
     <hr>
     <h3>🤖 Detection-Modus (Automatik)</h3>
@@ -745,7 +403,7 @@
     <hr>
     <h3>⏺ Manuelle Aufnahme</h3>
     <ul>
-      <li><strong>Dauer</strong> – 1 bis 10 Minuten (1-Minuten-Schritte) per Schieberegler wählbar</li>
+      <li><strong>Dauer</strong> – 10 Sekunden bis 10 Minuten per Schieberegler wählbar</li>
       <li><strong>Aufnahme-Profil</strong> – Qualität und Framerate vorauswählen:
         <ul style="margin-top:.3rem">
           <li><code>Normal HD</code> – 1080p, 30 fps</li>
@@ -930,7 +588,8 @@
     <hr>
     <h3>📋 Aufnahmen-Tabelle</h3>
     <ul>
-      <li><span class="help-badge">⬇ Download</span> – MP4/WAV direkt im Browser herunterladen</li>
+      <li><span class="help-badge">▶ Abspielen</span> – Video oder Audio direkt im Browser ansehen/anhören</li>
+      <li><span class="help-badge">⬇ Download</span> – MP4/WAV herunterladen</li>
       <li><span class="help-badge">🗑 Löschen</span> – MP4 und zugehörige H264-Quelldatei
           nach Bestätigung dauerhaft löschen</li>
     </ul>
@@ -1007,982 +666,31 @@
       <li>Port 8443 nicht im Router freigeben – für Zugriff von unterwegs ein VPN nutzen</li>
     </ul>
 
+    <hr>
+    <h3>📈 Monitoring (Grafana)</h3>
+    <p>Verläufe über Tage und Wochen – Akkustand, Temperaturen, Erkennungen pro Stunde, freier
+       Speicher – zeigt ein Grafana-Dashboard. Prometheus und Grafana laufen dafür als Container
+       auf dem Pi (<code>PI_MONITORING=true</code> in <code>ansible/.env</code>) oder auf einem
+       anderen Rechner im Heimnetz. Ist das eingerichtet, erscheint oben der Knopf
+       <span class="help-badge">📈 Monitoring</span>; Grafana hat einen eigenen Login
+       (Benutzer <code>admin</code>). Einrichtung: <code>monitoring/README.md</code>.</p>
+
     <div style="margin-top:1.5rem;text-align:right">
-      <button class="btn btn-neutral" onclick="closeHelp()">Schließen</button>
+      <button class="btn btn-neutral" data-action="close-help">Schließen</button>
     </div>
   </div>
 </div>
 
-<div id="toast"></div>
+<!-- ──── PLAYER ──────────────────────────────────────────────────────────── -->
+<div id="player-overlay">
+  <div id="player-modal" role="dialog" aria-modal="true" aria-labelledby="player-title" tabindex="-1">
+    <button class="help-close" data-action="close-player" title="Schließen" aria-label="Player schließen">✕</button>
+    <h2 id="player-title"></h2>
+    <div id="player-body"></div>
+  </div>
+</div>
 
-<script>
-  const API_BASE = '';
-  const REFRESH_INTERVAL = 5000;
-  let token = sessionStorage.getItem('pi_token') || '';
-  let refreshTimer = null;
-  let _targets = [];   // lokale Kopie der Sync-Ziele
+<div id="toast" role="status" aria-live="polite"></div>
 
-  // ── Hilfsfunktionen ────────────────────────────────────────────────────
-  function toast(msg, type = 'info') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.style.borderColor = type === 'error' ? 'rgba(248,81,73,.5)'
-                         : type === 'ok'    ? 'rgba(63,185,80,.5)'
-                         : 'var(--border)';
-    el.classList.add('show');
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('show'), 4000);
-  }
-
-  async function apiFetch(path, method = 'GET', body = null) {
-    const opts = {
-      method,
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-    };
-    if (body) opts.body = JSON.stringify(body);
-    try {
-      const res = await fetch(API_BASE + path, opts);
-      if (res.status === 401) { doLogout(); return null; }
-      return res.json().catch(() => ({}));
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-
-  // ── Login ──────────────────────────────────────────────────────────────
-  async function doLogin() {
-    const pw   = document.getElementById('pw').value;
-    const totp = document.getElementById('totp').value;
-    const btn  = document.getElementById('login-btn');
-    if (!pw || !totp) { showLoginErr('Bitte beide Felder ausfüllen.'); return; }
-    btn.disabled = true; btn.textContent = 'Anmelden…';
-    document.getElementById('login-error').style.display = 'none';
-    try {
-      const res = await fetch(API_BASE + '/api/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw, totp }),
-      });
-      const data = await res.json();
-      if (!res.ok) { showLoginErr(data.error || 'Anmeldung fehlgeschlagen.'); return; }
-      token = data.token; sessionStorage.setItem('pi_token', token);
-      showDashboard();
-    } catch (e) { showLoginErr('Verbindungsfehler: ' + e.message);
-    } finally { btn.disabled = false; btn.textContent = 'Anmelden'; }
-  }
-
-  function showLoginErr(msg) {
-    const el = document.getElementById('login-error');
-    el.textContent = msg; el.style.display = 'block';
-  }
-
-  document.getElementById('totp').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
-  document.getElementById('pw').addEventListener('keydown',   e => { if (e.key==='Enter') document.getElementById('totp').focus(); });
-
-  // ── Dashboard ──────────────────────────────────────────────────────────
-  function showDashboard() {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    loadProfiles();              // Profile-Dropdown einmal befüllen
-    loadLensPosition();          // Fokus-Einstellung laden
-    loadEVSetting();             // EV-Einstellung laden
-    loadAWBSetting();            // AWB-Einstellung laden
-    loadBrightnessSetting();     // Brightness-Einstellung laden
-    loadContrastSetting();       // Contrast-Einstellung laden
-    loadSaturationSetting();     // Saturation-Einstellung laden
-    loadSharpnessSetting();      // Sharpness-Einstellung laden
-    loadGainSetting();           // Gain-Einstellung laden
-    refreshAll();
-    refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL);
-  }
-
-  function doLogout() {
-    clearInterval(refreshTimer); token = '';
-    sessionStorage.removeItem('pi_token');
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('pw').value = ''; document.getElementById('totp').value = '';
-  }
-
-  // ── Status ─────────────────────────────────────────────────────────────
-  async function refreshAll() {
-    await Promise.all([fetchStatus(), fetchRecordings(), fetchPending()]);
-  }
-
-  function renderPowerbank(pb) {
-    const group = document.getElementById('pb-group');
-    if (!Object.keys(pb).length) { group.style.display = 'none'; return; }
-    group.style.display = 'block';
-    const W = v => v != null ? v.toFixed(1) + ' W' : '–';
-    if (pb.battery_percent != null) {
-      const p = pb.battery_percent;
-      const c = p <= 10 ? '#ef4444' : p <= 25 ? '#f97316' : '#22c55e';
-      setText('s-pb-battery', `<span style="color:${c};font-weight:600">${p} %</span>`);
-    } else { setText('s-pb-battery', '–'); }
-    const info = document.getElementById('s-pb-info');
-    const t = pb.updated_at ? new Date(pb.updated_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) : null;
-    if (pb.ok === false) {
-      info.textContent = '⚠️ nicht erreichbar' + (t ? ' · Stand ' + t : '');
-      info.title = pb.error || '';
-    } else {
-      info.textContent = t ? 'Stand ' + t : 'wird abgefragt …';
-      info.title = '';
-    }
-    setText('s-pb-out', W(pb.total_output_w));
-    setText('s-pb-in',  W(pb.total_input_w));
-    const ports = [['usb_c1', 'C1'], ['usb_c2', 'C2'], ['usb_a', 'A']]
-      .filter(([k]) => pb[k] && pb[k].mode !== 'off')
-      .map(([k, n]) => `${n} ${pb[k].power_w.toFixed(1)} W`);
-    document.getElementById('s-pb-ports').textContent = ports.join(' · ');
-    setText('s-pb-temp', pb.temperature_c != null ? pb.temperature_c + ' °C' : '–');
-  }
-
-  async function fetchStatus() {
-    const data = await apiFetch('/api/status');
-    if (!data) {
-      setText('s-health', '<span style="color:#ef4444;font-weight:600">&#x2717; Unhealthy</span>');
-      return;
-    }
-    setText('s-health', '<span style="color:#22c55e;font-weight:600">&#x2713; Healthy</span>');
-    const errBox = document.getElementById('error-box');
-    if (data.last_error) { errBox.textContent = '⚠ Letzter Fehler: ' + data.last_error; errBox.style.display = 'block'; }
-    else errBox.style.display = 'none';
-    document.getElementById('hw-error-box').style.display = data.camera_hw_error ? 'block' : 'none';
-    _detectionRunning = !!data.detection_running;
-    setText('s-detect',   pill(data.detection_running, 'Aktiv', 'Gestoppt'));
-    setText('s-det-mode', pill(data.detection_mode,    '\uD83E\uDD16 Automatik', 'Manuell'));
-    const hailoActive = data.detection_running && data.active_engine === 'hailo';
-    setText('s-hailo', pill(hailoActive, '\uD83D\uDD2C Aktiv', 'Inaktiv'));
-    // Hailo Hardware: Treiber · FW unter dem Status-Pill
-    const hailoHwEl = document.getElementById('s-hailo-hw');
-    if (hailoHwEl) {
-      const hw = data.hailo_hw || {};
-      if (hw.device_present) {
-        const parts = [];
-        if (hw.driver_version) parts.push('Treiber\u00A0' + hw.driver_version);
-        if (hw.fw_version)     parts.push('FW\u00A0' + hw.fw_version);
-        hailoHwEl.textContent = parts.join(' \u00B7 ');
-        hailoHwEl.style.display = 'block';
-      } else {
-        hailoHwEl.style.display = 'none';
-      }
-    }
-    // NPU-Temperatur-Kachel
-    const hw = data.hailo_hw || {};
-    if (hw.npu_temp_c != null) {
-      const tn = hw.npu_temp_c;
-      const cn = tn >= 80 ? '#ef4444' : tn >= 65 ? '#f97316' : '#22c55e';
-      setText('s-npu-temp', `<span style="color:${cn};font-weight:600">${tn.toFixed(1)} \u00B0C</span>`);
-    } else { setText('s-npu-temp', '\u2013'); }
-    // NPU-Takt-Kachel
-    if (hw.nn_clock_mhz != null) {
-      setText('s-npu-clock', hw.nn_clock_mhz + '\u00A0MHz');
-    } else { setText('s-npu-clock', '\u2013'); }
-    // Throttle-Level
-    if (hw.throttle_level != null) {
-      const _lvl = hw.throttle_level;
-      if (_lvl < 0) {
-        setText('s-throttle', '<span style="color:#22c55e;font-weight:600">\u2013\u00A0Normal</span>');
-      } else {
-        const _lc = _lvl === 0 ? '#f97316' : '#ef4444';
-        const _mhz = hw.nn_clock_mhz != null ? '\u00A0' + hw.nn_clock_mhz + '\u00A0MHz' : '';
-        setText('s-throttle', `<span style="color:${_lc};font-weight:600">L${_lvl}${_mhz}</span>`);
-      }
-    } else if (hw.throttle_zone != null) {
-      const _zones = ['\u2705\u00A0Normal', '\u26A0\uFE0F\u00A0Warm', '\uD83D\uDD34\u00A0Kritisch'];
-      const _zcols = ['#22c55e', '#f97316', '#ef4444'];
-      const _z = hw.throttle_zone;
-      const _zn = _zones[_z] || 'Zone\u00A0' + _z;
-      const _zc = _zcols[_z] || '#ef4444';
-      setText('s-throttle', `<span style="color:${_zc};font-weight:600">${_zn}</span>`);
-    } else { setText('s-throttle', '\u2013'); }
-    renderPowerbank(data.powerbank || {});
-    if (data.last_detection) {
-      const d = data.last_detection;
-      const cls = d.class ? d.class.charAt(0).toUpperCase() + d.class.slice(1) : '?';
-      const conf = d.conf != null ? (d.conf * 100).toFixed(0) + '\u202F%' : '';
-      const t = d.time || '';
-      setText('s-last-det', `${escHtml(cls)}\u00A0${escHtml(conf)}<br><small style="color:var(--muted)">${escHtml(t)}</small>`);
-    } else {
-      setText('s-last-det', '\u2013');
-    }
-    const todayRec = data.today_recordings != null ? data.today_recordings : (data.birds_recorded != null ? data.birds_recorded : null);
-    setText('s-birds', todayRec != null ? String(todayRec) : '\u2013');
-    const now = new Date();
-    const _wd = now.toLocaleDateString('de-DE', {weekday:'short'}).replace('.', '');
-    const _dt = now.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
-    document.getElementById('s-birds-date').textContent = _wd + ' ' + _dt;
-    setText('s-rec',      pill(data.recording_running, 'L\u00E4uft', 'Bereit'));
-    if (data.detection_target != null) {
-      const icons = { bird: '\uD83D\uDC26', person: '\uD83E\uDDD0', dog: '\uD83D\uDC15', cat: '\uD83D\uDC08', all4: '\uD83D\uDC26\uD83E\uDDD0\uD83D\uDC15\uD83D\uDC08' };
-      const names = { bird: 'Vogel', person: 'Person', dog: 'Hund', cat: 'Katze', all4: 'Alle 4' };
-      const icon = icons[data.detection_target] || '\uD83C\uDFAF';
-      const name = names[data.detection_target] || data.detection_target;
-      const thr  = data.detection_threshold != null ? (data.detection_threshold * 100).toFixed(0) + '\u202F%' : '';
-      setText('s-target', `${icon}\u00A0${name}<br><small style="color:var(--muted)">${thr} Konfidenz</small>`);
-    }
-    // Engine-Dropdown synchron halten
-    if (data.active_engine) {
-      const sel = document.getElementById('engine-select');
-      if (sel && sel.value !== data.active_engine) sel.value = data.active_engine;
-    }
-    // Detection-Zielklasse und Threshold synchron halten
-    if (data.detection_target) {
-      const rb = document.getElementById('det-target-' + data.detection_target);
-      if (rb && !rb.checked) rb.checked = true;
-    }
-    if (data.detection_threshold != null) {
-      const sl = document.getElementById('det-threshold');
-      const vl = document.getElementById('det-threshold-val');
-      if (sl && parseFloat(sl.value) !== data.detection_threshold) {
-        sl.value = data.detection_threshold;
-        if (vl) vl.textContent = data.detection_threshold.toFixed(2);
-      }
-    }
-    const blocked = data.detection_mode;
-    const anyRunning = data.recording_running || data.audio_running;
-    document.getElementById('rec-btn').disabled = anyRunning || blocked;
-    document.getElementById('aud-btn').disabled = anyRunning || blocked;
-    document.getElementById('rec-kill-btn').style.display = anyRunning ? 'inline-flex' : 'none';
-    document.getElementById('rec-blocked-info').style.display = blocked ? 'block' : 'none';
-    // Fortschrittsbalken Video
-    const recWrap = document.getElementById('rec-progress-wrap');
-    if (data.recording_running && data.recording_progress != null) {
-      recWrap.style.display = 'block';
-      document.getElementById('rec-progress').value       = data.recording_progress;
-      document.getElementById('rec-progress-label').textContent = data.recording_progress + ' %';
-      const dur = data.recording_duration || 0;
-      const rem = data.recording_remaining ?? 0;
-      const elapsed = dur - rem;
-      document.getElementById('rec-progress-time').textContent =
-        elapsed + ' s / ' + dur + ' s (≈ ' + rem + ' s verbleibend)';
-    } else {
-      recWrap.style.display = 'none';
-      document.getElementById('rec-progress').value = 0;
-    }
-    // Fortschrittsbalken Audio-Only
-    const audWrap = document.getElementById('aud-progress-wrap');
-    if (data.audio_running && data.audio_progress != null) {
-      audWrap.style.display = 'block';
-      document.getElementById('aud-progress').value       = data.audio_progress;
-      document.getElementById('aud-progress-label').textContent = data.audio_progress + ' %';
-      const adur = data.audio_duration || 0;
-      const arem = data.audio_remaining ?? 0;
-      document.getElementById('aud-progress-time').textContent =
-        (adur - arem) + ' s / ' + adur + ' s (≈ ' + arem + ' s verbleibend)';
-    } else {
-      audWrap.style.display = 'none';
-      document.getElementById('aud-progress').value = 0;
-    }
-    document.getElementById('det-mode-info').style.display = blocked ? 'block' : 'none';
-    const birdsEl = document.getElementById('det-birds-inline');
-    if (birdsEl) birdsEl.textContent = data.birds_recorded ? `(${data.birds_recorded} Aufnahme${data.birds_recorded!==1?'n':''})` : '';
-    const sys = data.system || {};
-    setText('s-cpu',  sys.cpu_percent != null ? sys.cpu_percent.toFixed(0) + ' %' : '–');
-    if (sys.cpu_temp != null) {
-      const t = sys.cpu_temp;
-      const col = t >= 75 ? '#ef4444' : t >= 60 ? '#f97316' : '#22c55e';
-      setText('s-temp', `<span style="color:${col};font-weight:600">${t.toFixed(1)} °C</span>`);
-    } else { setText('s-temp', '–'); }
-    if (sys.load_1min != null) setText('s-load', sys.load_1min + ' / ' + sys.load_5min + ' / ' + sys.load_15min);
-    if (sys.mem_used_mb && sys.mem_total_mb) setText('s-mem', sys.mem_used_mb + ' / ' + sys.mem_total_mb + ' MB');
-    if (sys.disk_free_gb != null) setText('s-disk', sys.disk_free_gb + ' GB frei');
-    if (sys.container_ram_mb != null) setText('s-docker-ram', sys.container_ram_mb + '\u00A0MB');
-    if (sys.net_rx_kbs != null) setText('s-net-rx', sys.net_rx_kbs + '\u00A0KB/s');
-    if (sys.net_tx_kbs != null) setText('s-net-tx', sys.net_tx_kbs + '\u00A0KB/s');
-    if (sys.uptime_days != null) {
-      const _d = sys.uptime_days, _h = sys.uptime_hours, _m = sys.uptime_minutes;
-      let _us = '';
-      if (_d > 0) _us += _d + 'T\u00A0';
-      _us += String(_h).padStart(2, '0') + 'h\u00A0' + String(_m).padStart(2, '0') + 'm';
-      setText('s-uptime', _us);
-    }
-    // Fokus-Slider synchron halten (nur wenn Slider gerade nicht angefasst wird)
-    if (data.lens_position != null) {
-      const sl = document.getElementById('lens-pos');
-      if (sl && !sl.matches(':active') && parseFloat(sl.value) !== data.lens_position) {
-        sl.value = data.lens_position;
-        updateLensLabel(data.lens_position);
-      }
-    }
-    // EV-Slider synchron halten
-    if (data.ev != null) {
-      const evEl = document.getElementById('ev-slider');
-      if (evEl && !evEl.matches(':active') && parseFloat(evEl.value) !== data.ev) {
-        evEl.value = data.ev;
-        updateEVLabel(data.ev);
-      }
-    }
-    // AWB-Selectbox synchron halten
-    if (data.awb != null) {
-      const awbEl = document.getElementById('awb-select');
-      if (awbEl && awbEl.value !== data.awb) {
-        awbEl.value = data.awb;
-      }
-    }
-    document.getElementById('last-update').textContent = 'Update: ' + new Date().toLocaleTimeString('de-DE');
-    const verEl = document.getElementById('gui-version');
-    if (verEl && data.version && !verEl.textContent) verEl.textContent = 'v' + data.version;
-  }
-
-  async function fetchPending() {
-    const d = await apiFetch('/api/pending');
-    if (!d) return;
-    const badge = document.getElementById('pending-badge');
-    if (d.pending > 0) { badge.textContent = d.pending; badge.style.display = 'inline'; }
-    else badge.style.display = 'none';
-  }
-
-  function pill(active, t, f) {
-    return `<span class="pill ${active?'pill-green':'pill-red'}">${active?t:f}</span>`;
-  }
-  function setText(id, html) { const el=document.getElementById(id); if(el) el.innerHTML=html; }
-
-  // ── Detection ──────────────────────────────────────────────────────────
-  async function detectionModeStart() {
-    const rb = document.querySelector('input[name="det-target"]:checked');
-    const target = rb ? rb.value : 'bird';
-    const targetLabel = { bird: 'Vogelerkennung', person: 'Menscherkennung', dog: 'Hundeerkennung', cat: 'Katzenerkennung', all4: 'Alle-4-Erkennung' }[target] || (target + '-Erkennung');
-    const d = await apiFetch('/api/detection/mode/start', 'POST');
-    if (d?.success) toast(`\u2705 Detection-Modus gestartet \u2013 Aufnahme bei ${targetLabel}`, 'ok');
-    else toast('\u274C ' + (d?.error || 'Fehler beim Starten'), 'error');
-    fetchStatus();
-  }
-  async function detectionModeStop() {
-    const d = await apiFetch('/api/detection/mode/stop', 'POST');
-    if (d?.success) {
-      const n = d.birds_recorded || 0;
-      toast(`\u23F9 Detection-Modus gestoppt (${n} Aufnahme${n!==1?'n':''})`, 'ok');
-    } else toast('\u274C Fehler beim Stoppen', 'error');
-    fetchStatus();
-  }
-  async function switchEngine(engine) {
-    const statusEl = document.getElementById('engine-status');
-    if (statusEl) statusEl.textContent = '\u23F3 Wechsle...';
-    const d = await apiFetch('/api/detection-engine', 'POST', { engine });
-    if (d?.success) {
-      const msg = d.changed ? `\uD83D\uDD04 Engine gewechselt auf ${engine}` : `\u2714 Bereits aktiv: ${engine}`;
-      toast(msg, 'ok');
-      if (statusEl) statusEl.textContent = '';
-    } else {
-      toast('\u274C ' + (d?.error || 'Engine-Wechsel fehlgeschlagen'), 'error');
-      if (statusEl) statusEl.textContent = '\u26A0 Fehler';
-    }
-    fetchStatus();
-  }
-  async function applyDetectionSettings() {
-    const rb = document.querySelector('input[name="det-target"]:checked');
-    const target    = rb ? rb.value : 'bird';
-    const threshold = parseFloat(document.getElementById('det-threshold').value);
-    const statusEl  = document.getElementById('det-settings-status');
-    if (statusEl) statusEl.textContent = '\u23F3 Speichere\u2026';
-    const d = await apiFetch('/api/detection-settings', 'POST', { target_class: target, threshold });
-    if (d?.success) {
-      if (statusEl) statusEl.textContent = '\u2714 Gespeichert';
-      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2500);
-    } else {
-      toast('\u274C ' + (d?.error || 'Einstellung konnte nicht gespeichert werden'), 'error');
-      if (statusEl) statusEl.textContent = '\u26A0 Fehler';
-    }
-    fetchStatus();
-  }
-
-  // ── Recording ──────────────────────────────────────────────────────────
-  async function startRecord() {
-    const duration = parseInt(document.getElementById('rec-dur').value) * 60;
-    const profile  = document.getElementById('rec-profile').value;
-    const btn = document.getElementById('rec-btn');
-    btn.disabled = true;
-    const d = await apiFetch('/api/record', 'POST', { duration, profile });
-    if (d?.success) toast(`⏺ ${d.message || 'Aufnahme gestartet'}`, 'ok');
-    else { toast('❌ ' + (d?.error || 'Aufnahme fehlgeschlagen'), 'error'); btn.disabled = false; }
-    fetchStatus();
-  }
-
-  async function killRecord() {
-    if (!confirm('Hängenden Aufnahme-/Audio-Prozess jetzt sofort beenden?')) return;
-    const btn = document.getElementById('rec-kill-btn');
-    btn.disabled = true;
-    const d = await apiFetch('/api/record/kill', 'POST', {});
-    if (d?.success) toast('⛔ Prozess beendet', 'ok');
-    else toast('❌ ' + (d?.error || 'Kill fehlgeschlagen'), 'error');
-    btn.disabled = false;
-    fetchStatus();
-  }
-
-  async function startAudio() {
-    const duration = parseInt(document.getElementById('rec-dur').value) * 60;
-    const btn = document.getElementById('aud-btn');
-    btn.disabled = true;
-    const d = await apiFetch('/api/record/audio', 'POST', { duration });
-    if (d?.success) toast('🎤 ' + (d.message || 'Audio-Aufnahme gestartet'), 'ok');
-    else { toast('❌ ' + (d?.error || 'Audio-Aufnahme fehlgeschlagen'), 'error'); btn.disabled = false; }
-    fetchStatus();
-  }
-
-  // Profile-Labels nachladen und Dropdown befüllen
-  // ── Fokus (Linsenposition) ──────────────────────────────────────────────
-  function updateLensLabel(val) {
-    const lp = parseFloat(val);
-    const dist = lp > 0 ? Math.round(100 / lp) : '∞';
-    document.getElementById('lens-pos-val').textContent = lp.toFixed(1) + ' (≈ ' + dist + ' cm)';
-  }
-
-  async function loadLensPosition() {
-    const data = await apiFetch('/api/camera-settings');
-    if (!data || data.lens_position == null) return;
-    const sl = document.getElementById('lens-pos');
-    if (sl) {
-      sl.value = data.lens_position;
-      updateLensLabel(data.lens_position);
-    }
-  }
-
-  async function saveLensPosition(val) {
-    const lp = parseFloat(val);
-    const statusEl = document.getElementById('lens-status');
-    if (statusEl) statusEl.textContent = '…';
-    const res = await apiFetch('/api/camera-settings', 'POST', { lens_position: lp });
-    if (statusEl) {
-      if (res?.success) {
-        statusEl.textContent = '✓ gespeichert';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      } else {
-        statusEl.textContent = '✗ Fehler';
-      }
-    }
-  }
-
-  // ── EV (Exposure Value / Belichtung) ────────────────────────────────────
-  function updateEVLabel(val) {
-    const ev = parseFloat(val);
-    document.getElementById('ev-val').textContent = ev.toFixed(1);
-  }
-
-  async function loadEVSetting() {
-    const data = await apiFetch('/api/camera-settings');
-    if (!data || data.ev == null) return;
-    const sl = document.getElementById('ev-slider');
-    if (sl) {
-      sl.value = data.ev;
-      updateEVLabel(data.ev);
-    }
-  }
-
-  async function saveEVSetting(val) {
-    const ev = parseFloat(val);
-    const statusEl = document.getElementById('ev-status');
-    if (statusEl) statusEl.textContent = '…';
-    const res = await apiFetch('/api/camera-settings', 'POST', { ev: ev });
-    if (statusEl) {
-      if (res?.success) {
-        statusEl.textContent = '✓ gespeichert';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      } else {
-        statusEl.textContent = '✗ Fehler';
-      }
-    }
-  }
-
-  // ── AWB (Auto White Balance / Weißabgleich) ────────────────────────────
-  async function loadAWBSetting() {
-    const data = await apiFetch('/api/camera-settings');
-    if (!data || data.awb == null) return;
-    const sel = document.getElementById('awb-select');
-    if (sel) {
-      sel.value = data.awb;
-    }
-  }
-
-  async function saveAWBSetting(val) {
-    const statusEl = document.getElementById('awb-status');
-    if (statusEl) statusEl.textContent = '…';
-    const res = await apiFetch('/api/camera-settings', 'POST', { awb: val });
-    if (statusEl) {
-      if (res?.success) {
-        statusEl.textContent = '✓ gespeichert';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      } else {
-        statusEl.textContent = '✗ Fehler';
-      }
-    }
-  }
-
-  // ── Brightness (Helligkeit) ────────────────────────────
-  function updateBrightnessLabel(val) {
-    const brightness = parseFloat(val);
-    document.getElementById('brightness-val').textContent = brightness.toFixed(1);
-  }
-
-  async function loadBrightnessSetting() {
-    const data = await apiFetch('/api/camera-settings');
-    if (!data || data.brightness == null) return;
-    const sl = document.getElementById('brightness-slider');
-    if (sl) {
-      sl.value = data.brightness;
-      updateBrightnessLabel(data.brightness);
-    }
-  }
-
-  async function saveBrightnessSetting(val) {
-    const brightness = parseFloat(val);
-    const statusEl = document.getElementById('brightness-status');
-    if (statusEl) statusEl.textContent = '…';
-    const res = await apiFetch('/api/camera-settings', 'POST', { brightness: brightness });
-    if (statusEl) {
-      if (res?.success) {
-        statusEl.textContent = '✓ gespeichert';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      } else {
-        statusEl.textContent = '✗ Fehler';
-      }
-    }
-  }
-
-  // ── Contrast (Kontrast) ────────────────────────────
-  function updateContrastLabel(val) {
-    const contrast = parseFloat(val);
-    document.getElementById('contrast-val').textContent = contrast.toFixed(1);
-  }
-
-  async function loadContrastSetting() {
-    const data = await apiFetch('/api/camera-settings');
-    if (!data || data.contrast == null) return;
-    const sl = document.getElementById('contrast-slider');
-    if (sl) {
-      sl.value = data.contrast;
-      updateContrastLabel(data.contrast);
-    }
-  }
-
-  async function saveContrastSetting(val) {
-    const contrast = parseFloat(val);
-    const statusEl = document.getElementById('contrast-status');
-    if (statusEl) statusEl.textContent = '…';
-    const res = await apiFetch('/api/camera-settings', 'POST', { contrast: contrast });
-    if (statusEl) {
-      if (res?.success) {
-        statusEl.textContent = '✓ gespeichert';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      } else {
-        statusEl.textContent = '✗ Fehler';
-      }
-    }
-  }
-
-  // ── Saturation (Sättigung) ────────────────────────────
-  function updateSaturationLabel(val) {
-    const saturation = parseFloat(val);
-    document.getElementById('saturation-val').textContent = saturation.toFixed(1);
-  }
-
-  async function loadSaturationSetting() {
-    const data = await apiFetch('/api/camera-settings');
-    if (!data || data.saturation == null) return;
-    const sl = document.getElementById('saturation-slider');
-    if (sl) {
-      sl.value = data.saturation;
-      updateSaturationLabel(data.saturation);
-    }
-  }
-
-  async function saveSaturationSetting(val) {
-    const saturation = parseFloat(val);
-    const statusEl = document.getElementById('saturation-status');
-    if (statusEl) statusEl.textContent = '…';
-    const res = await apiFetch('/api/camera-settings', 'POST', { saturation: saturation });
-    if (statusEl) {
-      if (res?.success) {
-        statusEl.textContent = '✓ gespeichert';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      } else {
-        statusEl.textContent = '✗ Fehler';
-      }
-    }
-  }
-
-  // ── Sharpness (Schärfe) ────────────────────────────
-  function updateSharpnessLabel(val) {
-    const sharpness = parseFloat(val);
-    document.getElementById('sharpness-val').textContent = sharpness.toFixed(1);
-  }
-
-  async function loadSharpnessSetting() {
-    const data = await apiFetch('/api/camera-settings');
-    if (!data || data.sharpness == null) return;
-    const sl = document.getElementById('sharpness-slider');
-    if (sl) {
-      sl.value = data.sharpness;
-      updateSharpnessLabel(data.sharpness);
-    }
-  }
-
-  async function saveSharpnessSetting(val) {
-    const sharpness = parseFloat(val);
-    const statusEl = document.getElementById('sharpness-status');
-    if (statusEl) statusEl.textContent = '…';
-    const res = await apiFetch('/api/camera-settings', 'POST', { sharpness: sharpness });
-    if (statusEl) {
-      if (res?.success) {
-        statusEl.textContent = '✓ gespeichert';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      } else {
-        statusEl.textContent = '✗ Fehler';
-      }
-    }
-  }
-
-  // ── Gain (ISO-Verstärkung) ────────────────────────────
-  function updateGainLabel(val) {
-    const gain = parseFloat(val);
-    document.getElementById('gain-val').textContent = gain.toFixed(1);
-  }
-
-  async function loadGainSetting() {
-    const data = await apiFetch('/api/camera-settings');
-    if (!data || data.gain == null) return;
-    const sl = document.getElementById('gain-slider');
-    if (sl) {
-      sl.value = data.gain;
-      updateGainLabel(data.gain);
-    }
-  }
-
-  async function saveGainSetting(val) {
-    const gain = parseFloat(val);
-    const statusEl = document.getElementById('gain-status');
-    if (statusEl) statusEl.textContent = '…';
-    const res = await apiFetch('/api/camera-settings', 'POST', { gain: gain });
-    if (statusEl) {
-      if (res?.success) {
-        statusEl.textContent = '✓ gespeichert';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      } else {
-        statusEl.textContent = '✗ Fehler';
-      }
-    }
-  }
-
-  async function loadProfiles() {
-    const profiles = await apiFetch('/api/profiles');
-    if (!profiles) return;
-    const sel = document.getElementById('rec-profile');
-    if (!sel) return;
-    sel.innerHTML = Object.entries(profiles)
-      .map(([k, v]) => `<option value="${k}">${escHtml(v.label)}</option>`)
-      .join('');
-    // Gespeicherte Einstellung wiederherstellen
-    const settings = await apiFetch('/api/rec-settings');
-    if (settings?.profile && profiles[settings.profile]) {
-      sel.value = settings.profile;
-    }
-    if (settings?.duration) {
-      const dur = document.getElementById('rec-dur');
-      // gespeicherter Wert ist in Sekunden → in Minuten umrechnen (min 1, max 10)
-      const mins = Math.min(10, Math.max(1, Math.round(settings.duration / 60)));
-      if (dur) { dur.value = mins; document.getElementById('rec-dur-label').textContent = mins + ' min'; }
-    }
-  }
-
-  // Profil- & Dauer-Änderung persistent speichern
-  document.addEventListener('DOMContentLoaded', () => {
-    const sel = document.getElementById('rec-profile');
-    const durEl = document.getElementById('rec-dur');
-    function saveRecSettings() {
-      if (!sel || !durEl) return;
-      apiFetch('/api/rec-settings', 'POST', { profile: sel.value, duration: parseInt(durEl.value) * 60 });
-    }
-    if (sel)   sel.addEventListener('change', saveRecSettings);
-    if (durEl) durEl.addEventListener('change', saveRecSettings);  // fires on mouseup/touchend
-  });
-
-  async function startConvert() {
-    const btn = document.getElementById('convert-btn');
-    btn.disabled = true;
-    const d = await apiFetch('/api/convert', 'POST');
-    toast(d?.success ? '🔄 Konvertierung läuft – alle ausstehenden H264 werden verarbeitet' : '❌ ' + (d?.error || 'Fehler'),
-          d?.success ? 'ok' : 'error');
-    setTimeout(() => { btn.disabled = false; fetchPending(); fetchRecordings(); }, 3000);
-  }
-
-  // ── Aufnahmen mit Kalender-Gruppierung + Download ─────────────────────
-  async function fetchRecordings() {
-    const list = await apiFetch('/api/recordings');
-    if (!list) return;
-    const tbody = document.getElementById('recordings-body');
-    if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Keine Aufnahmen vorhanden</td></tr>';
-      return;
-    }
-    let lastDate = '';
-    tbody.innerHTML = list.map(r => {
-      let hdr = '';
-      const d = (r.date || '').split(' ')[0];
-      if (d && d !== lastDate) {
-        lastDate = d;
-        let label = d;
-        try { label = new Date(d + 'T00:00:00').toLocaleDateString('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); } catch(_){}
-        hdr = `<tr class="date-header"><td colspan="5">📅 ${escHtml(label)}</td></tr>`;
-      }
-      const relPath = r.rel_path || r.name;
-      const isAudio = r.type === 'audio';
-      const badge = isAudio
-        ? '<span style="font-size:.7rem;background:#1d4ed8;color:#fff;padding:.1rem .35rem;border-radius:3px;margin-right:.35rem;">🎵 Audio</span>'
-        : '<span style="font-size:.7rem;background:#166534;color:#fff;padding:.1rem .35rem;border-radius:3px;margin-right:.35rem;">🎬 Video</span>';
-      return `${hdr}<tr>
-        <td>${badge}${escHtml(r.name)}</td>
-        <td class="size-col">${r.size_mb} MB</td>
-        <td>${escHtml((r.created||'').slice(11))}</td>
-        <td><button class="btn btn-neutral" style="padding:.25rem .6rem;font-size:.8rem;" data-path="${escHtml(relPath)}" onclick="downloadVideo(this.dataset.path)">⬇ Download</button></td>
-        <td><button class="btn btn-danger" style="padding:.25rem .6rem;font-size:.8rem;"
-                data-path="${escHtml(relPath)}" onclick="deleteFile(this.dataset.path)">🗑 Löschen</button></td>
-      </tr>`;
-    }).join('');
-  }
-
-  // ── Video-Download (fetch+Blob, umgeht Chrome-SSL-Sperre bei self-signed Cert) ──
-  async function downloadVideo(relPath) {
-    try {
-      const url = '/api/download?p=' + encodeURIComponent(relPath);
-      const resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-      if (!resp.ok) {
-        let msg = 'HTTP ' + resp.status;
-        try { const j = await resp.json(); msg = j.error || msg; } catch(_) {}
-        toast('\u274c Download-Fehler: ' + msg, 'error');
-        return;
-      }
-      const blob = await resp.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = relPath.split('/').pop() || 'recording.mp4';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-    } catch(e) {
-      toast('\u274c Download-Fehler: ' + e.message, 'error');
-    }
-  }
-
-  // ── Manueller Transfer ───────────────────────────────────────────────────
-  async function startTransfer() {
-    const btn = document.getElementById('transfer-btn');
-    btn.disabled = true;
-    const d = await apiFetch('/api/transfer', 'POST');
-    toast(d?.success ? '📤 Übertragung gestartet – alle MP4s werden gesendet' : '❌ ' + (d?.error || 'Fehler'),
-          d?.success ? 'ok' : 'error');
-    setTimeout(() => { btn.disabled = false; }, 4000);
-  }
-
-  // ── Hilfe-Modal ──────────────────────────────────────────────────────────
-  function openHelp()  { document.getElementById('help-overlay').classList.add('open'); }
-  function closeHelp() { document.getElementById('help-overlay').classList.remove('open'); }
-  function closeHelpOnBg(e) { if (e.target === document.getElementById('help-overlay')) closeHelp(); }
-
-  // ── Video löschen ──────────────────────────────────────────────────────
-  async function deleteFile(relPath) {
-    const isAudio = relPath.endsWith('.wav');
-    const extra = isAudio ? '' : '\n(inkl. H264-Quelldatei und WAV falls vorhanden)';
-    if (!confirm(`"${relPath}" wirklich löschen?${extra}`)) return;
-    const d = await apiFetch('/api/delete', 'POST', { p: relPath });
-    if (d?.success) {
-      toast('🗑 Gelöscht: ' + (d.deleted || []).join(', '), 'ok');
-      fetchRecordings();
-      fetchPending();
-    } else {
-      toast('❌ ' + (d?.error || 'Fehler beim Löschen'), 'error');
-    }
-  }
-
-  // ── Einstellungen: Multi-Target ────────────────────────────────────────
-  function toggleSettings() {
-    const p = document.getElementById('settings-panel');
-    const visible = p.style.display === 'block';
-    p.style.display = visible ? 'none' : 'block';
-    if (!visible) loadSettings();
-  }
-
-  async function loadSettings() {
-    const d = await apiFetch('/api/settings');
-    if (!d) return;
-    _targets = d.targets || [];
-    renderTargets();
-  }
-
-  function renderTargets() {
-    const c = document.getElementById('targets-container');
-    if (!_targets.length) {
-      c.innerHTML = '<p style="color:var(--muted);font-size:.875rem;margin-bottom:.75rem;">Noch keine Sync-Ziele konfiguriert. Klicke auf „＋ Ziel hinzufügen".</p>';
-      return;
-    }
-    c.innerHTML = _targets.map((t, i) => `
-      <div class="target-card" id="tc-${i}">
-        <div class="target-card-header">
-          <input class="name-input" type="text" value="${escHtml(t.name||'Ziel '+(i+1))}"
-                 oninput="_targets[${i}].name=this.value" placeholder="Name des Ziels">
-          <label class="toggle-label">
-            <input type="checkbox" ${t.enabled!==false?'checked':''} onchange="_targets[${i}].enabled=this.checked">
-            Aktiv
-          </label>
-          <button class="btn btn-danger" style="padding:.25rem .6rem;font-size:.8rem;" onclick="removeTarget(${i})">✕</button>
-        </div>
-        <div class="settings-grid">
-          <div class="field">
-            <label>Host / IP</label>
-            <input type="text" value="${escHtml(t.host||'')}" placeholder="192.168.1.100"
-                   oninput="_targets[${i}].host=this.value">
-          </div>
-          <div class="field">
-            <label>SSH Benutzer</label>
-            <input type="text" value="${escHtml(t.user||'')}" placeholder="roimme"
-                   oninput="_targets[${i}].user=this.value">
-          </div>
-          <div class="field" style="grid-column:span 2">
-            <label>Ziel-Pfad (Remote)</label>
-            <input type="text" value="${escHtml(t.path||'')}" placeholder="/home/roimme/Videos/"
-                   oninput="_targets[${i}].path=this.value">
-          </div>
-          <div class="field" style="grid-column:span 2">
-            <label>SSH Private Key <span style="color:var(--muted);font-weight:400">${t.key_set?'(gespeichert – leer lassen = unverändert)':'(leer lassen = Key-Auth deaktiviert)'}</span></label>
-            <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"
-                      oninput="_targets[${i}].ssh_key=this.value"></textarea>
-          </div>
-        </div>
-        <div class="action-row" style="margin-top:.5rem;">
-          <button class="btn btn-neutral" style="font-size:.82rem;padding:.3rem .7rem;"
-                  onclick="testTarget(${i}, this)">🔌 Testen</button>
-          <span class="test-result-inline" id="tr-${i}"></span>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function addTarget() {
-    _targets.push({ name: `Ziel ${_targets.length + 1}`, host: '', user: '', path: '', enabled: true });
-    renderTargets();
-    document.getElementById(`tc-${_targets.length-1}`)?.scrollIntoView({ behavior:'smooth' });
-  }
-
-  function removeTarget(i) {
-    _targets.splice(i, 1);
-    renderTargets();
-  }
-
-  async function saveAllTargets() {
-    const btn = document.querySelector('[onclick="saveAllTargets()"]');
-    const status = document.getElementById('save-status');
-    btn.disabled = true; status.textContent = 'Speichert…';
-    const d = await apiFetch('/api/settings/targets', 'POST', { targets: _targets });
-    btn.disabled = false;
-    if (d?.success) {
-      toast('💾 Sync-Ziele gespeichert', 'ok');
-      _targets = d.targets;
-      renderTargets();
-      status.textContent = '✓ Gespeichert';
-      setTimeout(() => status.textContent = '', 3000);
-    } else {
-      toast('❌ ' + (d?.error || 'Fehler beim Speichern'), 'error');
-      status.textContent = '';
-    }
-  }
-
-  async function testTarget(i, btn) {
-    const t = _targets[i];
-    const res = document.getElementById(`tr-${i}`);
-    btn.disabled = true; btn.textContent = '🔌 Teste…';
-    res.style.display = 'none';
-    // Erst speichern damit der Key auf dem Server ist
-    await apiFetch('/api/settings/targets', 'POST', { targets: _targets });
-    const d = await apiFetch('/api/settings/test', 'POST', { target_id: i });
-    btn.disabled = false; btn.textContent = '🔌 Testen';
-    res.style.display = 'inline-block';
-    res.className = 'test-result-inline ' + (d?.success ? 'test-ok' : 'test-err');
-    res.textContent = d?.message || d?.error || 'Keine Antwort';
-  }
-
-  // ── Live-Preview (Polling via fetch+Blob, wie Download – SSL-safe) ────
-  let _previewActive    = false;
-  let _previewTimer     = null;
-  let _previewErrCnt    = 0;
-  let _detectionRunning = false;   // wird von fetchStatus() aktualisiert
-
-  function togglePreview() {
-    const img         = document.getElementById('preview-img');
-    const placeholder = document.getElementById('preview-placeholder');
-    const btn         = document.getElementById('preview-toggle-btn');
-    const statusEl    = document.getElementById('preview-status');
-    _previewActive = !_previewActive;
-    if (_previewActive) {
-      _previewErrCnt = 0;
-      btn.textContent = '⏹ Vorschau stoppen';
-      placeholder.textContent = '📷 Bild wird geladen…';
-      placeholder.style.display = 'flex';
-      img.style.display = 'none';
-      _pollFrame();
-    } else {
-      clearTimeout(_previewTimer);
-      if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
-      img.src = '';
-      img.style.display = 'none';
-      placeholder.style.display = 'flex';
-      placeholder.textContent = '📷 Vorschau wird geladen…';
-      btn.textContent = '📷 Vorschau starten';
-      statusEl.textContent = '';
-    }
-  }
-
-  async function _pollFrame() {
-    if (!_previewActive) return;
-    const img         = document.getElementById('preview-img');
-    const placeholder = document.getElementById('preview-placeholder');
-    const statusEl    = document.getElementById('preview-status');
-    try {
-      const resp = await fetch('/api/snapshot', { headers: { 'Authorization': 'Bearer ' + token } });
-      if (resp.ok) {
-        const blob = await resp.blob();
-        const url  = URL.createObjectURL(blob);
-        const old  = img.src;
-        img.src    = url;
-        if (old && old.startsWith('blob:')) URL.revokeObjectURL(old);
-        img.style.display   = 'block';
-        placeholder.style.display = 'none';
-        statusEl.textContent = 'Stream aktiv ●';
-        _previewErrCnt = 0;
-      } else if (resp.status === 503) {
-        // Kein Frame vorhanden
-        if (_detectionRunning) {
-          // Hailo-NPU belegt Kamera exklusiv – kein Live-Frame möglich
-          _previewErrCnt = 0;
-          statusEl.textContent = '🔬 Hailo-Detection aktiv';
-          placeholder.textContent = '🔬 Hailo-NPU Detection läuft – kein Live-Frame verfügbar';
-          placeholder.style.display = 'flex';
-          img.style.display = 'none';
-        } else {
-          _previewErrCnt++;
-          statusEl.textContent = 'Warte auf Detection…';
-          if (_previewErrCnt > 40) {
-            placeholder.textContent = '⚠ Kein Bild – Detection gestartet?';
-            placeholder.style.display = 'flex';
-            img.style.display = 'none';
-          }
-        }
-      } else if (resp.status === 401) {
-        doLogout(); return;
-      } else {
-        statusEl.textContent = '⚠ Fehler: HTTP ' + resp.status;
-      }
-    } catch(e) {
-      _previewErrCnt++;
-      if (_previewErrCnt > 5) statusEl.textContent = '⚠ ' + e.message;
-    }
-    if (_previewActive) _previewTimer = setTimeout(_pollFrame, 250);
-  }
-
-  // ── Autostart wenn Token vorhanden ─────────────────────────────────────
-  if (token) showDashboard();
-</script>
 </body>
 </html>

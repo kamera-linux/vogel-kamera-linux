@@ -1,0 +1,31 @@
+---
+# Läuft VOR dem Schreiben von /etc/pi-daemon/app.env: Der pi-daemon braucht das Token,
+# mit dem Prometheus /metrics abfragt. Wer in ansible/.env kein PI_METRICS_TOKEN setzt,
+# bekommt einmalig ein zufälliges, das auf dem Pi bleibt.
+- name: Monitoring – /etc/pi-daemon anlegen
+  ansible.builtin.file:
+    path: /etc/pi-daemon
+    state: directory
+    owner: root
+    group: "{{ pi_user }}"
+    mode: "0750"
+  when: pi_monitoring | bool
+
+- name: Monitoring – Metrics-Token erzeugen (nur wenn keines vorgegeben und noch keines da ist)
+  ansible.builtin.shell:
+    cmd: umask 077 && openssl rand -hex 32 > /etc/pi-daemon/metrics.token
+    creates: /etc/pi-daemon/metrics.token
+  when: (pi_monitoring | bool) and (pi_metrics_token | default('') | length == 0)
+
+- name: Monitoring – erzeugtes Metrics-Token lesen
+  ansible.builtin.slurp:
+    src: /etc/pi-daemon/metrics.token
+  register: monitoring_token_file
+  no_log: true
+  when: (pi_monitoring | bool) and (pi_metrics_token | default('') | length == 0)
+
+- name: Monitoring – Metrics-Token übernehmen
+  ansible.builtin.set_fact:
+    pi_metrics_token: "{{ monitoring_token_file.content | b64decode | trim }}"
+  no_log: true
+  when: monitoring_token_file.content is defined

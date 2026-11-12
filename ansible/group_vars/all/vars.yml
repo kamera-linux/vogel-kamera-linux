@@ -25,9 +25,23 @@ pi_daemon_port:      8443
 
 # Token-Gültigkeit (Stunden)
 pi_token_expiry_h:   8
+# Speicher-Aufräumung: unter so vielen GB freiem Platz werden die ältesten Aufnahmen
+# gelöscht. 0 = aus.
+pi_min_free_gb:      0
 
 # Detection-Skript innerhalb des Containers
 pi_detection_script: "{{ pi_home }}/vogel-kamera-linux/raspberry-pi-scripts/unified-camera-monitor-hailo.py"
+
+# Prometheus-Endpunkt /metrics (leer = aus), Token aus ansible/.env
+pi_metrics_token:    "{{ lookup('env', 'PI_METRICS_TOKEN') }}"
+# Monitoring auf dem Pi: Prometheus + Grafana als Container (Rolle monitoring). Aus ansible/.env:
+#   PI_MONITORING=true, PI_GRAFANA_ADMIN_PASSWORD=<Passwort für Grafana-Login "admin">
+pi_monitoring:             "{{ lookup('env', 'PI_MONITORING') | default('false', true) | bool }}"
+pi_grafana_admin_password: "{{ lookup('env', 'PI_GRAFANA_ADMIN_PASSWORD') }}"
+pi_grafana_port:           3000
+# Nur wenn Grafana woanders läuft (anderer Rechner, Reverse-Proxy): feste Adresse für den
+# Knopf „Monitoring" in der Web-GUI. Mit PI_MONITORING=true nicht nötig.
+pi_grafana_url:      "{{ lookup('env', 'PI_GRAFANA_URL') }}"
 
 # Powerbank per Bluetooth (leer = aus), Werte aus ansible/.env
 pi_powerbank_mac:              "{{ lookup('env', 'PI_POWERBANK_MAC') }}"

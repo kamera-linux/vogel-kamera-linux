@@ -6,6 +6,7 @@ from pathlib import Path
 
 from . import config
 from .config import logger
+from .storage import write_json_atomic
 
 # ---------------------------------------------------------------------------
 # Eingabeprüfung: host/user/path landen in ssh- und rsync-Argumenten.
@@ -61,8 +62,7 @@ def _load_sync_settings() -> dict:
 
 def _save_sync_settings(data: dict) -> None:
     try:
-        Path(config.SETTINGS_FILE).parent.mkdir(parents=True, exist_ok=True)
-        Path(config.SETTINGS_FILE).write_text(json.dumps(data, indent=2))
+        write_json_atomic(config.SETTINGS_FILE, data)
     except Exception as exc:
         logger.error('Einstellungen konnten nicht gespeichert werden: %s', exc)
 
