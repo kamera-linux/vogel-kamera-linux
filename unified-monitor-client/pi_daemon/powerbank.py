@@ -193,6 +193,44 @@ async def _read_once(mac: str) -> dict:
         raise RuntimeError('Keine Statusantwort erhalten')
 
 
+async def _drop_stale_connection(mac: str) -> bool:
+    """Trennt eine Verbindung zur Powerbank, die BlueZ noch offen hält.
+
+    Wird der Container mitten in einer Abfrage beendet (Update, Neustart), bleibt die
+    Verbindung auf dem Host bestehen. Eine verbundene Powerbank sendet keine Werbepakete
+    mehr, die nächste Abfrage findet sie dann nicht („was not found"). Trennen behebt das.
+    Gibt True zurück, wenn eine Verbindung getrennt wurde.
+    """
+    from dbus_fast import BusType, Message, MessageType
+    from dbus_fast.aio import MessageBus
+
+    bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+    try:
+        reply = await bus.call(Message(
+            destination='org.bluez', path='/',
+            interface='org.freedesktop.DBus.ObjectManager', member='GetManagedObjects'))
+        if reply.message_type == MessageType.ERROR:
+            return False
+        dropped = False
+        for path, interfaces in reply.body[0].items():
+            dev = interfaces.get('org.bluez.Device1')
+            if not dev:
+                continue
+            address = dev.get('Address')
+            connected = dev.get('Connected')
+            if (getattr(address, 'value', address) or '').upper() != mac.upper():
+                continue
+            if not getattr(connected, 'value', connected):
+                continue
+            res = await bus.call(Message(
+                destination='org.bluez', path=path,
+                interface='org.bluez.Device1', member='Disconnect'))
+            dropped = dropped or res.message_type != MessageType.ERROR
+        return dropped
+    finally:
+        bus.disconnect()
+
+
 # ---------------------------------------------------------------------------
 # Cache für /api/status
 # ---------------------------------------------------------------------------
@@ -330,4 +368,11 @@ def _powerbank_updater() -> None:
                 _cache['error'] = err
             log = logger.warning if failures in (1, 10) or failures % 60 == 0 else logger.debug
             log('Powerbank nicht lesbar (%dx): %s', failures, err)
+            # Hängt noch eine alte Verbindung auf dem Host? Dann trennen – die nächste
+            # Abfrage findet die Powerbank wieder.
+            try:
+                if asyncio.run(asyncio.wait_for(_drop_stale_connection(config.POWERBANK_MAC), 10)):
+                    logger.warning('Powerbank: hängende Bluetooth-Verbindung getrennt')
+            except Exception as exc:
+                logger.debug('Powerbank: Verbindung trennen nicht möglich: %s', exc)
         time.sleep(config.POWERBANK_INTERVAL)
