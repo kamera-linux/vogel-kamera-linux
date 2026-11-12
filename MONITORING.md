@@ -217,7 +217,7 @@ Das Token kann nur Messwerte lesen, nichts steuern; das Login der Web-GUI gilt f
 | Messwert | Bedeutung |
 |---|---|
 | `powerbank_battery_percent`, `powerbank_input_watts`, `powerbank_output_watts` | Akkustand und Leistung |
-| `cpu_temperature_celsius`, `npu_temperature_celsius`, `npu_throttle_active` | Temperaturen, Drosselung |
+| `cpu_temperature_celsius`, `npu_temperature_celsius`, `npu_throttle_level` | Temperaturen, Drosselung (`-1` = keine) |
 | `triggered_recordings_total`, `recordings_today` | Aufnahmen durch Erkennung |
 | `detection_running`, `recording_running`, `camera_hardware_error` | Zustand der Kamera |
 | `disk_free_bytes`, `pending_conversions`, `postprocess_queue_length` | Speicher und Rückstau |

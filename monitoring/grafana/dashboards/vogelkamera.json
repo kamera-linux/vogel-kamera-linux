@@ -1647,7 +1647,7 @@
     {
       "type": "stat",
       "title": "NPU-Drosselung",
-      "description": "Drosselt der Hailo-Chip gerade wegen Temperatur?",
+      "description": "Drosselt der Hailo-Chip gerade wegen Temperatur? Stufe −1 heißt: keine Drosselung.",
       "id": 23,
       "datasource": {
         "type": "prometheus",
@@ -1679,15 +1679,27 @@
             {
               "type": "value",
               "options": {
-                "0": {
+                "-1": {
                   "text": "Nein",
                   "color": "green",
                   "index": 0
                 },
-                "1": {
+                "0": {
+                  "text": "Warnstufe",
+                  "color": "orange",
+                  "index": 1
+                }
+              }
+            },
+            {
+              "type": "range",
+              "options": {
+                "from": 1,
+                "to": 99,
+                "result": {
                   "text": "Gedrosselt",
                   "color": "red",
-                  "index": 1
+                  "index": 2
                 }
               }
             }
@@ -1716,7 +1728,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "vogelkamera_npu_throttle_active",
+          "expr": "vogelkamera_npu_throttle_level",
           "legendFormat": "",
           "refId": "A",
           "range": true,

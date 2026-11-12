@@ -126,8 +126,10 @@ def render() -> str:
     w.add('npu_temperature_celsius', npu.get('npu_temp_c'), 'Temperatur des Hailo-Chips')
     if npu.get('nn_clock_mhz') is not None:
         w.add('npu_clock_hertz', npu['nn_clock_mhz'] * 1_000_000, 'Takt des Hailo-NN-Kerns')
-    w.add('npu_throttle_active', npu.get('throttle_active'), 'Hailo drosselt wegen Temperatur (1/0)')
-    w.add('npu_throttle_level', npu.get('throttle_level'), 'Hailo-Drosselstufe (-1 = keine)')
+    # Achtung: throttle_active heißt nur, dass die Schutzfunktion eingeschaltet ist. Ob gerade
+    # gedrosselt wird, sagt allein throttle_level (-1 = nein).
+    w.add('npu_throttle_enabled', npu.get('throttle_active'), 'Temperatur-Schutz des Hailo-Chips eingeschaltet (1/0)')
+    w.add('npu_throttle_level', npu.get('throttle_level'), 'Hailo-Drosselstufe: -1 = keine Drosselung, ab 0 wird gedrosselt')
 
     # ── Powerbank ────────────────────────────────────────────────────────
     pb = powerbank.get_status()
