@@ -29,6 +29,8 @@ Performance (AI HAT+ mit Hailo-8):
 import argparse
 import json
 import logging
+import os
+import logging.handlers
 import re
 import signal
 import subprocess
@@ -37,7 +39,58 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-LAST_DETECTION_FILE = '/tmp/last-detection.json'
+# Letzte Auslösung: liegt im Konfigurationsverzeichnis des Daemons und übersteht damit
+# Container-Neustarts (/tmp ist ein tmpfs). Ohne /config (Start von Hand) → /tmp.
+LAST_DETECTION_FILE = ('/config/last-detection.json' if os.path.isdir('/config')
+                       else '/tmp/last-detection.json')
+# Was die Kamera gerade sieht, aber unter der Schwelle liegt – nur für die Anzeige, flüchtig.
+SEEN_DETECTION_FILE = '/tmp/detection-seen.json'
+SEEN_WRITE_INTERVAL = 1.0   # Sekunden zwischen zwei Schreibvorgängen
+
+
+def write_json_atomic(path: str, data: dict) -> None:
+    """Erst Temp-Datei, dann umbenennen: Leser sehen nie eine halbe Datei."""
+    tmp = f'{path}.tmp'
+    with open(tmp, 'w', encoding='utf-8') as fh:
+        json.dump(data, fh)
+    os.replace(tmp, path)
+
+
+class SeenTracker:
+    """Merkt sich die beste Erkennung des Ziels UNTER der Schwelle und schreibt sie höchstens
+    einmal pro Sekunde in eine Datei. Die Web-GUI zeigt damit „sieht gerade: Person 62 %" –
+    so ist erkennbar, ob die Schwelle zu hoch ist oder die Kamera gar nichts erkennt."""
+
+    def __init__(self, path: str, threshold: float, interval: float = SEEN_WRITE_INTERVAL):
+        self.path = path
+        self.threshold = threshold
+        self.interval = interval
+        self._best = None           # (Klasse, Confidence) seit dem letzten Schreiben
+        self._last_write = 0.0
+
+    def observe(self, class_name: str, confidence: float, now: float = None) -> bool:
+        """Nimmt eine Erkennung unter der Schwelle auf. True, wenn dabei geschrieben wurde."""
+        now = time.monotonic() if now is None else now
+        if self._best is None or confidence > self._best[1]:
+            self._best = (class_name, confidence)
+        if now - self._last_write < self.interval:
+            return False
+        try:
+            write_json_atomic(self.path, {
+                'class': self._best[0], 'conf': round(self._best[1], 3),
+                'threshold': self.threshold, 'ts': time.time(),
+            })
+        except OSError:
+            pass
+        self._best = None
+        self._last_write = now
+        return True
+
+    def clear(self) -> None:
+        try:
+            os.remove(self.path)
+        except OSError:
+            pass
 
 # ---------------------------------------------------------------------------
 # Logging  (FileHandler = selbe Log-Datei wie CPU-YOLO-Script → nahtloser Tausch)
@@ -47,7 +100,9 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('/tmp/unified-camera-monitor.log'),
+        # /tmp ist ein tmpfs (RAM): Logdatei begrenzen auf 3 × 2 MB
+        logging.handlers.RotatingFileHandler(
+            '/tmp/unified-camera-monitor.log', maxBytes=2 * 1024 * 1024, backupCount=2),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -135,6 +190,10 @@ def main() -> None:
                         help='Ziel-FPS (Standard 25)')
     parser.add_argument('--resolution',   type=str,   default='1920x1080',
                         help='Kamera-Auflösung WxH (Standard 1920x1080)')
+    parser.add_argument('--last-detection-file', type=str, default=LAST_DETECTION_FILE,
+                        help='Datei für die letzte Auslösung')
+    parser.add_argument('--seen-file',    type=str,   default=SEEN_DETECTION_FILE,
+                        help='Datei für Erkennungen unter der Schwelle')
     args = parser.parse_args()
     active_classes = TARGET_CLASSES[args.target_class]
     _icons = {'bird': '\ud83d\udc26', 'person': '\ud83e\uddd0', 'dog': '\ud83d\udc15', 'cat': '\ud83d\udc08', 'all4': '\ud83d\udc26\ud83e\uddd0\ud83d\udc15\ud83d\udc08'}
@@ -193,6 +252,8 @@ def main() -> None:
 
     # ── Detection-Loop: stderr zeilenweise einlesen ───────────────────────
     target_found = False
+    seen = SeenTracker(args.seen_file, args.threshold)
+    seen.clear()   # Reste eines früheren Laufs (anderes Ziel, andere Schwelle) entfernen
     try:
         for line in proc.stderr:
             if _stopped_by_signal:
@@ -214,6 +275,8 @@ def main() -> None:
                     )
                     target_found = True
                     break
+                if class_name in active_classes:
+                    seen.observe(class_name, confidence)   # gesehen, aber unter der Schwelle
 
             if target_found:
                 break
@@ -231,16 +294,17 @@ def main() -> None:
 
     if target_found:
         # Erkennung persistieren  →  Daemon liest /tmp/last-detection.json für Status-API
+        seen.clear()
         try:
-            Path(LAST_DETECTION_FILE).write_text(
-                json.dumps({
-                    'class': class_name,
-                    'conf':  round(confidence, 3),
-                    'time':  datetime.now().strftime('%H:%M:%S'),
-                })
-            )
-        except OSError:
-            pass
+            now = datetime.now()
+            write_json_atomic(args.last_detection_file, {
+                'class': class_name,
+                'conf':  round(confidence, 3),
+                'time':  now.strftime('%H:%M:%S'),
+                'date':  now.strftime('%Y-%m-%d'),
+            })
+        except OSError as exc:
+            logger.warning('Letzte Erkennung konnte nicht gespeichert werden: %s', exc)
         # rc=0 → pi_daemon_secure.py Watchdog triggert Aufnahme (wenn detection_mode=True)
         sys.exit(0)
 

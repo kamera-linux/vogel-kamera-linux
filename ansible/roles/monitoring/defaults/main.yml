@@ -1,0 +1,13 @@
+---
+# Monitoring direkt auf dem Pi (Prometheus + Grafana als Container neben dem pi-daemon).
+# Eingeschaltet mit PI_MONITORING=true in ansible/.env – siehe monitoring/README.md.
+pi_monitoring_dir:               /opt/pi-monitoring
+pi_prometheus_image:             prom/prometheus:v3.15.1
+pi_grafana_image:                grafana/grafana:13.2.4
+# Aufbewahrung der Messwerte (was zuerst greift). Klein gehalten: der Pi schreibt auf SD-Karte.
+pi_prometheus_retention:         90d
+pi_prometheus_retention_size:    1GB
+# Obergrenzen für den Arbeitsspeicher. Wirken nur mit aktivem Speicher-cgroup – bei Raspberry
+# Pi OS ab Werk aus (cgroup_enable=memory in /boot/firmware/cmdline.txt schaltet ihn ein).
+pi_prometheus_memory:            384m
+pi_grafana_memory:               512m

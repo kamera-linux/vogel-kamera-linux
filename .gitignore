@@ -110,3 +110,8 @@ wiki-repo/
 
 # Wiki-Sync-Skript ist im Repository für alle Nutzer verfügbar
 # wiki_sync.py - bewusst NICHT ignoriert
+# Monitoring-Stack: lokale Zugangsdaten und Ziele
+monitoring/.env
+monitoring/prometheus/targets/*.yml
+monitoring/prometheus/secrets/*
+!monitoring/prometheus/secrets/.gitkeep

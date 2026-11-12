@@ -204,7 +204,7 @@ cd ansible && bash build_and_deploy.sh --update
 |--------|-------------|-------------|
 | `--install` | Vollständiges Erstdeployment: Docker CE, SSL-Zertifikat, Firewall, systemd-Service | Erstmalige Einrichtung |
 | `--update` | Image neu bauen → gzippen → SCP → `docker load` → Daemon neu starten | Jedes Code-Update |
-| `--hotpatch` | `pi_daemon_secure.py`, `pi_daemon/` + `web/index.html` direkt in laufenden Container kopieren + Neustart | Schneller Bugfix ohne Image-Rebuild |
+| `--hotpatch` | `pi_daemon_secure.py`, `pi_daemon/` + die Web-GUI (`web/`) direkt in laufenden Container kopieren + Neustart | Schneller Bugfix ohne Image-Rebuild |
 | `--build` | Nur ARM64-Image bauen, kein Transfer und kein Deploy | Lokaler Test |
 | `--setup-host` | Gentoo-Build-Rechner einrichten: Docker, QEMU aarch64, buildx, binfmt | Einmalig auf dem Build-Host |
 | `--no-cache` | Kombinierbar mit obigen: Docker-Cache ignorieren | Nach Dependency-Updates |
@@ -429,13 +429,15 @@ python3 build_and_deploy.py --hotpatch
 ```
 
 **Ablauf:**
-1. `pi_daemon_secure.py`, Paket `pi_daemon/` + `web/index.html` per SCP auf den Pi übertragen
+1. `pi_daemon_secure.py`, Paket `pi_daemon/` + Verzeichnis `web/` (index.html, app.js, app.css, Bilder) per SCP auf den Pi übertragen
 2. Container-ID via `docker ps --filter name=pi-daemon` ermitteln
 3. Alles per `docker cp` in den Container kopieren
 4. `docker restart <container-id>`
 5. Warten bis Port 8443 antwortet (max. 60 s)
 
 > **Wichtig:** Änderungen per `--hotpatch` überleben keinen kompletten Image-Rebuild (`--update`).
+> Der Hotpatch überträgt nur Code: Detection-Skripte (`raspberry-pi-scripts/`), neue Einstellungen
+> aus `ansible/.env` und das Monitoring kommen nur mit `--update` auf den Pi.
 > Nach dem nächsten `--update` müssen die Änderungen im Quellcode bereits eingeflossen sein.
 
 ### `setup-build-host.yml` – Lokaler Build-Rechner
@@ -470,7 +472,7 @@ ansible/
 │   ├── vars.yml                ← Variablen (aus .env via lookup('env'))
 │   └── vault.yml               ← Verschlüsselt: TOTP-Secret, Passwort-Hash
 ├── playbooks/
-│   ├── deploy.yml              ← Erstdeployment (alle 4 Rollen)
+│   ├── deploy.yml              ← Erstdeployment (alle Rollen)
 │   ├── update.yml              ← Image-Update (schnell)
 │   ├── hotpatch.yml            ← Einzelne Dateien direkt in Container (kein Image-Rebuild)
 │   └── setup-build-host.yml   ← Gentoo Build-Rechner einrichten
@@ -478,6 +480,11 @@ ansible/
     ├── build-host/             ← Lokaler Gentoo-Rechner: Docker, QEMU, buildx
     ├── docker/                 ← Docker CE auf dem Pi installieren
     ├── firewall/               ← UFW-Regeln auf dem Pi
+    ├── hardening/              ← Dateirechte, SSH nur mit Schlüssel
+    ├── monitoring/             ← optional: Prometheus + Grafana auf dem Pi (PI_MONITORING=true)
+    │   └── templates/
+    │       ├── docker-compose.yml.j2   ← eigenes Compose-Projekt unter /opt/pi-monitoring
+    │       └── prometheus.yml.j2       ← fragt den pi-daemon lokal über HTTPS + Token ab
     ├── pi-daemon/              ← Container + systemd-Service auf dem Pi
     │   └── templates/
     │       ├── docker-compose.yml.j2   ← Volume-Mounts, Ports, Env-Vars
@@ -498,6 +505,10 @@ ansible/
 | `PI_USER` | SSH-Benutzername auf dem Pi | `roimme` |
 | `PI_SSH_KEY` | Lokaler Pfad zum SSH-Private-Key | `~/.ssh/id_rsa_ai-had` |
 | `VAULT_PASS_FILE` | Pfad der Vault-Passwort-Datei | `~/.pi-daemon-vault-pass` |
+| `PI_POWERBANK_MAC` | optional: Bluetooth-MAC der Powerbank | `00:7F:1D:xx:xx:xx` |
+| `PI_MONITORING` | optional: `true` startet Prometheus + Grafana auf dem Pi | `true` |
+| `PI_GRAFANA_ADMIN_PASSWORD` | Passwort für den Grafana-Login `admin` (Pflicht bei `PI_MONITORING=true`, mind. 8 Zeichen) | – |
+| `PI_METRICS_TOKEN`, `PI_GRAFANA_URL` | nur für Monitoring auf einem anderen Rechner, siehe [monitoring/README.md](../monitoring/README.md) | – |
 | `E2E_PASSWORD` | *(optional)* Klartext-Passwort für `--e2e` Volltest | `MeinPasswort` |
 | `E2E_TOTP_SECRET` | *(optional)* Base32-TOTP-Secret für `--e2e` Volltest | `JBSWY3DPEHPK3PXP` |
 ### Wichtige Variablen (`group_vars/all/vars.yml`)

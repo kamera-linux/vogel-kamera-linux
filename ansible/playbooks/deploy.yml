@@ -12,12 +12,21 @@
     - ../group_vars/all/vars.yml
     - ../group_vars/all/vault.yml
 
+  pre_tasks:
+    # Metrics-Token bereitstellen, bevor die Rolle pi-daemon app.env schreibt
+    - name: Monitoring vorbereiten (Metrics-Token)
+      ansible.builtin.include_role:
+        name: monitoring
+        tasks_from: token
+
   roles:
     - role: docker      # Docker CE installieren
     - role: ssl         # Self-signed Zertifikat
     - role: firewall    # UFW-Regeln
     - role: hardening   # Dateirechte, SSH nur mit Key, alte Firewall-Regeln
     - role: pi-daemon   # Image laden + docker-compose + systemd
+    - role: monitoring  # optional: Prometheus + Grafana auf dem Pi (PI_MONITORING=true)
+      when: pi_monitoring | bool
 
   post_tasks:
     - name: Warte bis Daemon erreichbar ist
@@ -33,3 +42,4 @@
           - "✅ Pi-Daemon läuft auf https://{{ inventory_hostname }}:{{ pi_daemon_port }}"
           - "   Web-GUI: https://{{ inventory_hostname }}:{{ pi_daemon_port }}/"
           - "   Zertifikat: self-signed, Browser-Ausnahme nötig beim ersten Aufruf"
+          - "{{ '   Monitoring: http://' ~ inventory_hostname ~ ':' ~ pi_grafana_port if (pi_monitoring | bool) else '   Monitoring: aus (PI_MONITORING=true in ansible/.env schaltet es ein)' }}"

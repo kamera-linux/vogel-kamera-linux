@@ -1,0 +1,62 @@
+# Jinja2-Template → {{ pi_monitoring_dir }}/docker-compose.yml
+# Monitoring auf dem Pi: Prometheus sammelt die Messwerte des pi-daemon, Grafana zeigt sie.
+# Eigenes Compose-Projekt – der pi-daemon läuft unabhängig davon weiter.
+name: vogelkamera-monitoring
+
+services:
+  prometheus:
+    image: {{ pi_prometheus_image }}
+    container_name: vogelkamera-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time={{ pi_prometheus_retention }}
+      - --storage.tsdb.retention.size={{ pi_prometheus_retention_size }}
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/secrets:/etc/prometheus/secrets:ro
+      - prometheus-data:/prometheus
+    # Der pi-daemon lauscht auf dem Host (Port {{ pi_daemon_port }})
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Prometheus-Oberfläche nur auf dem Pi selbst; Grafana spricht intern
+    ports:
+      - "127.0.0.1:9090:9090"
+    mem_limit: {{ pi_prometheus_memory }}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "5m", max-file: "2" }
+
+  grafana:
+    image: {{ pi_grafana_image }}
+    container_name: vogelkamera-grafana
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD fehlt in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      # Keine Zusatz-Plugins beim Start nachladen (sonst ~380 MB Download und langsamer Start)
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/vogelkamera.json
+      GF_DEFAULT_LOCALE: de-DE
+      TZ: Europe/Berlin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "{{ pi_grafana_port }}:3000"
+    mem_limit: {{ pi_grafana_memory }}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "5m", max-file: "2" }
+
+volumes:
+  prometheus-data:
+  grafana-data:

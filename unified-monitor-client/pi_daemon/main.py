@@ -4,7 +4,9 @@ from pathlib import Path
 
 from . import config
 from .api import app
-from .camera import CameraManager, _auto_convert_watcher, detection_watchdog
+from .camera import (
+    CameraManager, _auto_convert_watcher, _post_process_worker, detection_watchdog,
+)
 from .config import logger
 from .hailo import _hailo_temp_updater
 from .monitoring import _thread_monitor_daemon
@@ -20,6 +22,8 @@ def main() -> None:
 
     CameraManager.start_detection_mode()
 
+    # Konvertierung + Transfer fertiger Aufnahmen (hält die Kamera nicht auf)
+    threading.Thread(target=_post_process_worker, daemon=True, name='post-process').start()
     threading.Thread(target=_auto_convert_watcher, daemon=True, name='auto-convert').start()
     threading.Thread(target=detection_watchdog, daemon=True, name='detection-watchdog').start()
     threading.Thread(target=_hailo_temp_updater, daemon=True, name='hailo-temp').start()

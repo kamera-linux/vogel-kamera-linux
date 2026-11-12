@@ -1,0 +1,6 @@
+# Kopieren nach kamera.yml (wird nicht eingecheckt) und den Pi eintragen.
+# Hostname oder IP – so, wie er im Zertifikat des Pi steht.
+# Das Label "name" erscheint im Dashboard.
+- targets: ['raspberry-pi.local:8443']
+  labels:
+    name: Vogelhaus

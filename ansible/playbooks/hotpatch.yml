@@ -1,5 +1,5 @@
 ---
-# Kopiert pi_daemon_secure.py, das Paket pi_daemon/ und web/index.html direkt in den
+# Kopiert pi_daemon_secure.py, das Paket pi_daemon/ und die Web-GUI (web/) direkt in den
 # laufenden Container und startet ihn neu.
 # Kein Image-Rebuild nötig – ideal für schnelle Bugfixes.
 #
@@ -25,10 +25,10 @@
   vars:
     local_script: "{{ playbook_dir }}/../../unified-monitor-client/pi_daemon_secure.py"
     local_pkg:    "{{ playbook_dir }}/../../unified-monitor-client/pi_daemon/"
-    local_html:   "{{ playbook_dir }}/../../unified-monitor-client/web/index.html"
+    local_web:    "{{ playbook_dir }}/../../unified-monitor-client/web/"
     remote_tmp_py:   /tmp/pi_daemon_secure.py
     remote_tmp_pkg:  /tmp/pi_daemon_pkg
-    remote_tmp_html: /tmp/pi_daemon_index.html
+    remote_tmp_web:  /tmp/pi_daemon_web
 
   tasks:
     - name: Python-Skript auf den Pi übertragen
@@ -49,11 +49,17 @@
         mode:  "0644"
         directory_mode: "0755"
 
-    - name: index.html auf den Pi übertragen
+    - name: Altes Web-Verzeichnis auf dem Pi entfernen
+      ansible.builtin.file:
+        path:  "{{ remote_tmp_web }}"
+        state: absent
+
+    - name: Web-GUI (index.html, app.js, app.css, Bilder) auf den Pi übertragen
       ansible.builtin.copy:
-        src:   "{{ local_html }}"
-        dest:  "{{ remote_tmp_html }}"
+        src:   "{{ local_web }}"      # Slash am Ende → Inhalt kopieren
+        dest:  "{{ remote_tmp_web }}/"
         mode:  "0644"
+        directory_mode: "0755"
 
     - name: Container-ID ermitteln
       ansible.builtin.command:
@@ -74,9 +80,9 @@
       ansible.builtin.command:
         cmd: "docker cp {{ remote_tmp_pkg }}/. {{ container_id.stdout }}:/app/pi_daemon/"
 
-    - name: index.html in Container kopieren
+    - name: Web-GUI in Container kopieren
       ansible.builtin.command:
-        cmd: "docker cp {{ remote_tmp_html }} {{ container_id.stdout }}:/app/web/index.html"
+        cmd: "docker cp {{ remote_tmp_web }}/. {{ container_id.stdout }}:/app/web/"
 
     - name: Temporäre Dateien aufräumen
       ansible.builtin.file:
@@ -85,7 +91,7 @@
       loop:
         - "{{ remote_tmp_py }}"
         - "{{ remote_tmp_pkg }}"
-        - "{{ remote_tmp_html }}"
+        - "{{ remote_tmp_web }}"
 
     - name: Container neu starten
       ansible.builtin.command:

@@ -223,17 +223,11 @@ tmux send-keys -t pi-daemon-monitor "journalctl -u pi-daemon -f" Enter
 ```
 
 ### Mit Prometheus + Grafana:
-```yaml
-# prometheus.yml
-global:
-  scrape_interval: 30s
 
-scrape_configs:
-  - job_name: 'pi-daemon'
-    static_configs:
-      - targets: ['localhost:8443']
-    metrics_path: '/api/status'
-```
+Seit v2.5.0 fertig vorbereitet: `PI_MONITORING=true` und `PI_GRAFANA_ADMIN_PASSWORD=…` in
+`ansible/.env`, dann `--update`. Grafana läuft danach auf `http://<pi>:3000`.
+Der Endpunkt für Prometheus ist `/metrics` (mit eigenem Token), **nicht** `/api/status`.
+Anleitung: [../monitoring/README.md](../monitoring/README.md)
 
 ---
 

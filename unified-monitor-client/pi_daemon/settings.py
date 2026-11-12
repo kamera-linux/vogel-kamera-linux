@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 
 from .config import logger
+from .storage import write_json_atomic
 
 
 # Verfügbare Detection-Engines (key → Dateipfad im Container)
@@ -36,8 +37,7 @@ def _load_active_engine() -> str:
 
 def _save_active_engine(engine: str) -> None:
     try:
-        Path(DETECTION_ENGINE_FILE).parent.mkdir(parents=True, exist_ok=True)
-        Path(DETECTION_ENGINE_FILE).write_text(json.dumps({'engine': engine}, indent=2))
+        write_json_atomic(DETECTION_ENGINE_FILE, {'engine': engine})
     except Exception as exc:
         logger.error('Detection-Engine-Einstellung konnte nicht gespeichert werden: %s', exc)
 
@@ -65,10 +65,8 @@ def _load_detection_settings() -> dict:
 
 def _save_detection_settings(target_class: str, threshold: float) -> None:
     try:
-        Path(DETECTION_SETTINGS_FILE).parent.mkdir(parents=True, exist_ok=True)
-        Path(DETECTION_SETTINGS_FILE).write_text(
-            json.dumps({'target_class': target_class, 'threshold': threshold}, indent=2)
-        )
+        write_json_atomic(DETECTION_SETTINGS_FILE,
+                          {'target_class': target_class, 'threshold': threshold})
     except Exception as exc:
         logger.error('Detection-Settings konnten nicht gespeichert werden: %s', exc)
 
@@ -119,8 +117,7 @@ def _load_camera_settings() -> dict:
 
 def _save_camera_settings(data: dict) -> None:
     try:
-        Path(CAMERA_SETTINGS_FILE).parent.mkdir(parents=True, exist_ok=True)
-        Path(CAMERA_SETTINGS_FILE).write_text(json.dumps(data, indent=2))
+        write_json_atomic(CAMERA_SETTINGS_FILE, data)
     except Exception as exc:
         logger.error('Kamera-Einstellungen konnten nicht gespeichert werden: %s', exc)
 
@@ -208,7 +205,6 @@ def _load_rec_settings() -> dict:
 
 def _save_rec_settings(data: dict) -> None:
     try:
-        Path(REC_SETTINGS_FILE).parent.mkdir(parents=True, exist_ok=True)
-        Path(REC_SETTINGS_FILE).write_text(json.dumps(data, indent=2))
+        write_json_atomic(REC_SETTINGS_FILE, data)
     except Exception as exc:
         logger.error('Aufnahme-Einstellungen konnten nicht gespeichert werden: %s', exc)

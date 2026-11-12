@@ -47,7 +47,7 @@ Beispiel-Response:
     "mem_used_mb": 513
   },
   "threads_active": 5,
-  "version": "2.4.2"
+  "version": "2.5.0"
 }
 ```
 
@@ -186,6 +186,51 @@ sudo systemctl restart pi-daemon
 **Monatlich:**
 - [ ] Log-Rotation prüfen
 - [ ] Health-Cache-Performance checken
+
+---
+
+## 📈 Prometheus & Grafana (optional)
+
+Für Verläufe (Akku, Temperaturen, Erkennungen, Speicher) liefert der Daemon Messwerte im
+Prometheus-Format unter `https://<pi>:8443/metrics`. Prometheus sammelt sie, Grafana zeigt das
+Dashboard „Vogel-Kamera".
+
+**Einfachster Weg – direkt auf dem Pi:** zwei Zeilen in `ansible/.env`, dann deployen.
+
+```bash
+PI_MONITORING=true
+PI_GRAFANA_ADMIN_PASSWORD=MindestensAchtZeichen
+```
+
+Danach gibt es in der Web-GUI den Knopf „📈 Monitoring" (Grafana auf `http://<pi>:3000`, Login
+`admin`). Token, Zertifikat, Firewall und Dashboard richtet die Ansible-Rolle `monitoring` ein.
+
+**Alternative – auf einem anderen Rechner im Heimnetz:** Verläufe bleiben sichtbar, wenn der Pi
+aus ist. Vorbereitet in [`monitoring/`](monitoring/).
+
+**Beide Wege Schritt für Schritt:** [monitoring/README.md](monitoring/README.md)
+
+Das Token kann nur Messwerte lesen, nichts steuern; das Login der Web-GUI gilt für `/metrics` nicht.
+
+**Messwerte** (alle mit Präfix `vogelkamera_`):
+
+| Messwert | Bedeutung |
+|---|---|
+| `powerbank_battery_percent`, `powerbank_input_watts`, `powerbank_output_watts` | Akkustand und Leistung |
+| `cpu_temperature_celsius`, `npu_temperature_celsius`, `npu_throttle_active` | Temperaturen, Drosselung |
+| `triggered_recordings_total`, `recordings_today` | Aufnahmen durch Erkennung |
+| `detection_running`, `recording_running`, `camera_hardware_error` | Zustand der Kamera |
+| `disk_free_bytes`, `pending_conversions`, `postprocess_queue_length` | Speicher und Rückstau |
+| `cpu_usage_ratio`, `load_average`, `memory_used_bytes` | Systemlast |
+
+**Alarm, wenn der Pi nicht mehr antwortet** (das kann der Daemon selbst nicht melden) – als
+Alarmregel in Grafana oder Prometheus:
+
+```yaml
+- alert: VogelkameraNichtErreichbar
+  expr: up{job="vogelkamera"} == 0
+  for: 5m
+```
 
 ---
 

@@ -4,14 +4,19 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.4.2** - "Erkennungsziele & Online-Hilfe" 🐕
+**Version 2.5.0** - "Web-GUI, Player & Monitoring" 📈
 - **Branch:** main
-- **Release Notes:** [v2.4.2/RELEASE_NOTES_v2.4.2.md](v2.4.2/RELEASE_NOTES_v2.4.2.md)
-- **Release Date:** 2026-11-07
-- **🔧 Fix:** Erkennungsziel Hund/Katze/Alle 4 bleibt nach Neustart erhalten
-- **📚 Doku:** Online-Hilfe der Web-GUI und Wiki aktualisiert
+- **Release Notes:** [v2.5.0/RELEASE_NOTES_v2.5.0.md](v2.5.0/RELEASE_NOTES_v2.5.0.md)
+- **Release Date:** 2026-11-12
+- **⚡ Erkennung:** läuft nach einer Aufnahme sofort weiter (Konvertierung/Transfer im Hintergrund)
+- **🖥 Web-GUI:** Player, neue Anordnung, Handy-Ansicht, strikte CSP
+- **📈 Monitoring:** Prometheus-Endpunkt und Grafana-Dashboard
 
 ## 📦 Vorherige Versionen
+
+### Version 2.4.2 - "Erkennungsziele & Online-Hilfe" 🐕
+- **Release Notes:** [v2.4.2/RELEASE_NOTES_v2.4.2.md](v2.4.2/RELEASE_NOTES_v2.4.2.md)
+- **Release Date:** 2026-11-07
 
 ### Version 2.4.1 - "Security-Audit" 🔒
 - **Release Notes:** [v2.4.1/RELEASE_NOTES_v2.4.1.md](v2.4.1/RELEASE_NOTES_v2.4.1.md)

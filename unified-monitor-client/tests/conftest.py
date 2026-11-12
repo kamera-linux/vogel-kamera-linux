@@ -16,7 +16,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pi_daemon import api, config  # noqa: E402
+from pi_daemon import api, camera, config  # noqa: E402
 
 PASSWORD = 'test-passwort'
 JWT_SECRET = 'test-jwt-secret-mit-ausreichender-laenge-32b'
@@ -28,6 +28,7 @@ def video_dir(tmp_path, monkeypatch):
     base = tmp_path / 'videos'
     base.mkdir()
     monkeypatch.setattr(config, 'VIDEO_BASE_DIR', str(base))
+    monkeypatch.setattr(camera, '_SCAN_TTL', 0)   # Verzeichnis-Scan in Tests nicht cachen
     return base
 
 

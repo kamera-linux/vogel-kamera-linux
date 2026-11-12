@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: Vogelkamera
+    folder: Vogelkamera
+    type: file
+    # Änderungen in der Grafana-Oberfläche halten nur bis zum nächsten Neustart. Dauerhaft:
+    # Dashboard als JSON exportieren und nach monitoring/grafana/dashboards/ legen.
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards

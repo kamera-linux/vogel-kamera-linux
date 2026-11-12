@@ -1,26 +1,33 @@
 # 🐦 Vogel-Kamera-Linux
 
-> 🌐 **Multi-Language Documentation:** This README is available in multiple languages!  
+> 🌐 **Other languages:** short summaries in [🇬🇧 English](docs/i18n/README.md) and [🇯🇵 日本語](docs/i18n/README.ja.md) – the full documentation is in German.
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.4.2 — Erkennungsziele & Online-Hilfe 🐕
+## Release v2.5.0 — Web-GUI, Player & Monitoring 📈
 
-- **Version:** v2.4.2 (7. November 2026)
-- **🔧 Fix:** Erkennungsziel Hund, Katze oder „Alle 4“ bleibt nach einem Neustart erhalten
-- **📚 Online-Hilfe** in der Web-GUI aktualisiert (Zeitlupen-Profile, Erkennungsziele, Powerbank, Sicherheit)
-- **📖 [Wiki](https://github.com/kamera-linux/vogel-kamera-linux/wiki)** komplett überarbeitet
+- **Version:** v2.5.0 (12. November 2026)
+- **⚡ Erkennung läuft nach einer Aufnahme sofort weiter** – Konvertierung und Transfer blockieren die Kamera nicht mehr
+- **🖥 Web-GUI überarbeitet:** Aufnahmen im Browser abspielen, Steuerung oben, Handy-Ansicht, Dauer 10 s – 10 min
+- **📈 Monitoring:** Prometheus + Grafana direkt auf dem Pi mit fertigem Dashboard ([Einrichtung](monitoring/README.md))
+- **🔧 Fixes:** Profil-Bitrate bei normalen Aufnahmen, halbe Videos durch Auto-Convert, Log-Rotation
 
 **Update:** [`./ansible/build_and_deploy.sh --update`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.4.2/`](releases/v2.4.2/RELEASE_NOTES_v2.4.2.md)
+**Release Notes:** [`releases/v2.5.0/`](releases/v2.5.0/RELEASE_NOTES_v2.5.0.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.4.2-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.4.2)
+[![Version](https://img.shields.io/badge/Version-v2.5.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.5.0)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Slow-Motion](https://img.shields.io/badge/Slow--Motion-2304x1296%40%2056fps-ff9800)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
 [![CI](https://github.com/kamera-linux/vogel-kamera-linux/actions/workflows/ci.yml/badge.svg)](https://github.com/kamera-linux/vogel-kamera-linux/actions/workflows/ci.yml)
 [![Docker Web API](https://img.shields.io/badge/Architecture-Docker%20Web%20API-success)]()
+
+### v2.4.2 (Archiv)
+**Erkennungsziele & Online-Hilfe**
+- **Version:** v2.4.2 (7. November 2026)
+- Erkennungsziel bleibt nach Neustart erhalten, Online-Hilfe und Wiki aktualisiert
+- Siehe [Archiv-Release](releases/v2.4.2/RELEASE_NOTES_v2.4.2.md) für Details
 
 ### v2.4.1 (Archiv)
 **Security-Audit**
@@ -223,6 +230,8 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 - ⚙️ **Flexible Konfiguration** über `ansible/.env` (gitignored)
 - 📊 **Fortschrittsanzeige** während der Aufnahme
 - 🔋 **Powerbank-Überwachung** per Bluetooth mit Warnung und automatischem Shutdown *(Neu in v2.4.0)*
+- ▶️ **Aufnahmen im Browser abspielen** und Bedienung auch auf dem Handy *(Neu in v2.5.0)*
+- 📈 **Verläufe in Grafana** (Akku, Temperaturen, Erkennungen, Speicher) – optional direkt auf dem Pi *(Neu in v2.5.0)*
 - 🔄 **Automatische Video-/Audio-Synchronisation**
 - 📱 **YouTube-Integration** mit QR-Codes für mobile Nutzer
 - 🔧 **Einfache Installation** per Ansible (`build_and_deploy.sh`)
@@ -257,22 +266,41 @@ flowchart TD
 | Funktion | Beschreibung |
 |----------|--------------|
 | **Detection starten / stoppen** | KI-gestützte Vogelerkennung mit automatischer Aufnahme bei Trigger |
-| **Manuelle Aufnahme** | Zeitgesteuerte Aufnahme ohne Erkennungs-Overhead |
+| **Manuelle Aufnahme** | Zeitgesteuerte Aufnahme (10 s bis 10 min) ohne Erkennungs-Overhead |
 | **Konvertierung** | Automatische H264 → MP4 Konvertierung im Container |
-| **Transfer** | SSH-Sync zu konfigurierten Zielsystemen |
+| **Transfer** | SSH-Sync zu konfigurierten Zielsystemen – läuft im Hintergrund, die Erkennung arbeitet sofort weiter |
+| **Abspielen** | Videos und Audio-Aufnahmen direkt im Browser ansehen *(Neu in v2.5.0)* |
 | **Download** | Direkte Browser-Downloads von Aufnahmen |
 | **Löschen** | Verwaltung der Aufnahmen im Container |
 | **Powerbank** | Akkustand, Leistung und Temperatur der Anker-Powerbank (Bluetooth) |
+| **Monitoring** | Knopf „📈 Monitoring" öffnet das Grafana-Dashboard mit Verläufen *(Neu in v2.5.0, optional)* |
+
+### Monitoring mit Grafana *(Neu in v2.5.0)*
+
+Zwei Zeilen in `ansible/.env` genügen, dann laufen Prometheus und Grafana als Container auf dem Pi:
+
+```bash
+PI_MONITORING=true
+PI_GRAFANA_ADMIN_PASSWORD=MindestensAchtZeichen
+```
+
+Das Dashboard „Vogel-Kamera" zeigt Akkustand und Restlaufzeit, Erkennungen, Temperaturen,
+Speicher und Netz. Alternativ läuft der Stack auf einem anderen Rechner im Heimnetz.
+Anleitung: [monitoring/README.md](monitoring/README.md)
 
 ### Screenshots
 
-| Login | Status-Übersicht |
-|-------|-----------------|
+| Login | Status und Steuerung |
+|-------|----------------------|
 | ![Web-GUI Login](assets/WebGUI-Login.png) | ![Web-GUI Status](assets/WebGUI-Status.png) |
 
-| Manuelles Video | Online-Hilfe |
-|----------------|-------------|
-| ![Web-GUI Manuelles Video](assets/WebGUI-Manuelles-Video.png) | ![Web-GUI Online-Hilfe](assets/WebGUI-OnlineHilfe.png) |
+| Aufnahme und Bildeinstellungen | Online-Hilfe |
+|--------------------------------|--------------|
+| ![Web-GUI Aufnahme](assets/WebGUI-Manuelles-Video.png) | ![Web-GUI Online-Hilfe](assets/WebGUI-OnlineHilfe.png) |
+
+| Auf dem Handy | Grafana-Dashboard *(Neu in v2.5.0)* |
+|---------------|-------------------------------------|
+| <img src="assets/WebGUI-Mobil.png" alt="Web-GUI auf dem Handy" width="260"> | ![Grafana-Dashboard Vogel-Kamera](assets/Grafana-Dashboard.png) |
 
 **Powerbank-Überwachung** *(Neu in v2.4.0)*
 
@@ -407,12 +435,12 @@ vogel-kamera-linux/
 │   ├── group_vars/all/               #    Variablen + Vault (Secrets)
 │   ├── inventory/hosts.yml           #    Raspberry Pi (Alias: pi-camera)
 │   ├── playbooks/                    #    deploy.yml · update.yml · setup-build-host.yml
-│   ├── roles/                        #    build-host · docker · firewall · pi-daemon · ssl
+│   ├── roles/                        #    build-host · docker · firewall · hardening · monitoring · pi-daemon · ssl
 │   ├── build_and_deploy.sh           #    ⭐ Haupt-Skript (--install / --update / --e2e)
 │   └── ansible.cfg
 │
 ├── unified-monitor-client/           # 🐳 Docker-Container (Hauptsystem)
-│   ├── web/                          #    Web-GUI (index.html + logo.png)
+│   ├── web/                          #    Web-GUI (index.html · app.js · app.css · Logo)
 │   ├── pi_daemon_secure.py           #    ⭐ Flask HTTPS-Daemon (JWT + TOTP) – Startpunkt
 │   ├── pi_daemon/                    #    Daemon-Code (api, camera, settings, …)
 │   ├── tests/                        #    pytest (CI)
@@ -427,8 +455,10 @@ vogel-kamera-linux/
 │
 ├── docker/                           # 🐳 Dockerfile (ARM64, python:3.13-slim-trixie)
 │
+├── monitoring/                       # 📈 Prometheus + Grafana (Dashboard, Compose für externen Rechner)
+│
 ├── docs/                             # 📚 Dokumentation
-│   ├── i18n/                         #    README.de.md · README.md · README.ja.md
+│   ├── i18n/                         #    Kurzfassungen: English · 日本語 (Verweis aufs Haupt-README)
 │   ├── ARCHITEKTUR.md
 │   ├── SECURITY.md
 │   ├── AI-MODELLE-VOGELARTEN.md
@@ -563,5 +593,5 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ---
 
-**Version:** v2.4.2 (7. November 2026) | **Status:** Produktionsreif ✅  
+**Version:** v2.5.0 (12. November 2026) | **Status:** Produktionsreif ✅  
 **Raspberry Pi 5 AI HAT+ · Hailo-8 NPU · Debian Trixie (13) | Docker Web-API | JWT + TOTP 2FA | Powerbank-Überwachung (Bluetooth) | Security-Audit 11/2026**

@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  # pi-daemon der Vogel-Kamera: https://<pi>:8443/metrics
+  # Auf dem Pi muss PI_METRICS_TOKEN gesetzt sein (ansible/.env), sonst antwortet er mit 404.
+  - job_name: vogelkamera
+    scheme: https
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    authorization:
+      # Datei mit genau dem Token aus PI_METRICS_TOKEN (eine Zeile)
+      credentials_file: /etc/prometheus/secrets/metrics.token
+    tls_config:
+      # Selbstsigniertes Zertifikat des Pi:  curl -k https://<pi>:8443/cert.pem -o secrets/kamera.pem
+      # Der Name in targets/kamera.yml muss im Zertifikat stehen (Hostname oder IP des Pi).
+      ca_file: /etc/prometheus/secrets/kamera.pem
+    # Ziel(e) aus targets/kamera.yml – Änderungen werden ohne Neustart übernommen.
+    file_sd_configs:
+      - files: ['/etc/prometheus/targets/*.yml']

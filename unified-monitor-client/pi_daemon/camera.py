@@ -1,8 +1,11 @@
 """Kamera-Steuerung: Detection-Prozess, Aufnahme (Video/Audio), Konvertierung, Transfer."""
+import hashlib
 import json
 import os
+import queue
 import shlex
 import shutil
+import stat
 import subprocess
 import threading
 import time
@@ -16,28 +19,127 @@ from .settings import RECORDING_PROFILES, _RESOLUTION_MAP, _load_rec_settings
 from .sync import _get_active_targets, ssh_options
 
 
+# ---------------------------------------------------------------------------
+# Nachbearbeitung (Konvertierung + Transfer) läuft getrennt von der Aufnahme
+# ---------------------------------------------------------------------------
+# Dateien, die gerade aufgenommen werden oder auf Nachbearbeitung warten.
+# Auto-Convert und Speicher-Aufräumung fassen sie nicht an. Geschützt durch _lock.
+_busy_files: set = set()
+_convert_lock = threading.Lock()   # immer nur ein ffmpeg gleichzeitig
+_sweep_lock = threading.Lock()     # immer nur ein „alle ausstehenden"-Durchlauf
+_post_queue: queue.Queue = queue.Queue()   # (Pfad, fps, slowmotion)
+
+
+def _mark_busy(path: Path) -> None:
+    with _lock:
+        _busy_files.add(Path(path))
+
+
+def _release_busy(path: Path) -> None:
+    with _lock:
+        _busy_files.discard(Path(path))
+
+
+def _is_busy(path: Path) -> bool:
+    with _lock:
+        return Path(path) in _busy_files
+
+
+# ---------------------------------------------------------------------------
+# Verzeichnis-Scan (kurz gecacht)
+# ---------------------------------------------------------------------------
+# Die Web-GUI fragt den Status alle paar Sekunden ab. Statt bei jeder Anfrage
+# mehrfach das Video-Verzeichnis zu durchlaufen, teilen sich Status, Aufnahmeliste
+# und Pending-Zähler einen Scan, der _SCAN_TTL Sekunden gültig bleibt.
+_MEDIA_SUFFIXES = ('.mp4', '.h264', '.wav')
+_SCAN_TTL: float = 3.0
+_scan_lock = threading.Lock()
+_scan_cache: dict = {'at': float('-inf'), 'base': '', 'files': []}
+
+
+def _scan_media() -> list:
+    """Alle Mediendateien unter VIDEO_BASE_DIR als Liste von (Path, os.stat_result)."""
+    base = Path(config.VIDEO_BASE_DIR)
+    now = time.monotonic()
+    with _scan_lock:
+        if _scan_cache['base'] == str(base) and now - _scan_cache['at'] < _SCAN_TTL:
+            return _scan_cache['files']
+        files = []
+        if base.exists():
+            for f in base.rglob('*'):
+                if f.suffix not in _MEDIA_SUFFIXES:
+                    continue
+                try:
+                    st = f.stat()
+                except OSError:
+                    continue
+                if stat.S_ISREG(st.st_mode):
+                    files.append((f, st))
+        _scan_cache.update(at=now, base=str(base), files=files)
+        return files
+
+
+def invalidate_media_scan() -> None:
+    """Nach Löschen/Anlegen von Dateien aufrufen, damit die GUI sofort den neuen Stand sieht."""
+    with _scan_lock:
+        _scan_cache['at'] = float('-inf')
+
+
+def _is_listed(f: Path) -> bool:
+    """MP4s und manuell aufgenommene Audio-Dateien (_audio im Namen) erscheinen in der Liste.
+    Begleit-WAVs von Video-Aufnahmen und rohe H264-Dateien nicht."""
+    return f.suffix == '.mp4' or (f.suffix == '.wav' and '_audio' in f.name)
+
+
+def media_summary() -> dict:
+    """Kennzahlen für /api/status: Aufnahmen heute, ausstehende Konvertierungen und eine
+    Prüfsumme der Aufnahmeliste (die GUI lädt die Liste nur neu, wenn sie sich ändert)."""
+    files = _scan_media()
+    today = datetime.now().strftime('%Y-%m-%d')
+    paths = {f for f, _ in files}
+    today_count = 0
+    pending = 0
+    h = hashlib.sha1()
+    for f, st in sorted(files, key=lambda x: str(x[0])):
+        if f.suffix == '.mp4' and datetime.fromtimestamp(st.st_mtime).strftime('%Y-%m-%d') == today:
+            today_count += 1
+        if f.suffix == '.h264' and f.with_suffix('.mp4') not in paths:
+            pending += 1
+        if _is_listed(f):
+            h.update(f'{f}|{st.st_size}|{int(st.st_mtime)}\n'.encode())
+    return {'today': today_count, 'pending': pending, 'rev': h.hexdigest()[:12]}
+
+
 def _count_today_recordings() -> int:
     """Zählt Video-Aufnahmen im VIDEO_BASE_DIR die heute erstellt wurden."""
-    today = datetime.now().strftime('%Y-%m-%d')
-    base = Path(config.VIDEO_BASE_DIR)
-    if not base.exists():
-        return 0
-    count = 0
-    for f in base.rglob('*.mp4'):
-        try:
-            if datetime.fromtimestamp(f.stat().st_mtime).strftime('%Y-%m-%d') == today:
-                count += 1
-        except OSError:
-            pass
-    return count
+    return media_summary()['today']
 
 
 def _read_last_detection() -> dict:
-    """Letzte Erkennung aus /tmp/last-detection.json lesen (geschrieben vom Hailo-Script)."""
+    """Letzte Auslösung (geschrieben vom Detection-Skript): Klasse, Confidence, Uhrzeit, Datum.
+    Liegt unter /config und übersteht damit Container-Neustarts."""
+    for path in (config.LAST_DETECTION_FILE, '/tmp/last-detection.json'):   # zweiter Pfad: alte Skripte
+        try:
+            p = Path(path)
+            if p.exists():
+                return json.loads(p.read_text())
+        except Exception:
+            pass
+    return None
+
+
+def _read_seen_detection() -> dict:
+    """Was die Kamera gerade sieht, aber unter der Schwelle liegt – oder None.
+    Nur aktuelle Einträge (SEEN_MAX_AGE_S) und nur, solange die Detection läuft."""
+    if not state.detection_running:
+        return None
     try:
-        p = Path('/tmp/last-detection.json')
-        if p.exists():
-            return json.loads(p.read_text())
+        data = json.loads(Path(config.SEEN_DETECTION_FILE).read_text())
+        age = time.time() - float(data['ts'])
+        if 0 <= age <= config.SEEN_MAX_AGE_S:
+            return {'class': str(data['class']), 'conf': float(data['conf']),
+                    'threshold': float(data.get('threshold', settings._detection_threshold)),
+                    'age_s': round(age, 1)}
     except Exception:
         pass
     return None
@@ -126,6 +228,8 @@ class CameraManager:
                     'python3', settings.DETECTION_SCRIPT,
                     '--target-class', settings._detection_target,
                     '--threshold',    str(settings._detection_threshold),
+                    '--last-detection-file', config.LAST_DETECTION_FILE,
+                    '--seen-file',    config.SEEN_DETECTION_FILE,
                 ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -249,6 +353,8 @@ class CameraManager:
             state.recording_duration_s = duration
 
         # ── Aufnahme (Lock freigegeben) ─────────────────────────────────────
+        video_file = None
+        queued = False
         try:
             w, h = _RESOLUTION_MAP.get(resolution, (1920, 1080))
 
@@ -263,6 +369,7 @@ class CameraManager:
                 video_file = recording_dir / f'{ts}_{w}x{h}_{fps}fps.h264'
             else:
                 video_file = recording_dir / f'{ts}_{w}x{h}_{fps}fps.mp4'
+            _mark_busy(video_file)
 
             # Mic-Eingangspegel sicherstellen (USB-Audio-Karte setzt ihn manchmal auf 0%)
             try:
@@ -304,6 +411,7 @@ class CameraManager:
                     'rpicam-vid', '-n',
                     '--width', str(w), '--height', str(h),
                     '--framerate', str(fps),
+                    '--bitrate', str(bitrate * 1000),
                     '--rotation', '0',
                     '--autofocus-mode', 'manual',
                     '--lens-position', str(settings._lens_position),
@@ -380,20 +488,11 @@ class CameraManager:
                 logger.info('Recording abgeschlossen: %s | Load: %.2f %.2f %.2f',
                             video_file.name, *os.getloadavg())
 
-                if slowmotion:
-                    # Zeitlupe h264 → mehrere MP4-Playback-Versionen per ffmpeg
-                    ok, results = CameraManager._convert_one(video_file, recording_fps=fps, slowmotion=True)
-                    if ok:
-                        logger.info('Slowmo-Konvertierung: %d Datei(en)', len(results))
-                        for mp4 in results:
-                            CameraManager.transfer_all(mp4)
-                    else:
-                        logger.warning('Konvertierung fehlgeschlagen: %s', results[0] if results else '?')
-                        with _lock:
-                            state.last_error = f'Konvertierung: {results[0] if results else "Fehler"}'
-                else:
-                    # Normal: libav-MP4 ist fertig, direkt transferieren
-                    CameraManager.transfer_all(str(video_file))
+                # Konvertierung (Zeitlupe) und Transfer laufen im Nachbearbeitungs-Thread.
+                # Die Kamera ist ab hier frei – das finally unten startet die Detection
+                # sofort wieder, statt auf ffmpeg/rsync zu warten.
+                _post_queue.put((video_file, fps, slowmotion))
+                queued = True
 
                 return True, rec_info
 
@@ -413,6 +512,8 @@ class CameraManager:
             return False, str(exc)
 
         finally:
+            if video_file is not None and not queued:
+                _release_busy(video_file)
             with _lock:
                 state.recording_running    = False
                 state.recording_process    = None
@@ -441,6 +542,8 @@ class CameraManager:
             state.audio_started_at = time.monotonic()
             state.audio_duration_s = duration
 
+        wav = None
+        queued = False
         try:
             recording_dir = Path(config.VIDEO_BASE_DIR)
             recording_dir.mkdir(parents=True, exist_ok=True)
@@ -449,6 +552,7 @@ class CameraManager:
             ts  = datetime.now().strftime('%Y_%V_%d_%H%M%S')
             dur_min = max(1, round(duration / 60))
             wav = recording_dir / f'{ts}_audio_{dur_min}min.wav'
+            _mark_busy(wav)
 
             # Mic-Eingangspegel sicherstellen
             try:
@@ -567,7 +671,8 @@ class CameraManager:
             if wav.exists() and wav.stat().st_size > 4096:
                 file_size_mb = wav.stat().st_size / 1048576
                 logger.info('Audio-Aufnahme erfolgreich: %s (%.2f MB)', wav.name, file_size_mb)
-                CameraManager.transfer_all(str(wav))
+                _post_queue.put((wav, 0, False))
+                queued = True
                 return True, str(wav)
 
             # Datei nicht erstellt oder zu klein
@@ -593,6 +698,8 @@ class CameraManager:
             return False, err
 
         finally:
+            if wav is not None and not queued:
+                _release_busy(wav)
             with _lock:
                 state.audio_running    = False
                 state.audio_started_at = 0.0
@@ -600,12 +707,36 @@ class CameraManager:
                 state.recording_process = None
 
     @staticmethod
+    def post_process(path: 'Path', fps: int = 30, slowmotion: bool = False) -> None:
+        """Nachbearbeitung einer fertigen Aufnahme: Zeitlupe konvertieren, dann übertragen.
+        Wird vom Nachbearbeitungs-Thread aufgerufen, nie aus record() heraus."""
+        try:
+            if slowmotion:
+                # Zeitlupe h264 → mehrere MP4-Playback-Versionen per ffmpeg
+                ok, results = CameraManager._convert_one(path, recording_fps=fps, slowmotion=True)
+                if ok:
+                    logger.info('Slowmo-Konvertierung: %d Datei(en)', len(results))
+                    for mp4 in results:
+                        CameraManager.transfer_all(mp4)
+                else:
+                    logger.warning('Konvertierung fehlgeschlagen: %s', results[0] if results else '?')
+                    with _lock:
+                        state.last_error = f'Konvertierung: {results[0] if results else "Fehler"}'
+            else:
+                # Normal (libav-MP4) und Audio (WAV): fertig, direkt übertragen
+                CameraManager.transfer_all(str(path))
+        finally:
+            _release_busy(path)
+            invalidate_media_scan()
+
+    @staticmethod
     def _find_latest_h264() -> 'Path | None':
         """Findet die neueste h264-Datei in VIDEO_BASE_DIR (Fallback nach Neustart)."""
         base = Path(config.VIDEO_BASE_DIR)
         if not base.exists():
             return None
-        files = sorted(base.rglob('*.h264'), key=lambda f: f.stat().st_mtime, reverse=True)
+        files = sorted((f for f in base.rglob('*.h264') if not _is_busy(f)),
+                       key=lambda f: f.stat().st_mtime, reverse=True)
         return files[0] if files else None
 
     @staticmethod
@@ -650,7 +781,13 @@ class CameraManager:
         recording_fps: tatsächliche Aufnahme-Framerate (für Zeitstempel-Berechnung)
         slowmotion:    True → mehrere MP4-Versionen mit verschiedenen Playback-fps erstellen
                               Namensschema: {stem}_pb{playback}fps.mp4 und {stem}.mp4 (Original)
+        Es läuft immer nur eine Konvertierung gleichzeitig (_convert_lock).
         """
+        with _convert_lock:
+            return CameraManager._convert_one_locked(h264, recording_fps, slowmotion)
+
+    @staticmethod
+    def _convert_one_locked(h264: 'Path', recording_fps: int, slowmotion: bool) -> tuple:
         try:
             wav = h264.with_suffix('.wav')
 
@@ -726,10 +863,17 @@ class CameraManager:
     @staticmethod
     def convert_all_pending() -> tuple:
         """Konvertiert alle h264-Dateien die noch kein mp4 haben.
-        Gibt (converted_count, error_list) zurück."""
+        Dateien, die gerade aufgenommen werden oder auf Nachbearbeitung warten, bleiben
+        unberührt. Gibt (converted_count, error_list) zurück."""
+        with _sweep_lock:
+            return CameraManager._convert_all_pending_locked()
+
+    @staticmethod
+    def _convert_all_pending_locked() -> tuple:
         base = Path(config.VIDEO_BASE_DIR)
         h264_files = sorted(base.rglob('*.h264'), key=lambda f: f.stat().st_mtime) if base.exists() else []
-        pending = [f for f in h264_files if not f.with_suffix('.mp4').exists()]
+        pending = [f for f in h264_files
+                   if not f.with_suffix('.mp4').exists() and not _is_busy(f)]
         if not pending:
             return 0, []
         converted = 0
@@ -800,43 +944,93 @@ class CameraManager:
     @staticmethod
     def list_recordings() -> list:
         base = Path(config.VIDEO_BASE_DIR)
-        if not base.exists():
-            return []
-        all_files = []
-        for pattern, ftype in [('*.mp4', 'video'), ('*.wav', 'audio')]:
-            for f in base.rglob(pattern):
-                # WAV: nur manuell aufgenommene Audio-Dateien zeigen (_audio im Namen)
-                # Begleit-WAVs von Video-Aufnahmen (z.B. 1920x1080_30fps.wav) werden ausgeblendet
-                # Passt auf: _audio.wav (alt) und _audio_1min.wav (neu)
-                if ftype == 'audio' and '_audio' not in f.name:
-                    continue
-                try:
-                    rel = str(f.relative_to(base))
-                except ValueError:
-                    rel = f.name
-                mtime = f.stat().st_mtime
-                all_files.append({
-                    'name':     f.name,
-                    'rel_path': rel,
-                    'size_mb':  round(f.stat().st_size / 1_048_576, 1),
-                    'created':  datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S'),
-                    'date':     datetime.fromtimestamp(mtime).strftime('%Y-%m-%d'),
-                    'type':     ftype,
-                    '_mtime':   mtime,
-                })
-        all_files.sort(key=lambda x: x['_mtime'], reverse=True)
-        for entry in all_files:
-            del entry['_mtime']
-        return all_files[:100]
+        listed = [(f, st) for f, st in _scan_media() if _is_listed(f)]
+        listed.sort(key=lambda x: x[1].st_mtime, reverse=True)
+        result = []
+        for f, st in listed[:100]:
+            try:
+                rel = str(f.relative_to(base))
+            except ValueError:
+                rel = f.name
+            created = datetime.fromtimestamp(st.st_mtime)
+            result.append({
+                'name':     f.name,
+                'rel_path': rel,
+                'size_mb':  round(st.st_size / 1_048_576, 1),
+                'created':  created.strftime('%Y-%m-%d %H:%M:%S'),
+                'date':     created.strftime('%Y-%m-%d'),
+                'type':     'video' if f.suffix == '.mp4' else 'audio',
+            })
+        return result
 
+
+
+# ── Speicher-Aufräumung ───────────────────────────────────────────────────────
+
+def free_disk_space() -> int:
+    """Löscht die ältesten Aufnahmen, bis wieder config.MIN_FREE_GB frei sind.
+    MIN_FREE_GB = 0 (Standard) schaltet die Aufräumung ab. Gibt die Anzahl gelöschter
+    Dateien zurück."""
+    if config.MIN_FREE_GB <= 0:
+        return 0
+    base = Path(config.VIDEO_BASE_DIR)
+    if not base.exists():
+        return 0
+    need = config.MIN_FREE_GB * 1_073_741_824
+    if shutil.disk_usage(base).free >= need:
+        return 0
+
+    def _mtime(f: Path) -> float:
+        try:
+            return f.stat().st_mtime
+        except OSError:
+            return 0.0
+
+    candidates = sorted(
+        (f for f in base.rglob('*')
+         if f.suffix in _MEDIA_SUFFIXES and f.is_file() and not _is_busy(f)),
+        key=_mtime)
+    deleted = 0
+    for f in candidates:
+        if shutil.disk_usage(base).free >= need:
+            break
+        try:
+            f.unlink()
+            deleted += 1
+            invalidate_media_scan()
+            logger.warning('Speicher-Aufräumung: %s gelöscht', f.name)
+        except OSError as exc:
+            logger.error('Speicher-Aufräumung: %s nicht löschbar: %s', f.name, exc)
+    if shutil.disk_usage(base).free < need:
+        logger.error('Speicher-Aufräumung: weiterhin weniger als %.1f GB frei', config.MIN_FREE_GB)
+    return deleted
+
+
+# ── Nachbearbeitungs-Thread ───────────────────────────────────────────────────
+
+def _post_process_worker():
+    """Hintergrund-Thread: konvertiert und überträgt fertige Aufnahmen nacheinander."""
+    while True:
+        path, fps, slowmotion = _post_queue.get()
+        try:
+            CameraManager.post_process(path, fps, slowmotion)
+        except Exception as exc:
+            logger.error('Nachbearbeitung fehlgeschlagen (%s): %s', Path(path).name, exc)
+        finally:
+            _post_queue.task_done()
 
 
 # ── Auto-Convert Watcher ──────────────────────────────────────────────────────
 
 def _auto_convert_watcher():
-    """Hintergrund-Thread: prüft alle 3 Minuten auf unconvertierte H264-Dateien."""
+    """Hintergrund-Thread: prüft alle 3 Minuten auf unconvertierte H264-Dateien
+    und räumt bei knappem Speicher alte Aufnahmen weg."""
     time.sleep(30)  # kurzer Start-Delay
     while True:
+        try:
+            free_disk_space()
+        except Exception as exc:
+            logger.error('Speicher-Aufräumung Fehler: %s', exc)
         try:
             count, errors = CameraManager.convert_all_pending()
             if count:

@@ -39,6 +39,14 @@
 | **[SECURITY.md](SECURITY.md)** | JWT, TOTP, TLS, Best Practices | Sysadmin |
 | **[VERSIONIERUNG.md](VERSIONIERUNG.md)** | Versionierungsrichtlinien | Entwickler |
 
+### 📈 Überwachung
+
+| Dokument | Beschreibung | Zielgruppe |
+|----------|--------------|------------|
+| **[../monitoring/README.md](../monitoring/README.md)** | Prometheus + Grafana: auf dem Pi oder auf einem anderen Rechner | Alle |
+| **[../MONITORING.md](../MONITORING.md)** | Health-Checks, Messwerte, Alarme | Sysadmin |
+| **[../GOTIFY_SETUP.md](../GOTIFY_SETUP.md)** | Push-Meldungen bei Ausfall und niedrigem Akku | Sysadmin |
+
 ### 🤖 KI-Erkennung mit YOLO26n
 
 | Dokument | Beschreibung | Zielgruppe |
@@ -93,4 +101,5 @@
 1. ARCHITEKTUR.md (Systemverständnis)
    └─► 2. SECURITY.md (JWT, TOTP, TLS)
        └─► 3. SETUP_GUIDE.md (Deployment-Details, Vault)
+           └─► 4. monitoring/README.md (Verläufe in Grafana)
 ```
