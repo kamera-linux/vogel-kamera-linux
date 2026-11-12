@@ -196,8 +196,10 @@ def main() -> None:
                         help='Datei für Erkennungen unter der Schwelle')
     args = parser.parse_args()
     active_classes = TARGET_CLASSES[args.target_class]
-    _icons = {'bird': '\ud83d\udc26', 'person': '\ud83e\uddd0', 'dog': '\ud83d\udc15', 'cat': '\ud83d\udc08', 'all4': '\ud83d\udc26\ud83e\uddd0\ud83d\udc15\ud83d\udc08'}
-    target_icon    = _icons.get(args.target_class, '\ud83c\udfaf')
+    # Echte Emoji-Zeichen, keine Backslash-u-Paare: Die wären in Python einzelne Surrogate,
+    # die sich nicht ins Log schreiben lassen – die Zeile „Erkannt!" ginge verloren.
+    _icons = {'bird': '🐦', 'person': '🧐', 'dog': '🐕', 'cat': '🐈', 'all4': '🐦🧐🐕🐈'}
+    target_icon    = _icons.get(args.target_class, '🎯')
 
     # ── Voraussetzungen prüfen ────────────────────────────────────────────
     if not Path(HAILO_JSON).exists():
