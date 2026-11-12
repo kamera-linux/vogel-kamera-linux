@@ -110,7 +110,7 @@ optional `monitoring`. Details: [../ansible/README.md](../ansible/README.md).
 
 Mit `PI_MONITORING=true` startet die Rolle `monitoring` zwei weitere Container auf dem Pi:
 Prometheus fragt alle 30 s `/metrics` ab, Grafana zeigt das Dashboard „Vogel-Kamera". Beide
-laufen ohne besondere Rechte und mit festen Speicher-Obergrenzen. Alternativ läuft derselbe Stack
+laufen ohne besondere Rechte. Alternativ läuft derselbe Stack
 auf einem anderen Rechner. Details: [../monitoring/README.md](../monitoring/README.md).
 
 ---

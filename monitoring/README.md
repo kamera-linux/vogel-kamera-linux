@@ -33,8 +33,11 @@ Das war alles. Die Ansible-Rolle `monitoring` erledigt den Rest:
 Gut zu wissen:
 
 - **Internet beim ersten Mal:** Der Pi lädt die beiden Images von Docker Hub (zusammen rund 1 GB).
-- **Ressourcen:** etwa 350 MB Arbeitsspeicher und wenige Prozent CPU; die Container haben feste
-  Obergrenzen (384 MB und 512 MB), damit sie die Kamera nie verdrängen.
+- **Ressourcen:** etwa 350 MB Arbeitsspeicher und unter 1 % CPU im Leerlauf. Die eingetragenen
+  Obergrenzen (384 MB und 512 MB) greifen nur, wenn der Speicher-cgroup aktiv ist – bei Raspberry
+  Pi OS ist er ab Werk aus (`docker info` meldet dann „No memory limit support“). Einschalten:
+  `cgroup_enable=memory` an `/boot/firmware/cmdline.txt` anhängen und neu starten.
+- **Erster Start:** Nach dem Deployment braucht Grafana rund eine halbe Minute, bis es antwortet.
 - **Speicher:** Messwerte werden 90 Tage oder bis 1 GB aufbewahrt.
 - **Akkubetrieb:** Ist der Pi aus, ist auch das Dashboard nicht erreichbar, und für diese Zeit
   gibt es eine Lücke im Verlauf. Die bis dahin gesammelten Daten bleiben erhalten. Wer das

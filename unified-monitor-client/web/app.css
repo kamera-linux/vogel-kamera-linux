@@ -113,7 +113,8 @@ select {
 }
 
 /* Recordings */
-.recordings-list { overflow-x: auto; }
+/* Bis zu 100 Aufnahmen: Liste scrollt in sich, damit die Seite kurz bleibt */
+.recordings-list { overflow-x: auto; max-height: 28rem; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 thead th { text-align: left; padding: 0.5rem 0.75rem; color: var(--muted);
            border-bottom: 1px solid var(--border); font-weight: 500; }

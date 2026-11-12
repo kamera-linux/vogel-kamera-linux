@@ -40,6 +40,8 @@ services:
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_NEWS_NEWS_FEED_ENABLED: "false"
+      # Keine Zusatz-Plugins beim Start nachladen (sonst ~380 MB Download und langsamer Start)
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/vogelkamera.json
       GF_DEFAULT_LOCALE: de-DE
       TZ: Europe/Berlin

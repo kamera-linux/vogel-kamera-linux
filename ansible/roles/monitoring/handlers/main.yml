@@ -1,6 +1,0 @@
----
-# Geänderte Konfiguration übernehmen (Prometheus/Grafana lesen sie beim Start)
-- name: monitoring neu starten
-  ansible.builtin.command:
-    cmd: docker compose up -d --force-recreate --remove-orphans
-    chdir: "{{ pi_monitoring_dir }}"
