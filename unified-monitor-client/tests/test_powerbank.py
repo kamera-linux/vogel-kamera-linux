@@ -90,3 +90,75 @@ def test_status_endpoint_powerbank_disabled(client, auth_header, monkeypatch):
     monkeypatch.setattr(config, 'POWERBANK_MAC', '')
     data = client.get('/api/status', headers=auth_header).get_json()
     assert data['powerbank'] == {}
+
+
+# ── Hängende Bluetooth-Verbindung ────────────────────────────────────────────
+
+class _Variant:
+    def __init__(self, value):
+        self.value = value
+
+
+def _fake_dbus(monkeypatch, objects, calls):
+    """Ersetzt dbus_fast durch eine Attrappe, die BlueZ mit den gegebenen Objekten spielt."""
+    import sys
+    import types
+
+    class MessageType:
+        ERROR = 'error'
+        METHOD_RETURN = 'return'
+
+    class Message:
+        def __init__(self, **kw):
+            self.__dict__.update(kw)
+
+    class _Reply:
+        def __init__(self, body=None, message_type=MessageType.METHOD_RETURN):
+            self.body, self.message_type = body, message_type
+
+    class _Bus:
+        async def connect(self):
+            return self
+
+        async def call(self, msg):
+            calls.append((msg.path, msg.member))
+            return _Reply([objects]) if msg.member == 'GetManagedObjects' else _Reply([])
+
+        def disconnect(self):
+            calls.append(('bus', 'geschlossen'))
+
+    mod = types.ModuleType('dbus_fast')
+    mod.BusType = types.SimpleNamespace(SYSTEM='system')
+    mod.Message, mod.MessageType = Message, MessageType
+    aio = types.ModuleType('dbus_fast.aio')
+    aio.MessageBus = lambda bus_type=None: _Bus()
+    monkeypatch.setitem(sys.modules, 'dbus_fast', mod)
+    monkeypatch.setitem(sys.modules, 'dbus_fast.aio', aio)
+
+
+def _run(coro):
+    import asyncio
+    return asyncio.run(coro)
+
+
+def test_haengende_verbindung_wird_getrennt(monkeypatch):
+    calls = []
+    _fake_dbus(monkeypatch, {
+        '/org/bluez/hci0': {'org.bluez.Adapter1': {}},
+        '/org/bluez/hci0/dev_AA': {'org.bluez.Device1': {'Address': _Variant('AA:BB:CC:00:11:22'), 'Connected': _Variant(True)}},
+        '/org/bluez/hci0/dev_PB': {'org.bluez.Device1': {'Address': _Variant('00:7F:1D:00:00:01'), 'Connected': _Variant(True)}},
+    }, calls)
+    assert _run(powerbank._drop_stale_connection('00:7f:1d:00:00:01')) is True
+    # nur die Powerbank wird getrennt, kein anderes Gerät; der Bus wird wieder geschlossen
+    assert ('/org/bluez/hci0/dev_PB', 'Disconnect') in calls
+    assert ('/org/bluez/hci0/dev_AA', 'Disconnect') not in calls
+    assert calls[-1] == ('bus', 'geschlossen')
+
+
+def test_nicht_verbundene_powerbank_bleibt_unberuehrt(monkeypatch):
+    calls = []
+    _fake_dbus(monkeypatch, {
+        '/org/bluez/hci0/dev_PB': {'org.bluez.Device1': {'Address': _Variant('00:7F:1D:00:00:01'), 'Connected': _Variant(False)}},
+    }, calls)
+    assert _run(powerbank._drop_stale_connection('00:7F:1D:00:00:01')) is False
+    assert not [c for c in calls if c[1] == 'Disconnect']
