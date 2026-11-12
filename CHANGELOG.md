@@ -54,11 +54,13 @@
   sie galt nur für Zeitlupe
 - Dauer-Regler zeigte „1 min“, obwohl 15 s gespeichert waren, und ließ nichts unter 1 Minute zu –
   jetzt 10 s bis 10 min in Stufen
+- Im Detection-Log fehlte die Zeile „Erkannt!“ mit Klasse und Confidence der Auslösung (die
+  Symbole standen in einer Schreibweise im Skript, die sich nicht ins Log schreiben ließ)
 - Auto-Convert konnte eine noch laufende Zeitlupen-Aufnahme konvertieren und das halbe Video
   übertragen; gleichzeitige Konvertierungen derselben Datei sind jetzt ausgeschlossen
 
 ### 🧪 Tests
-- 59 neue Tests (119 gesamt): Aufnahme-Ablauf (`tests/test_camera.py`), Web-GUI und Download-Tickets
+- 60 neue Tests (120 gesamt): Aufnahme-Ablauf (`tests/test_camera.py`), Web-GUI und Download-Tickets
   (`tests/test_web.py`), Prometheus-Endpunkt (`tests/test_metrics.py`)
 
 ## [2.4.2] - 7. November 2026 🐕 **Erkennungsziele & Online-Hilfe**
