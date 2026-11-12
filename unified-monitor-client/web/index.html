@@ -103,6 +103,8 @@
       <div class="card">
         <div class="label">Objekt erkannt</div>
         <div class="value" id="s-last-det" style="font-size:0.95rem">–</div>
+        <!-- Was die Kamera gerade sieht, aber unter der Schwelle liegt (füllt app.js) -->
+        <div id="s-seen" style="font-size:0.75rem;color:var(--yellow);margin-top:0.35rem;display:none"></div>
       </div>
       <div class="card">
         <div class="label">Aufnahmen heute</div>
@@ -605,7 +607,11 @@
       <li><strong>Hailo-8 NPU</strong> – <span style="color:var(--green,#3fb950)">Aktiv</span> wenn Hailo-Detection läuft, sonst Inaktiv.
           Darunter werden Board-Name und Firmware-Version angezeigt (60&nbsp;s Aktualisierung)</li>
       <li><strong>Erkennungsziel</strong> – aktuell konfigurierte Klasse + Konfidenzschwelle</li>
-      <li><strong>Objekt erkannt</strong> – letztes erkanntes Objekt mit Klasse, Konfidenz und Uhrzeit</li>
+      <li><strong>Objekt erkannt</strong> – letzte Auslösung mit Klasse, Konfidenz und Uhrzeit (bleibt
+          auch nach einem Neustart stehen). Darunter erscheint in Gelb
+          <em>„sieht gerade: … – unter der Schwelle“</em>, wenn die Kamera das Ziel erkennt, aber nicht
+          sicher genug für eine Aufnahme: dann die Confidence senken. Erscheint nichts, erkennt die
+          Kamera das Ziel gar nicht (unter 40&nbsp;% meldet das Modell nichts).</li>
       <li><strong>Aufnahmen heute</strong> – persistenter Tageszähler der MP4-Aufnahmen</li>
       <li><strong>Recording</strong> – ob gerade aufgezeichnet wird</li>
     </ul>

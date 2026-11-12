@@ -92,7 +92,7 @@ Alle Endpunkte unter `/api/` außer `login`, `health` und `file` erfordern
 |---------|------|--------------|
 | `POST` | `/api/login` | Passwort + TOTP-Code → JWT (max. 5 Versuche pro Minute) |
 | `GET` | `/api/health` | ohne Login: Version, RAM, freier Speicher – für den Docker-Health-Check |
-| `GET` | `/api/status` | Gesamtstatus: Detection, Aufnahme, System, Hailo, Powerbank, Kamera-Einstellungen, `pending`, `recordings_rev` |
+| `GET` | `/api/status` | Gesamtstatus: Detection, Aufnahme, System, Hailo, Powerbank, Kamera-Einstellungen, `pending`, `recordings_rev`, `last_detection`, `seen_detection` |
 | `GET` | `/metrics` | Prometheus-Format; eigenes Token (`PI_DAEMON_METRICS_TOKEN`), ohne Token-Konfiguration 404 |
 
 **Erkennung**

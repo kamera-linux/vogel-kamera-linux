@@ -21,6 +21,8 @@ Nachbearbeitungs-Thread; die Erkennung startet, sobald `rpicam-vid` fertig ist.
 - **Dauer-Regler:** 10 s bis 10 min (vorher mindestens 1 Minute, Anzeige teils falsch)
 - **Ein Knopf** für Detection-Modus starten/stoppen; Ruhezustände grau statt rot
 - **Hinweis bei Verbindungsverlust**, veraltete Werte werden abgedunkelt
+- **„Objekt erkannt“** bleibt nach Neustarts stehen und zeigt zusätzlich, was die Kamera gerade
+  sieht, wenn es unter der Schwelle liegt – so ist klar, ob die Confidence zu hoch eingestellt ist
 - **Weniger Last** auf Pi und Netz: Aufnahmeliste nur bei Änderung, Pause im Hintergrund-Tab,
   Logo 1,2 MB → 20 KB, gzip
 - **Strikte CSP** (`script-src 'self'`): GUI aufgeteilt in `index.html`, `app.js`, `app.css`
@@ -65,4 +67,4 @@ Version das ganze `web/`-Verzeichnis.
 
 ## 🧪 Tests
 
-53 neue Tests (113 gesamt): Aufnahme-Ablauf, Web-GUI und Download-Tickets, Prometheus-Endpunkt.
+59 neue Tests (119 gesamt): Aufnahme-Ablauf, Web-GUI und Download-Tickets, Prometheus-Endpunkt.

@@ -36,6 +36,9 @@
   `/api/status` blockiert nicht mehr 0,3 s
 - GUI in `index.html`, `app.js`, `app.css` aufgeteilt, gzip + ETag; Logo 1,2 MB → 20 KB
 - **Strikte CSP** (`script-src 'self'`): keine Inline-Skripte und `onclick`-Attribute mehr
+- **Kachel „Objekt erkannt“:** die letzte Auslösung übersteht jetzt Neustarts (mit Datum), und
+  darunter steht, was die Kamera gerade sieht, wenn es unter der Schwelle bleibt
+  („sieht gerade: Person 62 % – unter der Schwelle“)
 - Hilfe/Player: Esc schließt, Fokus-Führung, Login als Formular; alle Kamera-Regler gleichen sich
   zwischen Tabs ab
 - Hotpatch kopiert jetzt das ganze `web/`-Verzeichnis
@@ -55,7 +58,7 @@
   übertragen; gleichzeitige Konvertierungen derselben Datei sind jetzt ausgeschlossen
 
 ### 🧪 Tests
-- 53 neue Tests (113 gesamt): Aufnahme-Ablauf (`tests/test_camera.py`), Web-GUI und Download-Tickets
+- 59 neue Tests (119 gesamt): Aufnahme-Ablauf (`tests/test_camera.py`), Web-GUI und Download-Tickets
   (`tests/test_web.py`), Prometheus-Endpunkt (`tests/test_metrics.py`)
 
 ## [2.4.2] - 7. November 2026 🐕 **Erkennungsziele & Online-Hilfe**

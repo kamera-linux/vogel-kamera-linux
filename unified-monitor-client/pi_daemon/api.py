@@ -21,7 +21,8 @@ from flask_limiter.util import get_remote_address
 
 from . import config, metrics, monitoring, powerbank, settings
 from .camera import (
-    CameraManager, _kill_process_group, _read_last_detection, invalidate_media_scan, media_summary,
+    CameraManager, _kill_process_group, _read_last_detection, _read_seen_detection,
+    invalidate_media_scan, media_summary,
 )
 from .config import logger
 from .hailo import _get_hailo_hw_info
@@ -296,6 +297,7 @@ def api_status():
         'detection_target':     settings._detection_target,
         'detection_threshold':  settings._detection_threshold,
         'last_detection':       _read_last_detection(),
+        'seen_detection':       _read_seen_detection(),   # gerade gesehen, aber unter der Schwelle
         'hailo_hw':             _get_hailo_hw_info(),
         'powerbank':            powerbank.get_status(),
         'lens_position':        settings._lens_position,

@@ -116,11 +116,30 @@ def _count_today_recordings() -> int:
 
 
 def _read_last_detection() -> dict:
-    """Letzte Erkennung aus /tmp/last-detection.json lesen (geschrieben vom Hailo-Script)."""
+    """Letzte Auslösung (geschrieben vom Detection-Skript): Klasse, Confidence, Uhrzeit, Datum.
+    Liegt unter /config und übersteht damit Container-Neustarts."""
+    for path in (config.LAST_DETECTION_FILE, '/tmp/last-detection.json'):   # zweiter Pfad: alte Skripte
+        try:
+            p = Path(path)
+            if p.exists():
+                return json.loads(p.read_text())
+        except Exception:
+            pass
+    return None
+
+
+def _read_seen_detection() -> dict:
+    """Was die Kamera gerade sieht, aber unter der Schwelle liegt – oder None.
+    Nur aktuelle Einträge (SEEN_MAX_AGE_S) und nur, solange die Detection läuft."""
+    if not state.detection_running:
+        return None
     try:
-        p = Path('/tmp/last-detection.json')
-        if p.exists():
-            return json.loads(p.read_text())
+        data = json.loads(Path(config.SEEN_DETECTION_FILE).read_text())
+        age = time.time() - float(data['ts'])
+        if 0 <= age <= config.SEEN_MAX_AGE_S:
+            return {'class': str(data['class']), 'conf': float(data['conf']),
+                    'threshold': float(data.get('threshold', settings._detection_threshold)),
+                    'age_s': round(age, 1)}
     except Exception:
         pass
     return None
@@ -209,6 +228,8 @@ class CameraManager:
                     'python3', settings.DETECTION_SCRIPT,
                     '--target-class', settings._detection_target,
                     '--threshold',    str(settings._detection_threshold),
+                    '--last-detection-file', config.LAST_DETECTION_FILE,
+                    '--seen-file',    config.SEEN_DETECTION_FILE,
                 ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,

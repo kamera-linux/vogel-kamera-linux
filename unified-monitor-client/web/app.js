@@ -281,14 +281,7 @@ function renderStatus(data) {
   renderHailo(data);
   renderPowerbank(data.powerbank || {});
 
-  if (data.last_detection) {
-    const d = data.last_detection;
-    const cls  = d.class ? d.class.charAt(0).toUpperCase() + d.class.slice(1) : '?';
-    const conf = d.conf != null ? (d.conf * 100).toFixed(0) + ' %' : '';
-    setHtml('s-last-det', `${escHtml(cls)} ${escHtml(conf)}<br><small style="color:var(--muted)">${escHtml(d.time || '')}</small>`);
-  } else {
-    setText('s-last-det', '–');
-  }
+  renderLastDetection(data);
   const todayRec = data.today_recordings ?? data.birds_recorded;
   setText('s-birds', todayRec != null ? String(todayRec) : '–');
   const now = new Date();
@@ -366,6 +359,38 @@ function renderStatus(data) {
   setText('last-update', 'Update: ' + new Date().toLocaleTimeString('de-DE'));
   if (data.version) setText('gui-version', 'v' + data.version);
   renderGrafanaLink(data.grafana_url, data.grafana_port);
+}
+
+const CLASS_NAMES = { bird: 'Vogel', person: 'Person', dog: 'Hund', cat: 'Katze' };
+function className(c) { return CLASS_NAMES[c] || (c ? c.charAt(0).toUpperCase() + c.slice(1) : '?'); }
+function percent(v) { return (v * 100).toFixed(0) + '\u202F%'; }
+
+/** Kachel „Objekt erkannt": letzte Auslösung (übersteht Neustarts) und darunter, was die
+ *  Kamera gerade sieht, wenn es unter der Schwelle bleibt. */
+function renderLastDetection(data) {
+  const d = data.last_detection;
+  if (d) {
+    const conf = d.conf != null ? percent(d.conf) : '';
+    // Datum nur nennen, wenn die Auslösung nicht von heute ist
+    const today = new Date().toLocaleDateString('sv-SE');   // JJJJ-MM-TT in Ortszeit
+    let when = d.time || '';
+    if (d.date && d.date !== today) {
+      const [y, m, day] = d.date.split('-');
+      when = `${day}.${m}.${y} ${when}`;
+    }
+    setHtml('s-last-det', `${escHtml(className(d.class))}\u00A0${escHtml(conf)}<br><small style="color:var(--muted)">${escHtml(when)}</small>`);
+  } else {
+    setText('s-last-det', '–');
+  }
+  const seenEl = $('s-seen');
+  const s = data.seen_detection;
+  if (s) {
+    seenEl.textContent = `sieht gerade: ${className(s.class)} ${percent(s.conf)} – unter der Schwelle (${percent(s.threshold)})`;
+    seenEl.title = 'Die Kamera erkennt das Ziel, aber nicht sicher genug für eine Aufnahme. Confidence senken, wenn das ein Treffer sein sollte.';
+    seenEl.style.display = 'block';
+  } else {
+    seenEl.style.display = 'none';
+  }
 }
 
 /** Knopf „Monitoring" in der Kopfzeile: feste Adresse, oder Grafana auf diesem Pi

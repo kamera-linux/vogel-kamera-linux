@@ -38,6 +38,11 @@ except ValueError:
     GRAFANA_PORT  = 0
 if not 0 < GRAFANA_PORT < 65536:
     GRAFANA_PORT  = 0
+# Letzte Auslösung der Erkennung (dauerhaft, übersteht Neustarts) und „gerade gesehen, aber
+# unter der Schwelle" (flüchtig). Beide schreibt das Detection-Skript.
+LAST_DETECTION_FILE = '/config/last-detection.json'
+SEEN_DETECTION_FILE = '/tmp/detection-seen.json'
+SEEN_MAX_AGE_S      = 10.0   # ältere „gesehen"-Einträge gelten nicht mehr als aktuell
 # Speicher-Aufräumung: sinkt der freie Platz im Video-Verzeichnis unter diesen Wert,
 # werden die ältesten Aufnahmen gelöscht. 0 = aus (Standard).
 MIN_FREE_GB       = float(os.environ.get('PI_DAEMON_MIN_FREE_GB', 0) or 0)
