@@ -298,9 +298,9 @@ Anleitung: [monitoring/README.md](monitoring/README.md)
 |--------------------------------|--------------|
 | ![Web-GUI Aufnahme](assets/WebGUI-Manuelles-Video.png) | ![Web-GUI Online-Hilfe](assets/WebGUI-OnlineHilfe.png) |
 
-| Letzte Aufnahmen mit Abspielen | |
-|--------------------------------|---|
-| ![Web-GUI Aufnahmeliste](assets/WebGUI-Aufnahmen.png) | |
+| Letzte Aufnahmen | Abspielen im Browser *(Neu in v2.5.0)* |
+|------------------|----------------------------------------|
+| ![Web-GUI Aufnahmeliste](assets/WebGUI-Aufnahmen.png) | ![Web-GUI Player mit Rotkehlchen am Futterhaus](assets/WebGUI-Player.png) |
 
 | Auf dem Handy | Grafana-Dashboard *(Neu in v2.5.0)* |
 |---------------|-------------------------------------|
