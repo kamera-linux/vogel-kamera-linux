@@ -289,6 +289,11 @@ Das Dashboard „Vogel-Kamera" zeigt Akkustand und Restlaufzeit, Erkennungen, Te
 Speicher und Netz. Alternativ läuft der Stack auf einem anderen Rechner im Heimnetz.
 Anleitung: [monitoring/README.md](monitoring/README.md)
 
+Seit v2.5.1 zeigt die Zeile **„System-Updates“**, ob Updates anstehen, ob ein Neustart nötig ist
+und ob die Boot-Prüfung vor dem Docker-Start bestanden wurde:
+
+![Grafana: Zeile System-Updates mit verfügbaren und gesperrten Updates, Neustart, Boot-Prüfung und Kernel](assets/Grafana-System-Updates.png)
+
 ### Screenshots
 
 | Login | Status und Steuerung |
