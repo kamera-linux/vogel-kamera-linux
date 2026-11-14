@@ -47,7 +47,7 @@ Beispiel-Response:
     "mem_used_mb": 513
   },
   "threads_active": 5,
-  "version": "2.5.0"
+  "version": "2.5.1"
 }
 ```
 
@@ -222,6 +222,13 @@ Das Token kann nur Messwerte lesen, nichts steuern; das Login der Web-GUI gilt f
 | `detection_running`, `recording_running`, `camera_hardware_error` | Zustand der Kamera |
 | `disk_free_bytes`, `pending_conversions`, `postprocess_queue_length` | Speicher und Rückstau |
 | `cpu_usage_ratio`, `load_average`, `memory_used_bytes` | Systemlast |
+| `os_updates_pending{kind="all\|security\|held"}`, `os_reboot_required`, `os_kernel_info` | Betriebssystem-Updates (`held` = gesperrt, nur von Hand) |
+| `os_last_upgrade_run_timestamp_seconds`, `os_last_upgrade_success`, `os_last_auto_install_timestamp_seconds` | Update-Lauf beim Systemstart (`boot-update.service`, vor Docker, höchstens alle 6 h) |
+| `boot_check_ok`, `boot_check_timestamp_seconds` | Boot-Prüfung vor dem Docker-Start |
+
+Die `os_*`- und `boot_check_*`-Werte liest der Daemon aus `/etc/pi-daemon/update-status.json`
+(im Container `/config/update-status.json`). Die Datei schreibt `/usr/local/bin/update-status.py`
+auf dem Pi alle 15 Minuten (`update-status.timer`) – fehlt sie, fallen diese Werte einfach weg.
 
 **Alarm, wenn der Pi nicht mehr antwortet** (das kann der Daemon selbst nicht melden) – als
 Alarmregel in Grafana oder Prometheus:

@@ -1,0 +1,28 @@
+// Verwaltet von Ansible (Rolle host-maintenance) – Änderungen dort machen.
+// Vogelkamera: automatische Updates (Debian, Raspberry Pi, Docker)
+// Läuft beim Systemstart über boot-update.service (vor Docker), höchstens alle 6 h.
+// Nach dem Neustart prüft boot-health-check.service das System, bevor Docker startet.
+
+#clear Unattended-Upgrade::Origins-Pattern;
+Unattended-Upgrade::Origins-Pattern {
+        "origin=Debian,codename=${distro_codename},label=Debian";
+        "origin=Debian,codename=${distro_codename}-updates";
+        "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+        "origin=Raspberry Pi Foundation,codename=${distro_codename}";
+        "origin=Docker,archive=bookworm";
+};
+
+// Geänderte Konfigurationsdateien nie überschreiben, nicht nachfragen
+Dpkg::Options {
+        "--force-confdef";
+        "--force-confold";
+};
+
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "false";
+
+// Neustart übernimmt boot-update.sh (wenn /run/reboot-required existiert)
+Unattended-Upgrade::Automatic-Reboot "false";
+
+Unattended-Upgrade::SyslogEnable "true";

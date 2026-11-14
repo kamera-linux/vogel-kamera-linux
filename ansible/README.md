@@ -481,6 +481,7 @@ ansible/
     ├── docker/                 ← Docker CE auf dem Pi installieren
     ├── firewall/               ← UFW-Regeln auf dem Pi
     ├── hardening/              ← Dateirechte, SSH nur mit Schlüssel
+    ├── host-maintenance/       ← WLAN-Watchdog, Updates beim Systemstart, Boot-Prüfung vor Docker
     ├── monitoring/             ← optional: Prometheus + Grafana auf dem Pi (PI_MONITORING=true)
     │   └── templates/
     │       ├── docker-compose.yml.j2   ← eigenes Compose-Projekt unter /opt/pi-monitoring

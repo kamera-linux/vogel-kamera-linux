@@ -8,7 +8,7 @@ import sys
 # ---------------------------------------------------------------------------
 # App-Version
 # ---------------------------------------------------------------------------
-APP_VERSION = '2.5.0'
+APP_VERSION = '2.5.1'
 
 # ---------------------------------------------------------------------------
 # Konfiguration (ausschließlich Umgebungsvariablen)
@@ -47,6 +47,9 @@ SEEN_MAX_AGE_S      = 10.0   # ältere „gesehen"-Einträge gelten nicht mehr a
 # werden die ältesten Aufnahmen gelöscht. 0 = aus (Standard).
 MIN_FREE_GB       = float(os.environ.get('PI_DAEMON_MIN_FREE_GB', 0) or 0)
 SETTINGS_FILE     = '/config/sync-config.json'
+# Update-Status des Host-Systems (apt, Neustart, Boot-Prüfung). Schreibt
+# /usr/local/bin/update-status.py auf dem Pi alle 15 Minuten nach /etc/pi-daemon/.
+UPDATE_STATUS_FILE = '/config/update-status.json'
 SYNC_KEY_FILE     = '/config/sync_rsa'
 
 # ---------------------------------------------------------------------------

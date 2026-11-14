@@ -4,19 +4,19 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.5.0 — Web-GUI, Player & Monitoring 📈
+## Release v2.5.1 — WLAN-Watchdog & Auto-Updates 📡
 
-- **Version:** v2.5.0 (12. November 2026)
-- **⚡ Erkennung läuft nach einer Aufnahme sofort weiter** – Konvertierung und Transfer blockieren die Kamera nicht mehr
-- **🖥 Web-GUI überarbeitet:** Aufnahmen im Browser abspielen, Steuerung oben, Handy-Ansicht, Dauer 10 s – 10 min
-- **📈 Monitoring:** Prometheus + Grafana direkt auf dem Pi mit fertigem Dashboard ([Einrichtung](monitoring/README.md))
-- **🔧 Fixes:** Profil-Bitrate bei normalen Aufnahmen, halbe Videos durch Auto-Convert, Log-Rotation
+- **Version:** v2.5.1 (14. November 2026)
+- **📡 WLAN kommt nach einem Abbruch selbst wieder** – Watchdog verbindet neu, lädt notfalls den Treiber neu
+- **🛠 Automatische Updates beim Systemstart** – vor dem Docker-Start, mit Boot-Prüfung (Kernel, Hailo, Kamera)
+- **📈 Grafana:** neue Zeile „System-Updates“ (verfügbare Updates, Neustart nötig, Boot-Prüfung)
+- **🔧 Fixes:** hängende Bluetooth-Verbindung zur Powerbank, Knöpfe der Aufnahmeliste
 
 **Update:** [`./ansible/build_and_deploy.sh --update`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.5.0/`](releases/v2.5.0/RELEASE_NOTES_v2.5.0.md)
+**Release Notes:** [`releases/v2.5.1/`](releases/v2.5.1/RELEASE_NOTES_v2.5.1.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.5.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.5.0)
+[![Version](https://img.shields.io/badge/Version-v2.5.1-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.5.1)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Slow-Motion](https://img.shields.io/badge/Slow--Motion-2304x1296%40%2056fps-ff9800)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
@@ -232,6 +232,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 - 🔋 **Powerbank-Überwachung** per Bluetooth mit Warnung und automatischem Shutdown *(Neu in v2.4.0)*
 - ▶️ **Aufnahmen im Browser abspielen** und Bedienung auch auf dem Handy *(Neu in v2.5.0)*
 - 📈 **Verläufe in Grafana** (Akku, Temperaturen, Erkennungen, Speicher) – optional direkt auf dem Pi *(Neu in v2.5.0)*
+- 📡 **Selbstheilendes WLAN** und **automatische Updates beim Systemstart** mit Boot-Prüfung vor Docker *(Neu in v2.5.1)*
 - 🔄 **Automatische Video-/Audio-Synchronisation**
 - 📱 **YouTube-Integration** mit QR-Codes für mobile Nutzer
 - 🔧 **Einfache Installation** per Ansible (`build_and_deploy.sh`)
@@ -597,5 +598,5 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ---
 
-**Version:** v2.5.0 (12. November 2026) | **Status:** Produktionsreif ✅  
+**Version:** v2.5.1 (14. November 2026) | **Status:** Produktionsreif ✅  
 **Raspberry Pi 5 AI HAT+ · Hailo-8 NPU · Debian Trixie (13) | Docker Web-API | JWT + TOTP 2FA | Powerbank-Überwachung (Bluetooth) | Security-Audit 11/2026**

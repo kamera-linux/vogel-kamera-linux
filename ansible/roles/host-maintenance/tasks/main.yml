@@ -1,0 +1,139 @@
+---
+# Wartung des Pi-Betriebssystems (läuft bei --install und --update).
+# Was die Rolle einrichtet und warum: defaults/main.yml und MONITORING.md.
+
+# ── Skripte ──────────────────────────────────────────────────────────────────
+- name: Verzeichnisse für Notausgänge und Zustand
+  ansible.builtin.file:
+    path:  "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode:  "0755"
+  loop:
+    - /etc/vogelkamera
+    - /var/lib/boot-health-check
+
+- name: Wartungs-Skripte installieren
+  ansible.builtin.copy:
+    src:   "{{ item }}"
+    dest:  "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode:  "0755"
+  loop:
+    - wlan-watchdog.sh
+    - boot-update.sh
+    - boot-health-check.sh
+    - update-status.py
+
+# ── unattended-upgrades ──────────────────────────────────────────────────────
+- name: unattended-upgrades installieren
+  ansible.builtin.apt:
+    name:  unattended-upgrades
+    state: present
+  when: host_boot_update | bool
+
+- name: Regeln für automatische Updates (Debian, Raspberry Pi, Docker)
+  ansible.builtin.copy:
+    src:   52vogelkamera-unattended
+    dest:  /etc/apt/apt.conf.d/52vogelkamera-unattended
+    owner: root
+    group: root
+    mode:  "0644"
+  when: host_boot_update | bool
+
+# Die Kamera läuft nur tagsüber: Updates laufen beim Systemstart (boot-update.service),
+# nicht über die nächtlichen apt-Timer.
+- name: Nächtliche apt-Timer abschalten
+  ansible.builtin.systemd:
+    name:    "{{ item }}"
+    enabled: false
+    state:   stopped
+  loop:
+    - apt-daily.timer
+    - apt-daily-upgrade.timer
+  when: host_boot_update | bool
+
+- name: Reste früherer Timer-Anpassungen entfernen
+  ansible.builtin.file:
+    path:  "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/apt-daily.timer.d
+    - /etc/systemd/system/apt-daily-upgrade.timer.d
+    - /etc/systemd/system/apt-daily.service.d/update-status.conf
+    - /etc/systemd/system/apt-daily-upgrade.service.d/update-status.conf
+    - /etc/systemd/system/boot-health-check.service.d   # jetzt in der Unit selbst
+  notify: systemd neu laden
+
+# ── systemd ──────────────────────────────────────────────────────────────────
+- name: systemd-Units installieren
+  ansible.builtin.copy:
+    src:   "systemd/{{ item }}"
+    dest:  "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode:  "0644"
+  loop:
+    - wlan-watchdog.service
+    - wlan-watchdog.timer
+    - boot-update.service
+    - boot-health-check.service
+    - update-status.service
+    - update-status.timer
+  notify: systemd neu laden
+
+- name: Docker erst nach bestandener Boot-Prüfung starten
+  ansible.builtin.file:
+    path:  /etc/systemd/system/docker.service.d
+    state: directory
+    mode:  "0755"
+  when: host_boot_check_gate | bool
+
+- name: Drop-in docker.service → boot-health-check.service
+  ansible.builtin.copy:
+    src:   systemd/docker-boot-health-check.conf
+    dest:  /etc/systemd/system/docker.service.d/boot-health-check.conf
+    owner: root
+    group: root
+    mode:  "0644"
+  when: host_boot_check_gate | bool
+  notify: systemd neu laden
+
+- name: Drop-in entfernen, wenn die Boot-Prüfung Docker nicht aufhalten soll
+  ansible.builtin.file:
+    path:  /etc/systemd/system/docker.service.d/boot-health-check.conf
+    state: absent
+  when: not (host_boot_check_gate | bool)
+  notify: systemd neu laden
+
+- name: systemd neu laden (vor dem Aktivieren)
+  ansible.builtin.meta: flush_handlers
+
+- name: Update-Status-Timer aktivieren
+  ansible.builtin.systemd:
+    name:    update-status.timer
+    enabled: true
+    state:   started
+
+- name: WLAN-Watchdog ein-/ausschalten (host_wlan_watchdog)
+  ansible.builtin.systemd:
+    name:    wlan-watchdog.timer
+    enabled: "{{ host_wlan_watchdog | bool }}"
+    state:   "{{ 'started' if host_wlan_watchdog | bool else 'stopped' }}"
+
+# Nur aktivieren, nicht starten: boot-update würde sonst mitten im Deployment
+# Updates installieren und ggf. neu starten.
+- name: Update beim Systemstart aktivieren
+  ansible.builtin.systemd:
+    name:    boot-update.service
+    enabled: "{{ host_boot_update | bool }}"
+
+# Starten ist schnell und harmlos (nur Prüfungen) – und nötig, weil docker.service
+# es per Requires= braucht. Schlägt die Prüfung fehl, bricht das Deployment hier ab.
+- name: Boot-Prüfung aktivieren und ausführen
+  ansible.builtin.systemd:
+    name:    boot-health-check.service
+    enabled: true
+    state:   started

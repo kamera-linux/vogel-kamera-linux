@@ -1,0 +1,16 @@
+---
+# Wartung des Pi-Betriebssystems (Rolle host-maintenance)
+#
+#  - WLAN-Watchdog: verbindet neu, lädt notfalls den WLAN-Treiber neu, startet
+#    nach 30 min ohne Netz neu
+#  - Update beim Systemstart (die Kamera läuft nur tagsüber): unattended-upgrades
+#    vor Docker, höchstens alle 6 h, Neustart falls nötig
+#  - Boot-Prüfung vor Docker: Paketsystem, Kernel, Hailo, Kamera
+#  - Update-Status für Grafana (/etc/pi-daemon/update-status.json)
+#
+# Notausgänge auf dem Pi: /etc/vogelkamera/skip-boot-update, /etc/vogelkamera/skip-boot-check
+host_wlan_watchdog:  true
+host_boot_update:    true
+# Docker nur nach bestandener Boot-Prüfung starten. Ohne Kamera/Hailo (z. B. Test-Pi)
+# auf false setzen, sonst startet Docker dort nie.
+host_boot_check_gate: true

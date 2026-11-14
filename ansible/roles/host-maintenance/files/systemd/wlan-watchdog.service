@@ -1,0 +1,8 @@
+[Unit]
+Description=WLAN Watchdog – reconnect bei Ausfall
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wlan-watchdog.sh
+TimeoutStartSec=180

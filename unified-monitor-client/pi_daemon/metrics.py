@@ -7,6 +7,7 @@ keine Prozesse.
 
 Aktiv nur, wenn PI_DAEMON_METRICS_TOKEN gesetzt ist. Details: MONITORING.md.
 """
+import json
 import os
 import time
 from pathlib import Path
@@ -61,6 +62,41 @@ class _Writer:
 
     def render(self) -> str:
         return '\n'.join(self.lines) + '\n'
+
+
+def _add_update_status(w: '_Writer') -> None:
+    """Betriebssystem-Updates – aus der Datei, die update-status.py auf dem Host schreibt.
+    Fehlt sie oder ist sie kaputt, fallen diese Werte einfach weg."""
+    try:
+        st = json.loads(Path(config.UPDATE_STATUS_FILE).read_text())
+    except (OSError, ValueError):
+        return
+    if not isinstance(st, dict):
+        return
+    w.add('os_update_status_timestamp_seconds', st.get('generated'),
+          'Zeitpunkt, zu dem der Update-Status zuletzt erhoben wurde (Unix-Zeit)')
+    for kind, key in (('all', 'pending'), ('security', 'pending_security'), ('held', 'held_pending')):
+        w.add('os_updates_pending', st.get(key),
+              'Verfuegbare Paket-Updates (held = gesperrt, werden nicht automatisch installiert)',
+              labels={'kind': kind})
+    w.add('os_reboot_required', st.get('reboot_required'), 'Neustart fuer installierte Updates noetig (1/0)')
+    if st.get('kernel_running'):
+        w.add('os_kernel_info', 1, 'Laufender und neuester installierter Kernel',
+              labels={'running': st['kernel_running'], 'newest': st.get('kernel_newest', '')})
+    w.add('os_package_lists_updated_timestamp_seconds', st.get('lists_updated'),
+          'Letzte Aktualisierung der Paketlisten (Unix-Zeit)')
+    w.add('os_last_auto_install_timestamp_seconds', st.get('last_install'),
+          'Letzte automatische Installation von Updates (Unix-Zeit)')
+    run = st.get('last_run')
+    if isinstance(run, dict):
+        w.add('os_last_upgrade_run_timestamp_seconds', run.get('time'),
+              'Letzter Lauf von unattended-upgrades beim Systemstart (Unix-Zeit)')
+        w.add('os_last_upgrade_success', run.get('ok'), 'Letzter Update-Lauf ohne Fehler (1/0)')
+        w.add('os_last_upgrade_packages', run.get('upgraded'), 'Im letzten Lauf aktualisierte Pakete')
+    boot = st.get('boot_check')
+    if isinstance(boot, dict):
+        w.add('boot_check_ok', boot.get('ok'), 'Boot-Pruefung vor dem Docker-Start bestanden (1/0)')
+        w.add('boot_check_timestamp_seconds', boot.get('time'), 'Zeitpunkt der letzten Boot-Pruefung (Unix-Zeit)')
 
 
 def render() -> str:
@@ -145,6 +181,8 @@ def render() -> str:
             if isinstance(info, dict) and info.get('power_w') is not None:
                 w.add('powerbank_port_watts', float(info['power_w']), 'Leistung je Anschluss',
                       labels={'port': port, 'mode': info.get('mode', '')})
+
+    _add_update_status(w)
 
     w.add('scrape_timestamp_seconds', int(time.time()), 'Zeitpunkt dieser Abfrage (Unix-Zeit)')
     return w.render()

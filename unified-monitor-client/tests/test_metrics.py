@@ -1,4 +1,5 @@
 """Prometheus-Endpunkt /metrics: Zugriffsschutz und gültiges Textformat."""
+import json
 import re
 
 import pytest
@@ -140,3 +141,41 @@ def test_grafana_port_nur_gueltige_ports(monkeypatch, wert, erwartet):
     finally:
         monkeypatch.delenv('PI_DAEMON_GRAFANA_PORT')
         importlib.reload(config)
+
+
+def test_update_status_vom_host(client, metrics_on, monkeypatch, tmp_path):
+    f = tmp_path / 'update-status.json'
+    f.write_text(json.dumps({
+        'generated': 1794684174, 'pending': 15, 'pending_security': 2, 'held_pending': 4,
+        'reboot_required': True,
+        'kernel_running': '6.18.60+rpt-rpi-2712', 'kernel_newest': '6.18.70+rpt-rpi-2712',
+        'lists_updated': 1794683138, 'last_install': None,
+        'last_run': {'time': 1794700000, 'ok': False, 'upgraded': 3},
+        'boot_check': {'ok': True, 'time': 1794683134, 'message': 'OK'},
+    }))
+    monkeypatch.setattr(config, 'UPDATE_STATUS_FILE', str(f))
+    text = client.get('/metrics', headers=metrics_on).get_data(as_text=True)
+    for line in text.splitlines():
+        if not line.startswith('#'):
+            assert LINE.match(line), f'ungültige Zeile: {line!r}'
+    v = _values(text)
+    assert v['vogelkamera_os_updates_pending{kind="all"}'] == '15'
+    assert v['vogelkamera_os_updates_pending{kind="security"}'] == '2'
+    assert v['vogelkamera_os_updates_pending{kind="held"}'] == '4'
+    assert v['vogelkamera_os_reboot_required'] == '1'
+    assert v['vogelkamera_os_kernel_info{running="6.18.60+rpt-rpi-2712",newest="6.18.70+rpt-rpi-2712"}'] == '1'
+    assert v['vogelkamera_os_last_upgrade_success'] == '0'
+    assert v['vogelkamera_os_last_upgrade_packages'] == '3'
+    assert v['vogelkamera_boot_check_ok'] == '1'
+    assert 'vogelkamera_os_last_auto_install_timestamp_seconds' not in v   # None → ausgelassen
+
+
+@pytest.mark.parametrize('inhalt', [None, 'kein json', '[1, 2]'])
+def test_update_status_fehlt_oder_kaputt(client, metrics_on, monkeypatch, tmp_path, inhalt):
+    f = tmp_path / 'update-status.json'
+    if inhalt is not None:
+        f.write_text(inhalt)
+    monkeypatch.setattr(config, 'UPDATE_STATUS_FILE', str(f))
+    r = client.get('/metrics', headers=metrics_on)
+    assert r.status_code == 200
+    assert 'os_' not in r.get_data(as_text=True)

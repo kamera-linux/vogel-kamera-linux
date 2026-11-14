@@ -1,0 +1,7 @@
+[Unit]
+Description=Update-Status für Grafana schreiben
+After=boot-health-check.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/update-status.py

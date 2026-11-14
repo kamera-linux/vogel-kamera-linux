@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.5.0"
-__version_info__ = (2, 5, 0)
+__version__ = "2.5.1"
+__version_info__ = (2, 5, 1)
 
 # Release Information
-RELEASE_NAME = "Web GUI, Player & Monitoring"
-RELEASE_DATE = "2026-11-12"
-RELEASE_TYPE = "minor"  # major, minor, patch
+RELEASE_NAME = "WLAN-Watchdog & Auto-Updates"
+RELEASE_DATE = "2026-11-14"
+RELEASE_TYPE = "patch"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20261112-1"
-GIT_TAG = "v2.5.0"
+BUILD_NUMBER = "20261114-1"
+GIT_TAG = "v2.5.1"
 
 # Feature Flags
 FEATURES = {
@@ -46,6 +46,8 @@ FEATURES = {
     "monitoring_improvements": True,  # New in v2.0.2 - CPU/RAM display, SSH stability
     "web_interface": True,  # Since v2.2.0 - Web-GUI im pi-daemon
     "powerbank_monitoring": True,  # New in v2.4.0 - Anker Prime per Bluetooth, Akku-Schutz
+    "host_maintenance": True,  # New in v2.5.1 - WLAN-Watchdog, Updates beim Start, Boot-Pruefung
+    "update_monitoring": True,  # New in v2.5.1 - Update-Status in Grafana
     "mobile_app": False,  # Planned for future
 }
 
