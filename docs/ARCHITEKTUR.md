@@ -103,7 +103,7 @@ Aufnahmeliste lädt sie nur neu, wenn sich `recordings_rev` im Status ändert.
 ### Ansible
 
 `ansible/build_and_deploy.sh` baut das ARM64-Image auf dem eigenen Rechner, überträgt es auf den
-Pi und richtet alles ein. Rollen: `docker`, `ssl`, `firewall`, `hardening`, `pi-daemon` und
+Pi und richtet alles ein. Rollen: `docker`, `ssl`, `firewall`, `hardening`, `host-maintenance`, `pi-daemon` und
 optional `monitoring`. Details: [../ansible/README.md](../ansible/README.md).
 
 ### Monitoring (optional)

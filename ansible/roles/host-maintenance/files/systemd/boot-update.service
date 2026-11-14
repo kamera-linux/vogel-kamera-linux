@@ -1,0 +1,14 @@
+[Unit]
+Description=Vogelkamera Update beim Systemstart (vor Docker)
+After=network-online.target time-sync.target
+Wants=network-online.target
+Before=boot-health-check.service docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/boot-update.sh
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=multi-user.target

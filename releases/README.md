@@ -4,15 +4,19 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.5.0** - "Web-GUI, Player & Monitoring" 📈
+**Version 2.5.1** - "WLAN-Watchdog & Auto-Updates" 📡
 - **Branch:** main
-- **Release Notes:** [v2.5.0/RELEASE_NOTES_v2.5.0.md](v2.5.0/RELEASE_NOTES_v2.5.0.md)
-- **Release Date:** 2026-11-12
-- **⚡ Erkennung:** läuft nach einer Aufnahme sofort weiter (Konvertierung/Transfer im Hintergrund)
-- **🖥 Web-GUI:** Player, neue Anordnung, Handy-Ansicht, strikte CSP
-- **📈 Monitoring:** Prometheus-Endpunkt und Grafana-Dashboard
+- **Release Notes:** [v2.5.1/RELEASE_NOTES_v2.5.1.md](v2.5.1/RELEASE_NOTES_v2.5.1.md)
+- **Release Date:** 2026-11-14
+- **📡 WLAN:** Watchdog verbindet nach einem Abbruch selbst wieder (bis hin zum Treiber-Neustart)
+- **🛠 Updates:** automatisch beim Systemstart, Boot-Prüfung vor Docker
+- **📈 Grafana:** neue Zeile „System-Updates“
 
 ## 📦 Vorherige Versionen
+
+### Version 2.5.0 - "Web-GUI, Player & Monitoring" 📈
+- **Release Notes:** [v2.5.0/RELEASE_NOTES_v2.5.0.md](v2.5.0/RELEASE_NOTES_v2.5.0.md)
+- **Release Date:** 2026-11-12
 
 ### Version 2.4.2 - "Erkennungsziele & Online-Hilfe" 🐕
 - **Release Notes:** [v2.4.2/RELEASE_NOTES_v2.4.2.md](v2.4.2/RELEASE_NOTES_v2.4.2.md)

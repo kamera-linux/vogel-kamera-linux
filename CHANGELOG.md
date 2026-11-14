@@ -1,5 +1,36 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.5.1] - 14. November 2026 📡 **WLAN-Watchdog & Auto-Updates**
+
+### 🔧 Bug Fixes
+- **WLAN kam nach einem Abbruch nicht wieder:** Hängt der WLAN-Chip (`ASSOC-REJECT status_code=16`),
+  gibt NetworkManager nach wenigen Versuchen mit `no-secrets` auf und sperrt das automatische
+  Verbinden dauerhaft – die Kamera blieb bis zum Aus-/Einschalten offline. Der vorhandene
+  WLAN-Watchdog lief nie (Timer aus, Skript ohne Shebang). Neu: verbindet über
+  `nmcli connection up` neu, lädt beim 2. Fehlschlag den WLAN-Treiber neu, startet nach 30 min
+  ohne Netz neu
+- **Powerbank dauerhaft „nicht erreichbar“** nach einem Container-Neustart mitten in einer
+  Abfrage: der Daemon trennt eine hängende Bluetooth-Verbindung jetzt selbst (#50)
+- **Web-GUI:** Knöpfe der Aufnahmeliste bleiben bei langen Dateinamen in einer Zeile (#49)
+
+### 🛠 Betrieb (neue Ansible-Rolle `host-maintenance`)
+- **Automatische Updates beim Systemstart** (die Kamera läuft nur tagsüber): unattended-upgrades
+  für Debian, Raspberry Pi und Docker – vor dem Docker-Start, höchstens alle 6 h, ohne Netz
+  übersprungen. Verlangt ein Update einen Neustart, startet der Pi sofort neu
+- **Boot-Prüfung vor Docker:** Paketsystem, neuester Kernel aktiv, Hailo (`/dev/hailo0`),
+  Kamera. Docker startet nur, wenn alles in Ordnung ist
+- Notausgänge: `/etc/vogelkamera/skip-boot-update`, `/etc/vogelkamera/skip-boot-check`
+- Docker (29.6.0) und Hailo bleiben gesperrt (`apt-mark hold`); Begründung in
+  `ansible/roles/docker/tasks/main.yml`
+
+### 📈 Monitoring
+- **Grafana-Zeile „System-Updates“:** verfügbare, Sicherheits- und gesperrte Updates, Neustart
+  nötig, Boot-Prüfung, Kernel, letzter Update-Lauf, Alter der Paketlisten
+- Neue Messwerte `vogelkamera_os_*` und `vogelkamera_boot_check_*` (aus
+  `/etc/pi-daemon/update-status.json`, geschrieben vom Host alle 15 min)
+
+3 neue Tests (126 gesamt).
+
 ## [2.5.0] - 12. November 2026 📈 **Web-GUI, Player & Monitoring**
 
 ### ⚡ Verbesserungen

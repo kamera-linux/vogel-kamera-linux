@@ -20,6 +20,19 @@
     state: present
     filename: docker
 
+# Docker ist bewusst auf 29.6.0 festgelegt und gegen Updates gesperrt:
+# Nach einem Docker-Update gab es Probleme auf dem Pi, daraufhin wurden die
+# Updates ausgesetzt. Welche Version betroffen war und was genau kaputtging,
+# ist nicht dokumentiert.
+#
+# Auf dem Pi läuft unattended-upgrades mit Docker als erlaubter Quelle – die
+# Sperre unten ist das Einzige, was automatische Docker-Updates verhindert.
+#
+# Sperre erst aufheben, wenn es neue Erkenntnisse gibt, und vorher manuell
+# testen (pi-daemon, Powerbank-Abfrage, Grafana, Prometheus). Zurück auf
+# 29.6.0: apt install docker-ce=5:29.6.0-1~debian.12~bookworm
+#             docker-ce-cli=5:29.6.0-1~debian.12~bookworm --allow-downgrades
+# Version hier UND hold unten gemeinsam ändern, sonst setzt Ansible sie zurück.
 - name: Docker CE in stabiler Version installieren (29.6.0)
   ansible.builtin.apt:
     name:

@@ -76,6 +76,12 @@
         apply:
           become: true
 
+    - name: Wartung des Pi-Systems (WLAN-Watchdog, Updates, Boot-Prüfung)
+      ansible.builtin.include_role:
+        name: host-maintenance
+        apply:
+          become: true
+
     - name: pi-daemon neu starten
       ansible.builtin.systemd:
         name:  pi-daemon

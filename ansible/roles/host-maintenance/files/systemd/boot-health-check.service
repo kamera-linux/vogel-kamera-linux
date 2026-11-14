@@ -1,0 +1,14 @@
+[Unit]
+Description=Vogelkamera Boot-Prüfung (vor Docker)
+After=network-online.target hailort.service systemd-modules-load.service boot-update.service
+Wants=network-online.target boot-update.service
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/boot-health-check.sh
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
