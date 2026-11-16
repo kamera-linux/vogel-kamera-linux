@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from . import config, settings
+from . import config, detection_log, settings
 from .config import logger
 from .runtime import _lock, state
 from .settings import RECORDING_PROFILES, _RESOLUTION_MAP, _load_rec_settings
@@ -1076,6 +1076,7 @@ def detection_watchdog():
             duration     = rec_cfg.get('duration', 15)
             profile      = RECORDING_PROFILES.get(profile_name, RECORDING_PROFILES['normal_hd'])
             logger.info('Detection-Modus: Vogel erkannt – starte Aufnahme (Profil: %s)', profile_name)
+            detection_log.record_trigger(_read_last_detection())
             threading.Thread(
                 target=CameraManager.record,
                 kwargs={

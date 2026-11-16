@@ -14,7 +14,7 @@ from pathlib import Path
 
 import psutil
 
-from . import camera, config, hailo, powerbank, settings
+from . import camera, config, detection_log, hailo, powerbank, settings
 from .runtime import _lock, state
 
 _PREFIX = 'vogelkamera_'
@@ -99,6 +99,83 @@ def _add_update_status(w: '_Writer') -> None:
         w.add('boot_check_timestamp_seconds', boot.get('time'), 'Zeitpunkt der letzten Boot-Pruefung (Unix-Zeit)')
 
 
+# get_throttled-Bits (Raspberry Pi Firmware)
+_THROTTLE_BITS = (
+    ('undervoltage_active',      0,  'Unterspannung liegt gerade an (1/0)'),
+    ('throttled_active',         2,  'CPU wird gerade gedrosselt (1/0)'),
+    ('undervoltage_since_boot',  16, 'Seit dem Boot gab es Unterspannung (1/0)'),
+    ('throttled_since_boot',     18, 'Seit dem Boot wurde gedrosselt (1/0)'),
+)
+
+
+def _add_host_status(w: '_Writer') -> None:
+    """Versorgungsspannung, Unterspannung, WLAN und Watchdog – aus der Datei, die
+    host-status.py jede Minute auf dem Host schreibt. Fehlt sie oder ist sie veraltet,
+    fallen diese Werte weg (Grafana zeigt dann eine Lücke statt alter Zahlen)."""
+    try:
+        st = json.loads(Path(config.HOST_STATUS_FILE).read_text())
+    except (OSError, ValueError):
+        return
+    if not isinstance(st, dict):
+        return
+    generated = st.get('generated')
+    if not isinstance(generated, (int, float)) or time.time() - generated > config.HOST_STATUS_MAX_AGE_S:
+        return
+    w.add('host_status_timestamp_seconds', int(generated), 'Zeitpunkt der letzten Host-Messung (Unix-Zeit)')
+    volts = st.get('supply_volts')
+    if isinstance(volts, (int, float)):
+        w.add('power_supply_volts', float(volts), 'Spannung am USB-C-Eingang des Pi (PMIC EXT5V)')
+    flags = st.get('throttled')
+    if isinstance(flags, int):
+        for name, bit, help_text in _THROTTLE_BITS:
+            w.add(name, bool(flags >> bit & 1), help_text)
+    events = st.get('undervoltage_events')
+    if isinstance(events, int):
+        w.add('undervoltage_events_total', events,
+              'Unterspannungs-Meldungen des Kernels seit dem Boot', kind='counter')
+    wifi = st.get('wifi')
+    if isinstance(wifi, dict):
+        w.add('wifi_signal_dbm', wifi.get('signal_dbm'), 'WLAN-Empfangspegel (dBm)')
+        if isinstance(wifi.get('quality'), int):
+            w.add('wifi_link_quality_ratio', round(wifi['quality'] / 70, 3), 'WLAN-Verbindungsqualitaet (0-1)')
+    counts = st.get('wlan_watchdog')
+    if isinstance(counts, dict):
+        for action in ('router_down', 'reconnect', 'driver_reload', 'reboot'):
+            value = counts.get(action, 0)
+            if isinstance(value, int):
+                w.add('wlan_watchdog_actions_total', value,
+                      'Eingriffe des WLAN-Watchdogs seit dem Boot (router_down = Router nicht erreichbar)',
+                      kind='counter', labels={'action': action})
+
+
+def _fan_rpm():
+    """Drehzahl des Pi-Lüfters (hwmon pwmfan) oder None."""
+    for hw in Path('/sys/class/hwmon').glob('hwmon*'):
+        try:
+            if (hw / 'name').read_text().strip() == 'pwmfan':
+                return int((hw / 'fan1_input').read_text().strip())
+        except (OSError, ValueError):
+            continue
+    return None
+
+
+def _add_detection_log(w: '_Writer') -> None:
+    """Auswertung des Auslöse-Protokolls (detection_log.py)."""
+    st = detection_log.stats()
+    w.add('detections_last_day', st['count_24h'], 'Ausloesungen im Detection-Modus in den letzten 24 Stunden')
+    w.add('detections_last_week', st['count_7d'], 'Ausloesungen im Detection-Modus in den letzten 7 Tagen')
+    for hour, n in st['by_hour'].items():
+        w.add('detections_by_hour_week', n, 'Ausloesungen der letzten 7 Tage je Stunde des Tages',
+              labels={'hour': hour})
+    for b, n in sorted(st['conf_bins'].items()):
+        w.add('detections_by_confidence_week', n,
+              'Ausloesungen der letzten 7 Tage je Confidence-Klasse (Untergrenze, Breite 0.05)',
+              labels={'confidence': b})
+    w.add('detection_last_confidence', st['last_conf'], 'Confidence der letzten Ausloesung (0-1)')
+    if st['last_ts'] is not None:
+        w.add('detection_last_timestamp_seconds', int(st['last_ts']), 'Zeitpunkt der letzten Ausloesung (Unix-Zeit)')
+
+
 def render() -> str:
     w = _Writer()
     w.add('info', 1, 'Version des pi-daemon', labels={'version': config.APP_VERSION})
@@ -123,6 +200,7 @@ def render() -> str:
     w.add('triggered_recordings_total', snap['birds_recorded'],
           'Durch Erkennung ausgeloeste Aufnahmen seit Start des Detection-Modus', kind='counter')
     w.add('detection_threshold', float(settings._detection_threshold), 'Eingestellte Confidence-Schwelle (0-1)')
+    _add_detection_log(w)
 
     media = camera.media_summary()
     w.add('recordings_today', media['today'], 'Video-Aufnahmen mit heutigem Datum')
@@ -155,6 +233,7 @@ def render() -> str:
         w.add('cpu_temperature_celsius', round(int(raw) / 1000.0, 1), 'CPU-Temperatur')
     except Exception:
         pass
+    w.add('fan_rpm', _fan_rpm(), 'Drehzahl des Pi-Luefters (U/min)')
 
     # ── Hailo-NPU (nur gecachte Werte – nie ein Subprozess im Request) ────
     with hailo._hailo_temp_bg_lock:
@@ -183,6 +262,7 @@ def render() -> str:
                       labels={'port': port, 'mode': info.get('mode', '')})
 
     _add_update_status(w)
+    _add_host_status(w)
 
     w.add('scrape_timestamp_seconds', int(time.time()), 'Zeitpunkt dieser Abfrage (Unix-Zeit)')
     return w.render()

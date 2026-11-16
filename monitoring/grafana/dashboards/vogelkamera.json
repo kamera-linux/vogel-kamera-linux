@@ -14,7 +14,7 @@
     "to": "now"
   },
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "templating": {
     "list": []
   },
@@ -490,7 +490,7 @@
     },
     {
       "type": "row",
-      "title": "Strom (Powerbank)",
+      "title": "Strom (Powerbank & Pi)",
       "id": 8,
       "collapsed": false,
       "gridPos": {
@@ -723,7 +723,7 @@
     {
       "type": "stat",
       "title": "Restlaufzeit (geschätzt)",
-      "description": "Aus dem Entladetempo der letzten 3 Stunden hochgerechnet. Leer, solange geladen wird oder der Akkustand nicht fällt.",
+      "description": "Aus dem Entladetempo der letzten 3 Stunden hochgerechnet, in Stunden. Phasen mit 100 % werden ignoriert, weil die Powerbank dort noch keinen Abfall meldet. Leer, solange geladen wird oder der Akkustand nicht fällt.",
       "id": 11,
       "datasource": {
         "type": "prometheus",
@@ -737,7 +737,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
+          "unit": "suffix: h",
+          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -751,11 +752,11 @@
               },
               {
                 "color": "orange",
-                "value": 21600
+                "value": 6
               },
               {
                 "color": "green",
-                "value": 86400
+                "value": 12
               }
             ]
           },
@@ -788,7 +789,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(vogelkamera_powerbank_battery_percent / (-deriv(vogelkamera_powerbank_battery_percent[3h])) > 0) < 30 * 86400",
+          "expr": "((vogelkamera_powerbank_battery_percent / (-deriv((vogelkamera_powerbank_battery_percent < 100)[3h:1m])) > 0) < 30 * 86400) / 3600",
           "legendFormat": "",
           "refId": "A",
           "range": true,
@@ -942,6 +943,490 @@
       ]
     },
     {
+      "type": "timeseries",
+      "title": "Versorgungsspannung Pi",
+      "description": "Spannung am USB-C-Eingang des Pi (PMIC). Unter etwa 4,63 V meldet der Pi Unterspannung – dann kann z. B. das WLAN abbrechen. Typisch: Kabel zu dünn/zu lang oder Stecker mit Wackelkontakt.",
+      "id": 43,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": 300000,
+            "lineInterpolation": "linear",
+            "axisPlacement": "auto",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 4.63
+              },
+              {
+                "color": "green",
+                "value": 4.8
+              }
+            ]
+          },
+          "min": 4.4,
+          "max": 5.3,
+          "decimals": 2
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Spannung"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_power_supply_volts",
+          "legendFormat": "Spannung",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Leistung je Anschluss",
+      "description": "Abgegebene bzw. aufgenommene Leistung je Anschluss der Powerbank",
+      "id": 44,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": 300000,
+            "lineInterpolation": "linear",
+            "axisPlacement": "auto",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (port) (vogelkamera_powerbank_port_watts)",
+          "legendFormat": "{{port}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Unterspannung jetzt",
+      "description": "Liegt gerade Unterspannung an? (vcgencmd get_throttled, Bit 0)",
+      "id": 45,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "Ja",
+                  "color": "red",
+                  "index": 0
+                },
+                "0": {
+                  "text": "Nein",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_undervoltage_active",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Unterspannung seit Boot",
+      "description": "Gab es seit dem letzten Boot mindestens einmal Unterspannung? (Bit 16)",
+      "id": 46,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "Ja",
+                  "color": "orange",
+                  "index": 0
+                },
+                "0": {
+                  "text": "Nein",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_undervoltage_since_boot",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Unterspannungs-Meldungen 24 h",
+      "description": "Anzahl „Undervoltage detected!“ im Kernel-Log in den letzten 24 Stunden",
+      "id": 47,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(vogelkamera_undervoltage_events_total[24h])))",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Neustarts (7 Tage)",
+      "description": "Wie oft der Pi in den letzten 7 Tagen neu gestartet ist (Updates, Watchdog, Stromausfall)",
+      "id": 48,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 7
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "changes((round(vogelkamera_boot_time_seconds / 60))[7d:5m])",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
       "type": "row",
       "title": "Erkennungen & Aufnahmen",
       "id": 14,
@@ -950,7 +1435,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 30
       },
       "panels": []
     },
@@ -967,7 +1452,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 19
+        "y": 31
       },
       "fieldConfig": {
         "defaults": {
@@ -1061,7 +1546,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 31
       },
       "fieldConfig": {
         "defaults": {
@@ -1155,7 +1640,7 @@
         "h": 7,
         "w": 16,
         "x": 0,
-        "y": 27
+        "y": 39
       },
       "fieldConfig": {
         "defaults": {
@@ -1262,7 +1747,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 27
+        "y": 39
       },
       "fieldConfig": {
         "defaults": {
@@ -1339,6 +1824,472 @@
       ]
     },
     {
+      "type": "barchart",
+      "title": "Aktivität nach Uhrzeit (7 Tage)",
+      "description": "Auslösungen im Detection-Modus der letzten 7 Tage, nach Stunde des Tages. Zeigt, wann die Vögel kommen.",
+      "id": 49,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 46
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "axisPlacement": "auto"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "Uhrzeit",
+        "orientation": "vertical",
+        "showValue": "auto",
+        "barWidth": 0.8,
+        "groupWidth": 0.7,
+        "xTickLabelSpacing": 0,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_detections_by_hour_week",
+          "legendFormat": "{{hour}}",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "name": true
+            },
+            "renameByName": {
+              "hour": "Uhrzeit",
+              "Value": "Auslösungen"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Uhrzeit",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Confidence der Auslösungen (7 Tage)",
+      "description": "Wie sicher sich die Erkennung bei den Auslösungen war (Klassen à 0,05). Viele Werte knapp über der Schwelle deuten auf Fehlauslösungen oder eine zu niedrige Schwelle hin.",
+      "id": 50,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 46
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "axisPlacement": "auto"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "Confidence",
+        "orientation": "vertical",
+        "showValue": "auto",
+        "barWidth": 0.8,
+        "groupWidth": 0.7,
+        "xTickLabelSpacing": 0,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_detections_by_confidence_week",
+          "legendFormat": "{{confidence}}",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "name": true
+            },
+            "renameByName": {
+              "confidence": "Confidence",
+              "Value": "Auslösungen"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Confidence",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Auslösungen 24 h",
+      "description": "Auslösungen im Detection-Modus in den letzten 24 Stunden",
+      "id": 51,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 18,
+        "y": 46
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_detections_last_day",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Auslösungen 7 Tage",
+      "description": "Auslösungen im Detection-Modus in den letzten 7 Tagen",
+      "id": 52,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 46
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_detections_last_week",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Schwelle",
+      "description": "Eingestellte Confidence-Schwelle der Erkennung (Web-GUI → Einstellungen)",
+      "id": 53,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 18,
+        "y": 50
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_detection_threshold",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Letzte Confidence",
+      "description": "Confidence der letzten Auslösung",
+      "id": 54,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 50
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_detection_last_confidence",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
       "type": "row",
       "title": "Temperatur & Last",
       "id": 19,
@@ -1347,7 +2298,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 54
       },
       "panels": []
     },
@@ -1364,7 +2315,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 55
       },
       "fieldConfig": {
         "defaults": {
@@ -1465,7 +2416,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 55
       },
       "fieldConfig": {
         "defaults": {
@@ -1570,7 +2521,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 63
       },
       "fieldConfig": {
         "defaults": {
@@ -1657,7 +2608,7 @@
         "h": 7,
         "w": 4,
         "x": 12,
-        "y": 43
+        "y": 63
       },
       "fieldConfig": {
         "defaults": {
@@ -1749,7 +2700,7 @@
         "h": 7,
         "w": 4,
         "x": 16,
-        "y": 43
+        "y": 63
       },
       "fieldConfig": {
         "defaults": {
@@ -1813,7 +2764,7 @@
         "h": 7,
         "w": 4,
         "x": 20,
-        "y": 43
+        "y": 63
       },
       "fieldConfig": {
         "defaults": {
@@ -1865,15 +2816,247 @@
       ]
     },
     {
+      "type": "timeseries",
+      "title": "Lüfter",
+      "description": "Drehzahl des Pi-Lüfters",
+      "id": 55,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 10,
+        "x": 0,
+        "y": 70
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": 300000,
+            "lineInterpolation": "linear",
+            "axisPlacement": "auto",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_fan_rpm",
+          "legendFormat": "Lüfter",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "NPU-Takt",
+      "description": "Takt des Hailo-NN-Kerns. Sinkt er, drosselt der Chip wegen Temperatur.",
+      "id": 56,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 10,
+        "x": 10,
+        "y": 70
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "hertz",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": 300000,
+            "lineInterpolation": "linear",
+            "axisPlacement": "auto",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_npu_clock_hertz",
+          "legendFormat": "NPU",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Letzter Fehler",
+      "description": "Steht im Status eine Fehlermeldung? Details in der Web-GUI.",
+      "id": 57,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 70
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "Fehler",
+                  "color": "red",
+                  "index": 0
+                },
+                "0": {
+                  "text": "Keiner",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_last_error",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
       "type": "row",
-      "title": "Speicher & Netz",
+      "title": "Speicher, Netz & WLAN",
       "id": 26,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 77
       },
       "panels": []
     },
@@ -1890,7 +3073,7 @@
         "h": 8,
         "w": 10,
         "x": 0,
-        "y": 51
+        "y": 78
       },
       "fieldConfig": {
         "defaults": {
@@ -1982,7 +3165,7 @@
         "h": 8,
         "w": 4,
         "x": 10,
-        "y": 51
+        "y": 78
       },
       "fieldConfig": {
         "defaults": {
@@ -2058,7 +3241,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 51
+        "y": 78
       },
       "fieldConfig": {
         "defaults": {
@@ -2133,6 +3316,326 @@
       ]
     },
     {
+      "type": "timeseries",
+      "title": "WLAN-Signal",
+      "description": "Empfangspegel des WLAN. Ab etwa −70 dBm stabil, unter −80 dBm drohen Abbrüche.",
+      "id": 58,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 0,
+        "y": 86
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dBm",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": 300000,
+            "lineInterpolation": "linear",
+            "axisPlacement": "auto",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -80
+              },
+              {
+                "color": "green",
+                "value": -70
+              }
+            ]
+          },
+          "min": -95,
+          "max": -30
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Signal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "vogelkamera_wifi_signal_dbm",
+          "legendFormat": "Signal",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "WLAN-Watchdog-Eingriffe",
+      "description": "Was der WLAN-Watchdog pro Stunde getan hat: Router nicht erreichbar → Reconnect → Treiber neu laden → Neustart",
+      "id": 59,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 10,
+        "y": 86
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 2,
+            "fillOpacity": 80,
+            "showPoints": "never",
+            "spanNulls": 300000,
+            "lineInterpolation": "linear",
+            "axisPlacement": "auto",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0,
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Router weg"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Reconnect"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Treiber neu geladen"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(vogelkamera_wlan_watchdog_actions_total{action=\"router_down\"}[1h])))",
+          "legendFormat": "Router weg",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(vogelkamera_wlan_watchdog_actions_total{action=\"reconnect\"}[1h])))",
+          "legendFormat": "Reconnect",
+          "refId": "B",
+          "range": true,
+          "instant": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(vogelkamera_wlan_watchdog_actions_total{action=\"driver_reload\"}[1h])))",
+          "legendFormat": "Treiber neu geladen",
+          "refId": "C",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "interval": "1h"
+    },
+    {
+      "type": "stat",
+      "title": "WLAN-Ausfälle 24 h",
+      "description": "Wie oft der Watchdog in den letzten 24 Stunden den Router nicht erreicht hat",
+      "id": 60,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 20,
+        "y": 86
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "–",
+          "mappings": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(vogelkamera_wlan_watchdog_actions_total{action=\"router_down\"}[24h])))",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
       "type": "row",
       "title": "System-Updates",
       "id": 30,
@@ -2141,7 +3644,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 94
       },
       "panels": []
     },
@@ -2158,7 +3661,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 60
+        "y": 95
       },
       "fieldConfig": {
         "defaults": {
@@ -2226,7 +3729,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 60
+        "y": 95
       },
       "fieldConfig": {
         "defaults": {
@@ -2294,7 +3797,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 60
+        "y": 95
       },
       "fieldConfig": {
         "defaults": {
@@ -2362,7 +3865,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 60
+        "y": 95
       },
       "fieldConfig": {
         "defaults": {
@@ -2442,7 +3945,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 60
+        "y": 95
       },
       "fieldConfig": {
         "defaults": {
@@ -2522,7 +4025,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 60
+        "y": 95
       },
       "fieldConfig": {
         "defaults": {
@@ -2586,7 +4089,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 64
+        "y": 99
       },
       "fieldConfig": {
         "defaults": {
@@ -2666,7 +4169,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 64
+        "y": 99
       },
       "fieldConfig": {
         "defaults": {
@@ -2730,7 +4233,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 64
+        "y": 99
       },
       "fieldConfig": {
         "defaults": {
@@ -2794,7 +4297,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 64
+        "y": 99
       },
       "fieldConfig": {
         "defaults": {
@@ -2862,7 +4365,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 64
+        "y": 99
       },
       "fieldConfig": {
         "defaults": {
@@ -2930,7 +4433,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 64
+        "y": 99
       },
       "fieldConfig": {
         "defaults": {

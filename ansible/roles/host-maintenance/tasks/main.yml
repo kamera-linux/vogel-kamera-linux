@@ -26,6 +26,7 @@
     - boot-update.sh
     - boot-health-check.sh
     - update-status.py
+    - host-status.py
 
 # ── unattended-upgrades ──────────────────────────────────────────────────────
 - name: unattended-upgrades installieren
@@ -82,7 +83,27 @@
     - boot-health-check.service
     - update-status.service
     - update-status.timer
+    - host-status.service
+    - host-status.timer
   notify: systemd neu laden
+
+# /run/vogelkamera liegt im RAM und muss nach jedem Boot existieren, bevor Docker
+# ihn in den pi-daemon-Container einbindet (Host-Status für /metrics).
+- name: Laufzeit-Verzeichnis /run/vogelkamera beim Boot anlegen
+  ansible.builtin.copy:
+    dest:    /etc/tmpfiles.d/vogelkamera.conf
+    content: "d /run/vogelkamera 0755 root root -\n"
+    owner:   root
+    group:   root
+    mode:    "0644"
+
+- name: Laufzeit-Verzeichnis /run/vogelkamera jetzt anlegen
+  ansible.builtin.file:
+    path:  /run/vogelkamera
+    state: directory
+    owner: root
+    group: root
+    mode:  "0755"
 
 - name: Docker erst nach bestandener Boot-Prüfung starten
   ansible.builtin.file:
@@ -114,6 +135,12 @@
 - name: Update-Status-Timer aktivieren
   ansible.builtin.systemd:
     name:    update-status.timer
+    enabled: true
+    state:   started
+
+- name: Host-Status-Timer aktivieren
+  ansible.builtin.systemd:
+    name:    host-status.timer
     enabled: true
     state:   started
 

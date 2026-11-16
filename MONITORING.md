@@ -225,10 +225,23 @@ Das Token kann nur Messwerte lesen, nichts steuern; das Login der Web-GUI gilt f
 | `os_updates_pending{kind="all\|security\|held"}`, `os_reboot_required`, `os_kernel_info` | Betriebssystem-Updates (`held` = gesperrt, nur von Hand) |
 | `os_last_upgrade_run_timestamp_seconds`, `os_last_upgrade_success`, `os_last_auto_install_timestamp_seconds` | Update-Lauf beim Systemstart (`boot-update.service`, vor Docker, höchstens alle 6 h) |
 | `boot_check_ok`, `boot_check_timestamp_seconds` | Boot-Prüfung vor dem Docker-Start |
+| `power_supply_volts`, `undervoltage_active`, `undervoltage_since_boot`, `undervoltage_events_total` | Versorgungsspannung am USB-C-Eingang und Unterspannung (Kernel-Meldungen seit Boot) |
+| `wifi_signal_dbm`, `wifi_link_quality_ratio` | WLAN-Empfang |
+| `wlan_watchdog_actions_total{action="router_down\|reconnect\|driver_reload\|reboot"}` | Eingriffe des WLAN-Watchdogs seit Boot |
+| `fan_rpm`, `npu_clock_hertz` | Lüfterdrehzahl, Takt des Hailo-Chips |
+| `detections_last_day`, `detections_last_week`, `detections_by_hour_week{hour}`, `detections_by_confidence_week{confidence}`, `detection_last_confidence` | Auslösungen im Detection-Modus: Anzahl, Uhrzeit, Confidence-Verteilung |
 
 Die `os_*`- und `boot_check_*`-Werte liest der Daemon aus `/etc/pi-daemon/update-status.json`
 (im Container `/config/update-status.json`). Die Datei schreibt `/usr/local/bin/update-status.py`
 auf dem Pi alle 15 Minuten (`update-status.timer`) – fehlt sie, fallen diese Werte einfach weg.
+
+Spannung, Unterspannung, WLAN und Watchdog kann der Container nicht selbst lesen (eigenes Netz,
+kein `vcgencmd`). Sie stehen in `/run/vogelkamera/host-status.json` (im Container
+`/host-status/host-status.json`), geschrieben von `/usr/local/bin/host-status.py` jede Minute
+(`host-status.timer`). `/run` liegt im RAM; ist die Datei älter als 5 Minuten, fallen die Werte weg.
+
+Die Auslösungen protokolliert der Daemon selbst in `/etc/pi-daemon/detection-log.jsonl`
+(Zeit, Klasse, Confidence; die letzten 30 Tage).
 
 **Alarm, wenn der Pi nicht mehr antwortet** (das kann der Daemon selbst nicht melden) – als
 Alarmregel in Grafana oder Prometheus:

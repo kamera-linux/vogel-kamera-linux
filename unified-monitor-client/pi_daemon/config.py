@@ -43,6 +43,9 @@ if not 0 < GRAFANA_PORT < 65536:
 LAST_DETECTION_FILE = '/config/last-detection.json'
 SEEN_DETECTION_FILE = '/tmp/detection-seen.json'
 SEEN_MAX_AGE_S      = 10.0   # ältere „gesehen"-Einträge gelten nicht mehr als aktuell
+# Protokoll der Auslösungen (Zeit, Klasse, Confidence) für Grafana – detection_log.py
+DETECTION_LOG_FILE  = '/config/detection-log.jsonl'
+DETECTION_LOG_DAYS  = 30
 # Speicher-Aufräumung: sinkt der freie Platz im Video-Verzeichnis unter diesen Wert,
 # werden die ältesten Aufnahmen gelöscht. 0 = aus (Standard).
 MIN_FREE_GB       = float(os.environ.get('PI_DAEMON_MIN_FREE_GB', 0) or 0)
@@ -50,6 +53,10 @@ SETTINGS_FILE     = '/config/sync-config.json'
 # Update-Status des Host-Systems (apt, Neustart, Boot-Prüfung). Schreibt
 # /usr/local/bin/update-status.py auf dem Pi alle 15 Minuten nach /etc/pi-daemon/.
 UPDATE_STATUS_FILE = '/config/update-status.json'
+# Host-Werte, die der Container nicht selbst lesen kann (Versorgungsspannung, WLAN,
+# Watchdog). Schreibt /usr/local/bin/host-status.py jede Minute nach /run/vogelkamera/.
+HOST_STATUS_FILE   = '/host-status/host-status.json'
+HOST_STATUS_MAX_AGE_S = 300   # ältere Werte gelten als veraltet und werden nicht exportiert
 SYNC_KEY_FILE     = '/config/sync_rsa'
 
 # ---------------------------------------------------------------------------
