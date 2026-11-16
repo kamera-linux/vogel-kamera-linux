@@ -4,19 +4,19 @@
 
 ![Vogel-Kamera-Linux Modell 2026-01](assets/vogelhaus-kamera-solo-neu-3.png)
 
-## Release v2.5.1 — WLAN-Watchdog & Auto-Updates 📡
+## Release v2.6.0 — Strom- & WLAN-Monitoring 🔌
 
-- **Version:** v2.5.1 (14. November 2026)
-- **📡 WLAN kommt nach einem Abbruch selbst wieder** – Watchdog verbindet neu, lädt notfalls den Treiber neu
-- **🛠 Automatische Updates beim Systemstart** – vor dem Docker-Start, mit Boot-Prüfung (Kernel, Hailo, Kamera)
-- **📈 Grafana:** neue Zeile „System-Updates“ (verfügbare Updates, Neustart nötig, Boot-Prüfung)
-- **🔧 Fixes:** hängende Bluetooth-Verbindung zur Powerbank, Knöpfe der Aufnahmeliste
+- **Version:** v2.6.0 (16. November 2026)
+- **🔌 Versorgungsspannung und Unterspannung im Dashboard** – zeigt sofort, wenn Kabel oder Powerbank nicht reichen
+- **📶 WLAN-Signal und Eingriffe des Watchdogs** als Verlauf
+- **🐦 Auswertung der Erkennungen:** Aktivität nach Uhrzeit, Confidence-Verteilung, Auslösungen pro Tag/Woche
+- **🔋 Restlaufzeit realistischer** und in Stunden; dazu Neustarts, Lüfter, NPU-Takt, Leistung je Anschluss
 
 **Update:** [`./ansible/build_and_deploy.sh --update`](ansible/build_and_deploy.sh)  
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)  
-**Release Notes:** [`releases/v2.5.1/`](releases/v2.5.1/RELEASE_NOTES_v2.5.1.md)
+**Release Notes:** [`releases/v2.6.0/`](releases/v2.6.0/RELEASE_NOTES_v2.6.0.md)
 
-[![Version](https://img.shields.io/badge/Version-v2.5.1-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.5.1)
+[![Version](https://img.shields.io/badge/Version-v2.6.0-brightgreen)](https://github.com/kamera-linux/vogel-kamera-linux/releases/tag/v2.6.0)
 [![Camera Controls](https://img.shields.io/badge/Camera-10%20Parameters-blue)]()
 [![Slow-Motion](https://img.shields.io/badge/Slow--Motion-2304x1296%40%2056fps-ff9800)]()
 [![Security](https://img.shields.io/badge/Auth-JWT%20%2B%20TOTP-critical)]()
@@ -233,6 +233,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 - ▶️ **Aufnahmen im Browser abspielen** und Bedienung auch auf dem Handy *(Neu in v2.5.0)*
 - 📈 **Verläufe in Grafana** (Akku, Temperaturen, Erkennungen, Speicher) – optional direkt auf dem Pi *(Neu in v2.5.0)*
 - 📡 **Selbstheilendes WLAN** und **automatische Updates beim Systemstart** mit Boot-Prüfung vor Docker *(Neu in v2.5.1)*
+- 🔌 **Stromversorgung und WLAN im Blick:** Spannung, Unterspannung, WLAN-Signal, Watchdog – und wann die Vögel kommen *(Neu in v2.6.0)*
 - 🔄 **Automatische Video-/Audio-Synchronisation**
 - 📱 **YouTube-Integration** mit QR-Codes für mobile Nutzer
 - 🔧 **Einfache Installation** per Ansible (`build_and_deploy.sh`)
@@ -293,6 +294,10 @@ Seit v2.5.1 zeigt die Zeile **„System-Updates“**, ob Updates anstehen, ob ei
 und ob die Boot-Prüfung vor dem Docker-Start bestanden wurde:
 
 ![Grafana: Zeile System-Updates mit verfügbaren und gesperrten Updates, Neustart, Boot-Prüfung und Kernel](assets/Grafana-System-Updates.png)
+
+Seit v2.6.0 zeigt das Dashboard außerdem die **Versorgungsspannung** des Pi mit Unterspannungs-Meldungen,
+das **WLAN-Signal** und die Eingriffe des WLAN-Watchdogs sowie die **Aktivität nach Uhrzeit** und die
+Confidence der Auslösungen.
 
 ### Screenshots
 
@@ -603,5 +608,5 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ---
 
-**Version:** v2.5.1 (14. November 2026) | **Status:** Produktionsreif ✅  
+**Version:** v2.6.0 (16. November 2026) | **Status:** Produktionsreif ✅  
 **Raspberry Pi 5 AI HAT+ · Hailo-8 NPU · Debian Trixie (13) | Docker Web-API | JWT + TOTP 2FA | Powerbank-Überwachung (Bluetooth) | Security-Audit 11/2026**

@@ -4,15 +4,19 @@ Hier finden Sie die vollständige Dokumentation aller Versionen des vogel-kamera
 
 ## 🚀 Aktuelle Version
 
-**Version 2.5.1** - "WLAN-Watchdog & Auto-Updates" 📡
+**Version 2.6.0** - "Strom- & WLAN-Monitoring" 🔌
 - **Branch:** main
-- **Release Notes:** [v2.5.1/RELEASE_NOTES_v2.5.1.md](v2.5.1/RELEASE_NOTES_v2.5.1.md)
-- **Release Date:** 2026-11-14
-- **📡 WLAN:** Watchdog verbindet nach einem Abbruch selbst wieder (bis hin zum Treiber-Neustart)
-- **🛠 Updates:** automatisch beim Systemstart, Boot-Prüfung vor Docker
-- **📈 Grafana:** neue Zeile „System-Updates“
+- **Release Notes:** [v2.6.0/RELEASE_NOTES_v2.6.0.md](v2.6.0/RELEASE_NOTES_v2.6.0.md)
+- **Release Date:** 2026-11-16
+- **🔌 Strom:** Versorgungsspannung, Unterspannung, Neustarts, Leistung je Anschluss
+- **📶 WLAN:** Signal und Eingriffe des Watchdogs
+- **🐦 Erkennungen:** Aktivität nach Uhrzeit, Confidence-Verteilung
 
 ## 📦 Vorherige Versionen
+
+### Version 2.5.1 - "WLAN-Watchdog & Auto-Updates" 📡
+- **Release Notes:** [v2.5.1/RELEASE_NOTES_v2.5.1.md](v2.5.1/RELEASE_NOTES_v2.5.1.md)
+- **Release Date:** 2026-11-14
 
 ### Version 2.5.0 - "Web-GUI, Player & Monitoring" 📈
 - **Release Notes:** [v2.5.0/RELEASE_NOTES_v2.5.0.md](v2.5.0/RELEASE_NOTES_v2.5.0.md)

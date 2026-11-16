@@ -3,17 +3,17 @@
 Version information for Vogel-Kamera-Linux
 """
 
-__version__ = "2.5.1"
-__version_info__ = (2, 5, 1)
+__version__ = "2.6.0"
+__version_info__ = (2, 6, 0)
 
 # Release Information
-RELEASE_NAME = "WLAN-Watchdog & Auto-Updates"
-RELEASE_DATE = "2026-11-14"
-RELEASE_TYPE = "patch"  # major, minor, patch
+RELEASE_NAME = "Strom- & WLAN-Monitoring"
+RELEASE_DATE = "2026-11-16"
+RELEASE_TYPE = "minor"  # major, minor, patch
 
 # Build Information
-BUILD_NUMBER = "20261114-1"
-GIT_TAG = "v2.5.1"
+BUILD_NUMBER = "20261116-1"
+GIT_TAG = "v2.6.0"
 
 # Feature Flags
 FEATURES = {
@@ -48,6 +48,8 @@ FEATURES = {
     "powerbank_monitoring": True,  # New in v2.4.0 - Anker Prime per Bluetooth, Akku-Schutz
     "host_maintenance": True,  # New in v2.5.1 - WLAN-Watchdog, Updates beim Start, Boot-Pruefung
     "update_monitoring": True,  # New in v2.5.1 - Update-Status in Grafana
+    "power_wifi_monitoring": True,  # New in v2.6.0 - Spannung, Unterspannung, WLAN, Watchdog in Grafana
+    "detection_stats": True,  # New in v2.6.0 - Aktivitaet nach Uhrzeit, Confidence-Verteilung
     "mobile_app": False,  # Planned for future
 }
 

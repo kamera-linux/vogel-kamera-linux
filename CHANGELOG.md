@@ -1,5 +1,32 @@
 # 📋 CHANGELOG - Vogel-Kamera-Linux
 
+## [2.6.0] - 16. November 2026 🔌 **Strom- & WLAN-Monitoring**
+
+### 🔌 Stromversorgung
+- **Versorgungsspannung des Pi** (PMIC, USB-C-Eingang) als Verlauf mit Warnlinien bei 4,63 V und 4,8 V
+- **Unterspannung:** gerade jetzt, seit dem Boot, Anzahl der Kernel-Meldungen in 24 h. Anlass: Die
+  WLAN-Abbrüche der letzten Tage kamen von Unterspannung durch ein zu schwaches Kabel zur Powerbank
+- **Neustarts (7 Tage)** und **Leistung je Anschluss** der Powerbank
+- **Restlaufzeit** jetzt in Stunden; Phasen mit 100 % fließen nicht mehr in die Hochrechnung ein
+  (vorher deutlich zu optimistisch, z. B. 24 h statt 16 h)
+
+### 📶 WLAN
+- **WLAN-Signal** (dBm) als Verlauf
+- Der **WLAN-Watchdog zählt seine Eingriffe** (Router weg, Reconnect, Treiber neu geladen,
+  Neustart) – im Dashboard pro Stunde und als „WLAN-Ausfälle 24 h“
+
+### 🐦 Erkennungen
+- **Auslöse-Protokoll** `/etc/pi-daemon/detection-log.jsonl` (Zeit, Klasse, Confidence; 30 Tage)
+- **Aktivität nach Uhrzeit** und **Confidence-Verteilung** der letzten 7 Tage, Auslösungen 24 h /
+  7 Tage, eingestellte Schwelle, letzte Confidence
+
+### 🛠 Technik
+- Neues Host-Skript `host-status.py` (Timer, jede Minute) für Werte, die der Container nicht lesen
+  kann; schreibt nach `/run/vogelkamera/` (RAM), im Container unter `/host-status` eingebunden
+- Weitere Panels: Lüfter, NPU-Takt, Letzter Fehler
+
+9 neue Tests (134 gesamt).
+
 ## [2.5.1] - 14. November 2026 📡 **WLAN-Watchdog & Auto-Updates**
 
 ### 🔧 Bug Fixes
