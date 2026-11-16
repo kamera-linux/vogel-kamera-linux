@@ -29,6 +29,9 @@ def video_dir(tmp_path, monkeypatch):
     base.mkdir()
     monkeypatch.setattr(config, 'VIDEO_BASE_DIR', str(base))
     monkeypatch.setattr(camera, '_SCAN_TTL', 0)   # Verzeichnis-Scan in Tests nicht cachen
+    # Protokoll und Host-Status nie aus /config bzw. /host-status des Rechners lesen
+    monkeypatch.setattr(config, 'DETECTION_LOG_FILE', str(tmp_path / 'detection-log.jsonl'))
+    monkeypatch.setattr(config, 'HOST_STATUS_FILE', str(tmp_path / 'host-status.json'))
     return base
 
 

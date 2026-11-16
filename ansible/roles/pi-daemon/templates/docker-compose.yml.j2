@@ -21,6 +21,7 @@ services:
     volumes:
       - {{ pi_video_dir }}:/videos
       - /etc/pi-daemon:/config         # beschreibbar: sync-config.json + SSH-Key
+      - /run/vogelkamera:/host-status:ro  # host-status.json (Spannung, WLAN, Watchdog) für /metrics
       - {{ pi_certs_dir }}:/certs:ro
       - /run/udev:/run/udev:ro
       - /proc:/proc:ro                 # psutil braucht /proc

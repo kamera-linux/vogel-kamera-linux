@@ -1,0 +1,6 @@
+[Unit]
+Description=Host-Status (Spannung, WLAN, Watchdog) für Grafana schreiben
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/host-status.py

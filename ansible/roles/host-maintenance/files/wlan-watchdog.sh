@@ -12,8 +12,15 @@ CONNECTION=preconfigured
 FALLBACK_GW=192.168.178.1
 STATE=/run/wlan-watchdog.fails
 REBOOT_AFTER=30   # Minuten ohne Netz, bevor neu gestartet wird
+COUNT_DIR=/run/vogelkamera/wlan-watchdog   # Zähler für Grafana (host-status.py liest sie)
 
 log() { logger -t wlan-watchdog "$*"; }
+
+count() {
+    mkdir -p "$COUNT_DIR"
+    local f="$COUNT_DIR/$1"
+    echo $(( $(cat "$f" 2>/dev/null || echo 0) + 1 )) > "$f"
+}
 
 gateway() {
     local gw
@@ -36,6 +43,7 @@ fi
 fails=$(( $(cat "$STATE" 2>/dev/null || echo 0) + 1 ))
 echo "$fails" > "$STATE"
 log "Router nicht erreichbar (Fehlversuch $fails)"
+count router_down
 
 # Stufe 1: Verbindung neu aktivieren
 nmcli device set "$INTERFACE" autoconnect yes &>/dev/null
@@ -43,6 +51,7 @@ nmcli --wait 40 connection up "$CONNECTION" ifname "$INTERFACE" &>/dev/null
 sleep 5
 if online; then
     log "Reconnect über NetworkManager erfolgreich"
+    count reconnect
     rm -f "$STATE"
     exit 0
 fi
@@ -50,6 +59,7 @@ fi
 # Stufe 2: ab dem 2. Fehlversuch WLAN-Treiber neu laden
 if [ "$fails" -ge 2 ]; then
     log "Reconnect fehlgeschlagen – lade WLAN-Treiber neu"
+    count driver_reload
     modprobe -r brcmfmac_cyw brcmfmac
     sleep 3
     modprobe brcmfmac
@@ -66,5 +76,6 @@ fi
 # Stufe 3: letzter Ausweg
 if [ "$fails" -ge "$REBOOT_AFTER" ]; then
     log "WLAN seit $fails Versuchen weg – starte neu"
+    count reboot
     systemctl reboot
 fi

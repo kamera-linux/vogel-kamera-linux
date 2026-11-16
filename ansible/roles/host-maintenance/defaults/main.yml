@@ -7,6 +7,8 @@
 #    vor Docker, höchstens alle 6 h, Neustart falls nötig
 #  - Boot-Prüfung vor Docker: Paketsystem, Kernel, Hailo, Kamera
 #  - Update-Status für Grafana (/etc/pi-daemon/update-status.json)
+#  - Host-Status für Grafana (/run/vogelkamera/host-status.json): Versorgungsspannung,
+#    Unterspannung, WLAN-Signal, Watchdog-Eingriffe – jede Minute
 #
 # Notausgänge auf dem Pi: /etc/vogelkamera/skip-boot-update, /etc/vogelkamera/skip-boot-check
 host_wlan_watchdog:  true
