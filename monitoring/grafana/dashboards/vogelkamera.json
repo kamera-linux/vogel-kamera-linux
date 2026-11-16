@@ -2810,8 +2810,8 @@
           "expr": "vogelkamera_info",
           "legendFormat": "v{{version}}",
           "refId": "A",
-          "range": true,
-          "instant": false
+          "range": false,
+          "instant": true
         }
       ]
     },
@@ -4071,8 +4071,8 @@
           "expr": "vogelkamera_os_kernel_info",
           "legendFormat": "{{running}}",
           "refId": "A",
-          "range": true,
-          "instant": false
+          "range": false,
+          "instant": true
         }
       ]
     },
