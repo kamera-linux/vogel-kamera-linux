@@ -119,14 +119,14 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**Vogelhaus-Highlights 2026 – Stieglitz, Kernbeißer,...**](https://www.youtube.com/watch?v=b8jPdtfGhSY) | 13.11.2026 | 0:59 | 38 | 4 | 0 |
-| [**Vogel-Kamera mit Raspberry Pi 5 und KI – Einrichtu...**](https://www.youtube.com/watch?v=HqzKHBYs-DA) | 12.11.2026 | 8:16 | 55 | 3 | 0 |
+| [**Vogelhaus-Highlights 2026 – Stieglitz, Kernbeißer,...**](https://www.youtube.com/watch?v=b8jPdtfGhSY) | 13.11.2026 | 0:59 | 40 | 4 | 0 |
+| [**Vogel-Kamera mit Raspberry Pi 5 und KI – Einrichtu...**](https://www.youtube.com/watch?v=HqzKHBYs-DA) | 12.11.2026 | 8:16 | 56 | 3 | 0 |
 | [**🐦 Haussperlinge am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XdpjpbCXhQE) | 29.08.2026 | 1:56 | 149 | 4 | 1 |
 | [**🐦 Sumpfmeise beim Hamstern (Zeitlupe)**](https://www.youtube.com/watch?v=pee3rH2nBnI) | 23.08.2026 | 2:15 | 99 | 6 | 0 |
 | [**🐦 Vögel am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XoG5j0GHGcM) | 12.08.2026 | 3:02 | 65 | 7 | 0 |
 | [**🤖 KI erkennt Haussperling am Futterhaus 🐦**](https://www.youtube.com/watch?v=GjOl43K4uUI) | 02.05.2026 | 1:53 | 148 | 6 | 1 |
 | [**Haussperling in 4K – Nahaufnahme am neuen Vogelfut...**](https://www.youtube.com/watch?v=utk6eLfYg_4) | 01.05.2026 | 2:16 | 62 | 7 | 0 |
-| [**Kernbeißer in 4K – Nahaufnahme am neuen Vogelfutte...**](https://www.youtube.com/watch?v=Jf6locShc_c) | 01.05.2026 | 2:22 | 62 | 6 | 1 |
+| [**Kernbeißer in 4K – Nahaufnahme am neuen Vogelfutte...**](https://www.youtube.com/watch?v=Jf6locShc_c) | 01.05.2026 | 2:22 | 63 | 6 | 1 |
 | [**Stieglitz in 4K – Nahaufnahme am neuen Vogelfutter...**](https://www.youtube.com/watch?v=0QABEj8JjS0) | 10.04.2026 | 3:20 | 112 | 6 | 0 |
 | [**🐦Kohlmeise am Futterhaus - Zeitlupen-Aufnahmen**](https://www.youtube.com/watch?v=-9orWyLCK3A) | 07.04.2026 | 2:23 | 59 | 5 | 0 |
 | [**Haussperling und Grünling am Futterhaus - Zeitlupe...**](https://www.youtube.com/watch?v=NXworCxUw8Q) | 24.03.2026 | 2:40 | 60 | 5 | 0 |
@@ -140,7 +140,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**5 Vogelarten mit Aufnahme (120fps) \| Automatische ...**](https://www.youtube.com/watch?v=k3tS0oJX7YE) | 06.10.2025 | 3:24 | 87 | 8 | 5 |
 | [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 134 | 7 | 1 |
 
-*Automatisch aktualisiert: 20.11.2026 15:26 Uhr (Winterzeit (MEZ))*
+*Automatisch aktualisiert: 21.11.2026 14:45 Uhr (Winterzeit (MEZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## 🔩 Hardware-Stückliste
