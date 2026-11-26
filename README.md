@@ -119,8 +119,8 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**Vogelhaus-Highlights 2026 – Stieglitz, Kernbeißer,...**](https://www.youtube.com/watch?v=b8jPdtfGhSY) | 13.11.2026 | 0:59 | 51 | 5 | 0 |
-| [**Vogel-Kamera mit Raspberry Pi 5 und KI – Einrichtu...**](https://www.youtube.com/watch?v=HqzKHBYs-DA) | 12.11.2026 | 8:16 | 70 | 4 | 0 |
+| [**Vogelhaus-Highlights 2026 – Stieglitz, Kernbeißer,...**](https://www.youtube.com/watch?v=b8jPdtfGhSY) | 13.11.2026 | 0:59 | 52 | 5 | 0 |
+| [**Vogel-Kamera mit Raspberry Pi 5 und KI – Einrichtu...**](https://www.youtube.com/watch?v=HqzKHBYs-DA) | 12.11.2026 | 8:16 | 74 | 4 | 0 |
 | [**🐦 Haussperlinge am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XdpjpbCXhQE) | 29.08.2026 | 1:56 | 150 | 5 | 1 |
 | [**🐦 Sumpfmeise beim Hamstern (Zeitlupe)**](https://www.youtube.com/watch?v=pee3rH2nBnI) | 23.08.2026 | 2:15 | 100 | 6 | 0 |
 | [**🐦 Vögel am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XoG5j0GHGcM) | 12.08.2026 | 3:02 | 65 | 7 | 0 |
@@ -140,7 +140,7 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**5 Vogelarten mit Aufnahme (120fps) \| Automatische ...**](https://www.youtube.com/watch?v=k3tS0oJX7YE) | 06.10.2025 | 3:24 | 87 | 8 | 5 |
 | [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 134 | 7 | 1 |
 
-*Automatisch aktualisiert: 25.11.2026 17:14 Uhr (Winterzeit (MEZ))*
+*Automatisch aktualisiert: 26.11.2026 16:52 Uhr (Winterzeit (MEZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## 🔩 Hardware-Stückliste
