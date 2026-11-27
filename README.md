@@ -119,8 +119,8 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 
 | 🎬 Video | 📅 Datum | ⏱️ Dauer | 👁️ Views | 👍 Likes | 💬 Komm. |
 |----------|----------|----------|----------|----------|---------|
-| [**Vogelhaus-Highlights 2026 – Stieglitz, Kernbeißer,...**](https://www.youtube.com/watch?v=b8jPdtfGhSY) | 13.11.2026 | 0:59 | 52 | 5 | 0 |
-| [**Vogel-Kamera mit Raspberry Pi 5 und KI – Einrichtu...**](https://www.youtube.com/watch?v=HqzKHBYs-DA) | 12.11.2026 | 8:16 | 74 | 4 | 0 |
+| [**Vogelhaus-Highlights 2026 – Stieglitz, Kernbeißer,...**](https://www.youtube.com/watch?v=b8jPdtfGhSY) | 13.11.2026 | 0:59 | 53 | 5 | 0 |
+| [**Vogel-Kamera mit Raspberry Pi 5 und KI – Einrichtu...**](https://www.youtube.com/watch?v=HqzKHBYs-DA) | 12.11.2026 | 8:16 | 77 | 4 | 0 |
 | [**🐦 Haussperlinge am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XdpjpbCXhQE) | 29.08.2026 | 1:56 | 150 | 5 | 1 |
 | [**🐦 Sumpfmeise beim Hamstern (Zeitlupe)**](https://www.youtube.com/watch?v=pee3rH2nBnI) | 23.08.2026 | 2:15 | 100 | 6 | 0 |
 | [**🐦 Vögel am Vogelhaus (Zeitlupe)**](https://www.youtube.com/watch?v=XoG5j0GHGcM) | 12.08.2026 | 3:02 | 65 | 7 | 0 |
@@ -133,14 +133,14 @@ cp ansible/.env.example ansible/.env && nano ansible/.env
 | [**🐦 Vogel-Beobachtung mit neuem Futterhaus**](https://www.youtube.com/watch?v=Y3KsGb4NkbU) | 23.03.2026 | 0:55 | 40 | 5 | 0 |
 | [**🐦 Vogel-Beobachtung von einem Star am Futterhaus**](https://www.youtube.com/watch?v=0bNoF5cutnc) | 06.03.2026 | 2:33 | 75 | 6 | 0 |
 | [**🐦 Vogel-Beobachtung mit KI: Meisen, Rotkehlchen un...**](https://www.youtube.com/watch?v=1Mrq4oIzckI) | 30.11.2025 | 2:38 | 196 | 1 | 2 |
-| [**3 Vogelarten live am Futterhaus - KI erkennt Kohlm...**](https://www.youtube.com/watch?v=uZm4Ao9JHoo) | 24.11.2025 | 3:10 | 189 | 6 | 1 |
+| [**3 Vogelarten live am Futterhaus - KI erkennt Kohlm...**](https://www.youtube.com/watch?v=uZm4Ao9JHoo) | 24.11.2025 | 3:10 | 190 | 6 | 1 |
 | [**🐦 Wunderschönes Rotkehlchen beim Fressen \| 4K Voge...**](https://www.youtube.com/watch?v=rWkWFUeVK0o) | 31.10.2025 | 1:58 | 80 | 6 | 0 |
 | [**🐦 Blaumeise beim Fressen \| KI-Kamera 120fps Zeitlu...**](https://www.youtube.com/watch?v=ew3l12TSn5k) | 28.10.2025 | 2:25 | 124 | 9 | 0 |
 | [**🐦 Sumpfmeise in Zeitlupe \| Futtersuche im Vogelhau...**](https://www.youtube.com/watch?v=dORu9qs8KSA) | 20.10.2025 | 2:46 | 57 | 6 | 1 |
 | [**5 Vogelarten mit Aufnahme (120fps) \| Automatische ...**](https://www.youtube.com/watch?v=k3tS0oJX7YE) | 06.10.2025 | 3:24 | 87 | 8 | 5 |
 | [**🤖 KI-gesteuerte Vogelkamera \| Automatische Erkennu...**](https://www.youtube.com/watch?v=5WeZb_YVe0s) | 02.10.2025 | 5:51 | 134 | 7 | 1 |
 
-*Automatisch aktualisiert: 26.11.2026 16:52 Uhr (Winterzeit (MEZ))*
+*Automatisch aktualisiert: 27.11.2026 16:40 Uhr (Winterzeit (MEZ))*
 <!-- YOUTUBE_VIDEOS_END -->
 
 ## 🔩 Hardware-Stückliste
